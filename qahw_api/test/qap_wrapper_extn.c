@@ -61,7 +61,6 @@
 #define TIMESTAMP_ARRAY_SIZE 2048
 #define DOLBY 1
 #define DTS   2
-#define FRAME_SIZE_FOR_2CH_PCM 6144 /* For 48k samplerate, 2 ch, 2 bytes */
 #define PCM_16_BITWIDTH 16
 #define PCM_24_BITWIDTH 24
 #define DEFAULT_SAMPLE_RATE 48000
@@ -1584,6 +1583,38 @@ int qap_wrapper_session_close ()
     }
 }
 
+/* Returns the PCM input buffer size set by user. */
+int get_pcm_input_buf_size(void* stream_data, uint32_t *pcm_input_buf_size)
+{
+    int ret = 0;
+    qap_module_handle_t qap_module_handle = NULL;
+
+    if (NULL == stream_data) {
+        fprintf(stderr, "!!!! Error Stream config is NULL \n");
+        return -EINVAL;
+    }
+
+    stream_config *stream_info = (stream_config *)stream_data;
+    qap_module_handle = stream_info->qap_module_handle;
+
+    uint32_t param_id = MS12_STREAM_GET_PCM_INPUT_BUF_SIZE;
+    ret = qap_module_cmd(qap_module_handle,
+            QAP_MODULE_CMD_GET_PARAM,
+            sizeof(param_id),
+            &param_id,
+            NULL,
+            pcm_input_buf_size);
+
+    if (ret >= 0) {
+        ALOGV("PCM input buffer size returned by MS12(%d)", *pcm_input_buf_size);
+    } else {
+        ret = -EINVAL;
+        *pcm_input_buf_size = 0;
+        ALOGV("PCM input buffer size returned by MS12(0)");
+    }
+    return ret;
+}
+
 /* Returns the number of decoder output frames and elapsed time in msec. */
 int get_decoder_output_frames(void* stream_data, uint64_t *frames,  double *timestamp)
 {
@@ -1638,6 +1669,7 @@ void *qap_wrapper_start_stream (void* stream_data)
     uint64_t frames = 0;
     double timestamp;
     qap_audio_format_t format;
+    uint32_t pcm_input_buf_size;
 
     if (fp_input == NULL) {
         fprintf(stderr, "Open File Failed for %s\n", stream_info->filename);
@@ -1682,11 +1714,11 @@ void *qap_wrapper_start_stream (void* stream_data)
                 first_read = 0;
                 int wav_header_len = get_wav_header_length(stream_info->file_stream);
                 fseek(fp_input, wav_header_len, SEEK_SET);
+
+                /* Get PCM buffer size set by user */
+                get_pcm_input_buf_size(stream_info, &pcm_input_buf_size);
             }
-            if (stream_info->channels > 6)
-                stream_info->bytes_to_read = (FRAME_SIZE_FOR_2CH_PCM * 4);
-            else
-                stream_info->bytes_to_read = (FRAME_SIZE_FOR_2CH_PCM * 3);
+            stream_info->bytes_to_read = pcm_input_buf_size;
         }
         buffer->buffer_parms.input_buf_params.flags = QAP_BUFFER_NO_TSTAMP;
         buffer->common_params.timestamp = QAP_BUFFER_NO_TSTAMP;
@@ -1920,6 +1952,20 @@ qap_module_handle_t qap_wrapper_stream_open(void* stream_data)
     if (qap_module_handle == NULL) {
         fprintf(stderr, "%s Module Handle is Null\n", __func__);
         return NULL;
+    }
+
+    /* Set PCM buffer size if user set it using "L" flag */
+    if ((stream_info->filetype == FILE_WAV) && (stream_info->pcm_input_buf_size)) {
+        uint32_t cmd_data[16] = {0};
+        uint32_t cmd_size = 0;
+        cmd_data[cmd_size++] = MS12_STREAM_SET_PCM_INPUT_BUF_SIZE;
+        cmd_data[cmd_size++] = stream_info->pcm_input_buf_size;
+
+        ret = qap_module_cmd(qap_module_handle, QAP_MODULE_CMD_SET_PARAM, cmd_size * sizeof(uint32_t), &cmd_data[0], NULL, NULL);
+        if (ret != QAP_STATUS_OK) {
+            fprintf(stderr, "SET PCM buffer size set failed\n");
+            return NULL;
+        }
     }
 
     qap_module_set_callback(qap_module_handle, &qap_wrapper_module_callback, stream_info);

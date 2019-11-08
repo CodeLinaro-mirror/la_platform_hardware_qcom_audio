@@ -1560,8 +1560,11 @@ void usage() {
     printf("                                             Params should be in the order defined in struct qahw_device_cfg_param. Order is: \n");
     printf("                                             <sample_rate>, <channels>, <bit_width>, <format>, <device>, <channel_map[channels]>, <channel_allocation> \n");
     printf("                                             Example(6 channel HDMI config): hal_play_test -f /data/ChID16bit_5.1ch_48k.wav -v 0.9 -d 1024 -c 6 -C 48000 6 16 1 1024 1 2 6 3 4 5 19\n");
+    printf(" -L  --pcm-input-buf-size                  - PCM input buffer size in bytes \n");
     printf(" \n Examples \n");
     printf(" hal_play_test -f /data/Anukoledenadu.wav  -> plays Wav stream with default params\n\n");
+    printf(" hal_play_test -qap -broadcast -f /data/Anukoledenadu.wav -v 0.5 -d 8 -F 4 -L 6144 \n");
+    printf("                                          -> plays Wav stream with PCM buffer size(-L) in bytes\n\n");
     printf(" hal_play_test -f /data/MateRani.mp3 -t 2 -d 2 -v 0.01 -r 44100 -c 2 \n");
     printf("                                          -> plays MP3 stream(-t = 2) on speaker device(-d = 2)\n");
     printf("                                          -> 2 channels and 44100 sample rate\n\n");
@@ -2070,6 +2073,7 @@ int main(int argc, char* argv[]) {
         {"intr-strm",    required_argument,    0, 'i'},
         {"device-config", required_argument,    0, 'C'},
         {"play-list",    required_argument,    0, 'g'},
+        {"pcm-input-buf-size", required_argument, 0, 'L'},
         {"help",          no_argument,          0, 'h'},
         {0, 0, 0, 0}
     };
@@ -2093,7 +2097,7 @@ int main(int argc, char* argv[]) {
 
     while ((opt = getopt_long(argc,
                               argv,
-                              "-f:r:c:b:d:s:v:V:l:t:a:w:k:PD:KF:Ee:A:u:m:S:C:p::x:y:qQh:i:h:g:",
+                              "-f:r:c:b:d:s:v:V:l:t:a:w:k:PD:KF:Ee:A:u:m:S:C:p::x:y:qQh:i:h:g:L:",
                               long_options,
                               &option_index)) != -1) {
 
@@ -2352,6 +2356,9 @@ int main(int argc, char* argv[]) {
             }
             break;
         case 'g':
+            break;
+        case 'L':
+            stream_param[i].pcm_input_buf_size = atoi(optarg);
             break;
         case 'h':
             usage();
