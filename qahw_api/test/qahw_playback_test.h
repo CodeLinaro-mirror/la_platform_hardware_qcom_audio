@@ -170,6 +170,9 @@ int get_wav_header_length (FILE* file_stream);
 /* Returns the number of decoder output frames and elapsed time in msec. */
 #define get_decoder_output_frames(stream_data, frames, timestamp)        (0)
 #define get_pcm_input_buf_size(stream_data, pcm_input_buf_size)          (0)
+/* Returns the number of consumed frames and decoded frames */
+#define get_decoder_reported_frames_info(stream_data,\
+                                                 frames_reported_info)   (0)
 #else
 void hal_test_qap_usage();
 char * qap_wrapper_get_single_kvp(const char *key, const char *kv_pairs, int *status);
@@ -191,5 +194,7 @@ int start_playback_through_qap_playlist(char *cmd_kvp_str[], int num_of_streams,
 /* Returns the number of decoder output frames and elapsed time in msec. */
 int get_decoder_output_frames(void* stream_data, uint64_t *frames, double *timestamp);
 int get_pcm_input_buf_size(void* stream_data, uint32_t *pcm_input_buf_size);
+/* Returns the number of decoder consumed and decoded frames */
+int get_decoder_reported_frames_info(void* stream_data, void* frames_reported_info);
 #endif
 #endif /* QAHW_PLAYBACK_TEST_H */

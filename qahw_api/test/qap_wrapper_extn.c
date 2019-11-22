@@ -65,6 +65,10 @@
 #define PCM_24_BITWIDTH 24
 #define DEFAULT_SAMPLE_RATE 48000
 #define MAX_QAP_MODULE_OUT 3
+#define CONSUMED_FRAME_INDEX 0
+#define DECODED_FRAME_INDEX 1
+#define MAX_REPORT_IO_FRAMES_SIZE 2
+
 
 extern bool stop_playback;
 bool is_media_fmt_changed[MAX_QAP_MODULE_OUT];
@@ -1651,10 +1655,40 @@ int get_decoder_output_frames(void* stream_data, uint64_t *frames,  double *time
     return ret;
 }
 
+/* Returns the number of consumed and decoded frames info.*/
+int get_decoder_reported_frames_info(void* stream_data, void* frames_reported_info)
+{
+    int ret = 0;
+    uint64_t qap_report_frames[MAX_REPORT_IO_FRAMES_SIZE] = {0};
+
+    if (NULL == stream_data || !frames_reported_info) {
+        fprintf(stderr, " !!!! Error improper input \n");
+        return -EINVAL;
+    }
+
+    qap_report_frames_t  *report_frames_data = (qap_report_frames_t*)frames_reported_info;
+    qap_module_handle_t qap_module_handle = NULL;
+
+    stream_config *stream_info = (stream_config *)stream_data;
+    qap_module_handle = stream_info->qap_module_handle;
+    uint32_t param_id = MS12_STREAM_GET_DECODER_IO_FRAMES_INFO;
+    ret = qap_module_cmd(qap_module_handle, QAP_MODULE_CMD_GET_PARAM, sizeof(param_id), &param_id, NULL, &qap_report_frames);
+
+        if (ret >= 0) {
+            report_frames_data->consumed_frames = qap_report_frames[CONSUMED_FRAME_INDEX];
+            report_frames_data->decoded_frames = qap_report_frames[DECODED_FRAME_INDEX];
+
+            ALOGV("Consumed_frames returned by MS12(%llu) stream_index : %d \n ", report_frames_data->consumed_frames, stream_info->stream_index);
+            ALOGV("Decoded_frames returned by MS12(%llu) stream_index : %d\n ", report_frames_data->decoded_frames, stream_info->stream_index);
+    }
+    return ret;
+}
+
 void *qap_wrapper_start_stream (void* stream_data)
 {
     int ret = 0;
     qap_audio_buffer_t *buffer;
+    qap_report_frames_t frames_reported_info;
     int8_t first_read = 1;
     int bytes_wanted;
     int bytes_read;
@@ -1751,6 +1785,9 @@ void *qap_wrapper_start_stream (void* stream_data)
             bytes_consumed = qap_module_process(qap_module_handle, buffer);
 
             get_decoder_output_frames(stream_data, &frames, &timestamp);
+
+            /* Reporting consumed frames and decoded frames from the decoder*/
+            get_decoder_reported_frames_info(stream_data, &frames_reported_info);
 
             if (stop_playback)
                 qap_module_cmd(qap_module_handle, QAP_MODULE_CMD_FLUSH, sizeof(QAP_MODULE_CMD_FLUSH), NULL, NULL, NULL);
