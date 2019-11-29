@@ -88,6 +88,7 @@
 #include <dlfcn.h>
 #include <sys/resource.h>
 #include <sys/prctl.h>
+#include <unistd.h>
 
 #include <log/log.h>
 #include <cutils/trace.h>
@@ -5867,10 +5868,32 @@ static int out_remove_audio_effect(const struct audio_stream *stream __unused,
     return 0;
 }
 
-static int out_get_next_write_timestamp(const struct audio_stream_out *stream __unused,
-                                        int64_t *timestamp __unused)
+static int out_get_next_write_timestamp(const struct audio_stream_out *stream,
+                                        int64_t *timestamp)
 {
-    return -ENOSYS;
+    struct stream_out *out = (struct stream_out *)stream;
+    int ret = -EINVAL;
+    struct audio_out_presentation_position_param pos_param;
+    uint64_t remain_frames;
+
+    lock_output_stream(out);
+
+    pos_param.clock_id = CLOCK_MONOTONIC;
+
+    ret = audio_ext_get_presentation_position(out, &pos_param);
+    if (ret < 0) {
+        ALOGE("%s:: presentation position query failed error %d",
+                __func__, ret);
+        pthread_mutex_unlock(&out->lock);
+        return ret;
+    }
+    remain_frames =  out->written - pos_param.frames;
+    *timestamp = remain_frames * 1000000000LL / out->sample_rate
+               + pos_param.timestamp.tv_sec * 1000000000LL
+               + pos_param.timestamp.tv_nsec;
+
+    pthread_mutex_unlock(&out->lock);
+    return 0;
 }
 
 static int out_get_presentation_position(const struct audio_stream_out *stream,
