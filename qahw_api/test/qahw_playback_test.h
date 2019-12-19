@@ -173,6 +173,10 @@ int get_wav_header_length (FILE* file_stream);
 /* Returns the number of consumed frames and decoded frames */
 #define get_decoder_reported_frames_info(stream_data,\
                                                  frames_reported_info)   (0)
+/* Returns the ms12 graph latency from lookup table in msec.
+ * pass ms12_graph_latency pointer to get ms12 latency
+ */
+#define get_ms12_graph_latency(stream_data, ms12_graph_latency)          (0)
 #else
 void hal_test_qap_usage();
 char * qap_wrapper_get_single_kvp(const char *key, const char *kv_pairs, int *status);
@@ -196,5 +200,9 @@ int get_decoder_output_frames(void* stream_data, uint64_t *frames, double *times
 int get_pcm_input_buf_size(void* stream_data, uint32_t *pcm_input_buf_size);
 /* Returns the number of decoder consumed and decoded frames */
 int get_decoder_reported_frames_info(void* stream_data, void* frames_reported_info);
+/* Returns the ms12 graph latency from lookup table in msec.
+ * pass ms12_graph_latency pointer to get ms12 latency
+ */
+int get_ms12_graph_latency(void* stream_data, int *ms12_graph_latency);
 #endif
 #endif /* QAHW_PLAYBACK_TEST_H */

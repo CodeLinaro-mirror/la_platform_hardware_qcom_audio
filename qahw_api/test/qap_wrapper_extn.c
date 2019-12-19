@@ -1689,6 +1689,30 @@ int get_decoder_reported_frames_info(void* stream_data, void* frames_reported_in
     return ret;
 }
 
+/* Returns the ms12 graph latency from lookup table in msec.
+ * pass ms12_latency_value pointer to get ms12 latency
+ */
+int get_ms12_graph_latency(void* stream_data, int *ms12_graph_latency)
+{
+    int ret = 0;
+    qap_module_handle_t qap_module_handle = NULL;
+
+    if (NULL == stream_data || NULL == ms12_graph_latency) {
+        fprintf(stderr, "!!!! Error Stream config is NULL \n");
+        return -EINVAL;
+    }
+
+    stream_config *stream_info = (stream_config *)stream_data;
+    qap_module_handle = stream_info->qap_module_handle;
+
+    uint32_t param_id = MS12_STREAM_GET_LATENCY;
+
+    ret = qap_module_cmd(qap_module_handle, QAP_MODULE_CMD_GET_PARAM, sizeof(param_id), &param_id, NULL, ms12_graph_latency);
+
+    ALOGV("ms12 Graph Latency value %d millisecond", *ms12_graph_latency);
+    return ret;
+}
+
 void *qap_wrapper_start_stream (void* stream_data)
 {
     int ret = 0;
@@ -1707,6 +1731,7 @@ void *qap_wrapper_start_stream (void* stream_data)
     char* temp_ptr = NULL;
     uint64_t frames = 0;
     double timestamp;
+    int ms12_graph_latency;
     qap_audio_format_t format;
     uint32_t pcm_input_buf_size;
 
@@ -1796,6 +1821,7 @@ void *qap_wrapper_start_stream (void* stream_data)
             bytes_consumed = qap_module_process(qap_module_handle, buffer);
 
             get_decoder_output_frames(stream_data, &frames, &timestamp);
+            get_ms12_graph_latency(stream_data, &ms12_graph_latency);
 
             /* Reporting consumed frames and decoded frames from the decoder*/
             get_decoder_reported_frames_info(stream_data, &frames_reported_info);
