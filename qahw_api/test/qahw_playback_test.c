@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2017, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2020, The Linux Foundation. All rights reserved.
  * Not a Contribution.
  *
  * Copyright (C) 2015 The Android Open Source Project *
@@ -2358,7 +2358,12 @@ int main(int argc, char* argv[]) {
         case 'g':
             break;
         case 'L':
-            stream_param[i].pcm_input_buf_size = atoi(optarg);
+            if (atoi(optarg) < 0) {
+                fprintf(log_file, "Invalid input pcm buffer size %d\n", atoi(optarg));
+                fprintf(stderr, "Invalid input pcm buffer size %d\n", atoi(optarg));
+            } else {
+                stream_param[i].pcm_input_buf_size = (uint32_t)atoi(optarg);
+            }
             break;
         case 'h':
             usage();

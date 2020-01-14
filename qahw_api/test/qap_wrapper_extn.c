@@ -1778,37 +1778,31 @@ void *qap_wrapper_start_stream (void* stream_data)
         }
         do {
             bytes_consumed = qap_module_process(qap_module_handle, buffer);
+            if (bytes_consumed < 0) {
+                pthread_mutex_lock(&stream_info->input_buffer_available_lock);
 
-            if (bytes_consumed > 0) {
+                while (buffer->common_params.size > stream_info->input_buffer_available_size) {
+                    ALOGV("%s %d: %s waiting for input buffer availability.",
+                                 __FUNCTION__, __LINE__, stream_info->filename);
+                    pthread_cond_wait(&stream_info->input_buffer_available_cond,
+                                      &stream_info->input_buffer_available_lock);
+                    ALOGV("%s %d: %s input buffer available, size %lu.",
+                                 __FUNCTION__, __LINE__,
+                                 stream_info->filename,
+                                 stream_info->input_buffer_available_size);
+                }
+                stream_info->input_buffer_available_size = 0;
+                pthread_mutex_unlock(&stream_info->input_buffer_available_lock);
+                if(kpi_mode && time_index > 5) {
+                    gettimeofday(&tcont_ts1, NULL);
+                    data_input_st_arr[time_index] = (tcont_ts1.tv_sec) * 1000 + (tcont_ts1.tv_usec) / 1000;
+                }
+            } else if (bytes_consumed > 0) {
                 buffer->common_params.data += bytes_consumed;
                 buffer->common_params.size -= bytes_consumed;
             }
             ALOGV("%s %d, %s feeding Input of size %d  and bytes_cosumed is %d",
                       __FUNCTION__, __LINE__,stream_info->filename, bytes_read, bytes_consumed);
-            {
-                if (bytes_consumed < 0) {
-                    pthread_mutex_lock(&stream_info->input_buffer_available_lock);
-                    stream_info->input_buffer_available_size = 0;
-                    pthread_mutex_unlock(&stream_info->input_buffer_available_lock);
-
-                    while (buffer->common_params.size > stream_info->input_buffer_available_size) {
-                        ALOGV("%s %d: %s waiting for input buffer availability.",
-                                     __FUNCTION__, __LINE__, stream_info->filename);
-                        pthread_mutex_lock(&stream_info->input_buffer_available_lock);
-                        pthread_cond_wait(&stream_info->input_buffer_available_cond,
-                                          &stream_info->input_buffer_available_lock);
-                        pthread_mutex_unlock(&stream_info->input_buffer_available_lock);
-                        ALOGV("%s %d: %s input buffer available, size %lu.",
-                                     __FUNCTION__, __LINE__,
-                                     stream_info->filename,
-                                     stream_info->input_buffer_available_size);
-                    }
-                    if(kpi_mode && time_index > 5) {
-                        gettimeofday(&tcont_ts1, NULL);
-                        data_input_st_arr[time_index] = (tcont_ts1.tv_sec) * 1000 + (tcont_ts1.tv_usec) / 1000;
-                    }
-                }
-            }
         } while (buffer->common_params.size > 0 && !stop_playback);
         if (reply_data)
             free(reply_data);
