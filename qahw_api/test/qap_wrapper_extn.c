@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2017, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2020, The Linux Foundation. All rights reserved.
  * Not a Contribution.
  *
  * Copyright (C) 2015 The Android Open Source Project *
@@ -1746,8 +1746,6 @@ void *qap_wrapper_start_stream (void* stream_data)
         }
         do {
             bytes_consumed = qap_module_process(qap_module_handle, buffer);
-
-            get_decoder_output_frames(stream_data, &frames, &timestamp);
 
             if (bytes_consumed > 0) {
                 buffer->common_params.data += bytes_consumed;
