@@ -1619,7 +1619,7 @@ int get_pcm_input_buf_size(void* stream_data, uint32_t *pcm_input_buf_size)
 int get_decoder_output_frames(void* stream_data, uint64_t *frames,  double *timestamp)
 {
     int ret = 0, i;
-    unsigned long long bytes_consumed = 0;
+    uint64_t bytes_consumed = 0;
     qap_module_handle_t qap_module_handle = NULL;
 
     if (NULL == stream_data) {
