@@ -206,6 +206,228 @@ static void update_combo_dev_kvpairs()
     ALOGV("%s:%d session set param %s and combo_enabled %d", __func__, __LINE__, session_kv_pairs, combo_enabled);
     return;
 }
+
+static void qap_wrapper_create_multi_channel_dump(char *path) {
+    fp_output_writer_hdmi = fopen(path,"wb");
+    if (fp_output_writer_hdmi)
+        fprintf(stdout, "output file ::%s has been generated.\n", path);
+    else
+        fprintf(stderr, "Failed open hdmi dump file\n");
+}
+
+static void session_write_data_to_hal(audio_devices_t devices, int index, qahw_module_handle_t *qap_out_handle, char *data, size_t bytes)
+{
+    int bytes_written = 0;
+    int ret = 0;
+
+    if (qap_out_handle == NULL) {
+        struct audio_config config;
+        audio_output_flags_t flags;
+        flags = (AUDIO_OUTPUT_FLAG_NON_BLOCKING |
+                AUDIO_OUTPUT_FLAG_COMPRESS_OFFLOAD |
+                AUDIO_OUTPUT_FLAG_DIRECT);
+
+        config.offload_info.version = AUDIO_INFO_INITIALIZER.version;
+        config.offload_info.size = AUDIO_INFO_INITIALIZER.size;
+        config.sample_rate = config.offload_info.sample_rate = DEFAULT_SAMPLE_RATE;
+
+        if (timestamp_mode)
+            flags |= AUDIO_OUTPUT_FLAG_TIMESTAMP;
+
+        if (devices == AUDIO_DEVICE_OUT_HDMI) {
+            if (index > -1) {
+                if (session_output_config.output_config[index].sample_rate > 0)
+                    config.sample_rate = config.offload_info.sample_rate = session_output_config.output_config[index].sample_rate;
+                config.offload_info.channel_mask = config.channel_mask =
+                    audio_channel_out_mask_from_count(session_output_config.output_config[index].channels);
+                if (session_output_config.output_config[index].bit_width == 24) {
+                    config.format = config.offload_info.format = AUDIO_FORMAT_PCM_24_BIT_PACKED;
+                    config.offload_info.bit_width = 24;
+                } else {
+                    config.format = config.offload_info.format = AUDIO_FORMAT_PCM_16_BIT;
+                    config.offload_info.bit_width = 16;
+                }
+                if (session_output_config.output_config[index].format == QAP_AUDIO_FORMAT_AC3)
+                    config.format = config.offload_info.format = AUDIO_FORMAT_AC3;
+                else if (session_output_config.output_config[index].format == QAP_AUDIO_FORMAT_EAC3)
+                    config.format = config.offload_info.format = AUDIO_FORMAT_E_AC3;
+                else if (session_output_config.output_config[index].format == QAP_AUDIO_FORMAT_DTS)
+                    config.format = config.offload_info.format = AUDIO_FORMAT_DTS;
+            }
+            if (encode) {
+                ret = qahw_open_output_stream(qap_out_hal_handle, qap_stream_out_cmpr_handle, devices,
+                        flags, &config, &qap_out_handle, "stream");
+            } else {
+                ret = qahw_open_output_stream(qap_out_hal_handle, qap_stream_out_hdmi_handle, devices,
+                        flags, &config, &qap_out_handle, "stream");
+                if (index > -1)
+                    set_qahw_stream_channel_map(qap_out_handle, &session_output_config.output_config[index]);
+            }
+            qap_out_hdmi_handle = qap_out_handle;
+        }
+        else if (devices == AUDIO_DEVICE_OUT_LINE || devices == AUDIO_DEVICE_OUT_SPEAKER) {
+
+            config.format = config.offload_info.format = AUDIO_FORMAT_PCM_16_BIT;
+            config.offload_info.bit_width = 16;
+            config.offload_info.channel_mask = config.channel_mask = AUDIO_CHANNEL_OUT_STEREO;
+
+            if (index > -1) {
+                config.sample_rate = config.offload_info.sample_rate = session_output_config.output_config[index].sample_rate;
+                config.offload_info.channel_mask = config.channel_mask =
+                    audio_channel_out_mask_from_count(session_output_config.output_config[index].channels);
+                if (session_output_config.output_config[index].bit_width == 24) {
+                    config.format = config.offload_info.format = AUDIO_FORMAT_PCM_24_BIT_PACKED;
+                    config.offload_info.bit_width = 24;
+                }
+            }
+
+            if (devices == AUDIO_DEVICE_OUT_LINE) {
+                ret = qahw_open_output_stream(qap_out_hal_handle, qap_stream_out_hp_handle, devices,
+                        flags, &config, &qap_out_handle, "stream");
+                if (ret) {
+                    ALOGE("%s:%d could not open output stream, error - %d", __func__, __LINE__, ret);
+                    return;
+                }
+                qap_out_hp_handle = qap_out_handle;
+            } else if (devices == AUDIO_DEVICE_OUT_SPEAKER) {
+                if (play_through_bt) {
+                    fprintf(stderr, "%s::%d: connecting BT\n", __func__, __LINE__);
+                    char param[100] = {0};
+                    snprintf(param, sizeof(param), "%s=%d", "connect", AUDIO_DEVICE_OUT_BLUETOOTH_A2DP);
+                    qahw_set_parameters(qap_out_hal_handle, param);
+                    devices = AUDIO_DEVICE_OUT_BLUETOOTH_A2DP;
+                }
+                ret = qahw_open_output_stream(qap_out_hal_handle, qap_stream_out_spk_handle, devices,
+                        flags, &config, &qap_out_handle, "stream");
+                if (ret) {
+                    ALOGE("%s:%d could not open output stream, error - %d", __func__, __LINE__, ret);
+                    return;
+                }
+                qap_out_spk_handle = qap_out_handle;
+            }
+
+            if (index > -1)
+                set_qahw_stream_channel_map(qap_out_handle, &session_output_config.output_config[index]);
+        }
+
+        ret = qahw_out_set_volume(qap_out_handle, vol_level, vol_level);
+        if (ret < 0)
+            ALOGE("unable to set volume");
+    }
+    if (qap_out_handle) {
+        bytes_written = qap_wrapper_write_to_hal(qap_out_handle,
+                data, bytes);
+        if (bytes_written == -1) {
+            ALOGE("%s::%d write failed in hal", __func__, __LINE__);
+        }
+        if (kpi_mode && data_callback_count == 6)
+            dsp_latency = qahw_out_get_latency(qap_out_handle);
+    }
+    if (kpi_mode && data_callback_count == 1) {
+        gettimeofday(&tcold_stop, NULL);
+        cold_stop = (tcold_stop.tv_sec) * 1000 + (tcold_stop.tv_usec) / 1000;
+        ALOGD("%s::%d Measuring Kpi cold stop %lf", __func__, __LINE__, cold_stop);
+    }
+}
+
+static void session_open_output_stream()
+{
+    int index;
+    int ret = 0;
+    char data = '0';
+
+    for (index = 0; index < session_output_config.num_output; index++) {
+        session_output_config.output_config[index].is_interleaved = 1;
+        session_output_config.output_config[index].ch_map[0] = AUDIO_QAF_PCM_CHANNEL_L;
+        session_output_config.output_config[index].ch_map[1] = AUDIO_QAF_PCM_CHANNEL_R;
+        session_output_config.output_config[index].ch_map[2] = AUDIO_QAF_PCM_CHANNEL_C;
+        session_output_config.output_config[index].ch_map[3] = AUDIO_QAF_PCM_CHANNEL_LFE;
+        session_output_config.output_config[index].ch_map[4] = AUDIO_QAF_PCM_CHANNEL_LS;
+        session_output_config.output_config[index].ch_map[5] = AUDIO_QAF_PCM_CHANNEL_RS;
+        session_output_config.output_config[index].ch_map[6] = AUDIO_QAF_PCM_CHANNEL_LB;
+        session_output_config.output_config[index].ch_map[7] = AUDIO_QAF_PCM_CHANNEL_RB;
+
+        if ((session_output_config.output_config[index].id &
+                    AUDIO_DEVICE_OUT_HDMI) == AUDIO_DEVICE_OUT_HDMI) {
+            if (!hdmi_connected) {
+                char param[100] = {0};
+                snprintf(param, sizeof(param), "%s=%d", "connect", AUDIO_DEVICE_OUT_HDMI);
+                qahw_set_parameters(qap_out_hal_handle, param);
+                hdmi_connected = true;
+            }
+            if (encode) {
+                if (enable_dump && fp_output_writer_hdmi == NULL) {
+                    if (session_output_config.output_config[index].id ==
+                            (AUDIO_FORMAT_E_AC3|AUDIO_DEVICE_OUT_HDMI))
+                        qap_wrapper_create_multi_channel_dump("/sdcard/output_hdmi.ddp");
+                    else if (session_output_config.output_config[index].id ==
+                            (AUDIO_FORMAT_AC3|AUDIO_DEVICE_OUT_HDMI))
+                        qap_wrapper_create_multi_channel_dump("/sdcard/output_hdmi.dd");
+                    else
+                        qap_wrapper_create_multi_channel_dump("/sdcard/output_hdmi_dts.dts");
+                }
+            } else {
+                if (enable_dump && fp_output_writer_hdmi == NULL)
+                    qap_wrapper_create_multi_channel_dump("/sdcard/output_hdmi.dump");
+            }
+            if (fp_output_writer_hdmi) {
+                ret = fwrite(&data, sizeof(unsigned char), 0, fp_output_writer_hdmi);
+                fflush(fp_output_writer_hdmi);
+            }
+
+            /* Write dummy data to initialize out device*/
+            session_write_data_to_hal(AUDIO_DEVICE_OUT_HDMI, index, qap_out_hdmi_handle, &data, 0);
+        }
+        if (session_output_config.output_config[index].id == AUDIO_DEVICE_OUT_WIRED_HEADPHONE ||
+                session_output_config.output_config[index].id == AUDIO_DEVICE_OUT_LINE) {
+            if (enable_dump && fp_output_writer_hp == NULL) {
+                fp_output_writer_hp =
+                    fopen("/sdcard/output_hp.dump","wb");
+                if (fp_output_writer_hp) {
+                    fprintf(stdout, "output file :: "
+                            "/sdcard/output_hp.dump"
+                            " has been generated.\n");
+                } else {
+                    fprintf(stderr, "Failed open hp dump file\n");
+                }
+            }
+            if (fp_output_writer_hp) {
+                ret = fwrite(&data, sizeof(unsigned char), 0, fp_output_writer_hp);
+                fflush(fp_output_writer_hp);
+            }
+
+            /* Write dummy data to initialize out device*/
+            session_write_data_to_hal(AUDIO_DEVICE_OUT_LINE, index, qap_out_hp_handle, &data, 0); //ToDO - Need to change to AUDIO_DEVICE_OUT_WIRED_HEADPHONE
+        }
+        if (session_output_config.output_config[index].id == AUDIO_DEVICE_OUT_SPEAKER) {
+            if (enable_dump && fp_output_writer_spk == NULL) {
+                char ch[4] = {0};
+                fp_output_writer_spk =
+                    fopen("/sdcard/output_speaker.dump","wb");
+                if (fp_output_writer_spk) {
+                    fprintf(stdout, "output file :: "
+                            "/sdcard/output_speaker.dump"
+                            " has been generated.\n");
+                    if (dolby_formats) {
+                        ret = fwrite((unsigned char *)&ch, sizeof(unsigned char),
+                                4, fp_output_writer_spk);
+                    }
+                } else {
+                    fprintf(stderr, "Failed open speaker dump file\n");
+                }
+            }
+            if (fp_output_writer_spk) {
+                ret = fwrite(&data, sizeof(unsigned char), 0, fp_output_writer_spk);
+                fflush(fp_output_writer_spk);
+            }
+
+            /* Write dummy data to initialize out device*/
+            session_write_data_to_hal(AUDIO_DEVICE_OUT_SPEAKER, index, qap_out_spk_handle, &data, 0);
+        }
+    }
+    return;
+}
+
 static void update_session_outputs_config(int hdmi_render_format, int in_channels, int bitwidth, int smpl_rate)
 {
     bool enable_spk = false;
@@ -229,12 +451,15 @@ static void update_session_outputs_config(int hdmi_render_format, int in_channel
         if (hdmi_render_format == 1) {
             session_output_config.output_config[session_output_config.num_output].id = AUDIO_DEVICE_OUT_HDMI|AUDIO_FORMAT_AC3;
             session_output_config.output_config[session_output_config.num_output].format = QAP_AUDIO_FORMAT_AC3;
+            session_output_config.output_config[session_output_config.num_output].bit_width = PCM_16_BITWIDTH;
         } else if (hdmi_render_format == 2) {
             session_output_config.output_config[session_output_config.num_output].id = AUDIO_DEVICE_OUT_HDMI|AUDIO_FORMAT_E_AC3;
             session_output_config.output_config[session_output_config.num_output].format = QAP_AUDIO_FORMAT_EAC3;
+            session_output_config.output_config[session_output_config.num_output].bit_width = PCM_16_BITWIDTH;
         } else if (hdmi_render_format == 3) {
             session_output_config.output_config[session_output_config.num_output].id = AUDIO_DEVICE_OUT_HDMI|AUDIO_FORMAT_DTS;
             session_output_config.output_config[session_output_config.num_output].format = QAP_AUDIO_FORMAT_DTS;
+            session_output_config.output_config[session_output_config.num_output].bit_width = PCM_16_BITWIDTH;
         } else {
             if (bitwidth == PCM_24_BITWIDTH) {
                 session_output_config.output_config[session_output_config.num_output].format = QAP_AUDIO_FORMAT_PCM_24_BIT_PACKED;
@@ -307,14 +532,6 @@ static void update_kvpairs_for_encode(int out_device_id) {
     }
     ALOGV("%s::%d output device %d and session set params %s", __func__, __LINE__, out_device_id, session_kv_pairs);
     return;
-}
-
-static void qap_wrapper_create_multi_channel_dump(char *path) {
-    fp_output_writer_hdmi = fopen(path,"wb");
-    if (fp_output_writer_hdmi)
-        fprintf(stdout, "output file ::%s has been generated.\n", path);
-    else
-        fprintf(stderr, "Failed open hdmi dump file\n");
 }
 
 /*
@@ -942,13 +1159,10 @@ void qap_wrapper_module_callback(qap_module_handle_t module_handle, void* priv_d
 void qap_wrapper_session_callback(qap_session_handle_t session_handle __unused, void* priv_data __unused, qap_callback_event_t event_id, int size, void *data)
 {
     int ret = 0;
+    int i;
     int bytes_written = 0;
     int bytes_remaining = 0;
     int offset = 0;
-    audio_output_flags_t flags;
-    flags = (AUDIO_OUTPUT_FLAG_NON_BLOCKING |
-             AUDIO_OUTPUT_FLAG_COMPRESS_OFFLOAD |
-             AUDIO_OUTPUT_FLAG_DIRECT);
     ALOGV("%s %d Received event id %d\n", __func__, __LINE__, event_id);
     switch (event_id) {
         case QAP_CALLBACK_EVENT_EOS:
@@ -1022,9 +1236,38 @@ void qap_wrapper_session_callback(qap_session_handle_t session_handle __unused, 
                     return;
                 }
                 if (memcmp(cached_conf, new_conf, sizeof(qap_output_config_t)) != 0) {
-                    memcpy(cached_conf, new_conf, sizeof(qap_output_config_t));
-                    cached_conf->id = buffer->buffer_parms.output_buf_params.output_id;
-                    is_media_fmt_changed[index] = true;
+                    if(buffer->buffer_parms.output_buf_params.output_config.id != session_output_config.output_config[index].id) {
+                        if( buffer->buffer_parms.output_buf_params.output_id != session_output_config.output_config[index].id) {
+                            memcpy(cached_conf, new_conf, sizeof(qap_output_config_t));
+                            is_media_fmt_changed[index] = true;
+                        }
+                    }
+                    if (buffer->buffer_parms.output_buf_params.output_config.format != session_output_config.output_config[index].format) {
+                        memcpy(cached_conf, new_conf, sizeof(qap_output_config_t));
+                        is_media_fmt_changed[index] = true;
+                    }
+                    if (buffer->buffer_parms.output_buf_params.output_config.sample_rate != session_output_config.output_config[index].sample_rate) {
+                        memcpy(cached_conf, new_conf, sizeof(qap_output_config_t));
+                        is_media_fmt_changed[index] = true;
+                    }
+                    if (buffer->buffer_parms.output_buf_params.output_config.channels != session_output_config.output_config[index].channels) {
+                        memcpy(cached_conf, new_conf, sizeof(qap_output_config_t));
+                        is_media_fmt_changed[index] = true;
+                    }
+                    if (buffer->buffer_parms.output_buf_params.output_config.bit_width != session_output_config.output_config[index].bit_width) {
+                        memcpy(cached_conf, new_conf, sizeof(qap_output_config_t));
+                        is_media_fmt_changed[index] = true;
+                    }
+                    if (buffer->buffer_parms.output_buf_params.output_config.is_interleaved != session_output_config.output_config[index].is_interleaved) {
+                        memcpy(cached_conf, new_conf, sizeof(qap_output_config_t));
+                        is_media_fmt_changed[index] = true;
+                    }
+                    for (i = 0; i < session_output_config.output_config[index].channels && i < AUDIO_CHANNEL_COUNT_MAX && i < QAP_AUDIO_MAX_CHANNELS; i++) {
+                        if (buffer->buffer_parms.output_buf_params.output_config.ch_map[i] != session_output_config.output_config[index].ch_map[i]) {
+                            memcpy(cached_conf, new_conf, sizeof(qap_output_config_t));
+                            is_media_fmt_changed[index] = true;
+                        }
+                    }
                 }
             }
             break;
@@ -1112,67 +1355,7 @@ void qap_wrapper_session_callback(qap_session_handle_t session_handle __unused, 
                             is_reopen_stream = false;
                         }
 
-                        if (hdmi_connected && qap_out_hdmi_handle == NULL) {
-                            struct audio_config config;
-                            audio_devices_t devices;
-
-                            config.offload_info.version = AUDIO_INFO_INITIALIZER.version;
-                            config.offload_info.size = AUDIO_INFO_INITIALIZER.size;
-                            config.sample_rate = config.offload_info.sample_rate = DEFAULT_SAMPLE_RATE;
-
-                            if (index > -1) {
-                                if (session_output_config.output_config[index].sample_rate > 0)
-                                    config.sample_rate = config.offload_info.sample_rate = session_output_config.output_config[index].sample_rate;
-                                config.offload_info.channel_mask = config.channel_mask =
-                                                   audio_channel_out_mask_from_count(session_output_config.output_config[index].channels);
-                                if (session_output_config.output_config[index].bit_width == 24) {
-                                    config.format = config.offload_info.format = AUDIO_FORMAT_PCM_24_BIT_PACKED;
-                                    config.offload_info.bit_width = 24;
-                                } else {
-                                    config.format = config.offload_info.format = AUDIO_FORMAT_PCM_16_BIT;
-                                    config.offload_info.bit_width = 16;
-                                }
-                                if (session_output_config.output_config[index].format == QAP_AUDIO_FORMAT_AC3)
-                                    config.format = config.offload_info.format = AUDIO_FORMAT_AC3;
-                                else if (session_output_config.output_config[index].format == QAP_AUDIO_FORMAT_EAC3)
-                                    config.format = config.offload_info.format = AUDIO_FORMAT_E_AC3;
-                                else if (session_output_config.output_config[index].format == QAP_AUDIO_FORMAT_DTS)
-                                    config.format = config.offload_info.format = AUDIO_FORMAT_DTS;
-                            }
-
-                            devices = AUDIO_DEVICE_OUT_HDMI;
-                            if (timestamp_mode)
-                                flags |= AUDIO_OUTPUT_FLAG_TIMESTAMP;
-                            if (encode) {
-                                ALOGV("%s:%d output format %x", __func__, __LINE__,
-                                        config.format, config.offload_info.format);
-                                ret = qahw_open_output_stream(qap_out_hal_handle, qap_stream_out_cmpr_handle, devices,
-                                                              flags, &config, &qap_out_hdmi_handle, "stream");
-                            } else {
-                                ret = qahw_open_output_stream(qap_out_hal_handle, qap_stream_out_hdmi_handle, devices,
-                                                              flags, &config, &qap_out_hdmi_handle, "stream");
-                                if (index > -1)
-                                    set_qahw_stream_channel_map(qap_out_hdmi_handle, &session_output_config.output_config[index]);
-                            }
-
-                            ret = qahw_out_set_volume(qap_out_hdmi_handle, vol_level, vol_level);
-                            if (ret < 0)
-                                ALOGE("unable to set volume");
-                        }
-                        if (qap_out_hdmi_handle) {
-                                bytes_written = qap_wrapper_write_to_hal(qap_out_hdmi_handle,
-                                                    buffer->common_params.data, buffer->common_params.size);
-                                if (bytes_written == -1) {
-                                    ALOGE("%s::%d write failed in hal", __func__, __LINE__);
-                                }
-                            if (kpi_mode && data_callback_count == 6)
-                                dsp_latency = qahw_out_get_latency(qap_out_hdmi_handle);
-                        }
-                        if (kpi_mode && data_callback_count == 1) {
-                             gettimeofday(&tcold_stop, NULL);
-                             cold_stop = (tcold_stop.tv_sec) * 1000 + (tcold_stop.tv_usec) / 1000;
-                             ALOGD("%s::%d Measuring Kpi cold stop %lf", __func__, __LINE__, cold_stop);
-                        }
+                        session_write_data_to_hal(AUDIO_DEVICE_OUT_HDMI, index, qap_out_hdmi_handle, buffer->common_params.data, buffer->common_params.size);
                     }
                     if (buffer->buffer_parms.output_buf_params.output_id == AUDIO_DEVICE_OUT_WIRED_HEADPHONE ||
                         buffer->buffer_parms.output_buf_params.output_id == AUDIO_DEVICE_OUT_LINE) {
@@ -1198,57 +1381,7 @@ void qap_wrapper_session_callback(qap_session_handle_t session_handle __unused, 
                             is_reopen_stream = false;
                         }
 
-                        if (qap_out_hp_handle == NULL) {
-                            struct audio_config config;
-                            audio_devices_t devices;
-                            config.offload_info.version = AUDIO_INFO_INITIALIZER.version;
-                            config.offload_info.size = AUDIO_INFO_INITIALIZER.size;
-                            config.sample_rate = config.offload_info.sample_rate = DEFAULT_SAMPLE_RATE;
-                            config.format = config.offload_info.format = AUDIO_FORMAT_PCM_16_BIT;
-                            config.offload_info.bit_width = 16;
-                            config.offload_info.channel_mask = config.channel_mask = AUDIO_CHANNEL_OUT_STEREO;
-
-                           if (index > -1) {
-                                config.sample_rate = config.offload_info.sample_rate = session_output_config.output_config[index].sample_rate;
-                                config.offload_info.channel_mask = config.channel_mask =
-                                                   audio_channel_out_mask_from_count(session_output_config.output_config[index].channels);
-                                if (session_output_config.output_config[index].bit_width == 24) {
-                                    config.format = config.offload_info.format = AUDIO_FORMAT_PCM_24_BIT_PACKED;
-                                    config.offload_info.bit_width = 24;
-                                }
-                            }
-
-                            devices = AUDIO_DEVICE_OUT_LINE;//ToDO - Need to change to AUDIO_DEVICE_OUT_WIRED_HEADPHONE
-
-                            if (timestamp_mode)
-                                flags |= AUDIO_OUTPUT_FLAG_TIMESTAMP;
-                            ret = qahw_open_output_stream(qap_out_hal_handle, qap_stream_out_hp_handle, devices,
-                                 flags, &config, &qap_out_hp_handle, "stream");
-
-                            if (ret) {
-                                ALOGE("%s:%d could not open output stream, error - %d", __func__, __LINE__, ret);
-                                return;
-                            }
-                            if (index > -1)
-                                set_qahw_stream_channel_map(qap_out_hp_handle, &session_output_config.output_config[index]);
-                            ret = qahw_out_set_volume(qap_out_hp_handle, vol_level, vol_level);
-                            if (ret < 0)
-                                 ALOGE("unable to set volume");
-                        }
-                        if (qap_out_hp_handle) {
-                                bytes_written = qap_wrapper_write_to_hal(qap_out_hp_handle,
-                                                    buffer->common_params.data, buffer->common_params.size);
-                                if (bytes_written == -1) {
-                                    ALOGE("%s::%d write failed in hal", __func__, __LINE__);
-                                }
-                            if (kpi_mode && data_callback_count == 6)
-                                dsp_latency = qahw_out_get_latency(qap_out_hp_handle);
-                        }
-                        if (kpi_mode && data_callback_count == 1) {
-                             gettimeofday(&tcold_stop, NULL);
-                             cold_stop = (tcold_stop.tv_sec) * 1000 + (tcold_stop.tv_usec) / 1000;
-                             ALOGD("%s::%d Measuring Kpi cold stop %lf", __func__, __LINE__, cold_stop);
-                        }
+                        session_write_data_to_hal(AUDIO_DEVICE_OUT_LINE, index, qap_out_hp_handle, buffer->common_params.data, buffer->common_params.size); //ToDO - Need to change to AUDIO_DEVICE_OUT_WIRED_HEADPHONE
                     }
                     if (buffer->buffer_parms.output_buf_params.output_id == AUDIO_DEVICE_OUT_SPEAKER) {
                         if (enable_dump && fp_output_writer_spk == NULL) {
@@ -1277,66 +1410,8 @@ void qap_wrapper_session_callback(qap_session_handle_t session_handle __unused, 
                             qap_out_spk_handle = NULL;
                             is_reopen_stream = false;
                         }
-                        if (qap_out_spk_handle == NULL) {
-                            struct audio_config config;
-                            audio_devices_t devices;
 
-                            config.offload_info.version = AUDIO_INFO_INITIALIZER.version;
-                            config.offload_info.size = AUDIO_INFO_INITIALIZER.size;
-                            config.sample_rate = config.offload_info.sample_rate = DEFAULT_SAMPLE_RATE;
-                            config.format = config.offload_info.format = AUDIO_FORMAT_PCM_16_BIT;
-                            config.offload_info.bit_width = 16;
-                            config.offload_info.channel_mask = config.channel_mask = AUDIO_CHANNEL_OUT_STEREO;
-
-                           if (index > -1) {
-                                 config.sample_rate = config.offload_info.sample_rate = session_output_config.output_config[index].sample_rate;
-                                 config.offload_info.channel_mask = config.channel_mask =
-                                 audio_channel_out_mask_from_count(session_output_config.output_config[index].channels);
-                                 if (session_output_config.output_config[index].bit_width == 24) {
-                                     config.format = config.offload_info.format = AUDIO_FORMAT_PCM_24_BIT_PACKED;
-                                     config.offload_info.bit_width = 24;
-                                 }
-                            }
-
-                            if (play_through_bt) {
-                                fprintf(stderr, "%s::%d: connecting BT\n", __func__, __LINE__);
-                                char param[100] = {0};
-                                snprintf(param, sizeof(param), "%s=%d", "connect", AUDIO_DEVICE_OUT_BLUETOOTH_A2DP);
-                                qahw_set_parameters(qap_out_hal_handle, param);
-                                devices = AUDIO_DEVICE_OUT_BLUETOOTH_A2DP;
-                            } else {
-                                devices = AUDIO_DEVICE_OUT_SPEAKER;
-                            }
-                            if (timestamp_mode)
-                                flags |= AUDIO_OUTPUT_FLAG_TIMESTAMP;
-                            ALOGD("%s::%d: open output for device %d", __func__, __LINE__, devices);
-                            ret = qahw_open_output_stream(qap_out_hal_handle, qap_stream_out_spk_handle, devices,
-                                 flags, &config, &qap_out_spk_handle, "stream");
-
-                            if (ret) {
-                                ALOGE("%s:%d could not open output stream, error - %d", __func__, __LINE__, ret);
-                                return;
-                            }
-                            if (index > -1)
-                                set_qahw_stream_channel_map(qap_out_spk_handle, &session_output_config.output_config[index]);
-                            ret = qahw_out_set_volume(qap_out_spk_handle, vol_level, vol_level);
-                            if (ret < 0)
-                                 ALOGE("unable to set volume");
-                        }
-                        if (qap_out_spk_handle) {
-                                bytes_written = qap_wrapper_write_to_hal(qap_out_spk_handle,
-                                                    buffer->common_params.data, buffer->common_params.size);
-                                if (bytes_written == -1) {
-                                    ALOGE("%s::%d write failed in hal", __func__, __LINE__);
-                                }
-                            if (kpi_mode && data_callback_count == 6)
-                                dsp_latency = qahw_out_get_latency(qap_out_spk_handle);
-                        }
-                        if (kpi_mode && data_callback_count == 1) {
-                             gettimeofday(&tcold_stop, NULL);
-                             cold_stop = (tcold_stop.tv_sec) * 1000 + (tcold_stop.tv_usec) / 1000;
-                             ALOGD("%s::%d Measuring Kpi cold stop %lf", __func__, __LINE__, cold_stop);
-                        }
+                        session_write_data_to_hal(AUDIO_DEVICE_OUT_SPEAKER, index, qap_out_spk_handle, buffer->common_params.data, buffer->common_params.size);
                     }
                 }
             }
@@ -1641,6 +1716,7 @@ int qap_wrapper_session_open(char *kv_pairs, void* stream_data, int num_of_strea
             play_through_bt = true;
         }
         update_session_outputs_config(render_format, stream->channels, out_bitwidth, out_sample_rate);
+        session_open_output_stream();
         ret = qap_session_cmd(qap_session_handle, QAP_SESSION_CMD_SET_OUTPUTS, sizeof(session_output_config), &session_output_config, NULL, NULL);
         if (ret != QAP_STATUS_OK) {
             fprintf(stderr, "Output config failed\n");
