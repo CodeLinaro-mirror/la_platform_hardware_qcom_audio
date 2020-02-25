@@ -47,6 +47,9 @@
 
 #ifdef AUDIO_EXTN_AUTO_HAL_ENABLED
 
+#define MIN_VOLUME_GAIN 0.0f
+#define MAX_VOLUME_GAIN 1.0f
+
 typedef struct auto_hal_module {
     struct audio_device *adev;
     card_status_t card_status;
@@ -274,11 +277,13 @@ int32_t audio_extn_auto_hal_open_output_stream(struct stream_out *out)
             ret = -EINVAL;
             goto error;
         }
+        out->volume_l = out->volume_r = MAX_VOLUME_GAIN;
         break;
     case CAR_AUDIO_STREAM_SYS_NOTIFICATION:
         /* sys notification bus stream shares pcm device with low-latency */
         out->usecase = USECASE_AUDIO_PLAYBACK_SYS_NOTIFICATION;
         out->config = pcm_config_low_latency;
+        out->volume_l = out->volume_r = MAX_VOLUME_GAIN;
         break;
     case CAR_AUDIO_STREAM_NAV_GUIDANCE:
         out->usecase = USECASE_AUDIO_PLAYBACK_NAV_GUIDANCE;
@@ -290,10 +295,12 @@ int32_t audio_extn_auto_hal_open_output_stream(struct stream_out *out)
             ret = -EINVAL;
             goto error;
         }
+        out->volume_l = out->volume_r = MAX_VOLUME_GAIN;
         break;
     case CAR_AUDIO_STREAM_PHONE:
         out->usecase = USECASE_AUDIO_PLAYBACK_PHONE;
         out->config = pcm_config_low_latency;
+        out->volume_l = out->volume_r = MAX_VOLUME_GAIN;
         break;
     default:
         ALOGE("%s: Car audio stream %x not supported", __func__,
@@ -381,9 +388,9 @@ int audio_extn_auto_hal_set_audio_port_config(struct audio_hw_device *dev,
                      * q13 = (10^(mdb/100/20))*(2^13)
                      */
                     if(config->gain.values[0] <= (MIN_VOLUME_VALUE_MB + STEP_VALUE_MB))
-                        volume = 0.0 ;
+                        volume = MIN_VOLUME_GAIN;
                     else
-                        volume = powf(10.0, ((float)config->gain.values[0] / 2000));
+                        volume = powf(10.0f, ((float)config->gain.values[0] / 2000));
                     ALOGV("%s: set volume to stream: %p", __func__,
                         &out_ctxt->output->stream);
                     /* set gain if output stream is active */
