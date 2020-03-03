@@ -30,6 +30,7 @@
 #include <signal.h>
 #include <cutils/str_parms.h>
 #include <tinyalsa/asoundlib.h>
+#include <stdbool.h>
 #include "qahw_api.h"
 #include "qahw_defs.h"
 #include "qahw_effect_api.h"
@@ -41,6 +42,74 @@ bool kpi_mode;
 bool enable_dump;
 float vol_level;
 uint8_t render_format;
+
+/* Audio formats */
+typedef enum {
+    AUDIO_QAP_FORMAT_PCM_16_BIT,
+    AUDIO_QAP_FORMAT_PCM_8_24_BIT,
+    AUDIO_QAP_FORMAT_PCM_24_BIT_PACKED,
+    AUDIO_QAP_FORMAT_PCM_32_BIT,
+    AUDIO_QAP_FORMAT_AC3,
+    AUDIO_QAP_FORMAT_AC4,
+    AUDIO_QAP_FORMAT_EAC3,
+    AUDIO_QAP_FORMAT_AAC,
+    AUDIO_QAP_FORMAT_AAC_ADTS,
+    AUDIO_QAP_FORMAT_MP2,
+    AUDIO_QAP_FORMAT_MP3,
+    AUDIO_QAP_FORMAT_FLAC,
+    AUDIO_QAP_FORMAT_ALAC,
+    AUDIO_QAP_FORMAT_APE,
+    AUDIO_QAP_FORMAT_DTS,
+    AUDIO_QAP_FORMAT_DTS_HD,
+} audio_qap_format_t;
+
+/* AAC profiles */
+typedef enum {
+    PROFILE_QAP_AAC_MAIN = 0,
+    PROFILE_QAP_AAC_LOW_COMPLEXITY,
+    PROFILE_QAP_AAC_SSR,
+} audio_qap_aac_profile_t;
+
+/* DTS profiles */
+typedef enum {
+    PROFILE_QAP_UNKNOWN = 0,
+    PROFILE_QAP_DTS_LEGACY,
+    PROFILE_QAP_DTS_ES_MATRIX,
+    PROFILE_QAP_DTS_ES_DISCRETE,
+    PROFILE_QAP_DTS_9624,
+    PROFILE_QAP_DTS_ES_8CH_DISCRETE,
+    PROFILE_QAP_DTS_HIRES,
+    PROFILE_QAP_DTS_MA,
+    PROFILE_QAP_DTS_LBR,
+    PROFILE_QAP_DTS_LOSSLESS,
+} audio_qap_dts_profile_t;
+
+static const char * const aac_profile_enum_to_str[] = {
+    [PROFILE_QAP_AAC_MAIN] = "AAC_MAIN",
+    [PROFILE_QAP_AAC_LOW_COMPLEXITY] = "AAC_LC",
+    [PROFILE_QAP_AAC_SSR] = "AAC_SSR",
+};
+
+static const char * const format_enum_to_string[] = {
+    [AUDIO_QAP_FORMAT_AC3] = "DD",
+    [AUDIO_QAP_FORMAT_EAC3] = "DDP",
+    [AUDIO_QAP_FORMAT_AAC] = "AAC",
+    [AUDIO_QAP_FORMAT_AAC_ADTS] = "AAC_ADTS",
+    [AUDIO_QAP_FORMAT_DTS_HD] = "DTS_HD",
+};
+
+static const char * const dts_profile_enum_to_str[] = {
+    [PROFILE_QAP_UNKNOWN] = "UNKNOWN",
+    [PROFILE_QAP_DTS_LEGACY] = "DTS_LEGACY",
+    [PROFILE_QAP_DTS_ES_MATRIX] = "DTS_ES_MATRIX",
+    [PROFILE_QAP_DTS_ES_DISCRETE] = "DTS_ES_DISCRETE",
+    [PROFILE_QAP_DTS_9624] = "DTS_9624",
+    [PROFILE_QAP_DTS_ES_8CH_DISCRETE] = "DTS_ES_8CH_DISCRETE",
+    [PROFILE_QAP_DTS_HIRES] = "DTS_HIRES",
+    [PROFILE_QAP_DTS_MA] = "DTS_MA",
+    [PROFILE_QAP_DTS_LBR] = "DTS_LBR",
+    [PROFILE_QAP_DTS_LOSSLESS] = "DTS_LOSSLESS",
+};
 
 
 enum {
