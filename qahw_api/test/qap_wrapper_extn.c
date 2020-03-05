@@ -52,6 +52,8 @@
 #define QAC_LIB_M8   "/system/lib/libdts_m8_wrapper.so"
 #endif
 
+#define MS12_SYS_ERR -ENOSYS
+#define MS12_BUFF_FULL -EAGAIN
 #define SESSION_BLURAY   1
 #define SESSION_BROADCAST 2
 #define MAX_OUTPUT_CHANNELS 8
@@ -117,6 +119,7 @@ pthread_mutex_t main2_eos_lock;
 bool main_eos_received = false;
 bool main2_eos_received = false;
 bool sec_eos_received = false;
+bool error_event = false;
 
 dlb_ms12_session_param_t dlb_param;
 dlb_ms12_session_param_t dlb_param_hp;
@@ -898,6 +901,8 @@ void qap_wrapper_session_callback(qap_session_handle_t session_handle __unused, 
                 close_output_streams();
             break;
         case QAP_CALLBACK_EVENT_ERROR:
+            error_event = true;
+            stop_playback = true;
             break;
         case QAP_CALLBACK_EVENT_SUCCESS:
             break;
@@ -1779,6 +1784,12 @@ void *qap_wrapper_start_stream (void* stream_data)
 
         buffer->common_params.offset = 0;
         buffer->common_params.size = bytes_read;
+
+        if ((bytes_consumed == MS12_SYS_ERR || error_event == true) && stop_playback) {
+            goto exit;
+            break;
+        }
+
         //memcpy(buffer->common_params.data, data_buf, bytes_read);
         if (bytes_read <= 0 || stop_playback) {
             buffer->buffer_parms.input_buf_params.flags = QAP_BUFFER_EOS;
@@ -1815,7 +1826,7 @@ void *qap_wrapper_start_stream (void* stream_data)
         }
         do {
             bytes_consumed = qap_module_process(qap_module_handle, buffer);
-            if (bytes_consumed < 0) {
+            if (bytes_consumed == MS12_BUFF_FULL) {
                 pthread_mutex_lock(&stream_info->input_buffer_available_lock);
 
                 while (buffer->common_params.size > stream_info->input_buffer_available_size) {
@@ -1834,6 +1845,11 @@ void *qap_wrapper_start_stream (void* stream_data)
                     gettimeofday(&tcont_ts1, NULL);
                     data_input_st_arr[time_index] = (tcont_ts1.tv_sec) * 1000 + (tcont_ts1.tv_usec) / 1000;
                 }
+            } else if (bytes_consumed < 0) {
+                ALOGE("%s %d: %s Buffer input Failed Err %d",__FUNCTION__,__LINE__,
+                                                              stream_info->filename,
+                                                              bytes_consumed);
+                stop_playback = true;
             } else if (bytes_consumed > 0) {
                 buffer->common_params.data += bytes_consumed;
                 buffer->common_params.size -= bytes_consumed;
