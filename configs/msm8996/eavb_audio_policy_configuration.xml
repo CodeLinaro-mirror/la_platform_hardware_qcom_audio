@@ -36,25 +36,25 @@
     <mixPorts>
         <mixPort name="eavb output" role="source" flags="AUDIO_OUTPUT_FLAG_PRIMARY">
             <profile name="" format="AUDIO_FORMAT_PCM_16_BIT"
-                     samplingRates="48000"
+                     samplingRates="16000,48000"
                      channelMasks="AUDIO_CHANNEL_OUT_STEREO"/>
         </mixPort>
         <mixPort name="eavb input" role="sink">
             <profile name="" format="AUDIO_FORMAT_PCM_16_BIT"
-                     samplingRates="48000"
-                     channelMasks="AUDIO_CHANNEL_IN_STEREO"/>
+                     samplingRates="48000,24000"
+                     channelMasks="AUDIO_CHANNEL_IN_MONO,AUDIO_CHANNEL_IN_STEREO"/>
         </mixPort>
     </mixPorts>
     <devicePorts>
         <devicePort tagName="eAVB Out" type="AUDIO_DEVICE_OUT_EAVB" role="sink" address="skt_name=eavb_out_1">
             <profile name="" format="AUDIO_FORMAT_PCM_16_BIT"
-                     samplingRates="48000"
+                     samplingRates="16000,48000"
                      channelMasks="AUDIO_CHANNEL_OUT_STEREO"/>
         </devicePort>
         <devicePort tagName="eAVB In" type="AUDIO_DEVICE_IN_EAVB" role="source" address="skt_name=eavb_in_1">
             <profile name="" format="AUDIO_FORMAT_PCM_16_BIT"
-                     samplingRates="48000"
-                     channelMasks="AUDIO_CHANNEL_IN_STEREO"/>
+                     samplingRates="48000,24000"
+                     channelMasks="AUDIO_CHANNEL_IN_MONO,AUDIO_CHANNEL_IN_STEREO"/>
         </devicePort>
     </devicePorts>
     <routes>
