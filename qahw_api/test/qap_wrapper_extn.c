@@ -799,9 +799,91 @@ static void close_output_streams()
     primary_stream_close = true;
 }
 
+static const char *audio_channel_to_str(qap_pcm_chmap channel)
+{
+    switch (channel) {
+    case QAP_AUDIO_PCM_CHANNEL_L: return "L";
+    case QAP_AUDIO_PCM_CHANNEL_R: return "R";
+    case QAP_AUDIO_PCM_CHANNEL_C: return "C";
+    case QAP_AUDIO_PCM_CHANNEL_LS: return "LS";
+    case QAP_AUDIO_PCM_CHANNEL_RS: return "RS";
+    case QAP_AUDIO_PCM_CHANNEL_LFE: return "LFE";
+    case QAP_AUDIO_PCM_CHANNEL_CS: return "CS";
+    case QAP_AUDIO_PCM_CHANNEL_LB: return "LB";
+    case QAP_AUDIO_PCM_CHANNEL_RB: return "RB";
+    case QAP_AUDIO_PCM_CHANNEL_TS: return "TS";
+    case QAP_AUDIO_PCM_CHANNEL_CVH: return "CVH";
+    case QAP_AUDIO_PCM_CHANNEL_MS: return "MS";
+    case QAP_AUDIO_PCM_CHANNEL_FLC: return "FLC";
+    case QAP_AUDIO_PCM_CHANNEL_FRC: return "FRC";
+    case QAP_AUDIO_PCM_CHANNEL_RLC: return "RLC";
+    case QAP_AUDIO_PCM_CHANNEL_RRC: return "RRC";
+    case QAP_AUDIO_PCM_CHANNEL_LFE2: return "LFE2";
+    case QAP_AUDIO_PCM_CHANNEL_SL: return "SL";
+    case QAP_AUDIO_PCM_CHANNEL_SR: return "SR";
+    case QAP_AUDIO_PCM_CHANNEL_TFL: return "TFL";
+    case QAP_AUDIO_PCM_CHANNEL_TFR: return "TFR";
+    case QAP_AUDIO_PCM_CHANNEL_TC: return "TC";
+    case QAP_AUDIO_PCM_CHANNEL_TBL: return "TBL";
+    case QAP_AUDIO_PCM_CHANNEL_TBR: return "TBR";
+    case QAP_AUDIO_PCM_CHANNEL_TSL: return "TSL";
+    case QAP_AUDIO_PCM_CHANNEL_TSR: return "TSR";
+    case QAP_AUDIO_PCM_CHANNEL_TBC: return "TBC";
+    case QAP_AUDIO_PCM_CHANNEL_BFC: return "BFC";
+    case QAP_AUDIO_PCM_CHANNEL_BFL: return "BFL";
+    case QAP_AUDIO_PCM_CHANNEL_BFR: return "BFR";
+    case QAP_AUDIO_PCM_CHANNEL_LW: return "LW";
+    case QAP_AUDIO_PCM_CHANNEL_RW: return "RW";
+    case QAP_AUDIO_PCM_CHANNEL_LSD: return "LSD";
+    case QAP_AUDIO_PCM_CHANNEL_RSD: return "RSD";
+    }
+    return "??";
+}
+
+static const char *audio_chmap_to_str(int channels, uint8_t *map)
+{
+    static char buf[256];
+    int len = sizeof (buf);
+    int offset = 0;
+    int i = 0;
+    int r = 0;
+
+    for (i = 0; i < channels && offset < len; i++) {
+            r = snprintf(buf + offset, len - offset, "%s%s",
+                             audio_channel_to_str(map[i]),
+                             i == channels  - 1 ? "" : ",");
+            if (r > 0)
+                    offset += r;
+    }
+
+    buf[offset] = '\0';
+
+    return buf;
+}
+
+static const char *audio_dts_profile_to_str(uint32_t dts_profile)
+{
+    const char *ret = dts_profile_enum_to_str[dts_profile];
+    return ret;
+}
+
+static const char *audio_aac_profile_to_str(uint32_t aac_profile)
+{
+    const char *ret = aac_profile_enum_to_str[aac_profile];
+    return ret;
+}
+
+static const char *audio_format_to_str(uint32_t format)
+{
+
+      const char *ret = format_enum_to_string[format];
+      return ret;
+}
+
 void qap_wrapper_module_callback(qap_module_handle_t module_handle, void* priv_data, qap_module_callback_event_t event_id, int size, void *data)
 {
     stream_config *p_stream_param = (stream_config*)priv_data;
+
     if(p_stream_param == NULL) {
         ALOGE("%s %d, callback handle is null.",__func__,__LINE__);
     }
@@ -837,6 +919,19 @@ void qap_wrapper_module_callback(qap_module_handle_t module_handle, void* priv_d
                   p_stream_format->sample_rate,
                   p_stream_format->channels,
                   p_stream_format->bit_width);
+
+            fprintf(stdout, "format: %s \n", audio_format_to_str(p_stream_format->format));
+
+            if (p_stream_format->format == QAP_AUDIO_FORMAT_AAC || p_stream_format->format == QAP_AUDIO_FORMAT_AAC_ADTS) {
+               fprintf(stdout, "Profile: %s \n", audio_aac_profile_to_str(p_stream_format->profile));
+            }
+
+            if (p_stream_format->format == QAP_AUDIO_FORMAT_DTS_HD) {
+               fprintf(stdout, "Profile: %s \n", audio_dts_profile_to_str(p_stream_format->profile));
+            }
+
+            fprintf(stdout, "channel map:[%s] \n", audio_chmap_to_str(p_stream_format->channels, p_stream_format->ch_map));
+
             break;
         }
         default:
