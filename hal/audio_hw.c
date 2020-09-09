@@ -4706,19 +4706,20 @@ static int out_set_parameters(struct audio_stream *stream, const char *kvpairs)
                 if (!voice_is_call_state_active(adev)) {
                     if (adev->mode == AUDIO_MODE_IN_CALL) {
                         adev->current_call_output = out;
-                        if (audio_is_usb_out_device(out->devices & AUDIO_DEVICE_OUT_ALL_USB)) {
-                            service_interval = audio_extn_usb_find_service_interval(true, true /*playback*/);
-                            audio_extn_usb_set_service_interval(true /*playback*/,
-                                                                service_interval,
-                                                                &reconfig);
-                            ALOGD("%s, svc_int(%ld),reconfig(%d)",__func__,service_interval, reconfig);
-                         }
-                         ret = voice_start_call(adev);
+                        ret = voice_start_call(adev);
                     }
                 } else {
                     adev->current_call_output = out;
                     voice_update_devices_for_all_voice_usecases(adev);
                 }
+            }
+
+            if (audio_is_usb_out_device(out->devices & AUDIO_DEVICE_OUT_ALL_USB)) {
+                 service_interval = audio_extn_usb_find_service_interval(false, true /*playback*/);
+                 audio_extn_usb_set_service_interval(true /*playback*/,
+                                                     service_interval,
+                                                     &reconfig);
+                 ALOGD("%s, svc_int(%ld),reconfig(%d)",__func__,service_interval, reconfig);
             }
 
             if (!out->standby) {
