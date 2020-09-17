@@ -3494,7 +3494,7 @@ static int stop_output_stream(struct stream_out *out)
     }
 
     /* Must be called after removing the usecase from list */
-    if (out->devices & AUDIO_DEVICE_OUT_AUX_DIGITAL)
+    if ((out->devices & AUDIO_DEVICE_OUT_AUX_DIGITAL) && adev->keep_alive_enable)
         audio_extn_keep_alive_start(KEEP_ALIVE_OUT_HDMI);
 
     if (out->ip_hdlr_handle) {
@@ -3678,9 +3678,9 @@ int start_output_stream(struct stream_out *out)
                                  adev->perf_lock_opts_size);
 
     if (out->devices & AUDIO_DEVICE_OUT_AUX_DIGITAL) {
-        audio_extn_keep_alive_stop(KEEP_ALIVE_OUT_HDMI);
         if (audio_extn_passthru_is_enabled() &&
             audio_extn_passthru_is_passthrough_stream(out)) {
+            audio_extn_keep_alive_stop(KEEP_ALIVE_OUT_HDMI);
             audio_extn_passthru_on_start(out);
         }
     }
@@ -5965,7 +5965,12 @@ static int out_get_presentation_position(const struct audio_stream_out *stream,
                 int64_t signed_frames = out->written - kernel_buffer_size + avail;
                 // This adjustment accounts for buffering after app processor.
                 // It is based on estimated DSP latency per use case, rather than exact.
-                signed_frames -=
+                if(adev->keep_alive_enable)
+                    signed_frames -=
+                        ((platform_render_latency(out->usecase)+ SILENCE_BUF_LATENCY) *
+                                                        out->sample_rate / 1000000LL);
+                else
+                    signed_frames -=
                         (platform_render_latency(out->usecase) * out->sample_rate / 1000000LL);
 
                 // Adjustment accounts for A2dp encoder latency with non offload usecases
