@@ -2362,7 +2362,7 @@ int main(int argc, char* argv[]) {
                 fprintf(log_file, "Invalid input pcm buffer size %d\n", atoi(optarg));
                 fprintf(stderr, "Invalid input pcm buffer size %d\n", atoi(optarg));
             } else {
-                stream_param[i].pcm_input_buf_size = (uint32_t)atoi(optarg);
+                stream_param[i].input_buf_size = (uint32_t)atoi(optarg);
             }
             break;
         case 'h':
