@@ -4168,9 +4168,11 @@ int platform_send_audio_calibration(void *platform, struct audio_usecase *usecas
     if (voice_is_in_call(my_data->adev))
         is_incall_rec_usecase = voice_is_in_call_rec_stream(usecase->stream.in);
 
-    if ((usecase->stream.out != NULL) &&
-        (audio_extn_auto_hal_is_bus_device_usecase(usecase->stream.out->usecase)))
-        is_bus_dev_usecase = true;
+    if (usecase->type == PCM_PLAYBACK || usecase->type == PCM_HFP_CALL) {
+        if ((usecase->stream.out != NULL) &&
+            (audio_extn_auto_hal_is_bus_device_usecase(usecase->stream.out->usecase)))
+            is_bus_dev_usecase = true;
+    }
 
     if (usecase->type == PCM_PLAYBACK)
         snd_device = usecase->out_snd_device;
