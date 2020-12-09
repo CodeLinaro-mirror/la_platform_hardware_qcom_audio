@@ -422,6 +422,11 @@ const char * const use_case_table[AUDIO_USECASE_MAX] = {
     [USECASE_AUDIO_PLAYBACK_REAR_SEAT] = "rear-seat-playback",
     [USECASE_AUDIO_FM_TUNER_EXT] = "fm-tuner-ext",
     [USECASE_ICC_CALL] = "icc-call",
+
+    [USECASE_AUDIO_RECORD_BUS] = "audio-record",
+    [USECASE_AUDIO_RECORD_BUS_FRONT_PASSENGER] = "front-passenger-record",
+    [USECASE_AUDIO_RECORD_BUS_REAR_SEAT] = "rear-seat-record",
+    [USECASE_AUDIO_PLAYBACK_SYNTHESIZER] = "synth-loopback",
 };
 
 static const audio_usecase_t offload_usecases[] = {
@@ -957,6 +962,8 @@ static void check_and_configure_headphone(struct audio_device *adev,
                     disable_audio_route(adev, usecase);
                     disable_snd_device(adev, usecase->out_snd_device);
                     usecase->stream.out->sample_rate = DEFAULT_OUTPUT_SAMPLING_RATE;
+                    platform_check_and_set_codec_backend_cfg(adev, usecase,
+                                                            usecase->out_snd_device);
                     enable_audio_route(adev, usecase);
                     enable_snd_device(adev, usecase->out_snd_device);
                 }
@@ -1279,10 +1286,15 @@ int enable_audio_route(struct audio_device *adev,
     if (audio_extn_is_maxx_audio_enabled())
         audio_extn_ma_set_device(usecase);
     audio_extn_utils_send_audio_calibration(adev, usecase);
-    if ((usecase->type == PCM_PLAYBACK) && is_offload_usecase(usecase->id)) {
-        out = usecase->stream.out;
-        if (out && out->compr)
+    if ((usecase->type == PCM_PLAYBACK) &&
+            ((out = usecase->stream.out) != NULL)) {
+        if (!is_offload_usecase(out->usecase)) {
+            pthread_mutex_lock(&out->latch_lock);
+            out->muted = false;
+            pthread_mutex_unlock(&out->latch_lock);
+        } else if (out->compr) {
             audio_extn_utils_compress_set_clk_rec_mode(usecase);
+        }
     }
 
     if (usecase->type == PCM_CAPTURE) {
@@ -2719,7 +2731,8 @@ int select_devices(struct audio_device *adev, audio_usecase_t uc_id)
     if ((usecase->type == VOICE_CALL) ||
         (usecase->type == VOIP_CALL)  ||
         (usecase->type == PCM_HFP_CALL)||
-        (usecase->type == ICC_CALL)) {
+        (usecase->type == ICC_CALL) ||
+        (usecase->type == SYNTH_LOOPBACK)) {
         if(usecase->stream.out == NULL) {
             ALOGE("%s: stream.out is NULL", __func__);
             return -EINVAL;
@@ -2883,11 +2896,14 @@ int select_devices(struct audio_device *adev, audio_usecase_t uc_id)
                     if (!priority_in)
                         priority_in = usecase->stream.in;
                 }
-
-                in_snd_device = platform_get_input_snd_device(adev->platform,
-                                                              priority_in,
-                                                              &out_devices,
-                                                              usecase->type);
+                if (compare_device_type(&usecase->device_list, AUDIO_DEVICE_IN_BUS)){
+                    in_snd_device = audio_extn_auto_hal_get_snd_device_for_car_audio_stream(priority_in->car_audio_stream);
+                }
+                else
+                    in_snd_device = platform_get_input_snd_device(adev->platform,
+                                                                  priority_in,
+                                                                  &out_devices,
+                                                                  usecase->type);
             }
         }
     }
@@ -9494,6 +9510,20 @@ static int adev_open_input_stream(struct audio_hw_device *dev,
 
     in->usecase = USECASE_AUDIO_RECORD;
 
+    /* validate bus device address */
+    if (compare_device_type(&in->device_list, AUDIO_DEVICE_IN_BUS)) {
+        /* extract car audio stream index */
+        in->car_audio_stream =
+            audio_extn_auto_hal_get_car_audio_stream_from_address(address);
+        if (in->car_audio_stream < 0) {
+            ALOGE("%s: invalid car audio stream %x",
+                __func__, in->car_audio_stream);
+            ret = -EINVAL;
+            goto err_open;
+        }
+        ALOGV("%s: car_audio_stream 0x%x", __func__, in->car_audio_stream);
+    }
+
     if (in->source == AUDIO_SOURCE_FM_TUNER) {
         if(!get_usecase_from_list(adev, USECASE_AUDIO_RECORD_FM_VIRTUAL))
             in->usecase = USECASE_AUDIO_RECORD_FM_VIRTUAL;
@@ -9696,6 +9726,14 @@ static int adev_open_input_stream(struct audio_hw_device *dev,
                     }
                 }
             }
+        }
+        if (compare_device_type(&in->device_list, AUDIO_DEVICE_IN_BUS)) {
+           ret = audio_extn_auto_hal_open_input_stream(in);
+           if (ret) {
+               ALOGE("%s: Failed to open input stream for bus device", __func__);
+               ret = -EINVAL;
+               goto err_open;
+           }
         }
     }
     if (audio_extn_ssr_get_stream() != in)

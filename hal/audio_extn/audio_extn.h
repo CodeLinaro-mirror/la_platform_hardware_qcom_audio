@@ -1350,6 +1350,16 @@ int audio_extn_utils_get_license_params(const struct audio_device *adev,  struct
 #ifndef AUDIO_OUTPUT_FLAG_REAR_SEAT
 #define AUDIO_OUTPUT_FLAG_REAR_SEAT 0x2000000
 #endif
+#ifndef AUDIO_INPUT_FLAG_PRIMARY
+#define AUDIO_INPUT_FLAG_PRIMARY 0x100000
+#endif
+#ifndef AUDIO_INPUT_FLAG_FRONT_PASSENGER
+#define AUDIO_INPUT_FLAG_FRONT_PASSENGER 0x200000
+#endif
+#ifndef AUDIO_INPUT_FLAG_REAR_SEAT
+#define AUDIO_INPUT_FLAG_REAR_SEAT 0x400000
+#endif
+
 int audio_extn_auto_hal_init(struct audio_device *adev);
 void audio_extn_auto_hal_deinit(void);
 int audio_extn_auto_hal_create_audio_patch(struct audio_hw_device *dev,
@@ -1362,6 +1372,7 @@ int audio_extn_auto_hal_release_audio_patch(struct audio_hw_device *dev,
                                 audio_patch_handle_t handle);
 int audio_extn_auto_hal_get_car_audio_stream_from_address(const char *address);
 int audio_extn_auto_hal_open_output_stream(struct stream_out *out);
+int audio_extn_auto_hal_open_input_stream(struct stream_in *in);
 bool audio_extn_auto_hal_is_bus_device_usecase(audio_usecase_t uc_id);
 int audio_extn_auto_hal_get_audio_port(struct audio_hw_device *dev,
                                 struct audio_port *config);
@@ -1377,6 +1388,7 @@ snd_device_t audio_extn_auto_hal_get_input_snd_device(struct audio_device *adev,
                                 audio_usecase_t uc_id);
 snd_device_t audio_extn_auto_hal_get_output_snd_device(struct audio_device *adev,
                                 audio_usecase_t uc_id);
+snd_device_t audio_extn_auto_hal_get_snd_device_for_car_audio_stream(int car_audio_stream);
 
 typedef streams_input_ctxt_t* (*fp_in_get_stream_t)(struct audio_device*, audio_io_handle_t);
 typedef streams_output_ctxt_t* (*fp_out_get_stream_t)(struct audio_device*, audio_io_handle_t);
@@ -1402,6 +1414,20 @@ typedef struct auto_hal_init_config {
     fp_generate_patch_handle_t                   fp_generate_patch_handle;
 } auto_hal_init_config_t;
 // END: AUTO_HAL FEATURE ==================================================
+
+// START: SYNTH_HAL FEATURE ==================================================
+bool audio_extn_synth_is_active(struct audio_device *adev);
+void audio_extn_synth_set_parameters(struct audio_device *adev,
+                                struct str_parms *parms);
+
+typedef struct synth_init_config {
+    fp_get_usecase_from_list_t                   fp_get_usecase_from_list;
+    fp_platform_get_pcm_device_id_t              fp_platform_get_pcm_device_id;
+    fp_disable_audio_route_t                     fp_disable_audio_route;
+    fp_disable_snd_device_t                      fp_disable_snd_device;
+    fp_select_devices_t                          fp_select_devices;
+} synth_init_config_t;
+// END: SYNTH_HAL FEATURE ==================================================
 
 bool audio_extn_edid_is_supported_sr(edid_audio_info* info, int sr);
 bool audio_extn_edid_is_supported_bps(edid_audio_info* info, int bps);
