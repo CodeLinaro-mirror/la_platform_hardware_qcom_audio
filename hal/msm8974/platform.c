@@ -228,6 +228,13 @@
 
 #define GET_IN_DEVICE_INDEX(SND_DEVICE) ((SND_DEVICE) - (SND_DEVICE_IN_BEGIN))
 
+#define is_native_samplerate_supported_in_snd_dev(x) \
+    (is_usb_in_snd_dev(x) ||                                             \
+    ((x) == SND_DEVICE_IN_SPDIF) ||                                      \
+    ((x) == SND_DEVICE_IN_HDMI_MIC) ||                                   \
+    ((x) == SND_DEVICE_IN_HDMI_MIC_DSD) ||                               \
+    ((x) == SND_DEVICE_IN_HDMI_ARC))
+
 #define is_usb_in_snd_dev(x) \
     (((x) == SND_DEVICE_IN_USB_HEADSET_MIC) ||                           \
     ((x) == SND_DEVICE_IN_USB_HEADSET_MIC_AEC) ||                        \
@@ -11445,7 +11452,7 @@ static bool platform_check_capture_codec_backend_cfg(struct audio_device* adev,
             }
         }
         if ((sample_rate % INPUT_SAMPLING_RATE_11025 == 0) &&
-            (!is_usb_in_snd_dev(snd_device))) {
+            (!is_native_samplerate_supported_in_snd_dev(snd_device))) {
             ALOGV("%s:txbecf: afe: set sample rate to default Sample Rate(48k)",__func__);
             sample_rate = CODEC_BACKEND_DEFAULT_SAMPLE_RATE;
         }
