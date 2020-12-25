@@ -90,6 +90,13 @@ AUDIO_FEATURE_ENABLED_EXT_HW_PLUGIN := true
 AUDIO_FEATURE_ENABLED_AUDIO_CONTROL_HAL := true
 ifneq ($(ENABLE_HYP),true)
 AUDIO_FEATURE_ENABLED_AUTO_AUDIOD := true
+
+ifeq ($(TARGET_PRODUCT),msmnile_au)
+AUDIO_FEATURE_ENABLED_DAEMON_SUPPORT := true
+else
+AUDIO_FEATURE_ENABLED_DAEMON_SUPPORT := false
+endif
+
 endif
 AUDIO_FEATURE_ENABLED_FM_TUNER_EXT := true
 AUDIO_FEATURE_ENABLED_ICC := true
@@ -381,7 +388,8 @@ vendor.audio.feature.vbat.enable=false \
 vendor.audio.feature.wsa.enable=false \
 vendor.audio.feature.audiozoom.enable=false \
 vendor.audio.feature.snd_mon.enable=false \
-vendor.audio.feature.auto_hal.enable=true
+vendor.audio.feature.auto_hal.enable=true \
+vendor.audio.feature.synth.enable=true
 else
 # Non-Generic ODM varient related
 PRODUCT_ODM_PROPERTIES += \
@@ -427,7 +435,8 @@ vendor.audio.feature.vbat.enable=true \
 vendor.audio.feature.wsa.enable=false \
 vendor.audio.feature.audiozoom.enable=false \
 vendor.audio.feature.snd_mon.enable=false \
-vendor.audio.feature.auto_hal.enable=true
+vendor.audio.feature.auto_hal.enable=true \
+vendor.audio.feature.synth.enable=true
 endif
 
 # for HIDL related packages
@@ -470,8 +479,8 @@ PRODUCT_PACKAGES_DEBUG += \
 
 # for HIDL related audiocontrol packages
 PRODUCT_PACKAGES += \
-    vendor.qti.hardware.automotive.audiocontrol@1.0-service \
-    android.hardware.automotive.audiocontrol@1.0
+    android.hardware.automotive.audiocontrol@2.0-service \
+    android.hardware.automotive.audiocontrol@2.0
 
 ifeq ($(ENABLE_HYP),true)
 PRODUCT_PROPERTY_OVERRIDES += \
