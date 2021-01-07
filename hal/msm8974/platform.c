@@ -7174,11 +7174,8 @@ snd_device_t platform_get_input_snd_device(void *platform,
                 goto exit;
             }
         }
-        if (out_device & AUDIO_DEVICE_OUT_EARPIECE ||
-            out_device & AUDIO_DEVICE_OUT_WIRED_HEADPHONE ||
-                out_device & AUDIO_DEVICE_OUT_LINE) {
-            if (out_device & AUDIO_DEVICE_OUT_EARPIECE &&
-                audio_extn_should_use_handset_anc(channel_count)) {
+        if (out_device & AUDIO_DEVICE_OUT_EARPIECE) {
+            if (audio_extn_should_use_handset_anc(channel_count)) {
                 if ((my_data->fluence_type != FLUENCE_NONE) &&
                     (my_data->source_mic_type & SOURCE_DUAL_MIC)) {
                     snd_device = SND_DEVICE_IN_VOICE_FLUENCE_DMIC_AANC;
@@ -7190,16 +7187,9 @@ snd_device_t platform_get_input_snd_device(void *platform,
             } else if (my_data->fluence_type == FLUENCE_NONE ||
                 (my_data->fluence_in_voice_call == false &&
                  my_data->fluence_in_hfp_call == false)) {
-                 if (out_device & AUDIO_DEVICE_OUT_LINE &&
-                     audio_extn_hfp_is_active(adev)) {
-                     snd_device = my_data->fluence_sb_enabled ?
-                                      SND_DEVICE_IN_VOICE_SPEAKER_MIC_SB
-                                      : SND_DEVICE_IN_VOICE_SPEAKER_MIC_HFP;
-                 } else {
-                     snd_device = my_data->fluence_sb_enabled ?
-                                     SND_DEVICE_IN_HANDSET_MIC_SB
-                                     : SND_DEVICE_IN_HANDSET_MIC;
-                 }
+                 snd_device = my_data->fluence_sb_enabled ?
+                                 SND_DEVICE_IN_HANDSET_MIC_SB
+                                 : SND_DEVICE_IN_HANDSET_MIC;
                  if (audio_extn_hfp_is_active(adev))
                      platform_set_echo_reference(adev, true, out_device);
             } else {
