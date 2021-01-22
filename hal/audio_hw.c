@@ -2278,15 +2278,6 @@ int select_devices(struct audio_device *adev, audio_usecase_t uc_id)
 
         usecase->devices = usecase->stream.out->devices;
 
-        if (((in_snd_device == SND_DEVICE_IN_VOICE_DMIC)||(in_snd_device == SND_DEVICE_IN_HANDSET_DMIC)||
-           (in_snd_device == SND_DEVICE_IN_SPEAKER_DMIC)||(in_snd_device == SND_DEVICE_IN_HANDSET_DMIC_AEC)
-           ||(in_snd_device == SND_DEVICE_IN_SPEAKER_DMIC)||(in_snd_device == SND_DEVICE_IN_SPEAKER_DMIC)||
-           (in_snd_device == SND_DEVICE_IN_SPEAKER_DMIC)||(in_snd_device == SND_DEVICE_IN_SPEAKER_DMIC)||
-           (in_snd_device == SND_DEVICE_IN_SPEAKER_DMIC)) && (usecase->stream.out->ecall != 1)) {
-            ALOGE("Fluence cannot be enabled in non-ecall scenario");
-            return -EINVAL;
-	    }
-
         ALOGE("just before ecall flag check in select_devices");
         if (usecase->stream.out->ecall == 1)
         {
@@ -2309,14 +2300,34 @@ int select_devices(struct audio_device *adev, audio_usecase_t uc_id)
                 in_snd_device = SND_DEVICE_IN_ECALL_HEADSET_MIC;
                 break;
             case SND_DEVICE_IN_VOICE_DMIC:
+                in_snd_device = SND_DEVICE_IN_ECALL_VOICE_DMIC;
+                break;
             case SND_DEVICE_IN_HANDSET_DMIC:
-            case SND_DEVICE_IN_SPEAKER_DMIC:
+                in_snd_device = SND_DEVICE_IN_ECALL_HANDSET_DMIC;
+                break;
             case SND_DEVICE_IN_HANDSET_DMIC_AEC:
+                in_snd_device = SND_DEVICE_IN_ECALL_HANDSET_DMIC_AEC;
+                break;
             case SND_DEVICE_IN_HANDSET_DMIC_NS:
+                in_snd_device = SND_DEVICE_IN_ECALL_HANDSET_DMIC_NS;
+                break;
             case SND_DEVICE_IN_HANDSET_DMIC_AEC_NS:
+                in_snd_device = SND_DEVICE_IN_ECALL_HANDSET_DMIC_AEC_NS;
+                break;
+            case SND_DEVICE_IN_SPEAKER_DMIC:
+                in_snd_device = SND_DEVICE_IN_ECALL_SPEAKER_DMIC;
+                break;
             case SND_DEVICE_IN_SPEAKER_DMIC_AEC:
+                in_snd_device = SND_DEVICE_IN_ECALL_SPEAKER_DMIC_AEC;
+                break;
             case SND_DEVICE_IN_SPEAKER_DMIC_NS:
+                in_snd_device = SND_DEVICE_IN_ECALL_SPEAKER_DMIC_NS;
+                break;
             case SND_DEVICE_IN_SPEAKER_DMIC_AEC_NS:
+                in_snd_device = SND_DEVICE_IN_ECALL_SPEAKER_DMIC_AEC_NS;
+                break;
+            case SND_DEVICE_IN_VOICE_SPEAKER_DMIC:
+                in_snd_device = SND_DEVICE_IN_ECALL_SPEAKER_DMIC;
                 break;
             default:
                 ALOGE(" default ecall in snd case");
