@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017,2021, The Linux Foundation. All rights reserved.
  * Not a Contribution.
  *
  * Copyright (C) 2011 The Android Open Source Project
@@ -130,6 +130,11 @@ enum qahw_effect_command_e {
    QAHW_EFFECT_CMD_SET_AUDIO_SOURCE,     // set the audio source (see audio.h, audio_source_t)
    QAHW_EFFECT_CMD_OFFLOAD,              // set if effect thread is an offload one,
                                          // send the ioHandle of the effect thread
+   QAHW_EFFECT_CMD_OFFLOAD_V2,           // Support for tunnel and non tunnel offload effect threads
+                                         // send io handle if tunnel effect
+                                         // send asm session id, topo id and app type if non tunnel
+   QAHW_EFFECT_CMD_SET_PERSIST,          // set if effect param calibration needs to be persist.
+                                         // By default calibration is persist
    QAHW_EFFECT_CMD_FIRST_PROPRIETARY = 0x10000 // first proprietary command code
 };
 
@@ -595,6 +600,17 @@ typedef struct qahw_effect_offload_param_s {
     int ioHandle;           // io handle of the playback thread the effect is attached to
 } qahw_effect_offload_param_t;
 
+// structure used by QAHW_EFFECT_CMD_OFFLOAD_V2 command
+typedef struct qahw_effect_offload_v2_param_s {
+    bool isOffload;         // true if the playback thread the effect is attached to is offloaded
+    bool isNonTunnel;       // true if offloaded in non tunnel mode. Need to send non tunnel params if true
+    int ioHandle;           // io handle of the playback thread the effect is attached to
+
+    // Non tunnel params
+    int sessionId;         // asm session id the effect is attached to
+    uint32_t topoId;       // asm topology id
+    uint32_t appType;      // asm app type
+} qahw_effect_offload_v2_param_t;
 
 /////////////////////////////////////////////////
 //      Effect library interface
