@@ -214,6 +214,13 @@
 
 #define GET_IN_DEVICE_INDEX(SND_DEVICE) ((SND_DEVICE) - (SND_DEVICE_IN_BEGIN))
 
+#define is_native_samplerate_supported_in_snd_dev(x) \
+    (is_usb_in_snd_dev(x) ||                                             \
+    ((x) == SND_DEVICE_IN_SPDIF) ||                                      \
+    ((x) == SND_DEVICE_IN_HDMI_MIC) ||                                   \
+    ((x) == SND_DEVICE_IN_HDMI_MIC_DSD) ||                               \
+    ((x) == SND_DEVICE_IN_HDMI_ARC))
+
 #define is_usb_in_snd_dev(x) \
     (((x) == SND_DEVICE_IN_USB_HEADSET_MIC) ||                           \
     ((x) == SND_DEVICE_IN_USB_HEADSET_MIC_AEC) ||                        \
@@ -3271,56 +3278,6 @@ void *platform_init(struct audio_device *adev)
     }
 
     update_codec_type_and_interface(my_data, snd_card_name);
-    if (platform_is_i2s_ext_modem(snd_card_name, my_data) &&
-        !is_auto_snd_card(snd_card_name)) {
-        query_platform(snd_card_name, mixer_xml_path);
-        ALOGD("%s: Call %s", __func__, mixer_xml_path);
-        adev->audio_route = audio_route_init(adev->snd_card, mixer_xml_path);
-    } else {
-        /* Get the codec internal name from the sound card name
-         * and form the mixer paths file name dynamically. This
-         * is generic way of picking any codec name based mixer
-         * files in future with no code change. This code
-         * assumes mixer files are formed with format as
-         * mixer_paths_internalcodecname.xml
-
-         * If this dynamically read mixer files fails to open then it
-         * falls back to default mixer file i.e mixer_paths.xml. This is
-         * done to preserve backward compatibility but not mandatory as
-         * long as the mixer files are named as per above assumption.
-        */
-        snprintf(mixer_xml_file, sizeof(mixer_xml_file), "%s_%s_%s.xml",
-                         MIXER_XML_BASE_STRING, snd_split_handle->snd_card,
-                         snd_split_handle->form_factor);
-        if (!audio_extn_utils_resolve_config_file(mixer_xml_file)) {
-            memset(mixer_xml_file, 0, sizeof(mixer_xml_file));
-            snprintf(mixer_xml_file, sizeof(mixer_xml_file), "%s_%s.xml",
-                         MIXER_XML_BASE_STRING, snd_split_handle->snd_card);
-
-            if (!audio_extn_utils_resolve_config_file(mixer_xml_file)) {
-                memset(mixer_xml_file, 0, sizeof(mixer_xml_file));
-                strlcpy(mixer_xml_file, MIXER_XML_DEFAULT_PATH, MIXER_PATH_MAX_LENGTH);
-                audio_extn_utils_resolve_config_file(mixer_xml_file);
-            }
-        }
-
-        ALOGD("%s: Loading mixer file: %s", __func__, mixer_xml_file);
-        if (audio_extn_read_xml(adev, adev->snd_card, mixer_xml_file,
-                                MIXER_XML_PATH_AUXPCM) == -ENOSYS) {
-            adev->audio_route = audio_route_init(adev->snd_card, mixer_xml_file);
-            update_codec_type_and_interface(my_data, snd_card_name);
-        }
-    }
-    if (!adev->audio_route) {
-        ALOGE("%s: Failed to init audio route controls, aborting.",
-               __func__);
-        if (my_data)
-            free(my_data);
-        if (snd_card_name)
-            free(snd_card_name);
-        audio_extn_utils_close_snd_mixer(adev->mixer);
-        return NULL;
-    }
 
     adev->dp_allowed_for_voice =
         property_get_bool("vendor.audio.enable.dp.for.voice", false);
@@ -7139,11 +7096,11 @@ snd_device_t platform_get_input_snd_device(void *platform,
     struct audio_device *adev = my_data->adev;
     audio_mode_t    mode   = adev->mode;
     snd_device_t snd_device = SND_DEVICE_NONE;
-    int format = (adev->active_input == NULL) ? AUDIO_FORMAT_DEFAULT : adev->active_input->format;
 
     if (in == NULL)
         in = adev_get_active_input(adev);
 
+    int format = (in == NULL) ? AUDIO_FORMAT_DEFAULT : in->format;
     audio_source_t source = (in == NULL) ? AUDIO_SOURCE_DEFAULT : in->source;
     audio_devices_t in_device =
         ((in == NULL) ? AUDIO_DEVICE_NONE : in->device) & ~AUDIO_DEVICE_BIT_IN;
@@ -7154,8 +7111,8 @@ snd_device_t platform_get_input_snd_device(void *platform,
     struct audio_usecase *usecase = NULL;
     audio_usecase_t uc_id = (in == NULL) ? USECASE_AUDIO_RECORD : in->usecase;
 
-    ALOGV("%s: enter: out_device(%#x) in_device(%#x) channel_count (%d) channel_mask (0x%x)",
-          __func__, out_device, in_device, channel_count, channel_mask);
+    ALOGV("%s: enter: out_device(%#x) in_device(%#x) channel_count (%d) channel_mask (0x%x) format(%d)",
+          __func__, out_device, in_device, channel_count, channel_mask, format);
     if (my_data->external_mic) {
         if ((out_device != AUDIO_DEVICE_NONE) && ((mode == AUDIO_MODE_IN_CALL) ||
             voice_check_voicecall_usecases_active(adev) ||
@@ -7237,7 +7194,7 @@ snd_device_t platform_get_input_snd_device(void *platform,
                      audio_extn_hfp_is_active(adev)) {
                      snd_device = my_data->fluence_sb_enabled ?
                                       SND_DEVICE_IN_VOICE_SPEAKER_MIC_SB
-                                      : SND_DEVICE_IN_VOICE_SPEAKER_MIC;
+                                      : SND_DEVICE_IN_VOICE_SPEAKER_MIC_HFP;
                  } else {
                      snd_device = my_data->fluence_sb_enabled ?
                                      SND_DEVICE_IN_HANDSET_MIC_SB
@@ -10393,7 +10350,7 @@ static bool platform_check_capture_codec_backend_cfg(struct audio_device* adev,
             }
         }
         if ((sample_rate % INPUT_SAMPLING_RATE_11025 == 0) &&
-            (!is_usb_in_snd_dev(snd_device))) {
+            (!is_native_samplerate_supported_in_snd_dev(snd_device))) {
             ALOGV("%s:txbecf: afe: set sample rate to default Sample Rate(48k)",__func__);
             sample_rate = CODEC_BACKEND_DEFAULT_SAMPLE_RATE;
         }

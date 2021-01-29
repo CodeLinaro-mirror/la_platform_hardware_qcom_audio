@@ -793,6 +793,7 @@ bool audio_extn_is_hdmi_passthru_enabled();
 // START: HFP FEATURE ==================================================
 bool audio_extn_hfp_is_active(struct audio_device *adev);
 audio_usecase_t audio_extn_hfp_get_usecase();
+int audio_extn_hfp_get_pcm_device_id();
 int audio_extn_hfp_set_mic_mute(struct audio_device *adev, bool state);
 void audio_extn_hfp_set_parameters(struct audio_device *adev,
                                            struct str_parms *parms);
