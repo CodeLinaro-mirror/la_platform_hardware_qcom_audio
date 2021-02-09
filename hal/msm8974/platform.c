@@ -7096,11 +7096,11 @@ snd_device_t platform_get_input_snd_device(void *platform,
     struct audio_device *adev = my_data->adev;
     audio_mode_t    mode   = adev->mode;
     snd_device_t snd_device = SND_DEVICE_NONE;
-    int format = (adev->active_input == NULL) ? AUDIO_FORMAT_DEFAULT : adev->active_input->format;
 
     if (in == NULL)
         in = adev_get_active_input(adev);
 
+    int format = (in == NULL) ? AUDIO_FORMAT_DEFAULT : in->format;
     audio_source_t source = (in == NULL) ? AUDIO_SOURCE_DEFAULT : in->source;
     audio_devices_t in_device =
         ((in == NULL) ? AUDIO_DEVICE_NONE : in->device) & ~AUDIO_DEVICE_BIT_IN;
@@ -7111,8 +7111,8 @@ snd_device_t platform_get_input_snd_device(void *platform,
     struct audio_usecase *usecase = NULL;
     audio_usecase_t uc_id = (in == NULL) ? USECASE_AUDIO_RECORD : in->usecase;
 
-    ALOGV("%s: enter: out_device(%#x) in_device(%#x) channel_count (%d) channel_mask (0x%x)",
-          __func__, out_device, in_device, channel_count, channel_mask);
+    ALOGV("%s: enter: out_device(%#x) in_device(%#x) channel_count (%d) channel_mask (0x%x) format(%d)",
+          __func__, out_device, in_device, channel_count, channel_mask, format);
     if (my_data->external_mic) {
         if ((out_device != AUDIO_DEVICE_NONE) && ((mode == AUDIO_MODE_IN_CALL) ||
             voice_check_voicecall_usecases_active(adev) ||
@@ -7194,7 +7194,7 @@ snd_device_t platform_get_input_snd_device(void *platform,
                      audio_extn_hfp_is_active(adev)) {
                      snd_device = my_data->fluence_sb_enabled ?
                                       SND_DEVICE_IN_VOICE_SPEAKER_MIC_SB
-                                      : SND_DEVICE_IN_VOICE_SPEAKER_MIC;
+                                      : SND_DEVICE_IN_VOICE_SPEAKER_MIC_HFP;
                  } else {
                      snd_device = my_data->fluence_sb_enabled ?
                                      SND_DEVICE_IN_HANDSET_MIC_SB

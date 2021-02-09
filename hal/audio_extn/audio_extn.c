@@ -5034,6 +5034,9 @@ static hfp_is_active_t hfp_is_active;
 typedef audio_usecase_t (*hfp_get_usecase_t)();
 static hfp_get_usecase_t hfp_get_usecase;
 
+typedef int (*hfp_get_pcm_device_id_t)();
+static hfp_get_pcm_device_id_t hfp_get_pcm_device_id;
+
 typedef int (*hfp_set_mic_mute_t)(struct audio_device *dev, bool state);
 static hfp_set_mic_mute_t hfp_set_mic_mute;
 
@@ -5064,6 +5067,9 @@ int hfp_feature_init(bool is_feature_enabled)
             !(hfp_get_usecase =
                  (hfp_get_usecase_t)dlsym(
                             hfp_lib_handle, "hfp_get_usecase")) ||
+            !(hfp_get_pcm_device_id =
+                 (hfp_get_pcm_device_id_t)dlsym(
+                            hfp_lib_handle, "hfp_get_pcm_device_id")) ||
             !(hfp_set_mic_mute =
                  (hfp_set_mic_mute_t)dlsym(
                             hfp_lib_handle, "hfp_set_mic_mute")) ||
@@ -5110,6 +5116,7 @@ feature_disabled:
     hfp_init = NULL;
     hfp_is_active = NULL;
     hfp_get_usecase = NULL;
+    hfp_get_pcm_device_id = NULL;
     hfp_set_mic_mute = NULL;
     hfp_set_mic_mute2 = NULL;
     hfp_set_parameters = NULL;
@@ -5128,6 +5135,12 @@ audio_usecase_t audio_extn_hfp_get_usecase()
 {
     return ((hfp_get_usecase) ?
                     hfp_get_usecase(): -1);
+}
+
+int audio_extn_hfp_get_pcm_device_id()
+{
+    return ((hfp_get_pcm_device_id) ?
+                    hfp_get_pcm_device_id(): -1);
 }
 
 int audio_extn_hfp_set_mic_mute(struct audio_device *adev, bool state)

@@ -3137,7 +3137,7 @@ int start_input_stream(struct stream_in *in)
     if ((in->format == AUDIO_FORMAT_DSD) && (in->dsd_config_updated == false)) {
 
         const char *hw_interface_name = platform_get_snd_device_backend_interface(
-                                            platform_get_input_snd_device(adev->platform, NULL, in->device));
+                                            platform_get_input_snd_device(adev->platform, in, in->device));
 
         if ((hw_interface_name != NULL) && (strstr(hw_interface_name, "MI2S"))) {
             in->bit_width = 32;
