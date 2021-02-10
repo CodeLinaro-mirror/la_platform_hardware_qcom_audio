@@ -1177,16 +1177,6 @@ int enable_audio_route(struct audio_device *adev,
             audio_extn_utils_compress_set_clk_rec_mode(usecase);
     }
 
-    if (usecase->type == PCM_CAPTURE) {
-        in = usecase->stream.in;
-        if (in && is_loopback_input_device(in->device)) {
-            ALOGD("%s: set custom mtmx params v1", __func__);
-            audio_extn_set_custom_mtmx_params_v1(adev, usecase, true);
-        }
-    } else {
-        audio_extn_set_custom_mtmx_params_v2(adev, usecase, true);
-    }
-
     // we shouldn't truncate mixer_path
     ALOGW_IF(strlcpy(mixer_path, use_case_table[usecase->id], sizeof(mixer_path))
             >= sizeof(mixer_path), "%s: truncation on mixer path", __func__);
