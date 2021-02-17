@@ -189,6 +189,9 @@
 #define AUDIO_PARAMETER_KEY_CAPTURE_DEVICE_CHMAP "capture_device_chmap"
 #define AUDIO_PARAMETER_KEY_HFP_ZONE "hfp_zone"
 
+/* Query acdb initialization status */
+#define  AUDIO_PARAMETER_KEY_ACDB_INITIALIZED  "acdb_initialized"
+
 #define EVENT_EXTERNAL_SPK_1 "qc_ext_spk_1"
 #define EVENT_EXTERNAL_SPK_2 "qc_ext_spk_2"
 #define EVENT_EXTERNAL_MIC   "qc_ext_mic"
@@ -7641,6 +7644,14 @@ void platform_get_parameters(void *platform,
     if (ret >= 0) {
         snprintf(value, sizeof(value), "%d", platform_get_hfp_zone(my_data));
         str_parms_add_str(reply, AUDIO_PARAMETER_KEY_HFP_ZONE, value);
+    }
+
+    /* acdb initialization status */
+    ret = str_parms_get_str(query, AUDIO_PARAMETER_KEY_ACDB_INITIALIZED,
+                            value, sizeof(value));
+    if (ret >= 0) {
+        str_parms_add_str(reply, AUDIO_PARAMETER_KEY_ACDB_INITIALIZED,
+                          my_data->is_acdb_initialized? "true": "false");
     }
 
     /* Handle audio calibration keys */

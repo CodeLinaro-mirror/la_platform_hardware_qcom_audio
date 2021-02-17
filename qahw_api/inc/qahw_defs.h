@@ -62,6 +62,9 @@ __BEGIN_DECLS
 /* Screen state */
 #define QAHW_PARAMETER_KEY_SCREEN_STATE "screen_state"
 
+/* Query acdb initialization status */
+#define  QAHW_PARAMETER_KEY_ACDB_INITIALIZED  "acdb_initialized"
+
 /* Bluetooth SCO wideband */
 #define QAHW_PARAMETER_KEY_BT_SCO_WB "bt_wbs"
 
