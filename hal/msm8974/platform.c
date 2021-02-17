@@ -8389,6 +8389,7 @@ static void platform_set_fluence_params(void *platform, struct str_parms *parms,
 {
     struct platform_data *my_data = (struct platform_data *)platform;
     int err = str_parms_get_str(parms, AUDIO_PARAMETER_KEY_FLUENCE_TYPE, value, len);
+    char prop_value[PROPERTY_VALUE_MAX];
 
     if (err >= 0) {
         if (!strncmp("fluence", value, sizeof("fluence")))
@@ -8398,6 +8399,12 @@ static void platform_set_fluence_params(void *platform, struct str_parms *parms,
         else if (!strncmp("none", value, sizeof("none")))
                  my_data->fluence_type = FLUENCE_NONE;
 
+        if (my_data->fluence_type != FLUENCE_NONE) {
+            property_get("persist.vendor.audio.fluence.audiorec",prop_value,"");
+            if (!strncmp("true", prop_value, sizeof("true"))) {
+                my_data->fluence_in_audio_rec = true;
+            }
+        }
         str_parms_del(parms, AUDIO_PARAMETER_KEY_FLUENCE_TYPE);
     }
 
@@ -8639,6 +8646,8 @@ int platform_set_parameters(void *platform, struct str_parms *parms)
     if (err >= 0) {
         str_parms_del(parms, PLATFORM_MAX_MIC_COUNT);
         my_data->max_mic_count = atoi(value);
+        my_data->source_mic_type = 0;
+        get_source_mic_type(my_data);
         ALOGV("%s: max_mic_count %d", __func__, my_data->max_mic_count);
     }
 
