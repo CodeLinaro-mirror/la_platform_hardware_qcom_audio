@@ -1,5 +1,5 @@
 /*
-* Copyright (c) 2016-2017, 2018-2020, The Linux Foundation. All rights reserved.
+* Copyright (c) 2016-2017, 2018-2021, The Linux Foundation. All rights reserved.
 *
 * Redistribution and use in source and binary forms, with or without
 * modification, are permitted provided that the following conditions are
@@ -76,6 +76,21 @@ static void lock_input_stream(struct stream_in *in)
     pthread_mutex_unlock(&in->pre_lock);
 }
 
+int qahwi_out_get_latency(struct audio_stream_out *stream) {
+    int latency = 0;
+    struct stream_out *out = (struct stream_out *)stream;
+
+    if (out->standby && (out->flags & AUDIO_OUTPUT_FLAG_TIMESTAMP))
+        qahwi_out_write_v2(stream, NULL, 0, NULL, 0);
+
+    if (stream->get_latency)
+        latency = stream->get_latency(stream);
+    else
+        ALOGW("%s:: not supported", __func__);
+
+    ALOGD("%s:: latency %d", __func__, latency);
+    return latency;
+}
 /* API to send playback stream specific config parameters */
 int qahwi_out_set_param_data(struct audio_stream_out *stream,
                              audio_extn_param_id param_id,
