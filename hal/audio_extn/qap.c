@@ -1237,6 +1237,9 @@ static int qap_stream_start_l(struct stream_out *out)
     } else
         ERROR_MSG("QAP stream not yet opened, drop this cmd");
 
+    /* apply default volume at start of the qap stream */
+    qap_ms12_volume_easing_cmd(out, 1.0, 1.0, 0);
+
     DEBUG_MSG("exit");
     return ret;
 
