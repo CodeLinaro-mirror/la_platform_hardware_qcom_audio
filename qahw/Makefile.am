@@ -1,7 +1,9 @@
 AM_CFLAGS = -I $(top_srcdir)/inc
 
 h_sources = inc/qahw.h \
-            inc/qahw_effect_api.h
+            inc/qahw_effect_api.h \
+            inc/qahw_post_proc.h \
+            inc/qahw_post_proc_defs.h
 
 qahw_include_HEADERS = $(h_sources)
 qahw_includedir = $(includedir)/mm-audio/qahw/inc
@@ -11,7 +13,8 @@ qahw_api_includedir = $(includedir)/mm-audio/qahw_api/inc
 
 lib_LTLIBRARIES = libqahwwrapper.la
 libqahwwrapper_la_SOURCES = src/qahw.c \
-                     src/qahw_effect.c
+                     src/qahw_effect.c \
+                     src/qahw_post_proc.c
 
 if SVA_AUDIO_CONCURRENCY
 AM_CFLAGS += -DSVA_AUDIO_CONC

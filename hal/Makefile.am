@@ -171,6 +171,11 @@ AM_CFLAGS += -DAUDIO_GENERIC_EFFECT_FRAMEWORK_ENABLED
 c_sources += audio_extn/gef.c
 endif
 
+if ADSP_PP
+AM_CFLAGS += -DAUDIO_ADSP_PP_ENABLED
+c_sources += audio_extn/adsp_post_proc_extn.c
+endif
+
 if APTX_DECODER
 AM_CFLAGS += -DAPTX_DECODER_ENABLED
 endif

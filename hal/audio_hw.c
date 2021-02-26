@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2020, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2021, The Linux Foundation. All rights reserved.
  * Not a Contribution.
  *
  * Copyright (C) 2013 The Android Open Source Project
@@ -1175,16 +1175,6 @@ int enable_audio_route(struct audio_device *adev,
         out = usecase->stream.out;
         if (out && out->compr)
             audio_extn_utils_compress_set_clk_rec_mode(usecase);
-    }
-
-    if (usecase->type == PCM_CAPTURE) {
-        in = usecase->stream.in;
-        if (in && is_loopback_input_device(in->device)) {
-            ALOGD("%s: set custom mtmx params v1", __func__);
-            audio_extn_set_custom_mtmx_params_v1(adev, usecase, true);
-        }
-    } else {
-        audio_extn_set_custom_mtmx_params_v2(adev, usecase, true);
     }
 
     // we shouldn't truncate mixer_path
@@ -9931,6 +9921,7 @@ static int adev_close(hw_device_t *device)
             audio_extn_qaf_deinit();
         audio_route_free(adev->audio_route);
         audio_extn_gef_deinit(adev);
+        audio_extn_adsp_post_proc_deinit();
         free(adev->snd_dev_ref_cnt);
         platform_deinit(adev->platform);
         for (i = 0; i < ARRAY_SIZE(adev->use_case_table); ++i) {
@@ -10280,6 +10271,7 @@ static int adev_open(const hw_module_t *module, const char *name,
     voice_extn_init(adev);
     audio_extn_listen_init(adev, adev->snd_card);
     audio_extn_gef_init(adev);
+    audio_extn_adsp_post_proc_init(adev);
     audio_extn_hw_loopback_init(adev);
     audio_extn_afe_loopback_init(adev);
     audio_extn_ffv_init(adev);

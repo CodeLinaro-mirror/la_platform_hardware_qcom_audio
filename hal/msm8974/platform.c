@@ -1,6 +1,6 @@
 
 /*
- * Copyright (c) 2013-2020, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2021, The Linux Foundation. All rights reserved.
  * Not a Contribution.
  *
  * Copyright (C) 2013 The Android Open Source Project
@@ -385,6 +385,7 @@ struct platform_data {
     acdb_send_audio_cal_v3_t   acdb_send_audio_cal_v3;
     acdb_send_audio_cal_v4_t   acdb_send_audio_cal_v4;
     acdb_send_audio_cal_v5_t   acdb_send_audio_cal_v5;
+    acdb_loader_send_asm_cal_t acdb_loader_send_asm_cal;
     acdb_set_audio_cal_t       acdb_set_audio_cal;
     acdb_get_audio_cal_t       acdb_get_audio_cal;
     acdb_send_voice_cal_t      acdb_send_voice_cal;
@@ -3627,6 +3628,12 @@ void *platform_init(struct audio_device *adev)
             ALOGE("%s: Could not find the symbol acdb_send_audio_cal_v5 from %s",
                   __func__, LIB_ACDB_LOADER);
 
+        my_data->acdb_loader_send_asm_cal = (acdb_loader_send_asm_cal_t)dlsym(my_data->acdb_handle,
+                                                    "acdb_loader_send_asm_cal");
+        if (!my_data->acdb_loader_send_asm_cal)
+            ALOGE("%s: Could not find the symbol acdb_loader_send_asm_cal from %s",
+                  __func__, LIB_ACDB_LOADER);
+
         my_data->acdb_set_audio_cal = (acdb_set_audio_cal_t)dlsym(my_data->acdb_handle,
                                                     "acdb_loader_set_audio_cal_v2");
         if (!my_data->acdb_set_audio_cal)
@@ -5664,6 +5671,17 @@ int platform_send_audio_calibration(void *platform, struct audio_usecase *usecas
     return 0;
 }
 
+int platform_send_non_tunnel_asm_calibration(void *platform, int app_type)
+{
+    ALOGV("%s: Enter", __func__);
+    struct platform_data *my_data = (struct platform_data *)platform;
+
+    if (my_data->acdb_loader_send_asm_cal)
+        my_data->acdb_loader_send_asm_cal(ACDB_DEV_TYPE_OUT, app_type);
+
+    return 0;
+}
+
 int platform_switch_voice_call_device_pre(void *platform)
 {
     struct platform_data *my_data = (struct platform_data *)platform;
@@ -7174,11 +7192,8 @@ snd_device_t platform_get_input_snd_device(void *platform,
                 goto exit;
             }
         }
-        if (out_device & AUDIO_DEVICE_OUT_EARPIECE ||
-            out_device & AUDIO_DEVICE_OUT_WIRED_HEADPHONE ||
-                out_device & AUDIO_DEVICE_OUT_LINE) {
-            if (out_device & AUDIO_DEVICE_OUT_EARPIECE &&
-                audio_extn_should_use_handset_anc(channel_count)) {
+        if (out_device & AUDIO_DEVICE_OUT_EARPIECE) {
+            if (audio_extn_should_use_handset_anc(channel_count)) {
                 if ((my_data->fluence_type != FLUENCE_NONE) &&
                     (my_data->source_mic_type & SOURCE_DUAL_MIC)) {
                     snd_device = SND_DEVICE_IN_VOICE_FLUENCE_DMIC_AANC;
@@ -7190,16 +7205,9 @@ snd_device_t platform_get_input_snd_device(void *platform,
             } else if (my_data->fluence_type == FLUENCE_NONE ||
                 (my_data->fluence_in_voice_call == false &&
                  my_data->fluence_in_hfp_call == false)) {
-                 if (out_device & AUDIO_DEVICE_OUT_LINE &&
-                     audio_extn_hfp_is_active(adev)) {
-                     snd_device = my_data->fluence_sb_enabled ?
-                                      SND_DEVICE_IN_VOICE_SPEAKER_MIC_SB
-                                      : SND_DEVICE_IN_VOICE_SPEAKER_MIC_HFP;
-                 } else {
-                     snd_device = my_data->fluence_sb_enabled ?
-                                     SND_DEVICE_IN_HANDSET_MIC_SB
-                                     : SND_DEVICE_IN_HANDSET_MIC;
-                 }
+                 snd_device = my_data->fluence_sb_enabled ?
+                                 SND_DEVICE_IN_HANDSET_MIC_SB
+                                 : SND_DEVICE_IN_HANDSET_MIC;
                  if (audio_extn_hfp_is_active(adev))
                      platform_set_echo_reference(adev, true, out_device);
             } else {

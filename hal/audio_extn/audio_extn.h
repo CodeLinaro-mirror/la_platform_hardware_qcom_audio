@@ -1264,6 +1264,18 @@ int audio_extn_gef_retrieve_audio_cal(void* adev, int acdb_dev_id, int acdb_devi
 
 #endif /* AUDIO_GENERIC_EFFECT_FRAMEWORK_ENABLED */
 
+#ifndef AUDIO_ADSP_PP_ENABLED
+
+#define audio_extn_adsp_post_proc_init(adev) (0)
+#define audio_extn_adsp_post_proc_deinit() (0)
+
+#else
+
+void audio_extn_adsp_post_proc_init(struct audio_device *adev);
+void audio_extn_adsp_post_proc_deinit();
+
+#endif /* AUDIO_ADSP_PP_ENABLED */
+
 #ifdef COMPRESS_INPUT_ENABLED
 // START: COMPRESS_INPUT_ENABLED ===============================
 bool audio_extn_cin_applicable_stream(struct stream_in *in);
