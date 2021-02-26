@@ -2767,6 +2767,24 @@ int select_devices(struct audio_device *adev, audio_usecase_t uc_id)
                 in_snd_device = platform_get_input_snd_device(adev->platform,
                                                               priority_in,
                                                               out_device);
+                /*
+                 * if current input different from priority input check if
+                 * current input snd device and priority input snd device
+                 * match. Only in such case priority input snd device takes
+                 * priority. Else restore it to snd device of current input.
+                 */
+                if (priority_in != usecase->stream.in) {
+                    snd_device_t tmp_in_snd_device = SND_DEVICE_NONE;
+                    tmp_in_snd_device = platform_get_input_snd_device(adev->platform,
+                                                              usecase->stream.in,
+                                                              out_device);
+
+                    if (!platform_check_backends_match(in_snd_device, tmp_in_snd_device)) {
+                        ALOGD("%s: in_snd_device %d, tmp_in_snd_device %d", __func__,
+                               in_snd_device, tmp_in_snd_device);
+                        in_snd_device = tmp_in_snd_device;
+                    }
+                }
             }
         }
     }
