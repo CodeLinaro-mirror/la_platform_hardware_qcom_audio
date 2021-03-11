@@ -793,6 +793,7 @@ bool audio_extn_is_hdmi_passthru_enabled();
 // START: HFP FEATURE ==================================================
 bool audio_extn_hfp_is_active(struct audio_device *adev);
 audio_usecase_t audio_extn_hfp_get_usecase();
+int audio_extn_hfp_get_pcm_device_id();
 int audio_extn_hfp_set_mic_mute(struct audio_device *adev, bool state);
 void audio_extn_hfp_set_parameters(struct audio_device *adev,
                                            struct str_parms *parms);
@@ -1262,6 +1263,18 @@ int audio_extn_gef_retrieve_audio_cal(void* adev, int acdb_dev_id, int acdb_devi
 #endif
 
 #endif /* AUDIO_GENERIC_EFFECT_FRAMEWORK_ENABLED */
+
+#ifndef AUDIO_ADSP_PP_ENABLED
+
+#define audio_extn_adsp_post_proc_init(adev) (0)
+#define audio_extn_adsp_post_proc_deinit() (0)
+
+#else
+
+void audio_extn_adsp_post_proc_init(struct audio_device *adev);
+void audio_extn_adsp_post_proc_deinit();
+
+#endif /* AUDIO_ADSP_PP_ENABLED */
 
 #ifdef COMPRESS_INPUT_ENABLED
 // START: COMPRESS_INPUT_ENABLED ===============================

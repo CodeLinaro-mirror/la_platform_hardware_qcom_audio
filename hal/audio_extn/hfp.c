@@ -699,6 +699,20 @@ audio_usecase_t hfp_get_usecase()
     }
 }
 
+int hfp_get_pcm_device_id()
+{
+    switch (current_hfp_num) {
+    case SIG_HFP:
+        return hfpmod_sig.hfp_pcm_dev_id;
+    case PRI_HFP:
+        return hfpmod_pri.hfp_pcm_dev_id;
+    case SEC_HFP:
+        return hfpmod_sec.hfp_pcm_dev_id;
+    default:
+        return -EINVAL;
+    }
+}
+
 void hfp_set_parameters(struct audio_device *adev, struct str_parms *parms)
 {
     int ret;

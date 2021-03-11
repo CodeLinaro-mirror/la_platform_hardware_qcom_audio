@@ -1,5 +1,5 @@
 /*
-* Copyright (c) 2016-2020, The Linux Foundation. All rights reserved.
+* Copyright (c) 2016-2021, The Linux Foundation. All rights reserved.
 *
 * Redistribution and use in source and binary forms, with or without
 * modification, are permitted provided that the following conditions are
@@ -90,6 +90,8 @@ typedef int (*qahwi_in_set_param_data_t)(struct audio_stream_in *in,
                                       qahw_param_id param_id,
                                       qahw_param_payload *payload);
 
+typedef uint64_t (*qahwi_out_get_latency_t)(audio_stream_out_t *out);
+
 typedef struct {
     audio_hw_device_t *audio_device;
     char module_name[MAX_MODULE_NAME_LENGTH];
@@ -119,6 +121,7 @@ typedef struct {
     qahwi_out_set_param_data_t qahwi_out_get_param_data;
     qahwi_out_get_param_data_t qahwi_out_set_param_data;
     qahwi_out_write_v2_t qahwi_out_write_v2;
+    qahwi_out_get_latency_t qahwi_out_get_latency;
 } qahw_stream_out_t;
 
 typedef struct {
@@ -513,7 +516,9 @@ uint32_t qahw_out_get_latency_l(const qahw_stream_handle_t *out_handle)
 
     pthread_mutex_lock(&qahw_stream_out->lock);
     out = qahw_stream_out->stream;
-    if (out->get_latency) {
+    if (qahw_stream_out->qahwi_out_get_latency) {
+        latency = qahw_stream_out->qahwi_out_get_latency(out);
+    } else if (out->get_latency) {
         latency = out->get_latency(out);
     } else {
         ALOGW("%s not supported", __func__);
@@ -1772,6 +1777,13 @@ int qahw_open_output_stream_l(qahw_module_handle_t *hw_module,
         if ((error = dlerror()) != NULL) {
             ALOGI("%s: dlsym error %s for qahwi_out_write_v2", __func__, error);
             qahw_stream_out->qahwi_out_write_v2 = NULL;
+        }
+
+        dlerror();
+        qahw_stream_out->qahwi_out_get_latency = (qahwi_out_get_latency_t)dlsym(qahw_module->module->dso, "qahwi_out_get_latency");
+        if ((error = dlerror()) != NULL) {
+            ALOGI("%s: dlsym error %s for qahwi_out_get_latency", __func__, error);
+            qahw_stream_out->qahwi_out_get_latency = NULL;
         }
     }
 

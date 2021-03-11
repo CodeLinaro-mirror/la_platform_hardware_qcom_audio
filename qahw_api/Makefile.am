@@ -1,4 +1,5 @@
 h_sources = inc/qahw_api.h \
+            inc/qahw_post_proc_api.h \
             inc/qahw_effect_audiosphere.h \
             inc/qahw_effect_bassboost.h \
             inc/qahw_effect_environmentalreverb.h \
@@ -16,8 +17,11 @@ AM_CPPFLAGS += -D__unused=__attribute__\(\(__unused__\)\)
 library_include_HEADERS = $(h_sources)
 library_includedir = $(includedir)/mm-audio/qahw_api/inc
 
-lib_LTLIBRARIES     = libqahw.la
-libqahw_la_SOURCES   = src/qahw_api.cpp
+cpp_sources = src/qahw_api.cpp \
+              src/qahw_post_proc_api.cpp
+
+lib_LTLIBRARIES      = libqahw.la
+libqahw_la_SOURCES   = $(cpp_sources)
 libqahw_la_LIBADD    = -lqahwwrapper
 libqahw_la_CPPFLAGS := $(AM_CPPFLAGS)
 libqahw_la_CPPFLAGS += -std=c++11 -DHAVE_PTHREADS -DHAVE_ANDROID_OS

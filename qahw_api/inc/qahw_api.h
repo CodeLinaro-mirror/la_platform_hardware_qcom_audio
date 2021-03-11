@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2020, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2021, The Linux Foundation. All rights reserved.
  * Not a Contribution.
  *
  * Copyright (C) 2011 The Android Open Source Project *
@@ -47,6 +47,8 @@ __BEGIN_DECLS
 
 /* Minimal QTI audio HAL version supported by the audio framework */
 #define QAHW_MODULE_API_VERSION_MIN QAHW_MODULE_API_VERSION_0_0
+
+#define QAHW_AUDIO_ADSP_PP_ENABLED
 
 /**
  * List of known audio HAL modules. This is the base name of the audio HAL
