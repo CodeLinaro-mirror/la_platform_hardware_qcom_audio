@@ -17,6 +17,12 @@ c_sources = audio_hw.c \
             audio_extn/audio_feature_manager.c \
             audio_extn/audio_hidl.cpp
 
+if DTMF_ENABLED
+AM_CFLAGS += -DDTMF_ENABLED
+c_sources += voice_extn/dtmf.c
+endif
+
+
 #if HDMI_EDID
 #AM_CFLAGS += -DHDMI_EDID
 #c_sources += edid.c

@@ -2467,8 +2467,6 @@ static int init_be_dai_name_table(struct audio_device *adev)
         valid_hw_interface = false;
 
         if (hw_interface_table[i] == NULL) {
-            ALOGW("%s: sound device %s has no hw interface set\n",
-                  __func__, platform_get_snd_device_name(i));
             continue;
         }
 
@@ -2479,9 +2477,6 @@ static int init_be_dai_name_table(struct audio_device *adev)
                 break;
             }
         }
-        if (!valid_hw_interface)
-            ALOGD("%s: sound device %s does not have a valid hw interface set (disregard for combo devices) %s\n",
-                   __func__, platform_get_snd_device_name(i), hw_interface_table[i]);
     }
 
     goto done;
@@ -10213,7 +10208,7 @@ static const char *platform_get_mixer_control(struct mixer_ctl *ctl)
     const char *id_string = NULL;
 
     if (!ctl) {
-        ALOGD("%s: mixer ctl not obtained", __func__);
+        return NULL;
     } else {
         id = mixer_ctl_get_value(ctl, 0);
         if (id >= 0) {

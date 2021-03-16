@@ -68,52 +68,22 @@ bool audio_feature_manager_is_feature_enabled(audio_ext_feature feature)
     switch (feature) {
         case SND_MONITOR:
             return confValues->snd_monitor_enabled;
-        case COMPRESS_CAPTURE:
-            return confValues->compress_capture_enabled;
-        case SOURCE_TRACK:
-            return confValues->source_track_enabled;
-        case SSREC:
-            return confValues->ssrec_enabled;
-        case AUDIOSPHERE:
-            return confValues->audiosphere_enabled;
         case AFE_PROXY:
             return confValues->afe_proxy_enabled;
         case USE_DEEP_BUFFER_AS_PRIMARY_OUTPUT:
             return confValues->use_deep_buffer_as_primary_output;
-        case HDMI_EDID:
-            return confValues->hdmi_edid_enabled;
-        case KEEP_ALIVE:
-            return confValues->keep_alive_enabled;
-        case HIFI_AUDIO:
-            return confValues->hifi_audio_enabled;
         case RECEIVER_AIDED_STEREO:
             return confValues->receiver_aided_stereo;
         case KPI_OPTIMIZE:
             return confValues->kpi_optimize_enabled;
-        case DISPLAY_PORT:
-            return confValues->display_port_enabled;
         case FLUENCE:
             return confValues->fluence_enabled;
-        case CUSTOM_STEREO:
-            return confValues->custom_stereo_enabled;
         case ANC_HEADSET:
             return confValues->anc_headset_enabled;
         case DSM_FEEDBACK:
             return confValues->dsm_feedback_enabled;
-        case USB_OFFLOAD:
-            return confValues->usb_offload_enabled;
-        case USB_OFFLOAD_BURST_MODE:
-            return confValues->usb_offload_burst_mode;
-        case USB_OFFLOAD_SIDETONE_VOLM:
-            return confValues->usb_offload_sidetone_vol_enabled;
-        case A2DP_OFFLOAD:
-            return confValues->a2dp_offload_enabled;
         case VBAT:
             return confValues->vbat_enabled;
-        case COMPRESS_METADATA_NEEDED:
-            return confValues->compress_metadata_needed;
-        case COMPRESS_VOIP:
-            return confValues->compress_voip_enabled;
         case DYNAMIC_ECNS:
             return confValues->dynamic_ecns_enabled;
         case SPKR_PROT:
