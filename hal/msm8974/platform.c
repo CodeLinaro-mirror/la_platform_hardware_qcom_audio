@@ -3928,43 +3928,47 @@ acdb_init_fail:
         if (!strncmp(snd_card_name, "qcs405", strlen("qcs405"))) {
 
             if (!strncmp(snd_card_name, "qcs405-csra", strlen("qcs405-csra"))) {
+                int32_t be_id;
                 if (!strncmp(platform_get_snd_device_backend_interface(SND_DEVICE_OUT_SPEAKER),
                     "PRI_META_MI2S_RX", sizeof("PRI_META_MI2S_RX"))) {
-                    my_data->current_backend_cfg[DEFAULT_CODEC_BACKEND].bitwidth_mixer_ctl =
+                    be_id = PRIM_META_MI2S_RX_BACKEND;
+                    my_data->current_backend_cfg[be_id].bitwidth_mixer_ctl =
                         strdup("PRIM_META_MI2S_RX Format");
-                    my_data->current_backend_cfg[DEFAULT_CODEC_BACKEND].samplerate_mixer_ctl =
+                    my_data->current_backend_cfg[be_id].samplerate_mixer_ctl =
                         strdup("PRIM_META_MI2S_RX SampleRate");
-                    my_data->current_backend_cfg[DEFAULT_CODEC_BACKEND].channels_mixer_ctl =
+                    my_data->current_backend_cfg[be_id].channels_mixer_ctl =
                         strdup("PRIM_META_MI2S_RX Channels");
                 } else if (!strncmp(platform_get_snd_device_backend_interface(SND_DEVICE_OUT_SPEAKER),
                     "SEC_META_MI2S_RX", sizeof("SEC_META_MI2S_RX"))) {
-                    my_data->current_backend_cfg[DEFAULT_CODEC_BACKEND].bitwidth_mixer_ctl =
+                    be_id = SEC_META_MI2S_RX_BACKEND;
+                    my_data->current_backend_cfg[be_id].bitwidth_mixer_ctl =
                         strdup("SEC_META_MI2S_RX Format");
-                    my_data->current_backend_cfg[DEFAULT_CODEC_BACKEND].samplerate_mixer_ctl =
+                    my_data->current_backend_cfg[be_id].samplerate_mixer_ctl =
                         strdup("SEC_META_MI2S_RX SampleRate");
-                    my_data->current_backend_cfg[DEFAULT_CODEC_BACKEND].channels_mixer_ctl =
+                    my_data->current_backend_cfg[be_id].channels_mixer_ctl =
                         strdup("SEC_META_MI2S_RX Channels");
                 } else {
-                    my_data->current_backend_cfg[DEFAULT_CODEC_BACKEND].bitwidth_mixer_ctl =
+                    be_id = PRIM_MI2S_RX_BACKEND;
+                    my_data->current_backend_cfg[be_id].bitwidth_mixer_ctl =
                         strdup("PRIM_MI2S_RX Format");
-                    my_data->current_backend_cfg[DEFAULT_CODEC_BACKEND].samplerate_mixer_ctl =
+                    my_data->current_backend_cfg[be_id].samplerate_mixer_ctl =
                         strdup("PRIM_MI2S_RX SampleRate");
-                    my_data->current_backend_cfg[DEFAULT_CODEC_BACKEND].channels_mixer_ctl =
+                    my_data->current_backend_cfg[be_id].channels_mixer_ctl =
                         strdup("PRIM_MI2S_RX Channels");
                 }
-                    my_data->current_backend_cfg[DSD_NATIVE_BACKEND].bitwidth_mixer_ctl =
+                my_data->current_backend_cfg[DSD_NATIVE_BACKEND].bitwidth_mixer_ctl =
                         strdup("PRIM_MI2S_RX Format");
-                    my_data->current_backend_cfg[DSD_NATIVE_BACKEND].samplerate_mixer_ctl =
+                my_data->current_backend_cfg[DSD_NATIVE_BACKEND].samplerate_mixer_ctl =
                         strdup("PRIM_MI2S_RX SampleRate");
-                    my_data->current_backend_cfg[DSD_NATIVE_BACKEND].channels_mixer_ctl =
+                my_data->current_backend_cfg[DSD_NATIVE_BACKEND].channels_mixer_ctl =
                         strdup("PRIM_MI2S_RX Channels");
-
             } else {
-               my_data->current_backend_cfg[DEFAULT_CODEC_BACKEND].bitwidth_mixer_ctl =
-                   strdup("WSA_CDC_DMA_RX_0 Format");
-               my_data->current_backend_cfg[DEFAULT_CODEC_BACKEND].samplerate_mixer_ctl =
-                   strdup("WSA_CDC_DMA_RX_0 SampleRate");
+                my_data->current_backend_cfg[DEFAULT_CODEC_BACKEND].bitwidth_mixer_ctl =
+                        strdup("WSA_CDC_DMA_RX_0 Format");
+                my_data->current_backend_cfg[DEFAULT_CODEC_BACKEND].samplerate_mixer_ctl =
+                        strdup("WSA_CDC_DMA_RX_0 SampleRate");
             }
+
             my_data->current_backend_cfg[DEFAULT_CODEC_TX_BACKEND].bitwidth_mixer_ctl =
                 strdup("VA_CDC_DMA_TX_0 Format");
             my_data->current_backend_cfg[DEFAULT_CODEC_TX_BACKEND].samplerate_mixer_ctl =
@@ -5454,43 +5458,59 @@ int platform_get_backend_index(snd_device_t snd_device)
 
     if (snd_device >= SND_DEVICE_OUT_BEGIN && snd_device < SND_DEVICE_OUT_END) {
         if (backend_tag_table[snd_device] != NULL) {
-                if (strncmp(backend_tag_table[snd_device], "headphones-44.1",
-                            sizeof("headphones-44.1")) == 0)
-                        port = HEADPHONE_44_1_BACKEND;
-                else if (strncmp(backend_tag_table[snd_device], "headphones-hifi-filter",
-                            sizeof("headphones-hifi-filter")) == 0)
-                        port = HEADPHONE_BACKEND;
-                else if (strncmp(backend_tag_table[snd_device], "headphones-dsd",
-                            sizeof("headphones-dsd")) == 0)
-                        port = DSD_NATIVE_BACKEND;
-                else if (strncmp(backend_tag_table[snd_device], "headphones",
-                            sizeof("headphones")) == 0)
-                        port = HEADPHONE_BACKEND;
-                else if (strncmp(backend_tag_table[snd_device], "headset",
-                            sizeof("headset")) == 0)
-                        port = HEADPHONE_BACKEND;
-                else if (strcmp(backend_tag_table[snd_device], "hdmi") == 0)
-                        port = HDMI_RX_BACKEND;
-                else if (strcmp(backend_tag_table[snd_device], "display-port") == 0)
-                        port = DISP_PORT_RX_BACKEND;
-                else if (strcmp(backend_tag_table[snd_device], "display-port1") == 0)
-                        port = DISP_PORT1_RX_BACKEND;
-                else if ((strcmp(backend_tag_table[snd_device], "usb-headphones") == 0) ||
-                           (strcmp(backend_tag_table[snd_device], "usb-headset") == 0))
-                        port = USB_AUDIO_RX_BACKEND;
-                else if (!strncmp(platform_get_snd_device_backend_interface(snd_device),
-                         "SEC_MI2S_RX", sizeof("SEC_MI2S_RX")))
-                        port = SEC_MI2S_RX_BACKEND;
-                else if (!strncmp(platform_get_snd_device_backend_interface(snd_device),
-                         "TERT_MI2S_RX", sizeof("TERT_MI2S_RX")))
-                        port = TERT_MI2S_RX_BACKEND;
-                else if (!strncmp(platform_get_snd_device_backend_interface(snd_device),
-                         "QUAT_MI2S_RX", sizeof("QUAT_MI2S_RX")))
-                        port = QUAT_MI2S_RX_BACKEND;
-                else if (strcmp(backend_tag_table[snd_device], "spdif") == 0)
-                        port = SPDIF_RX_BACKEND;
-                else if (strcmp(backend_tag_table[snd_device], "optical") == 0)
-                        port = OPTICAL_RX_BACKEND;
+            if (strncmp(backend_tag_table[snd_device], "headphones-44.1",
+                        sizeof("headphones-44.1")) == 0)
+                port = HEADPHONE_44_1_BACKEND;
+            else if (strncmp(backend_tag_table[snd_device], "headphones-hifi-filter",
+                        sizeof("headphones-hifi-filter")) == 0)
+                port = HEADPHONE_BACKEND;
+            else if (strncmp(backend_tag_table[snd_device], "headphones-dsd",
+                        sizeof("headphones-dsd")) == 0)
+                port = DSD_NATIVE_BACKEND;
+            else if (strncmp(backend_tag_table[snd_device], "headphones",
+                        sizeof("headphones")) == 0)
+                port = HEADPHONE_BACKEND;
+            else if (strncmp(backend_tag_table[snd_device], "headset",
+                     sizeof("headset")) == 0)
+                port = HEADPHONE_BACKEND;
+            else if (strcmp(backend_tag_table[snd_device], "hdmi") == 0)
+                port = HDMI_RX_BACKEND;
+            else if (strcmp(backend_tag_table[snd_device], "display-port") == 0)
+                port = DISP_PORT_RX_BACKEND;
+            else if (strcmp(backend_tag_table[snd_device], "display-port1") == 0)
+                port = DISP_PORT1_RX_BACKEND;
+            else if ((strcmp(backend_tag_table[snd_device], "usb-headphones") == 0) ||
+                      (strcmp(backend_tag_table[snd_device], "usb-headset") == 0))
+                port = USB_AUDIO_RX_BACKEND;
+            else if (!strncmp(platform_get_snd_device_backend_interface(snd_device),
+                     "SEC_MI2S_RX", sizeof("SEC_MI2S_RX")))
+                port = SEC_MI2S_RX_BACKEND;
+            else if (!strncmp(platform_get_snd_device_backend_interface(snd_device),
+                     "TERT_MI2S_RX", sizeof("TERT_MI2S_RX")))
+                port = TERT_MI2S_RX_BACKEND;
+            else if (!strncmp(platform_get_snd_device_backend_interface(snd_device),
+                     "QUAT_MI2S_RX", sizeof("QUAT_MI2S_RX")))
+                port = QUAT_MI2S_RX_BACKEND;
+            else if (strcmp(backend_tag_table[snd_device], "spdif") == 0)
+                port = SPDIF_RX_BACKEND;
+            else if (strcmp(backend_tag_table[snd_device], "optical") == 0)
+                port = OPTICAL_RX_BACKEND;
+        }
+
+        /*
+         * For few interfaces, need to update port based on snd device
+         * backend interface. Check for such instances here.
+         */
+        if (port == DEFAULT_CODEC_BACKEND) {
+            if (!strncmp(platform_get_snd_device_backend_interface(snd_device),
+                "PRI_META_MI2S_RX", sizeof("PRI_META_MI2S_RX")))
+                port = PRIM_META_MI2S_RX_BACKEND;
+            else if (!strncmp(platform_get_snd_device_backend_interface(snd_device),
+                     "SEC_META_MI2S_RX", sizeof("SEC_META_MI2S_RX")))
+                port = SEC_META_MI2S_RX_BACKEND;
+            else if (!strncmp(platform_get_snd_device_backend_interface(snd_device),
+                     "PRI_MI2S_RX", sizeof("PRI_MI2S_RX")))
+                port = PRIM_MI2S_RX_BACKEND;
         }
     } else if (snd_device >= SND_DEVICE_IN_BEGIN && snd_device < SND_DEVICE_IN_END) {
         port = DEFAULT_CODEC_TX_BACKEND;
