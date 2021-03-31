@@ -2125,7 +2125,7 @@ int qahw_stream_open(qahw_module_handle_t *hw_module,
 
     if ((attr.type == QAHW_VOICE_CALL)||(attr.type == QAHW_ECALL)) {
         if (strncmp("11C05000",attr.attr.voice.vsid,sizeof("11C05000")) == 0) {
-            flags = QAHW_AUDIO_OUTPUT_FLAG_VOICE_CALL;
+            flags = AUDIO_OUTPUT_FLAG_PRIMARY | QAHW_AUDIO_OUTPUT_FLAG_VOICE_CALL;
             ALOGE("VSID1");
         }
         if (strncmp("11DC5000",attr.attr.voice.vsid,sizeof("11DC5000")) == 0) {
