@@ -174,8 +174,7 @@ AC_CONFIG_FILES([ \
         hal/Makefile \
         hal/audio_extn/Makefile \
         qahw_api/Makefile \
-        qahw_api/test/Makefile \
-        hdmi_in_test/Makefile
+        qahw_api/test/Makefile
         ])
 
 AC_OUTPUT
