@@ -1089,8 +1089,6 @@ void audio_extn_set_cpu_affinity()
 void vbat_feature_init(bool is_feature_enabled)
 {
     audio_extn_vbat_enabled = is_feature_enabled;
-    ALOGD(":: %s: ---- Feature VBAT is %s ----",
-                  __func__, is_feature_enabled ? "ENABLED": " NOT ENABLED");
 }
 
 bool audio_extn_is_vbat_enabled(void)
@@ -1147,8 +1145,6 @@ bool audio_extn_can_use_bcl(void)
 void anc_headset_feature_init(bool is_feature_enabled)
 {
     audio_extn_anc_headset_feature_enabled = is_feature_enabled;
-    ALOGD(":: %s: ---- Feature FM_POWER_OPT is %s----", __func__,
-                                    is_feature_enabled? "ENABLED": "NOT ENABLED");
 
 }
 
@@ -1356,7 +1352,6 @@ int32_t audio_extn_set_afe_proxy_channel_mixer(struct audio_device *adev,
     const char *mixer_ctl_name = "PROXY_RX Channels";
 
     if (!audio_feature_manager_is_feature_enabled(AFE_PROXY)) {
-        ALOGW("%s: AFE_PROXY is disabled", __func__);
         return -ENOSYS;
     }
 
@@ -1437,7 +1432,6 @@ int32_t audio_extn_read_afe_proxy_channel_masks(struct stream_out *out)
     int channels = aextnmod.proxy_channel_num;
 
     if (!audio_feature_manager_is_feature_enabled(AFE_PROXY)) {
-        ALOGW("%s: AFE_PROXY is disabled", __func__);
         return -ENOSYS;
     }
 
@@ -1467,7 +1461,6 @@ int32_t audio_extn_get_afe_proxy_channel_count()
 {
 
     if (!audio_feature_manager_is_feature_enabled(AFE_PROXY)) {
-        ALOGW("%s: AFE_PROXY is disabled", __func__);
         return -ENOSYS;
     }
 
@@ -1552,19 +1545,16 @@ static bool is_usb_sidetone_vol_enabled = false;
 
 void usb_offload_feature_init(bool is_feature_enabled)
 {
-    ALOGD("%s: Called with feature %s", __func__, is_feature_enabled?"Enabled":"NOT Enabled");
     is_usb_offload_enabled = is_feature_enabled;
 }
 
 void usb_offload_burst_mode_feature_init(bool is_feature_enabled)
 {
-    ALOGD("%s: Called with feature %s", __func__, is_feature_enabled?"Enabled":"NOT Enabled");
     is_usb_burst_mode_enabled = is_feature_enabled;
 }
 
 void usb_offload_sidetone_volume_feature_init(bool is_feature_enabled)
 {
-    ALOGD("%s: Called with feature %s", __func__, is_feature_enabled?"Enabled":"NOT Enabled");
     is_usb_sidetone_vol_enabled = is_feature_enabled;
 }
 
@@ -1816,7 +1806,6 @@ static get_spkr_prot_snd_device_t get_spkr_prot_snd_device;
 
 void spkr_prot_feature_init(bool is_feature_enabled)
 {
-    ALOGD("%s: Called with feature %s", __func__, is_feature_enabled?"Enabled":"NOT Enabled");
     if (is_feature_enabled) {
         //dlopen lib
 #if LINUX_ENABLED
@@ -1895,7 +1884,6 @@ feature_disabled:
     fbsp_get_parameters = NULL;
     get_spkr_prot_snd_device = NULL;
 
-    ALOGW(":: %s: ---- Feature SPKR_PROT is disabled ----", __func__);
     return;
 }
 
@@ -2045,7 +2033,6 @@ static external_qdsp_supported_usb_t external_qdsp_supported_usb;
 
 void external_qdsp_feature_init(bool is_feature_enabled)
 {
-    ALOGD("%s: Called with feature %s", __func__, is_feature_enabled?"Enabled":"NOT Enabled");
     if (is_feature_enabled) {
         //dlopen lib
         external_qdsp_lib_handle = dlopen(EXTERNAL_QDSP_LIB_PATH, RTLD_NOW);
@@ -2088,7 +2075,6 @@ feature_disabled:
     external_qdsp_set_parameter = NULL;
     external_qdsp_supported_usb = NULL;
 
-    ALOGW(":: %s: ---- Feature EXTERNAL_QDSP is disabled ----", __func__);
     return;
 }
 
@@ -2170,7 +2156,6 @@ static external_speaker_set_voice_vol_t external_speaker_set_voice_vol;
 
 void external_speaker_feature_init(bool is_feature_enabled)
 {
-    ALOGD("%s: Called with feature %s", __func__, is_feature_enabled?"Enabled":"NOT Enabled");
     if (is_feature_enabled) {
         //dlopen lib
         external_speaker_lib_handle = dlopen(EXTERNAL_SPKR_LIB_PATH, RTLD_NOW);
@@ -2210,7 +2195,6 @@ feature_disabled:
     external_speaker_set_mode = NULL;
     external_speaker_set_voice_vol = NULL;
 
-    ALOGW(":: %s: ---- Feature EXTERNAL_SPKR is disabled ----", __func__);
     return;
 }
 
@@ -2292,7 +2276,6 @@ static external_speaker_tfa_is_supported_t external_speaker_tfa_is_supported;
 
 void external_speaker_tfa_feature_init(bool is_feature_enabled)
 {
-    ALOGD("%s: Called with feature %s", __func__, is_feature_enabled?"Enabled":"NOT Enabled");
     if (is_feature_enabled) {
         //dlopen lib
         external_speaker_tfa_lib_handle = dlopen(EXTERNAL_SPKR_TFA_LIB_PATH, RTLD_NOW);
@@ -2343,7 +2326,6 @@ feature_disabled:
     external_speaker_tfa_deinit = NULL;
     external_speaker_tfa_is_supported = NULL;
 
-    ALOGW(":: %s: ---- Feature EXTERNAL_SPKR_TFA is disabled ----", __func__);
     return;
 }
 
@@ -2429,7 +2411,6 @@ static hwdep_cal_send_t hwdep_cal_send;
 
 void hwdep_cal_feature_init(bool is_feature_enabled)
 {
-    ALOGD("%s: Called with feature %s", __func__, is_feature_enabled?"Enabled":"NOT Enabled");
     if (is_feature_enabled) {
         //dlopen lib
         hwdep_cal_lib_handle = dlopen(HWDEP_CAL_LIB_PATH, RTLD_NOW);
@@ -2457,7 +2438,6 @@ feature_disabled:
 
     hwdep_cal_send = NULL;
 
-    ALOGW(":: %s: ---- Feature HWDEP_CAL is disabled ----", __func__);
     return;
 }
 
@@ -2487,7 +2467,6 @@ static dsm_feedback_enable_t dsm_feedback_enable;
 
 void dsm_feedback_feature_init (bool is_feature_enabled)
 {
-    ALOGD("%s: Called with feature %s", __func__, is_feature_enabled?"Enabled":"NOT Enabled");
     if (is_feature_enabled) {
         //dlopen lib
         dsm_feedback_lib_handle = dlopen(DSM_FEEDBACK_LIB_PATH, RTLD_NOW);
@@ -2515,7 +2494,6 @@ feature_disabled:
 
     dsm_feedback_enable = NULL;
 
-    ALOGW(":: %s: ---- Feature DSM_FEEDBACK is disabled ----", __func__);
     return;
 }
 
@@ -2557,7 +2535,6 @@ static snd_mon_unregister_listener_t snd_mon_unregister_listener;
 
 void snd_mon_feature_init (bool is_feature_enabled)
 {
-    ALOGD("%s: Called with feature %s", __func__, is_feature_enabled?"Enabled":"NOT Enabled");
     if (is_feature_enabled) {
         //dlopen lib
         snd_mnt_lib_handle = dlopen(SND_MONITOR_PATH, RTLD_NOW);
@@ -2588,7 +2565,6 @@ feature_disabled:
     snd_mon_deinit              = NULL;
     snd_mon_register_listener   = NULL;
     snd_mon_unregister_listener = NULL;
-    ALOGW(":: %s: ---- Feature SND_MONITOR is disabled ----", __func__);
     return;
 }
 
@@ -2653,7 +2629,6 @@ void src_trkn_feature_init(bool is_feature_enabled) {
         return;
     }
 
-    ALOGW(":: %s: ---- Feature SOURCE_TRACKING is disabled ----", __func__);
 }
 
 int audio_extn_get_soundfocus_data(const struct audio_device *adev,
@@ -2799,7 +2774,6 @@ feature_disabled:
     ssr_get_parameters = NULL;
     ssr_get_stream = NULL;
 
-    ALOGW(":: %s: ---- Feature SSREC is disabled ----", __func__);
 }
 
 bool audio_extn_ssr_check_usecase(struct stream_in *in) {
@@ -2970,7 +2944,6 @@ feature_disabled:
     compr_cap_get_buffer_size      = NULL;
     compr_cap_read                 = NULL;
 
-    ALOGW(":: %s: ---- Feature COMPRESS_CAPTURE is disabled ----", __func__);
     return;
 }
 
@@ -3656,7 +3629,6 @@ int audio_extn_set_device_cfg_params(struct audio_device *adev,
 void fm_feature_init(bool is_feature_enabled)
 {
     audio_extn_fm_power_opt_enabled = is_feature_enabled;
-    ALOGD(":: %s: ---- Feature FM_POWER_OPT is %s----", __func__, is_feature_enabled? "ENABLED": "NOT ENABLED");
 }
 
 
@@ -3705,7 +3677,6 @@ static hdmi_edid_get_sink_caps_t hdmi_edid_get_sink_caps;
 
 void hdmi_edid_feature_init(bool is_feature_enabled)
 {
-    ALOGD("%s: HDMI_EDID feature %s", __func__, is_feature_enabled?"Enabled":"NOT Enabled");
     if (is_feature_enabled) {
         //dlopen lib
         hdmi_edid_lib_handle = dlopen(HDMI_EDID_LIB_PATH, RTLD_NOW);
@@ -3745,7 +3716,6 @@ feature_disabled:
     hdmi_edid_is_supported_bps = NULL;
     hdmi_edid_get_highest_supported_sr = NULL;
     hdmi_edid_get_sink_caps = NULL;
-    ALOGW(":: %s: ---- Feature HDMI_EDID is disabled ----", __func__);
     return;
 }
 
@@ -3792,7 +3762,6 @@ bool audio_extn_edid_get_sink_caps(edid_audio_info* info, char *edid_data)
 void keep_alive_feature_init(bool is_feature_enabled)
 {
     audio_extn_keep_alive_enabled = is_feature_enabled;
-    ALOGD(":: %s: ---- Feature KEEP_ALIVE is %s ----", __func__, is_feature_enabled? "ENABLED": " NOT ENABLED");
 }
 
 void audio_extn_keep_alive_init(struct audio_device *adev)
@@ -3839,7 +3808,6 @@ int audio_extn_keep_alive_set_parameters(struct audio_device *adev,
 void hifi_audio_feature_init(bool is_feature_enabled)
 {
     audio_extn_hifi_audio_enabled = is_feature_enabled;
-    ALOGD(":: %s: ---- Feature HIFI_AUDIO is %s ----", __func__, is_feature_enabled? "ENABLED": " NOT ENABLED");
 }
 
 bool audio_extn_is_hifi_audio_enabled(void)
@@ -3878,7 +3846,6 @@ bool audio_extn_is_hifi_audio_supported(void)
 void ras_feature_init(bool is_feature_enabled)
 {
     audio_extn_ras_feature_enabled = is_feature_enabled;
-    ALOGD(":: %s: ---- Feature RAS_FEATURE is %s ----", __func__, is_feature_enabled? "ENABLED": " NOT ENABLED");
 }
 
 bool audio_extn_is_ras_enabled(void)
@@ -3913,7 +3880,6 @@ bool audio_extn_can_use_ras(void)
 void kpi_optimize_feature_init(bool is_feature_enabled)
 {
     audio_extn_kpi_optimize_feature_enabled = is_feature_enabled;
-    ALOGD(":: %s: ---- Feature KPI_OPTIMIZE is %s ----", __func__, is_feature_enabled? "ENABLED": " NOT ENABLED");
 }
 
 typedef int (*perf_lock_acquire_t)(int, int, int*, int);
@@ -4007,7 +3973,6 @@ void audio_extn_perf_lock_release(int *handle)
 void display_port_feature_init(bool is_feature_enabled)
 {
     audio_extn_display_port_feature_enabled = is_feature_enabled;
-    ALOGD(":: %s: ---- Feature DISPLAY_PORT is %s ----", __func__, is_feature_enabled? "ENABLED": " NOT ENABLED");
 }
 
 bool audio_extn_is_display_port_enabled()
@@ -4085,7 +4050,6 @@ done:
 void custom_stereo_feature_init(bool is_feature_enabled)
 {
     audio_extn_custom_stereo_feature_enabled = is_feature_enabled;
-    ALOGD(":: %s: ---- Feature CUSTOM_STEREO is %s ----", __func__, is_feature_enabled? "ENABLED": " NOT ENABLED");
 }
 
 bool audio_extn_is_custom_stereo_enabled()
@@ -4269,8 +4233,6 @@ static a2dp_stop_capture_t a2dp_stop_capture;
 
 int a2dp_offload_feature_init(bool is_feature_enabled)
 {
-    ALOGD("%s: Called with feature %s", __func__,
-                  is_feature_enabled ? "Enabled" : "NOT Enabled");
     if (is_feature_enabled) {
         // dlopen lib
         a2dp_lib_handle = dlopen(A2DP_OFFLOAD_LIB_PATH, RTLD_NOW);
@@ -4336,7 +4298,6 @@ feature_disabled:
     a2dp_start_capture = NULL;
     a2dp_stop_capture = NULL;
 
-    ALOGW(":: %s: ---- Feature A2DP_OFFLOAD is disabled ----", __func__);
     return -ENOSYS;
 }
 
@@ -4422,12 +4383,6 @@ void audio_extn_feature_init()
         switch (index) {
             case SND_MONITOR:
                 snd_mon_feature_init(enable);
-                break;
-            case COMPRESS_CAPTURE:
-                compr_cap_feature_init(enable);
-                break;
-            case DSM_FEEDBACK:
-                dsm_feedback_feature_init(enable);
                 break;
             case SSREC:
                 ssrec_feature_init(enable);

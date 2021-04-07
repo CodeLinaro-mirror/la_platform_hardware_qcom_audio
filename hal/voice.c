@@ -276,9 +276,12 @@ int voice_start_usecase(struct audio_device *adev, audio_usecase_t usecase_id)
     if (pcm_dev_rx_id < 0 || pcm_dev_tx_id < 0) {
         ALOGE("%s: Invalid PCM devices (rx: %d tx: %d) for the usecase(%d)",
               __func__, pcm_dev_rx_id, pcm_dev_tx_id, uc_info->id);
+        ALOGE("%s: %d", __func__, __LINE__);
         ret = -EIO;
         goto error_start_voice;
     }
+    ALOGE("%s: PCM devices (rx: %d tx: %d) for the usecase(%d)",
+              __func__, pcm_dev_rx_id, pcm_dev_tx_id, uc_info->id);
     ret = platform_get_sample_rate(adev->platform, &sample_rate);
     if (ret < 0) {
         ALOGE("platform_get_sample_rate error %d\n", ret);
@@ -296,6 +299,7 @@ int voice_start_usecase(struct audio_device *adev, audio_usecase_t usecase_id)
                                PCM_IN, &voice_config);
     if (session->pcm_tx && !pcm_is_ready(session->pcm_tx)) {
         ALOGE("%s: %s", __func__, pcm_get_error(session->pcm_tx));
+        ALOGE("%s: %d", __func__, __LINE__);
         ret = -EIO;
         goto error_start_voice;
     }
@@ -307,6 +311,7 @@ int voice_start_usecase(struct audio_device *adev, audio_usecase_t usecase_id)
                                PCM_OUT, &voice_config);
     if (session->pcm_rx && !pcm_is_ready(session->pcm_rx)) {
         ALOGE("%s: %s", __func__, pcm_get_error(session->pcm_rx));
+        ALOGE("%s: %d", __func__, __LINE__);
         ret = -EIO;
         goto error_start_voice;
     }
@@ -318,6 +323,7 @@ int voice_start_usecase(struct audio_device *adev, audio_usecase_t usecase_id)
     if (voice_loopback_rx < 0 || !pcm_is_ready(voice_loopback_rx)) {
         ALOGE("%s: Either could not open pcm_dev_loopback_rx_id %d or %s",
               __func__, pcm_dev_loopback_rx_id, pcm_get_error(voice_loopback_rx));
+        ALOGE("%s: %d", __func__, __LINE__);
         ret = -EIO;
         goto error_start_voice;
     }
@@ -328,6 +334,7 @@ int voice_start_usecase(struct audio_device *adev, audio_usecase_t usecase_id)
     if (voice_loopback_tx < 0 || !pcm_is_ready(voice_loopback_tx)) {
          ALOGE("%s: Either could not open pcm_dev_loopback_tx_id %d or %s",
                __func__, pcm_dev_loopback_tx_id, pcm_get_error(voice_loopback_tx));
+        ALOGE("%s: %d", __func__, __LINE__);
          ret = -EIO;
          goto error_start_voice;
     }
