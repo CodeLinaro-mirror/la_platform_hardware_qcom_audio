@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2020, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2021, The Linux Foundation. All rights reserved.
  * Not a Contribution.
  *
  * Copyright (C) 2011 The Android Open Source Project *
@@ -583,7 +583,7 @@ typedef union {
     struct qahw_in_ttp_offset_param ttp_offset;
     struct qahw_out_channel_status_info ch_status_info;
     struct qahw_device_channel_bit_mask ch_bit_mask;
-} qahw_param_payload;
+}  qahw_param_payload;
 
 typedef enum {
     QAHW_PARAM_SOURCE_TRACK,
