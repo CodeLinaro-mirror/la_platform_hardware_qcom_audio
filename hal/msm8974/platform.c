@@ -317,6 +317,7 @@ struct platform_data {
     bool fluence_nn_enabled;
     int  fluence_type;
     int  fluence_mode;
+    int  afe_loopback;
     char fluence_cap[PROPERTY_VALUE_MAX];
     bool ambisonic_capture;
     bool ambisonic_profile;
@@ -358,6 +359,8 @@ struct platform_data {
     acdb_set_codec_data_t      acdb_set_codec_data;
     acdb_reload_t              acdb_reload;
     acdb_reload_v2_t           acdb_reload_v2;
+    acdb_get_fluence_nn_state_t  acdb_get_fluence_nn_state;
+    acdb_set_fluence_nn_state_t  acdb_set_fluence_nn_state;
     void *hw_info;
     acdb_send_gain_dep_cal_t   acdb_send_gain_dep_cal;
     struct csd_data *csd;
@@ -536,6 +539,7 @@ static int pcm_device_table[AUDIO_USECASE_MAX][2] = {
     [USECASE_AUDIO_RECORD_BUS_FRONT_PASSENGER] = {FRONT_PASSENGER_PCM_DEVICE, FRONT_PASSENGER_PCM_DEVICE},
     [USECASE_AUDIO_RECORD_BUS_REAR_SEAT] = {REAR_SEAT_PCM_DEVICE, REAR_SEAT_PCM_DEVICE},
     [USECASE_AUDIO_PLAYBACK_SYNTHESIZER] = {-1, -1},
+    [USECASE_AUDIO_RECORD_ECHO_REF_EXT] = {MULTIMEDIA2_PCM_DEVICE, MULTIMEDIA2_PCM_DEVICE},
 };
 
 /* Array to store sound devices */
@@ -802,6 +806,7 @@ static const char * const device_table[SND_DEVICE_MAX] = {
     [SND_DEVICE_IN_CALL_PROXY] = "call-proxy-in",
     [SND_DEVICE_IN_ICC] = "speaker-mic",
     [SND_DEVICE_IN_SYNTH_MIC] = "speaker-mic",
+    [SND_DEVICE_IN_ECHO_REFERENCE] = "echo-reference",
 };
 
 // Platform specific backend bit width table
@@ -1039,6 +1044,7 @@ static int acdb_device_table[SND_DEVICE_MAX] = {
     [SND_DEVICE_IN_USB_HEADSET_MULTI_CHANNEL_MIC_AEC] = 162,
     [SND_DEVICE_IN_UNPROCESSED_USB_HEADSET_MULTI_CHANNEL_MIC] = 162,
     [SND_DEVICE_IN_CAPTURE_FM] = 0,
+    [SND_DEVICE_IN_ECHO_REFERENCE] = 100,
     [SND_DEVICE_IN_AANC_HANDSET_MIC] = 104,
     [SND_DEVICE_IN_VOICE_FLUENCE_DMIC_AANC] = 105,
     [SND_DEVICE_IN_QUAD_MIC] = 46,
@@ -1293,6 +1299,7 @@ static struct name_to_index snd_device_name_index[SND_DEVICE_MAX] = {
     {TO_NAME_INDEX(SND_DEVICE_IN_VOICE_RECOG_USB_HEADSET_MULTI_CHANNEL_MIC)},
     {TO_NAME_INDEX(SND_DEVICE_IN_USB_HEADSET_MULTI_CHANNEL_MIC_AEC)},
     {TO_NAME_INDEX(SND_DEVICE_IN_CAPTURE_FM)},
+    {TO_NAME_INDEX(SND_DEVICE_IN_ECHO_REFERENCE)},
     {TO_NAME_INDEX(SND_DEVICE_IN_AANC_HANDSET_MIC)},
     {TO_NAME_INDEX(SND_DEVICE_IN_VOICE_FLUENCE_DMIC_AANC)},
     {TO_NAME_INDEX(SND_DEVICE_IN_QUAD_MIC)},
@@ -2679,6 +2686,7 @@ static void set_platform_defaults(struct platform_data * my_data)
     hw_interface_table[SND_DEVICE_OUT_ICC] = strdup("TERT_TDM_RX_0");
     hw_interface_table[SND_DEVICE_OUT_SYNTH_SPKR] = strdup("TERT_TDM_RX_0");
     hw_interface_table[SND_DEVICE_IN_SYNTH_MIC] = strdup("TERT_TDM_TX_0");
+    hw_interface_table[SND_DEVICE_IN_ECHO_REFERENCE] = strdup("SEC_TDM_TX_0");
     my_data->max_mic_count = PLATFORM_DEFAULT_MIC_COUNT;
 
      /*remove ALAC & APE from DSP decoder list based on software decoder availability*/
@@ -3723,6 +3731,18 @@ void *platform_init(struct audio_device *adev)
         if (my_data->acdb_reload_v2 == NULL) {
             ALOGE("%s: dlsym error %s for acdb_loader_reload_acdb_files_v2", __func__, dlerror());
         }
+
+        my_data->acdb_set_fluence_nn_state = (acdb_set_fluence_nn_state_t)dlsym(
+                                                                   my_data->acdb_handle,
+                                                                   "acdb_set_fluence_nn_state");
+        if (!my_data->acdb_set_fluence_nn_state)
+            ALOGE("%s: dlsym error %s for acdb_set_fluence_nn_state", __func__, dlerror());
+
+        my_data->acdb_get_fluence_nn_state = (acdb_get_fluence_nn_state_t)dlsym(
+                                                                   my_data->acdb_handle,
+                                                                   "acdb_get_fluence_nn_state");
+        if (!my_data->acdb_get_fluence_nn_state)
+            ALOGE("%s: dlsym error %s for acdb_get_fluence_nn_state", __func__, dlerror());
 
         my_data->acdb_reload = (acdb_reload_t)dlsym(my_data->acdb_handle,
                                                     "acdb_loader_reload_acdb_files");
@@ -7565,6 +7585,9 @@ snd_device_t platform_get_input_snd_device(void *platform,
         }
     } else if (source == AUDIO_SOURCE_FM_TUNER) {
         snd_device = SND_DEVICE_IN_CAPTURE_FM;
+    } else if ((source == AUDIO_SOURCE_ECHO_REFERENCE) &&
+        (uc_id == USECASE_AUDIO_RECORD_ECHO_REF_EXT)) {
+        snd_device = SND_DEVICE_IN_ECHO_REFERENCE;
     } else if (source == AUDIO_SOURCE_DEFAULT) {
         goto exit;
     }
@@ -7638,6 +7661,9 @@ snd_device_t platform_get_input_snd_device(void *platform,
             snd_device = SND_DEVICE_IN_USB_HEADSET_MIC;
         } else if (compare_device_type(&in_devices, AUDIO_DEVICE_IN_FM_TUNER)) {
             snd_device = SND_DEVICE_IN_CAPTURE_FM;
+        } else if (compare_device_type(&in_devices, AUDIO_DEVICE_IN_ECHO_REFERENCE) &&
+            (uc_id == USECASE_AUDIO_RECORD_ECHO_REF_EXT)) {
+            snd_device = SND_DEVICE_IN_ECHO_REFERENCE;
         } else if (audio_extn_usb_connected(NULL) &&
                    is_usb_in_device_type(&in_devices)) {
             snd_device = fixup_usb_headset_mic_snd_device(platform,
@@ -8513,6 +8539,12 @@ int platform_set_parameters(void *platform, struct str_parms *parms)
         }
     }
 
+    err = str_parms_get_str(parms, "afe_loopback", value, len);
+    if (err >= 0) {
+        my_data->afe_loopback = atoi(value);
+        ALOGD("Updating afe_loopback as %d from platform XML" , my_data->afe_loopback);
+    }
+
     err = str_parms_get_str(parms, AUDIO_PARAMETER_KEY_MONO_SPEAKER, value, len);
     if (err >= 0) {
         if (!strncmp("left", value, sizeof("left")))
@@ -9033,6 +9065,13 @@ void platform_set_audio_source_delay(audio_source_t audio_source, int delay_ms)
 /* Delay in Us */
 int64_t platform_get_audio_source_delay(audio_source_t audio_source)
 {
+    if (audio_source == AUDIO_SOURCE_ECHO_REFERENCE) {
+        /* return 0 because audio source delay is not
+        currently implemented on automotive in the
+        audio_platform_info.xml */
+        return 0;
+    }
+
     if ((audio_source < AUDIO_SOURCE_DEFAULT) ||
             (audio_source > AUDIO_SOURCE_MAX)) {
         ALOGE("%s: Invalid audio_source = %d", __func__, audio_source);
@@ -11495,6 +11534,12 @@ int platform_set_edid_channels_configuration(void *platform, int channels,
                         backend_idx, snd_device, 0, 0);
 }
 
+int platform_get_is_afe_loopback_enabled(void *platform)
+{
+  struct platform_data *my_data = (struct platform_data *)platform;
+  return my_data->afe_loopback;
+}
+
 int platform_set_edid_channels_configuration_v2(void *platform, int channels,
                                      int backend_idx, snd_device_t snd_device,
                                      int controller, int stream) {
@@ -12559,4 +12604,38 @@ bool platform_is_call_proxy_snd_device(snd_device_t snd_device) {
     if (snd_device == SND_DEVICE_IN_CALL_PROXY || snd_device == SND_DEVICE_OUT_CALL_PROXY)
         return true;
     return false;
+}
+
+bool platform_set_fluence_nn_state(void *platform, bool state) {
+     struct platform_data *my_data = (struct platform_data *)platform;
+
+     if (my_data->acdb_set_fluence_nn_state == NULL) {
+         ALOGE("%s: dlsym error for acdb_set_fluence_nn_state", __func__);
+         return false;
+     }
+
+     if (my_data->fluence_nn_enabled) {
+         my_data->acdb_set_fluence_nn_state(state);
+         ALOGD("%s: set fluence nn state %d", __func__, state);
+         return true;
+     }
+
+     return false;
+}
+
+int platform_get_fluence_nn_state(void *platform) {
+    struct platform_data *my_data = (struct platform_data *)platform;
+    int ret = -1;
+
+    if (my_data->acdb_get_fluence_nn_state == NULL) {
+        ALOGE("%s: dlsym error for acdb_get_fluence_nn_state", __func__);
+        return ret;
+    }
+
+    if (my_data->fluence_nn_enabled)
+        ret = my_data->acdb_get_fluence_nn_state();
+    else
+        ALOGD("fluence nn disabled");
+
+    return ret;
 }

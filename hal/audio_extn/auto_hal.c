@@ -336,6 +336,25 @@ int auto_hal_open_input_stream(struct stream_in *in)
     return ret;
 }
 
+/*
+ * Function: auto_hal_open_echo_reference_stream
+ * ---------------------------------------------
+ * opens an input stream to capture an echo reference
+ * and sets for external echo reference
+ *
+ * param *in: stream to be used for echo reference
+ *
+ * returns: 0
+ */
+int auto_hal_open_echo_reference_stream(struct stream_in *in)
+{
+    /* note: this function may be expanded in the future
+    to accommodate other echo reference sources
+    such as an internal AFE loopback. */
+    in->usecase = USECASE_AUDIO_RECORD_ECHO_REF_EXT;
+    return 0;
+}
+
 int auto_hal_open_output_stream(struct stream_out *out)
 {
     int ret = 0;
@@ -465,6 +484,17 @@ snd_device_t auto_hal_get_snd_device_for_car_audio_stream(int car_audio_stream)
             __func__, car_audio_stream);
     }
     return snd_device;
+}
+
+bool auto_hal_overwrite_priority_for_auto(struct stream_in *in)
+{
+    /* Don't use the priority_in stream when the source is
+     * AUDIO_SOURCE_ECHO_REFERENCE because the platform_get_input_snd_device
+     * call (below) needs to set the snd_device based the echo ref stream and
+     * NOT based on higher priority streams (such as concurrent recording
+     * streams from the mic) */
+
+    return (in->source == AUDIO_SOURCE_ECHO_REFERENCE);
 }
 
 int auto_hal_get_audio_port(struct audio_hw_device *dev __unused,

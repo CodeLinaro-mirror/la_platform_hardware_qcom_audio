@@ -333,6 +333,7 @@ bool platform_check_codec_dsd_support(void *platform);
 bool platform_check_codec_asrc_support(void *platform);
 int platform_get_backend_index(snd_device_t snd_device);
 int platform_get_ext_disp_type(void *platform);
+int platform_get_is_afe_loopback_enabled(void *platform);
 void platform_invalidate_hdmi_config(void *platform);
 void platform_invalidate_backend_config(void * platform,snd_device_t snd_device);
 bool platform_get_spkr_hph_single_be_native_concurrency_flag();
@@ -423,6 +424,8 @@ int platform_set_hdmi_channels_v2(void *platform, int channel_count,
 int platform_get_display_port_ctl_index(int controller, int stream);
 bool platform_is_call_proxy_snd_device(snd_device_t snd_device);
 void platform_set_audio_source_delay(audio_source_t audio_source, int delay_ms);
+bool platform_set_fluence_nn_state(void *platform, bool start);
+int platform_get_fluence_nn_state(void *platform);
 
 int platform_get_audio_source_index(const char *audio_source_name);
 bool platform_check_and_update_island_power_status(void *platform,
