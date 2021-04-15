@@ -276,7 +276,7 @@ int cin_open_input_stream(struct stream_in *in)
             compress_close(cin_data->compr);
             cin_data->compr = NULL;
         }
-        ret = -EIO;
+        return -EIO;
     } else {
         ret = 0;
     }
