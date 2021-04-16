@@ -1707,12 +1707,10 @@
     </path>
 
     <path name="pri-hfp-sco-wb">
-        <ctl name="PRI_TDM_RX_0 SampleRate" value="KHZ_16" />
         <path name="pri-hfp-sco" />
     </path>
 
     <path name="sec-hfp-sco-wb">
-        <ctl name="PRI_TDM_RX_1 SampleRate" value="KHZ_16" />
         <path name="sec-hfp-sco" />
     </path>
 
@@ -1777,12 +1775,10 @@
     </path>
 
     <path name="pri-hfp-sco-wb-downlink">
-        <ctl name="PRI_TDM_TX_0 SampleRate" value="KHZ_16" />
         <path name="pri-hfp-sco-downlink" />
     </path>
 
     <path name="sec-hfp-sco-wb-downlink">
-        <ctl name="PRI_TDM_TX_1 SampleRate" value="KHZ_16" />
         <path name="sec-hfp-sco-downlink" />
     </path>
 
