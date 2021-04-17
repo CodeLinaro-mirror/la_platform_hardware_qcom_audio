@@ -1237,6 +1237,9 @@ static int qap_stream_start_l(struct stream_out *out)
     } else
         ERROR_MSG("QAP stream not yet opened, drop this cmd");
 
+    /* apply default volume at start of the qap stream */
+    qap_ms12_volume_easing_cmd(out, 1.0, 1.0, 0);
+
     DEBUG_MSG("exit");
     return ret;
 
@@ -1465,6 +1468,25 @@ static int get_buffer_latency(struct stream_out *out, uint32_t buffer_size, uint
     return 0;
 }
 
+/* Returns the ms12 graph latency from lookup table in msec.
+ * pass ms12_latency_value pointer to get ms12 latency
+ */
+int get_ms12_graph_latency(struct stream_out *out, int *ms12_graph_latency)
+{
+    int ret = 0;
+
+    if (NULL == out || NULL == out->qap_stream_handle || NULL == ms12_graph_latency) {
+        fprintf(stderr, "!!!! Error Stream config is NULL \n");
+        return -EINVAL;
+    }
+
+    uint32_t param_id = MS12_STREAM_GET_LATENCY;
+
+    ret = qap_module_cmd(out->qap_stream_handle, QAP_MODULE_CMD_GET_PARAM, sizeof(param_id), &param_id, NULL, ms12_graph_latency);
+
+    return ret;
+}
+
 /* Returns the number of frames rendered to outside observer. */
 static int qap_get_rendered_frames(struct stream_out *out, uint64_t *frames)
 {
@@ -1474,7 +1496,10 @@ static int qap_get_rendered_frames(struct stream_out *out, uint64_t *frames)
     uint32_t kernel_latency = 0;
     uint32_t dsp_latency = 0;
     uint64_t signed_frames = 0;
+    int ms12_latency = 0;
     struct qap_module *qap_mod = NULL;
+    int ms12_latency_sample = 0;
+    int ms12_latency_addon = 0;
 
     qap_mod = get_qap_module_for_input_stream_l(out);
     if (!qap_mod || !qap_mod->session_handle|| !out->qap_stream_handle) {
@@ -1483,8 +1508,16 @@ static int qap_get_rendered_frames(struct stream_out *out, uint64_t *frames)
         return -EINVAL;
     }
 
+    if (property_get_bool("vendor.audio.qap.ms12_latency_realtime", false)) {
+        ms12_latency_addon = property_get_int32("vendor.audio.qap.ms12_latency_addon", 0);
 
-     module_latency = MS12_LATENCY;
+        get_ms12_graph_latency(out, &ms12_latency);
+        ms12_latency_sample = 48 * (ms12_latency + ms12_latency_addon);
+    } else {
+        ms12_latency_sample = MS12_LATENCY;
+    }
+
+     module_latency = ms12_latency_sample;
     //Get kernel Latency
     for (i = MAX_QAP_MODULE_OUT - 1; i >= 0; i--) {
         if (qap_mod->stream_out[i] == NULL) {
@@ -2287,6 +2320,8 @@ static void qap_session_callback(qap_session_handle_t session_handle __unused,
                     }
                     if (devices == 0 || !p_qap->hdmi_connect) {
                         devices = device;
+                    } else if (p_qap->hdmi_connect) {
+                        devices = AUDIO_DEVICE_OUT_AUX_DIGITAL;
                     }
 
                     flags = AUDIO_OUTPUT_FLAG_DIRECT;
