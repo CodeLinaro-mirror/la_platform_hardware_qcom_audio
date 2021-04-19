@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019-2020, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2019-2021, The Linux Foundation. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -43,6 +43,15 @@
 #include "audio_extn.h"
 #include "AudioVoice.h"
 #include "PalApi.h"
+#include "PalDefs.h"
+
+
+/* DTMF Generator Params */
+#define AUDIO_PARAMETER_KEY_DTMF_HIGH_FREQ "dtmf_high_freq"
+#define AUDIO_PARAMETER_KEY_DTMF_LOW_FREQ "dtmf_low_freq"
+#define AUDIO_PARAMETER_KEY_DTMF_TONE_GAIN "dtmf_tone_gain"
+#define AUDIO_PARAMETER_KEY_DTMF_DURATION_MS "dtmf_duration_ms"
+
 
 int AudioVoice::SetMode(const audio_mode_t mode) {
     int ret = 0;
@@ -255,6 +264,11 @@ int AudioVoice::VoiceOutSetParameters(const char *kvpairs) {
     pal_device_id_t* pal_device_ids = NULL;
     uint16_t device_count = 0;
     struct str_parms *parms = (str_parms *)NULL;
+    uint16_t high_freq = 0;
+    uint16_t low_freq = 0;
+    uint16_t gain = 0;
+    int16_t duration_ms = 0;
+    pal_param_dtmf_gen_tone_cfg_t dtmf_gen_cfg;
 
     ALOGD("%s Enter", __func__);
     parms = str_parms_create_str(kvpairs);
@@ -263,7 +277,7 @@ int AudioVoice::VoiceOutSetParameters(const char *kvpairs) {
        return -EINVAL;
     }
     err = str_parms_get_str(parms, AUDIO_PARAMETER_STREAM_ROUTING, value, sizeof(value));
-    str_parms_destroy(parms);
+
     if (err >= 0) {
         rx_device = atoi(value);
         if ((device_count = popcount(rx_device)) == 0) {
@@ -312,7 +326,37 @@ int AudioVoice::VoiceOutSetParameters(const char *kvpairs) {
 
         free(pal_device_ids);
     }
-    return ret;
+    err = str_parms_get_str(parms, AUDIO_PARAMETER_KEY_DTMF_HIGH_FREQ, value, sizeof(value));
+    if (err >= 0) {
+        high_freq = atoi(value);
+    }
+    err = str_parms_get_str(parms, AUDIO_PARAMETER_KEY_DTMF_LOW_FREQ, value, sizeof(value));
+    if (err >= 0) {
+        low_freq = atoi(value);
+    }
+    err = str_parms_get_str(parms, AUDIO_PARAMETER_KEY_DTMF_TONE_GAIN, value, sizeof(value));
+    if (err >= 0) {
+        gain = atoi(value);
+    }
+    err = str_parms_get_str(parms, AUDIO_PARAMETER_KEY_DTMF_DURATION_MS, value, sizeof(value));
+    if (err >= 0) {
+        duration_ms = atoi(value);
+        dtmf_gen_cfg.high_freq = high_freq;
+        dtmf_gen_cfg.low_freq = low_freq;
+        dtmf_gen_cfg.gain = gain;
+        dtmf_gen_cfg.duration_ms = duration_ms;
+        ret = pal_set_param(PAL_PARAM_ID_DTMF_GEN_TONE_CFG,
+            (void*)&dtmf_gen_cfg,
+            sizeof(pal_param_dtmf_gen_tone_cfg_t));
+        if (ret!=0) {
+            ALOGE("%s: pal set param failed for dtmf generator",__func__);
+        }
+        ALOGI("%s: pal set param success for dtmf generator", __func__);
+    }
+
+str_parms_destroy(parms);
+ALOGD("%s: exit", __func__);
+return ret;
 }
 
 int AudioVoice::UpdateCallState(uint32_t vsid, int call_state) {
