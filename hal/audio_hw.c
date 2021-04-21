@@ -1786,6 +1786,9 @@ static void check_usecases_codec_backend(struct audio_device *adev,
             }
         }
 
+        /* Need to set device ch map as adm close would reset the map in driver */
+        platform_check_and_set_device_ch_map(adev->platform, snd_device);
+
         /* Re-route all the usecases on the shared backend other than the
            specified usecase to new snd devices */
         list_for_each(node, &adev->usecase_list) {

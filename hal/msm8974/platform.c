@@ -9377,6 +9377,43 @@ static int platform_get_voice_call_backend(struct audio_device* adev)
    return backend_idx;
 }
 
+bool platform_spkr_i2s_interface(struct platform_data *my_data,
+                                 snd_device_t snd_device)
+{
+    bool ret = false;
+    int be_id = -1;
+
+    if (snd_device == SND_DEVICE_OUT_SPEAKER) {
+        be_id = platform_get_backend_index(snd_device);
+        if ((be_id == PRIM_META_MI2S_RX_BACKEND) ||
+             (be_id == SEC_META_MI2S_RX_BACKEND) ||
+             (be_id == PRIM_MI2S_RX_BACKEND))
+            ret = true;
+    }
+
+    return ret;
+}
+
+void platform_check_and_set_device_ch_map(void *platform,
+                                          snd_device_t snd_device)
+{
+    struct platform_data *my_data = (struct platform_data *)platform;
+    int device_be_idx = platform_get_snd_device_backend_index(snd_device);
+
+    /*
+     * set spkr map in following cases -
+     * 1. default codec backend
+     * 2. snd device is speaker and uses i2s backend id
+     */
+    if ((my_data->spkr_ch_map != NULL) &&
+        ((platform_get_backend_index(snd_device) == DEFAULT_CODEC_BACKEND) ||
+         (platform_spkr_i2s_interface(my_data, snd_device)))) {
+        ALOGD("%s: set channel map", __func__);
+        platform_set_channel_map(my_data, my_data->spkr_ch_map->num_ch,
+                                 my_data->spkr_ch_map->chmap, -1, device_be_idx);
+    }
+}
+
 /*
  * configures afe with bit width and Sample Rate
  */
@@ -9487,8 +9524,9 @@ static int platform_set_codec_backend_cfg(struct audio_device* adev,
 
         if (backend_idx == USB_AUDIO_RX_BACKEND ||
                 backend_idx == USB_AUDIO_TX_BACKEND ||
-                ((backend_idx == DEFAULT_CODEC_BACKEND) &&
-                (my_data->use_sprk_default_sample_rate == false)) ) {
+                ((backend_idx == DEFAULT_CODEC_BACKEND) ||
+                    (platform_spkr_i2s_interface(my_data, snd_device)) &&
+                 (my_data->use_sprk_default_sample_rate == false)) ) {
             switch (sample_rate) {
             case 32000:
                     rate_str = "KHZ_32";
@@ -10301,13 +10339,11 @@ bool platform_check_and_set_codec_backend_cfg(struct audio_device* adev,
     int backend_idx = DEFAULT_CODEC_BACKEND;
     int new_snd_devices[SND_DEVICE_OUT_END] = {0};
     int i, num_devices = 1;
-    int device_be_idx = -1;
     bool ret = false;
     struct platform_data *my_data = (struct platform_data *)adev->platform;
     struct audio_backend_cfg backend_cfg;
 
     backend_idx = platform_get_backend_index(snd_device);
-    device_be_idx = platform_get_snd_device_backend_index(snd_device);
 
     if ((usecase->type == AFE_LOOPBACK) ||
         (usecase->type == DTMF_PLAYBACK)) {
@@ -10347,10 +10383,7 @@ bool platform_check_and_set_codec_backend_cfg(struct audio_device* adev,
           backend_cfg.sample_rate, backend_cfg.channels, backend_idx, usecase->id,
           platform_get_snd_device_name(snd_device));
 
-    if ((my_data->spkr_ch_map != NULL) &&
-        (platform_get_backend_index(snd_device) == DEFAULT_CODEC_BACKEND))
-        platform_set_channel_map(my_data, my_data->spkr_ch_map->num_ch,
-                                 my_data->spkr_ch_map->chmap, -1, device_be_idx);
+    platform_check_and_set_device_ch_map((void *)my_data, snd_device);
 
     if (platform_split_snd_device(my_data, snd_device, &num_devices,
                                   new_snd_devices) < 0)
