@@ -10089,13 +10089,18 @@ static bool platform_check_codec_backend_cfg(struct audio_device* adev,
                     }
                 }
 
-                /* WCD9335 support native SR only 44.1Khz, hence reset
-                 * multiple SR of 44.1Khz to 44.1Khz
+                /* WCD9335 support native SR only 44.1Khz and bit width upto 24 bit, hence reset
+                 * Sample rate which are multiples of 44.1Khz to 44.1Khz
+                 * and Reset Bit Width to 24 if greater than 24bit
                  */
-                if ((strcmp(my_data->codec_variant,"WCD9335")) &&
-                    (sample_rate % OUTPUT_SAMPLING_RATE_44100 == 0)) {
-                    sample_rate = 44100;
-                    ALOGD("%s:Reset Sampling rate to %d",  __func__, sample_rate);
+                if (strcmp(my_data->codec_variant,"WCD9335")) {
+                    if (bit_width > 24)
+                        bit_width = 24;
+
+                    if (sample_rate % OUTPUT_SAMPLING_RATE_44100 == 0)
+                        sample_rate = 44100;
+
+                    ALOGD("%s: Updated Sampling rate: %d, Bit width: %d ",  __func__, sample_rate, bit_width);
                 }
             }
         } else if (na_mode != NATIVE_AUDIO_MODE_MULTIPLE_MIX_IN_CODEC) {
