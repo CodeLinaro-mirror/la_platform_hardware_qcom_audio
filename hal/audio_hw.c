@@ -1786,6 +1786,9 @@ static void check_usecases_codec_backend(struct audio_device *adev,
             }
         }
 
+        /* Need to set device ch map as adm close would reset the map in driver */
+        platform_check_and_set_device_ch_map(adev->platform, snd_device);
+
         /* Re-route all the usecases on the shared backend other than the
            specified usecase to new snd devices */
         list_for_each(node, &adev->usecase_list) {
@@ -3045,6 +3048,16 @@ static int stop_input_stream(struct stream_in *in)
     }
 
     priority_in = get_priority_input(adev);
+
+    /* Disable echo reference if there are no active input, hfp call
+     * and sound trigger while stop input stream
+     */
+    if (adev_get_active_input(adev) == NULL &&
+        !audio_extn_hfp_is_active(adev) &&
+        !audio_extn_sound_trigger_check_ec_ref_enable())
+        platform_set_echo_reference(adev, false, AUDIO_DEVICE_NONE);
+    else
+        audio_extn_sound_trigger_update_ec_ref_status(false);
 
     if (audio_extn_ext_hw_plugin_usecase_stop(adev->ext_hw_plugin, uc_info))
         ALOGE("%s: failed to stop ext hw plugin", __func__);
@@ -9614,15 +9627,6 @@ static void adev_close_input_stream(struct audio_hw_device *dev,
      */
     audio_extn_snd_mon_unregister_listener(stream);
 
-    /* Disable echo reference if there are no active input, hfp call
-     * and sound trigger while closing input stream
-     */
-    if (adev_get_active_input(adev) == NULL &&
-        !audio_extn_hfp_is_active(adev) &&
-        !audio_extn_sound_trigger_check_ec_ref_enable())
-        platform_set_echo_reference(adev, false, AUDIO_DEVICE_NONE);
-    else
-        audio_extn_sound_trigger_update_ec_ref_status(false);
     if (in == NULL) {
         ALOGE("%s: audio_stream_in ptr is NULL", __func__);
         return;

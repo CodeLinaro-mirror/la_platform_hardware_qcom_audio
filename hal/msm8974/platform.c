@@ -592,6 +592,7 @@ static const char * const device_table[SND_DEVICE_MAX] = {
     [SND_DEVICE_OUT_SPEAKER_DSD] = "speaker-dsd",
     [SND_DEVICE_OUT_HEADPHONES_44_1] = "headphones-44.1",
     [SND_DEVICE_OUT_LINE] = "line",
+    [SND_DEVICE_OUT_LINE_44_1] = "line-44.1",
     [SND_DEVICE_OUT_SPEAKER_AND_HEADPHONES] = "speaker-and-headphones",
     [SND_DEVICE_OUT_SPEAKER_SAFE_AND_HEADPHONES] = "speaker-safe-and-headphones",
     [SND_DEVICE_OUT_SPEAKER_AND_LINE] = "speaker-and-line",
@@ -900,6 +901,7 @@ static int acdb_device_table[SND_DEVICE_MAX] = {
     [SND_DEVICE_OUT_SPEAKER_REVERSE] = 14,
     [SND_DEVICE_OUT_SPEAKER_SAFE] = 14,
     [SND_DEVICE_OUT_LINE] = 10,
+    [SND_DEVICE_OUT_LINE_44_1] = 10,
     [SND_DEVICE_OUT_HEADPHONES] = 10,
     [SND_DEVICE_OUT_HEADPHONES_DSD] = 10,
     [SND_DEVICE_OUT_HEADPHONES_44_1] = 10,
@@ -1164,6 +1166,7 @@ static struct name_to_index snd_device_name_index[SND_DEVICE_MAX] = {
     {TO_NAME_INDEX(SND_DEVICE_OUT_SPEAKER_DSD)},
     {TO_NAME_INDEX(SND_DEVICE_OUT_HEADPHONES_44_1)},
     {TO_NAME_INDEX(SND_DEVICE_OUT_LINE)},
+    {TO_NAME_INDEX(SND_DEVICE_OUT_LINE_44_1)},
     {TO_NAME_INDEX(SND_DEVICE_OUT_SPEAKER_AND_HEADPHONES)},
     {TO_NAME_INDEX(SND_DEVICE_OUT_SPEAKER_SAFE_AND_HEADPHONES)},
     {TO_NAME_INDEX(SND_DEVICE_OUT_SPEAKER_AND_LINE)},
@@ -2089,6 +2092,9 @@ void platform_set_echo_reference(struct audio_device *adev, bool enable,
         if (adev->snd_dev_ref_cnt[SND_DEVICE_OUT_HEADPHONES_44_1] > 0)
             strlcat(ec_ref_mixer_path, " headphones-44.1",
                     MIXER_PATH_MAX_LENGTH);
+        else if (adev->snd_dev_ref_cnt[SND_DEVICE_OUT_LINE_44_1] > 0)
+            strlcat(ec_ref_mixer_path, " line-44.1",
+                    MIXER_PATH_MAX_LENGTH);
         else if (adev->snd_dev_ref_cnt[SND_DEVICE_OUT_SPEAKER_VBAT] > 0)
             strlcat(ec_ref_mixer_path, " speaker-vbat",
                     MIXER_PATH_MAX_LENGTH);
@@ -2406,6 +2412,7 @@ static void set_platform_defaults(struct platform_data * my_data)
     backend_tag_table[SND_DEVICE_OUT_SPEAKER_AND_HEADPHONES_HIFI_FILTER] =
         strdup("speaker-and-headphones-hifi-filter");
     backend_tag_table[SND_DEVICE_OUT_HEADPHONES_44_1] = strdup("headphones-44.1");
+    backend_tag_table[SND_DEVICE_OUT_LINE_44_1] = strdup("line-44.1");
     backend_tag_table[SND_DEVICE_OUT_VOICE_SPEAKER_VBAT] = strdup("voice-speaker-vbat");
     backend_tag_table[SND_DEVICE_OUT_VOICE_SPEAKER_2_VBAT] = strdup("voice-speaker-2-vbat");
     backend_tag_table[SND_DEVICE_OUT_BT_A2DP] = strdup("bt-a2dp");
@@ -2435,6 +2442,7 @@ static void set_platform_defaults(struct platform_data * my_data)
     hw_interface_table[SND_DEVICE_OUT_SPEAKER_SAFE] = strdup("SLIMBUS_0_RX");
     hw_interface_table[SND_DEVICE_OUT_SPEAKER_VBAT] = strdup("SLIMBUS_0_RX");
     hw_interface_table[SND_DEVICE_OUT_LINE] = strdup("SLIMBUS_6_RX");
+    hw_interface_table[SND_DEVICE_OUT_LINE_44_1] = strdup("SLIMBUS_5_RX");
     hw_interface_table[SND_DEVICE_OUT_HEADPHONES] = strdup("SLIMBUS_6_RX");
     hw_interface_table[SND_DEVICE_OUT_HEADPHONES_DSD] = strdup("SLIMBUS_2_RX");
     hw_interface_table[SND_DEVICE_OUT_HEADPHONES_44_1] = strdup("SLIMBUS_5_RX");
@@ -3810,7 +3818,7 @@ acdb_init_fail:
     /* initialize backend config */
     for (idx = 0; idx < MAX_CODEC_BACKENDS; idx++) {
         my_data->current_backend_cfg[idx].sample_rate = CODEC_BACKEND_DEFAULT_SAMPLE_RATE;
-        if (idx == HEADPHONE_44_1_BACKEND)
+        if (idx == HEADPHONE_44_1_BACKEND || idx == LINE_44_1_BACKEND)
             my_data->current_backend_cfg[idx].sample_rate = OUTPUT_SAMPLING_RATE_44100;
         my_data->current_backend_cfg[idx].bit_width = CODEC_BACKEND_DEFAULT_BIT_WIDTH;
         my_data->current_backend_cfg[idx].channels = CODEC_BACKEND_DEFAULT_CHANNELS;
@@ -3837,6 +3845,11 @@ acdb_init_fail:
     my_data->current_backend_cfg[HEADPHONE_44_1_BACKEND].bitwidth_mixer_ctl =
         strdup("SLIM_5_RX Format");
     my_data->current_backend_cfg[HEADPHONE_44_1_BACKEND].samplerate_mixer_ctl =
+        strdup("SLIM_5_RX SampleRate");
+
+    my_data->current_backend_cfg[LINE_44_1_BACKEND].bitwidth_mixer_ctl =
+        strdup("SLIM_5_RX Format");
+    my_data->current_backend_cfg[LINE_44_1_BACKEND].samplerate_mixer_ctl =
         strdup("SLIM_5_RX SampleRate");
 
     if (!my_data->is_slimbus_interface) {
@@ -3928,43 +3941,47 @@ acdb_init_fail:
         if (!strncmp(snd_card_name, "qcs405", strlen("qcs405"))) {
 
             if (!strncmp(snd_card_name, "qcs405-csra", strlen("qcs405-csra"))) {
+                int32_t be_id;
                 if (!strncmp(platform_get_snd_device_backend_interface(SND_DEVICE_OUT_SPEAKER),
                     "PRI_META_MI2S_RX", sizeof("PRI_META_MI2S_RX"))) {
-                    my_data->current_backend_cfg[DEFAULT_CODEC_BACKEND].bitwidth_mixer_ctl =
+                    be_id = PRIM_META_MI2S_RX_BACKEND;
+                    my_data->current_backend_cfg[be_id].bitwidth_mixer_ctl =
                         strdup("PRIM_META_MI2S_RX Format");
-                    my_data->current_backend_cfg[DEFAULT_CODEC_BACKEND].samplerate_mixer_ctl =
+                    my_data->current_backend_cfg[be_id].samplerate_mixer_ctl =
                         strdup("PRIM_META_MI2S_RX SampleRate");
-                    my_data->current_backend_cfg[DEFAULT_CODEC_BACKEND].channels_mixer_ctl =
+                    my_data->current_backend_cfg[be_id].channels_mixer_ctl =
                         strdup("PRIM_META_MI2S_RX Channels");
                 } else if (!strncmp(platform_get_snd_device_backend_interface(SND_DEVICE_OUT_SPEAKER),
                     "SEC_META_MI2S_RX", sizeof("SEC_META_MI2S_RX"))) {
-                    my_data->current_backend_cfg[DEFAULT_CODEC_BACKEND].bitwidth_mixer_ctl =
+                    be_id = SEC_META_MI2S_RX_BACKEND;
+                    my_data->current_backend_cfg[be_id].bitwidth_mixer_ctl =
                         strdup("SEC_META_MI2S_RX Format");
-                    my_data->current_backend_cfg[DEFAULT_CODEC_BACKEND].samplerate_mixer_ctl =
+                    my_data->current_backend_cfg[be_id].samplerate_mixer_ctl =
                         strdup("SEC_META_MI2S_RX SampleRate");
-                    my_data->current_backend_cfg[DEFAULT_CODEC_BACKEND].channels_mixer_ctl =
+                    my_data->current_backend_cfg[be_id].channels_mixer_ctl =
                         strdup("SEC_META_MI2S_RX Channels");
                 } else {
-                    my_data->current_backend_cfg[DEFAULT_CODEC_BACKEND].bitwidth_mixer_ctl =
+                    be_id = PRIM_MI2S_RX_BACKEND;
+                    my_data->current_backend_cfg[be_id].bitwidth_mixer_ctl =
                         strdup("PRIM_MI2S_RX Format");
-                    my_data->current_backend_cfg[DEFAULT_CODEC_BACKEND].samplerate_mixer_ctl =
+                    my_data->current_backend_cfg[be_id].samplerate_mixer_ctl =
                         strdup("PRIM_MI2S_RX SampleRate");
-                    my_data->current_backend_cfg[DEFAULT_CODEC_BACKEND].channels_mixer_ctl =
+                    my_data->current_backend_cfg[be_id].channels_mixer_ctl =
                         strdup("PRIM_MI2S_RX Channels");
                 }
-                    my_data->current_backend_cfg[DSD_NATIVE_BACKEND].bitwidth_mixer_ctl =
+                my_data->current_backend_cfg[DSD_NATIVE_BACKEND].bitwidth_mixer_ctl =
                         strdup("PRIM_MI2S_RX Format");
-                    my_data->current_backend_cfg[DSD_NATIVE_BACKEND].samplerate_mixer_ctl =
+                my_data->current_backend_cfg[DSD_NATIVE_BACKEND].samplerate_mixer_ctl =
                         strdup("PRIM_MI2S_RX SampleRate");
-                    my_data->current_backend_cfg[DSD_NATIVE_BACKEND].channels_mixer_ctl =
+                my_data->current_backend_cfg[DSD_NATIVE_BACKEND].channels_mixer_ctl =
                         strdup("PRIM_MI2S_RX Channels");
-
             } else {
-               my_data->current_backend_cfg[DEFAULT_CODEC_BACKEND].bitwidth_mixer_ctl =
-                   strdup("WSA_CDC_DMA_RX_0 Format");
-               my_data->current_backend_cfg[DEFAULT_CODEC_BACKEND].samplerate_mixer_ctl =
-                   strdup("WSA_CDC_DMA_RX_0 SampleRate");
+                my_data->current_backend_cfg[DEFAULT_CODEC_BACKEND].bitwidth_mixer_ctl =
+                        strdup("WSA_CDC_DMA_RX_0 Format");
+                my_data->current_backend_cfg[DEFAULT_CODEC_BACKEND].samplerate_mixer_ctl =
+                        strdup("WSA_CDC_DMA_RX_0 SampleRate");
             }
+
             my_data->current_backend_cfg[DEFAULT_CODEC_TX_BACKEND].bitwidth_mixer_ctl =
                 strdup("VA_CDC_DMA_TX_0 Format");
             my_data->current_backend_cfg[DEFAULT_CODEC_TX_BACKEND].samplerate_mixer_ctl =
@@ -5454,43 +5471,62 @@ int platform_get_backend_index(snd_device_t snd_device)
 
     if (snd_device >= SND_DEVICE_OUT_BEGIN && snd_device < SND_DEVICE_OUT_END) {
         if (backend_tag_table[snd_device] != NULL) {
-                if (strncmp(backend_tag_table[snd_device], "headphones-44.1",
-                            sizeof("headphones-44.1")) == 0)
-                        port = HEADPHONE_44_1_BACKEND;
-                else if (strncmp(backend_tag_table[snd_device], "headphones-hifi-filter",
-                            sizeof("headphones-hifi-filter")) == 0)
-                        port = HEADPHONE_BACKEND;
-                else if (strncmp(backend_tag_table[snd_device], "headphones-dsd",
-                            sizeof("headphones-dsd")) == 0)
-                        port = DSD_NATIVE_BACKEND;
-                else if (strncmp(backend_tag_table[snd_device], "headphones",
-                            sizeof("headphones")) == 0)
-                        port = HEADPHONE_BACKEND;
-                else if (strncmp(backend_tag_table[snd_device], "headset",
-                            sizeof("headset")) == 0)
-                        port = HEADPHONE_BACKEND;
-                else if (strcmp(backend_tag_table[snd_device], "hdmi") == 0)
-                        port = HDMI_RX_BACKEND;
-                else if (strcmp(backend_tag_table[snd_device], "display-port") == 0)
-                        port = DISP_PORT_RX_BACKEND;
-                else if (strcmp(backend_tag_table[snd_device], "display-port1") == 0)
-                        port = DISP_PORT1_RX_BACKEND;
-                else if ((strcmp(backend_tag_table[snd_device], "usb-headphones") == 0) ||
-                           (strcmp(backend_tag_table[snd_device], "usb-headset") == 0))
-                        port = USB_AUDIO_RX_BACKEND;
-                else if (!strncmp(platform_get_snd_device_backend_interface(snd_device),
-                         "SEC_MI2S_RX", sizeof("SEC_MI2S_RX")))
-                        port = SEC_MI2S_RX_BACKEND;
-                else if (!strncmp(platform_get_snd_device_backend_interface(snd_device),
-                         "TERT_MI2S_RX", sizeof("TERT_MI2S_RX")))
-                        port = TERT_MI2S_RX_BACKEND;
-                else if (!strncmp(platform_get_snd_device_backend_interface(snd_device),
-                         "QUAT_MI2S_RX", sizeof("QUAT_MI2S_RX")))
-                        port = QUAT_MI2S_RX_BACKEND;
-                else if (strcmp(backend_tag_table[snd_device], "spdif") == 0)
-                        port = SPDIF_RX_BACKEND;
-                else if (strcmp(backend_tag_table[snd_device], "optical") == 0)
-                        port = OPTICAL_RX_BACKEND;
+            if (strncmp(backend_tag_table[snd_device], "headphones-44.1",
+                        sizeof("headphones-44.1")) == 0)
+                port = HEADPHONE_44_1_BACKEND;
+            else if (strncmp(backend_tag_table[snd_device], "line-44.1",
+                        sizeof("line-44.1")) == 0)
+                port = LINE_44_1_BACKEND;
+            else if (strncmp(backend_tag_table[snd_device], "headphones-hifi-filter",
+                        sizeof("headphones-hifi-filter")) == 0)
+                port = HEADPHONE_BACKEND;
+            else if (strncmp(backend_tag_table[snd_device], "headphones-dsd",
+                        sizeof("headphones-dsd")) == 0)
+                port = DSD_NATIVE_BACKEND;
+            else if (strncmp(backend_tag_table[snd_device], "headphones",
+                        sizeof("headphones")) == 0)
+                port = HEADPHONE_BACKEND;
+            else if (strncmp(backend_tag_table[snd_device], "headset",
+                     sizeof("headset")) == 0)
+                port = HEADPHONE_BACKEND;
+            else if (strcmp(backend_tag_table[snd_device], "hdmi") == 0)
+                port = HDMI_RX_BACKEND;
+            else if (strcmp(backend_tag_table[snd_device], "display-port") == 0)
+                port = DISP_PORT_RX_BACKEND;
+            else if (strcmp(backend_tag_table[snd_device], "display-port1") == 0)
+                port = DISP_PORT1_RX_BACKEND;
+            else if ((strcmp(backend_tag_table[snd_device], "usb-headphones") == 0) ||
+                      (strcmp(backend_tag_table[snd_device], "usb-headset") == 0))
+                port = USB_AUDIO_RX_BACKEND;
+            else if (!strncmp(platform_get_snd_device_backend_interface(snd_device),
+                     "SEC_MI2S_RX", sizeof("SEC_MI2S_RX")))
+                port = SEC_MI2S_RX_BACKEND;
+            else if (!strncmp(platform_get_snd_device_backend_interface(snd_device),
+                     "TERT_MI2S_RX", sizeof("TERT_MI2S_RX")))
+                port = TERT_MI2S_RX_BACKEND;
+            else if (!strncmp(platform_get_snd_device_backend_interface(snd_device),
+                     "QUAT_MI2S_RX", sizeof("QUAT_MI2S_RX")))
+                port = QUAT_MI2S_RX_BACKEND;
+            else if (strcmp(backend_tag_table[snd_device], "spdif") == 0)
+                port = SPDIF_RX_BACKEND;
+            else if (strcmp(backend_tag_table[snd_device], "optical") == 0)
+                port = OPTICAL_RX_BACKEND;
+        }
+
+        /*
+         * For few interfaces, need to update port based on snd device
+         * backend interface. Check for such instances here.
+         */
+        if (port == DEFAULT_CODEC_BACKEND) {
+            if (!strncmp(platform_get_snd_device_backend_interface(snd_device),
+                "PRI_META_MI2S_RX", sizeof("PRI_META_MI2S_RX")))
+                port = PRIM_META_MI2S_RX_BACKEND;
+            else if (!strncmp(platform_get_snd_device_backend_interface(snd_device),
+                     "SEC_META_MI2S_RX", sizeof("SEC_META_MI2S_RX")))
+                port = SEC_META_MI2S_RX_BACKEND;
+            else if (!strncmp(platform_get_snd_device_backend_interface(snd_device),
+                     "PRI_MI2S_RX", sizeof("PRI_MI2S_RX")))
+                port = PRIM_MI2S_RX_BACKEND;
         }
     } else if (snd_device >= SND_DEVICE_IN_BEGIN && snd_device < SND_DEVICE_IN_END) {
         port = DEFAULT_CODEC_TX_BACKEND;
@@ -6777,9 +6813,7 @@ snd_device_t platform_get_output_snd_device(void *platform, struct stream_out *o
         if (OUTPUT_SAMPLING_RATE_44100 == sample_rate &&
             NATIVE_AUDIO_MODE_SRC == na_mode &&
             !audio_extn_get_anc_enabled()) {
-
             snd_device = SND_DEVICE_OUT_HEADPHONES_44_1;
-
         } else if (devices & AUDIO_DEVICE_OUT_WIRED_HEADSET
             && audio_extn_get_anc_enabled()) {
                 if (audio_extn_should_use_fb_anc())
@@ -6798,6 +6832,13 @@ snd_device_t platform_get_output_snd_device(void *platform, struct stream_out *o
         } else if (audio_extn_is_hifi_filter_enabled(adev, out, snd_device,
              my_data->codec_variant, channel_count, 1)) {
                 snd_device = SND_DEVICE_OUT_HEADPHONES_HIFI_FILTER;
+        } else if (NATIVE_AUDIO_MODE_MULTIPLE_MIX_IN_DSP == na_mode &&
+                   (sample_rate % OUTPUT_SAMPLING_RATE_44100 == 0) &&
+                   (strcmp(my_data->codec_variant,"WCD9335"))) {
+                if (devices & AUDIO_DEVICE_OUT_LINE)
+                    snd_device = SND_DEVICE_OUT_LINE_44_1;
+                else
+                    snd_device = SND_DEVICE_OUT_HEADPHONES_44_1;
         } else if (devices & AUDIO_DEVICE_OUT_LINE) {
                 snd_device = SND_DEVICE_OUT_LINE;
         } else
@@ -9336,6 +9377,43 @@ static int platform_get_voice_call_backend(struct audio_device* adev)
    return backend_idx;
 }
 
+bool platform_spkr_i2s_interface(struct platform_data *my_data,
+                                 snd_device_t snd_device)
+{
+    bool ret = false;
+    int be_id = -1;
+
+    if (snd_device == SND_DEVICE_OUT_SPEAKER) {
+        be_id = platform_get_backend_index(snd_device);
+        if ((be_id == PRIM_META_MI2S_RX_BACKEND) ||
+             (be_id == SEC_META_MI2S_RX_BACKEND) ||
+             (be_id == PRIM_MI2S_RX_BACKEND))
+            ret = true;
+    }
+
+    return ret;
+}
+
+void platform_check_and_set_device_ch_map(void *platform,
+                                          snd_device_t snd_device)
+{
+    struct platform_data *my_data = (struct platform_data *)platform;
+    int device_be_idx = platform_get_snd_device_backend_index(snd_device);
+
+    /*
+     * set spkr map in following cases -
+     * 1. default codec backend
+     * 2. snd device is speaker and uses i2s backend id
+     */
+    if ((my_data->spkr_ch_map != NULL) &&
+        ((platform_get_backend_index(snd_device) == DEFAULT_CODEC_BACKEND) ||
+         (platform_spkr_i2s_interface(my_data, snd_device)))) {
+        ALOGD("%s: set channel map", __func__);
+        platform_set_channel_map(my_data, my_data->spkr_ch_map->num_ch,
+                                 my_data->spkr_ch_map->chmap, -1, device_be_idx);
+    }
+}
+
 /*
  * configures afe with bit width and Sample Rate
  */
@@ -9446,8 +9524,9 @@ static int platform_set_codec_backend_cfg(struct audio_device* adev,
 
         if (backend_idx == USB_AUDIO_RX_BACKEND ||
                 backend_idx == USB_AUDIO_TX_BACKEND ||
-                ((backend_idx == DEFAULT_CODEC_BACKEND) &&
-                (my_data->use_sprk_default_sample_rate == false)) ) {
+                ((backend_idx == DEFAULT_CODEC_BACKEND) ||
+                    (platform_spkr_i2s_interface(my_data, snd_device)) &&
+                 (my_data->use_sprk_default_sample_rate == false)) ) {
             switch (sample_rate) {
             case 32000:
                     rate_str = "KHZ_32";
@@ -10009,6 +10088,15 @@ static bool platform_check_codec_backend_cfg(struct audio_device* adev,
                             break;
                     }
                 }
+
+                /* WCD9335 support native SR only 44.1Khz, hence reset
+                 * multiple SR of 44.1Khz to 44.1Khz
+                 */
+                if ((strcmp(my_data->codec_variant,"WCD9335")) &&
+                    (sample_rate % OUTPUT_SAMPLING_RATE_44100 == 0)) {
+                    sample_rate = 44100;
+                    ALOGD("%s:Reset Sampling rate to %d",  __func__, sample_rate);
+                }
             }
         } else if (na_mode != NATIVE_AUDIO_MODE_MULTIPLE_MIX_IN_CODEC) {
             /*
@@ -10044,6 +10132,7 @@ static bool platform_check_codec_backend_cfg(struct audio_device* adev,
         if ((sample_rate % OUTPUT_SAMPLING_RATE_44100 == 0 &&
              backend_idx != HEADPHONE_44_1_BACKEND &&
              backend_idx != HEADPHONE_BACKEND &&
+             backend_idx != LINE_44_1_BACKEND &&
              backend_idx != USB_AUDIO_RX_BACKEND) ||
             sample_rate < OUTPUT_SAMPLING_RATE_44100) {
             sample_rate = CODEC_BACKEND_DEFAULT_SAMPLE_RATE;
@@ -10250,13 +10339,11 @@ bool platform_check_and_set_codec_backend_cfg(struct audio_device* adev,
     int backend_idx = DEFAULT_CODEC_BACKEND;
     int new_snd_devices[SND_DEVICE_OUT_END] = {0};
     int i, num_devices = 1;
-    int device_be_idx = -1;
     bool ret = false;
     struct platform_data *my_data = (struct platform_data *)adev->platform;
     struct audio_backend_cfg backend_cfg;
 
     backend_idx = platform_get_backend_index(snd_device);
-    device_be_idx = platform_get_snd_device_backend_index(snd_device);
 
     if ((usecase->type == AFE_LOOPBACK) ||
         (usecase->type == DTMF_PLAYBACK)) {
@@ -10296,10 +10383,7 @@ bool platform_check_and_set_codec_backend_cfg(struct audio_device* adev,
           backend_cfg.sample_rate, backend_cfg.channels, backend_idx, usecase->id,
           platform_get_snd_device_name(snd_device));
 
-    if ((my_data->spkr_ch_map != NULL) &&
-        (platform_get_backend_index(snd_device) == DEFAULT_CODEC_BACKEND))
-        platform_set_channel_map(my_data, my_data->spkr_ch_map->num_ch,
-                                 my_data->spkr_ch_map->chmap, -1, device_be_idx);
+    platform_check_and_set_device_ch_map((void *)my_data, snd_device);
 
     if (platform_split_snd_device(my_data, snd_device, &num_devices,
                                   new_snd_devices) < 0)
