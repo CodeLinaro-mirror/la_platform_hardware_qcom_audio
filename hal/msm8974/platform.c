@@ -67,6 +67,7 @@
 #define PLATFORM_INFO_XML_PATH_SKUSH  "/etc/audio_platform_info_skush.xml"
 #define PLATFORM_INFO_XML_PATH_SKUW  "/etc/audio_platform_info_skuw.xml"
 #define PLATFORM_INFO_XML_PATH_QRD  "/etc/audio_platform_info_qrd.xml"
+#define PLATFORM_INFO_XML_PATH_IOT_VC "/etc/audio_platform_info_iot_vc.xml"
 #define PLATFORM_INFO_XML_PATH_LAGOON_QRD  "/etc/audio_platform_info_lagoon_qrd.xml"
 #define PLATFORM_INFO_XML_PATH_IOT  "/etc/audio_platform_info_iot.xml"
 #define PLATFORM_INFO_XML_PATH "/etc/audio_platform_info.xml"
@@ -86,6 +87,7 @@
 #define PLATFORM_INFO_XML_PATH_SKUSH "/vendor/etc/audio_platform_info_skush.xml"
 #define PLATFORM_INFO_XML_PATH_SKUW "/vendor/etc/audio_platform_info_skuw.xml"
 #define PLATFORM_INFO_XML_PATH_QRD "/vendor/etc/audio_platform_info_qrd.xml"
+#define PLATFORM_INFO_XML_PATH_IOT_VC "/vendor/etc/audio_platform_info_iot_vc.xml"
 #define PLATFORM_INFO_XML_PATH_LAGOON_QRD  "/vendor/etc/audio_platform_info_lagoon_qrd.xml"
 #define PLATFORM_INFO_XML_PATH_IOT  "/vendor/etc/audio_platform_info_iot.xml"
 #define PLATFORM_INFO_XML_PATH "/vendor/etc/audio_platform_info.xml"
@@ -3471,6 +3473,9 @@ void *platform_init(struct audio_device *adev)
     else if (!strncmp(snd_card_name, "kona-qrd-snd-card",
                sizeof("kona-qrd-snd-card")))
         platform_info_init(PLATFORM_INFO_XML_PATH_QRD, my_data, PLATFORM);
+    else if (!strncmp(snd_card_name, "kona-iot-vc-snd-card",
+               sizeof("kona-iot-vc-snd-card")))
+        platform_info_init(PLATFORM_INFO_XML_PATH_IOT_VC, my_data, PLATFORM);
     else if (!strncmp(snd_card_name, "kona-iot-snd-card",
                sizeof("kona-iot-snd-card")))
         platform_info_init(PLATFORM_INFO_XML_PATH_IOT, my_data, PLATFORM);
