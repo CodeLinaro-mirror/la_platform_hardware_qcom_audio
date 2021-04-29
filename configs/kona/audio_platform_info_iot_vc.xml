@@ -26,6 +26,21 @@
 <!-- OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN -->
 <!-- IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.                          -->
 <audio_platform_info>
+    <custom_mtmx_params param_id="0" in_channel_count="6" out_channel_count="6" 		
+usecase="USECASE_AUDIO_RECORD_VOIP,USECASE_AUDIO_RECORD_COMPRESS2,USECASE_AUDIO_RECORD_COMPRESS3,USECASE_AUDIO_RECORD_COMPRESS4,USECASE_AUDIO_RECORD_COMPRESS5,USECASE_AUDIO_RECORD_COMPRESS6" snd_device="SND_DEVICE_IN_HANDSET_QMIC_AND_EC_REF_LOOPBACK" fe_id="10,18,19,28,29,30" >
+        <custom_mtmx_param_coeffs out_channel_index="0"  values="16384 0 0 0 0 0"/>
+        <custom_mtmx_param_coeffs out_channel_index="1"  values="0 16384 0 0 0 0"/>
+        <custom_mtmx_param_coeffs out_channel_index="2"  values="0 0 16384 0 0 0"/>
+        <custom_mtmx_param_coeffs out_channel_index="3"  values="0 0 0 16384 0 0"/>
+        <custom_mtmx_param_coeffs out_channel_index="4"  values="0 0 0 0 16384 0"/>
+        <custom_mtmx_param_coeffs out_channel_index="5"  values="0 0 0 0 0 16384"/>
+    </custom_mtmx_params>
+    
+    <custom_mtmx_in_params usecase="USECASE_AUDIO_RECORD_VOIP,USECASE_AUDIO_RECORD_COMPRESS2,USECASE_AUDIO_RECORD_COMPRESS3,USECASE_AUDIO_RECORD_COMPRESS4,USECASE_AUDIO_RECORD_COMPRESS5,USECASE_AUDIO_RECORD_COMPRESS6" out_channel_count="6" >
+        <custom_mtmx_param_in_chs in_channel_index="0" channel_count="4" device="AUDIO_DEVICE_IN_BUILTIN_MIC" interface="VA_CDC_DMA_TX_0" />
+        <custom_mtmx_param_in_chs in_channel_index="1" channel_count="2" device="AUDIO_DEVICE_IN_LOOPBACK" interface="AFE_LOOPBACK_TX" />
+    </custom_mtmx_in_params>
+
     <bit_width_configs>
         <device name="SND_DEVICE_OUT_SPEAKER" bit_width="24"/>
     </bit_width_configs>
@@ -304,6 +319,8 @@
         <device name="SND_DEVICE_OUT_SPEAKER_AND_BT_SCO" backend="speaker-and-bt-sco" interface="WSA_CDC_DMA_RX_0-and-SLIMBUS_7_RX"/>
         <device name="SND_DEVICE_OUT_SPEAKER_AND_BT_SCO_WB" backend="speaker-and-bt-sco-wb" interface="WSA_CDC_DMA_RX_0-and-SLIMBUS_7_RX"/>
         <device name="SND_DEVICE_OUT_SPEAKER_AND_BT_SCO_SWB" backend="speaker-and-bt-sco-swb" interface="WSA_CDC_DMA_RX_0-and-SLIMBUS_7_RX"/>
+	    <device name="SND_DEVICE_IN_HANDSET_QMIC_AND_EC_REF_LOOPBACK" backend="handset-mic-and-ec-ref-loopback" interface="VA_CDC_DMA_TX_0-and-AFE_LOOPBACK_TX"/>
+	
     </backend_names>
     <!-- below values are for ref purpose to OEM, doesn't contain actual hardware info on MTP -->
     <microphone_characteristics>

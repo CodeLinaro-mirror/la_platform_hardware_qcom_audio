@@ -7599,8 +7599,19 @@ snd_device_t platform_get_input_snd_device(void *platform,
         in_device = ((out_device == AUDIO_DEVICE_NONE) ?
                       AUDIO_DEVICE_IN_BUILTIN_MIC : in_device) & ~AUDIO_DEVICE_BIT_IN;
 
-        if (in)
+        if (in) {
             snd_device = get_snd_device_for_voice_comm(my_data, in, out_device, in_device);
+            
+            usecase = get_usecase_from_list(adev, uc_id);
+            if (usecase == NULL) {
+                ALOGE("%s: Could not find the record usecase", __func__);
+                snd_device = SND_DEVICE_NONE;
+                goto exit;
+            }
+
+            int ch_count = audio_channel_count_from_in_mask(channel_mask);
+            snd_device = audio_extn_get_loopback_snd_device(adev, usecase, ch_count);
+	}
     } else if (source == AUDIO_SOURCE_MIC) {
         if (in_device & AUDIO_DEVICE_IN_BUILTIN_MIC &&
                 channel_count == 1 ) {
