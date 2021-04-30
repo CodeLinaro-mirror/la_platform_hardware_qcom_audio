@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2020, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2021, The Linux Foundation. All rights reserved.
  * Not a contribution.
  *
  * Copyright (C) 2013 The Android Open Source Project
@@ -250,6 +250,9 @@ enum {
 
     USECASE_AUDIO_PLAYBACK_SYNTHESIZER,
 
+    /* Echo reference capture usecases */
+    USECASE_AUDIO_RECORD_ECHO_REF_EXT,
+
     /*Audio FM Tuner usecase*/
     USECASE_AUDIO_FM_TUNER_EXT,
     /*voip usecase with low latency path*/
@@ -361,6 +364,16 @@ struct stream_config {
     unsigned int bit_width;
 };
 
+typedef struct streams_input_ctxt {
+    struct listnode list;
+    struct stream_in *input;
+} streams_input_ctxt_t;
+
+typedef struct streams_output_ctxt {
+    struct listnode list;
+    struct stream_out *output;
+} streams_output_ctxt_t;
+
 struct stream_inout {
     pthread_mutex_t lock; /* see note below on mutex acquisition order */
     pthread_mutex_t pre_lock; /* acquire before lock to avoid DOS by playback thread */
@@ -382,11 +395,12 @@ struct stream_out {
     pthread_mutex_t pre_lock; /* acquire before lock to avoid DOS by playback thread */
     pthread_cond_t  cond;
     /* stream_out->lock is of large granularity, and can only be held before device lock
-     * latch is a supplemetary lock to protect certain fields of out stream and
-     * it can be held after device lock
+     * latch is a supplemetary lock to protect certain fields of out stream (such as
+     * offload_state, a2dp_muted, to add any stream member that needs to be accessed
+     * with device lock held) and it can be held after device lock
      */
     pthread_mutex_t latch_lock;
-    pthread_mutex_t position_query_lock; /* sychronize frame written */
+    pthread_mutex_t position_query_lock;
     struct pcm_config config;
     struct compr_config compr_config;
     struct pcm *pcm;
@@ -409,11 +423,12 @@ struct stream_out {
     int64_t mmap_time_offset_nanos; /* fudge factor to correct inaccuracies in DSP */
     int     mmap_shared_memory_fd; /* file descriptor associated with MMAP NOIRQ shared memory */
     audio_io_handle_t handle;
+    streams_output_ctxt_t out_ctxt;
     struct stream_app_type_cfg app_type_cfg;
 
     int non_blocking;
     int playback_started;
-    int offload_state;
+    int offload_state; /* guarded by latch_lock */
     pthread_cond_t offload_cond;
     pthread_t offload_thread;
     struct listnode offload_cmd_list;
@@ -455,7 +470,7 @@ struct stream_out {
     qahwi_stream_out_t qahwi_out;
 
     bool is_iec61937_info_available;
-    bool a2dp_muted;
+    bool a2dp_muted; /* guarded by latch_lock */
     float volume_l;
     float volume_r;
     bool apply_volume;
@@ -515,6 +530,7 @@ struct stream_in {
     int64_t mmap_time_offset_nanos; /* fudge factor to correct inaccuracies in DSP */
     int     mmap_shared_memory_fd; /* file descriptor associated with MMAP NOIRQ shared memory */
     audio_io_handle_t capture_handle;
+    streams_input_ctxt_t in_ctxt;
     audio_input_flags_t flags;
     char profile[MAX_STREAM_PROFILE_STR_LEN];
     bool is_st_session;
@@ -622,16 +638,6 @@ struct streams_io_cfg {
     struct listnode sample_rate_list;
     struct stream_app_type_cfg app_type_cfg;
 };
-
-typedef struct streams_input_ctxt {
-    struct listnode list;
-    struct stream_in *input;
-} streams_input_ctxt_t;
-
-typedef struct streams_output_ctxt {
-    struct listnode list;
-    struct stream_out *output;
-} streams_output_ctxt_t;
 
 typedef void* (*adm_init_t)();
 typedef void (*adm_deinit_t)(void *);
@@ -742,6 +748,7 @@ struct audio_device {
     int    haptic_pcm_device_id;
     uint8_t *haptic_buffer;
     size_t haptic_buffer_size;
+    int fluence_nn_usecase_id;
 
     /* logging */
     snd_device_t last_logged_snd_device[AUDIO_USECASE_MAX][2]; /* [out, in] */
@@ -800,6 +807,7 @@ int pcm_ioctl(struct pcm *pcm, int request, ...);
 audio_usecase_t get_usecase_id_from_usecase_type(const struct audio_device *adev,
                                                  usecase_type_t type);
 
+/* adev lock held */
 int check_a2dp_restore_l(struct audio_device *adev, struct stream_out *out, bool restore);
 
 int adev_open_output_stream(struct audio_hw_device *dev,
@@ -813,11 +821,6 @@ void adev_close_output_stream(struct audio_hw_device *dev __unused,
                               struct audio_stream_out *stream);
 
 bool is_interactive_usecase(audio_usecase_t uc_id);
-
-streams_input_ctxt_t *in_get_stream(struct audio_device *dev,
-                                  audio_io_handle_t input);
-streams_output_ctxt_t *out_get_stream(struct audio_device *dev,
-                                  audio_io_handle_t output);
 
 size_t get_output_period_size(uint32_t sample_rate,
                             audio_format_t format,
@@ -862,7 +865,8 @@ audio_patch_handle_t generate_patch_handle();
 
 /*
  * NOTE: when multiple mutexes have to be acquired, always take the
- * stream_in or stream_out mutex first, followed by the audio_device mutex.
+ * stream_in or stream_out mutex first, followed by the audio_device mutex
+ * and latch at last.
  */
 
 #endif // QCOM_AUDIO_HW_H
