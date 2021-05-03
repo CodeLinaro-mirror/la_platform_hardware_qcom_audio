@@ -416,4 +416,5 @@ int platform_set_channel_allocation_v2(void *platform, int channel_alloc,
 int platform_set_hdmi_channels_v2(void *platform, int channel_count,
                                   int controller, int stream);
 int platform_get_display_port_ctl_index(int controller, int stream);
+void platform_check_and_set_device_ch_map(void *platform, int snd_device);
 #endif // AUDIO_PLATFORM_API_H
