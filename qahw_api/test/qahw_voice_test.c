@@ -86,6 +86,7 @@ static void init_stream(void) {
     stream_params.dtmf_freq_low = 697;
     stream_params.dtmf_freq_high =  1209;
     stream_params.dtmf_gain = 100;
+    stream_params.dtmf_detect_enable = 0;
     stream_params.file_type = FILE_WAV;
     stream_params.stream_type = 1;
     pthread_mutex_init(&stream_params.write_lock, (const pthread_mutexattr_t *)NULL);
@@ -273,6 +274,7 @@ void usage() {
     printf(" -y  --tty_mode                - <MODE_OFF = 0, MODE_FULL = 1, MODE_VCO  = 2, MODE_HCO = 3\n");
     printf(" -e  --in_dl_call_playback <filename to play from> play downlink audio to voice call\n");
     printf(" -n  --stream type             - <1 = QAHW_VOICECALL, 2 = QAHW_ECALL \n");
+    printf(" -w  --dtmf_detect                                   .\n");
 }
 
 void stop_signal_handler(int signal __unused) {
@@ -904,12 +906,13 @@ int main(int argc, char *argv[]) {
         { "file_type",  required_argument,  0, 'o' },
         { "in_dl_call_playback",  required_argument,  0, 'e' },
         { "stream_type", no_argument,  0, 'n' },
+        { "dtmf_detect", no_argument,  0, 'w' },
         { 0, 0, 0, 0 }
     };
 
     while ((opt = getopt_long(argc,
                               argv,
-                                "-v:d:l:m:p:r:t:f:a:b:h:i:u:y:c:o:e:n:",
+                                "-v:d:l:m:p:r:t:f:a:b:h:i:u:y:c:w:o:e:n:",
                               long_options,
                               &option_index)) != -1) {
 
@@ -970,6 +973,9 @@ int main(int argc, char *argv[]) {
             break;
         case 'n':
             stream_params.stream_type = atoll(optarg);
+            break;
+        case 'w':
+            stream_params.dtmf_detect_enable = true;
             break;
         case 'h':
         default:
@@ -1098,6 +1104,16 @@ int main(int argc, char *argv[]) {
             rc = qahw_stream_set_parameters(stream_params.out_voice_handle,
                                             QAHW_PARAM_DTMF_GEN, &dtmf);
 
+        }
+        if(stream_params.dtmf_detect_enable) {
+            qahw_param_payload dtmf_det;
+            dtmf_det.dtmf_detect_params.enable = 1;
+            rc = qahw_stream_set_parameters(stream_params.out_voice_handle,
+                                            QAHW_PARAM_DTMF_DETECT, &dtmf_det);
+            usleep(50000000);
+            dtmf_det.dtmf_detect_params.enable = 0;
+            rc = qahw_stream_set_parameters(stream_params.out_voice_handle,
+                                            QAHW_PARAM_DTMF_DETECT, &dtmf_det);
         }
         /*setup hpcm if needed*/
         if(stream_params.hpcm) {

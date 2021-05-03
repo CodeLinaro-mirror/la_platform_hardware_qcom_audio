@@ -74,6 +74,7 @@ typedef struct {
     int dtmf_freq_low;
     int dtmf_freq_high;
     int dtmf_gain;
+    int dtmf_detect_enable;
     uint32_t file_type;
     pthread_cond_t write_cond;
     pthread_mutex_t write_lock;
