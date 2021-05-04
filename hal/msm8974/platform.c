@@ -4042,13 +4042,13 @@ acdb_init_fail:
         strdup("USB_AUDIO_TX Channels");
 
     if (!strncmp(platform_get_snd_device_backend_interface(SND_DEVICE_IN_HDMI_MIC),
-        "SEC_MI2S_TX", sizeof("SEC_MI2S_TX"))) {
+        "TERT_MI2S_TX", sizeof("TERT_MI2S_TX"))) {
         my_data->current_backend_cfg[HDMI_TX_BACKEND].bitwidth_mixer_ctl =
-            strdup("SEC_MI2S_TX Format");
+            strdup("TERT_MI2S_TX Format");
         my_data->current_backend_cfg[HDMI_TX_BACKEND].samplerate_mixer_ctl =
-            strdup("SEC_MI2S_TX SampleRate");
+            strdup("TERT_MI2S_TX SampleRate");
         my_data->current_backend_cfg[HDMI_TX_BACKEND].channels_mixer_ctl =
-            strdup("SEC_MI2S_TX Channels");
+            strdup("TERT_MI2S_TX Channels");
     } else {
         my_data->current_backend_cfg[HDMI_TX_BACKEND].bitwidth_mixer_ctl =
             strdup("QUAT_MI2S_TX Format");
@@ -7565,7 +7565,8 @@ snd_device_t platform_get_input_snd_device(void *platform,
              if (((channel_mask == AUDIO_CHANNEL_IN_FRONT_BACK) ||
                  (channel_mask == AUDIO_CHANNEL_IN_STEREO)) &&
                  (my_data->source_mic_type & SOURCE_DUAL_MIC)) {
-                 snd_device = SND_DEVICE_IN_UNPROCESSED_STEREO_MIC;
+                 // assume the Android application use AUDIO_SOURCE_UNPROCESSED to capture HDMI-in audio
+                 snd_device = SND_DEVICE_IN_HDMI_MIC;
              } else if (((int)channel_mask == (int)AUDIO_CHANNEL_INDEX_MASK_3) &&
                  (my_data->source_mic_type & SOURCE_THREE_MIC)) {
                  snd_device = SND_DEVICE_IN_UNPROCESSED_THREE_MIC;
