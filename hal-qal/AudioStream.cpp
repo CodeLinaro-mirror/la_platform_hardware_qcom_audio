@@ -1379,12 +1379,13 @@ int StreamOutPrimary::CreateMmapBuffer(int32_t min_size_frames,
         Standby();
         return ret;
     }
-#endif
+
     info->shared_memory_address = qalMmapBuf.buffer;
     info->shared_memory_fd = qalMmapBuf.fd;
     info->buffer_size_frames = qalMmapBuf.buffer_size_frames;
     info->burst_size_frames = qalMmapBuf.burst_size_frames;
     info->flags = (audio_mmap_buffer_flag) AUDIO_MMAP_APPLICATION_SHAREABLE;
+#endif
 
     return ret;
 }
@@ -1638,12 +1639,20 @@ int StreamOutPrimary::SetVolume(float left , float right) {
     if (left == right) {
         volume_ = (struct qal_volume_data *)malloc(sizeof(struct qal_volume_data)
                     +sizeof(struct qal_channel_vol_kv));
+        if (!volume_) {
+            ret = -ENOMEM;
+            return ret;
+        }
         volume_->no_of_volpair = 1;
         volume_->volume_pair[0].channel_mask = 0x03;
         volume_->volume_pair[0].vol = left;
     } else {
         volume_ = (struct qal_volume_data *)malloc(sizeof(struct qal_volume_data)
                     +sizeof(struct qal_channel_vol_kv) * 2);
+        if (!volume_) {
+            ret = -ENOMEM;
+            return ret;
+        }
         volume_->no_of_volpair = 2;
         volume_->volume_pair[0].channel_mask = 0x01;
         volume_->volume_pair[0].vol = left;
@@ -2247,7 +2256,7 @@ StreamOutPrimary::StreamOutPrimary(
 
     if (!stream_) {
         ALOGE("%s: No memory allocated for stream_", __func__);
-        goto error;
+        throw std::runtime_error("No memory allocated for stream_");
     }
     ALOGE("%s: enter: handle (%x) format(%#x) sample_rate(%d) channel_mask(%#x) devices(%#x) flags(%#x)\
           address(%s)", __func__, handle, config->format, config->sample_rate, config->channel_mask,
@@ -2268,7 +2277,7 @@ StreamOutPrimary::StreamOutPrimary(
             ret = qal_get_param(QAL_PARAM_ID_DEVICE_CAPABILITY,
                                 (void **)&device_cap_query,
                                 &payload_size, nullptr);
-            delete device_cap_query;
+            delete[] device_cap_query;
 
             config->sample_rate = dynamic_media_config.sample_rate;
             config->channel_mask = dynamic_media_config.mask;
@@ -2451,12 +2460,13 @@ int StreamInPrimary::CreateMmapBuffer(int32_t min_size_frames,
         Standby();
         return ret;
     }
-#endif
+
     info->shared_memory_address = qalMmapBuf.buffer;
     info->shared_memory_fd = qalMmapBuf.fd;
     info->buffer_size_frames = qalMmapBuf.buffer_size_frames;
     info->burst_size_frames = qalMmapBuf.burst_size_frames;
     info->flags = (audio_mmap_buffer_flag)qalMmapBuf.flags;
+#endif
 
     return ret;
 }
@@ -2612,6 +2622,10 @@ int StreamInPrimary::SetGain(float gain) {
 
     volume = (struct qal_volume_data*)malloc(sizeof(uint32_t)
                 +sizeof(struct qal_channel_vol_kv));
+    if (!volume) {
+        ret = -ENOMEM;
+        return ret;
+    }
     volume->no_of_volpair = 1;
     volume->volume_pair[0].channel_mask = 0x03;
     volume->volume_pair[0].vol = gain;
@@ -3067,7 +3081,7 @@ StreamInPrimary::StreamInPrimary(audio_io_handle_t handle,
             ALOGD("%s: usb fs=%d format=%d mask=%x", __func__,
                 dynamic_media_config.sample_rate,
                 dynamic_media_config.format, dynamic_media_config.mask);
-            delete device_cap_query;
+            delete[] device_cap_query;
             config->sample_rate = dynamic_media_config.sample_rate;
             config->channel_mask = dynamic_media_config.mask;
             config->format = (audio_format_t)dynamic_media_config.format;

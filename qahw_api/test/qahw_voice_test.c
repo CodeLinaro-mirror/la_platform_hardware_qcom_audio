@@ -353,9 +353,10 @@ void *rec_start(void *thread_param) {
     }
 
     /* Get buffer size to get upper bound on data to read from the HAL */
-    size_t buffer_size;
-    rc = qahw_stream_get_buffer_size(in_handle, &buffer_size, NULL);
-    char *buffer = (char *)calloc(1, buffer_size);
+    size_t in_buffer_size;
+    size_t out_buffer_size;
+    rc = qahw_stream_get_buffer_size(in_handle, &in_buffer_size, &out_buffer_size);
+    char *buffer = (char *)calloc(1, in_buffer_size);
     size_t written_size;
     int bps = 16;
 
@@ -394,16 +395,16 @@ void *rec_start(void *thread_param) {
     fprintf(stderr, "file %s opened for write", params->rec_file);
     while (true && !stop) {
         in_buf.buffer = buffer;
-        in_buf.size = buffer_size;
+        in_buf.size = in_buffer_size;
 
         bytes_read = qahw_stream_read(in_handle, &in_buf);
 
-        written_size = fwrite(in_buf.buffer, 1, buffer_size, fd);
-        if (written_size < buffer_size) {
+        written_size = fwrite(in_buf.buffer, 1, in_buffer_size, fd);
+        if (written_size < in_buffer_size) {
             fprintf(stderr, "Error in fwrite\n");
             break;
         }
-        data_sz += buffer_size;
+        data_sz += in_buffer_size;
     }
     fprintf(stderr, "rec ended\n");
     /* update lengths in header */
@@ -466,7 +467,8 @@ void *playback_start(void *thread_param) {
     uint32_t num_dev = 1;
     audio_devices_t out_device[1] = { AUDIO_DEVICE_OUT_TELEPHONY_TX };
     struct qahw_stream_attributes attr;
-    size_t bytes_wanted = 0;
+    size_t in_bytes_wanted = 0;
+    size_t out_bytes_wanted = 0;
     size_t write_length = 0;
     size_t bytes_remaining = 0;
     ssize_t bytes_written = 0;
@@ -531,10 +533,10 @@ void *playback_start(void *thread_param) {
 
     if (params->playback_file != NULL) {
         fp = fopen(params->playback_file, "r");
-        if (fp== NULL) {
-           fprintf(stderr, "failed to open file %s\n",params->playback_file );
-           pthread_exit(0);
-        }
+    }
+    if (fp== NULL) {
+        fprintf(stderr, "failed to open file %s\n",params->playback_file );
+        pthread_exit(0);
     }
 
     if (params->file_type == FILE_WAV ) {
@@ -597,8 +599,8 @@ void *playback_start(void *thread_param) {
             pthread_exit(0);
         }
     }
-    rc = qahw_stream_get_buffer_size(out_handle ,NULL, &bytes_wanted);
-    data_ptr = (char *)malloc(bytes_wanted);
+    rc = qahw_stream_get_buffer_size(out_handle ,&in_bytes_wanted, &out_bytes_wanted);
+    data_ptr = (char *)malloc(out_bytes_wanted);
     if (data_ptr == NULL) {
         fprintf(stderr, "failed to allocate data buffer\n");
         pthread_exit(0);
@@ -608,8 +610,8 @@ void *playback_start(void *thread_param) {
 
     while (!exit && !stop) {
         if (!bytes_remaining) {
-            fprintf(stderr, "reading bytes %zd\n", bytes_wanted);
-            bytes_read = fread(data_ptr, 1, bytes_wanted, fp);
+            fprintf(stderr, "reading bytes %zd\n", out_bytes_wanted);
+            bytes_read = fread(data_ptr, 1, out_bytes_wanted, fp);
             fprintf(stderr, "read bytes %zd\n", bytes_read);
             if ((!read_complete_file && (bytes_to_read <= 0)) || (bytes_read <= 0)) {
                 fprintf(stderr, "end of file\n");
@@ -633,8 +635,8 @@ void *playback_start(void *thread_param) {
             } else {
                 if (!read_complete_file) {
                     bytes_to_read -= bytes_read;
-                    if ((bytes_to_read > 0) && (bytes_to_read < bytes_wanted))
-                        bytes_wanted = bytes_to_read;
+                    if ((bytes_to_read > 0) && (bytes_to_read < out_bytes_wanted))
+                        out_bytes_wanted = bytes_to_read;
                 }
             }
             bytes_remaining = write_length = bytes_read;
@@ -671,7 +673,8 @@ void *playback_dl_start(void *thread_param) {
     uint32_t num_dev = 1;
     audio_devices_t out_device[1] = { AUDIO_DEVICE_OUT_ECHO_CANCELLER };
     struct qahw_stream_attributes attr;
-    size_t bytes_wanted = 0;
+    size_t in_bytes_wanted = 0;
+    size_t out_bytes_wanted = 0;
     size_t write_length = 0;
     size_t bytes_remaining = 0;
     ssize_t bytes_written = 0;
@@ -802,8 +805,8 @@ void *playback_dl_start(void *thread_param) {
             pthread_exit(0);
         }
     }
-    rc = qahw_stream_get_buffer_size(out_handle ,NULL, &bytes_wanted);
-    data_ptr = (char *)malloc(bytes_wanted);
+    rc = qahw_stream_get_buffer_size(out_handle ,&in_bytes_wanted, &out_bytes_wanted);
+    data_ptr = (char *)malloc(out_bytes_wanted);
     if (data_ptr == NULL) {
         fprintf(stderr, "failed to allocate data buffer\n");
         pthread_exit(0);
@@ -813,8 +816,8 @@ void *playback_dl_start(void *thread_param) {
 
     while (!exit && !stop_dl) {
         if (!bytes_remaining) {
-            fprintf(stderr, "reading bytes %zd\n", bytes_wanted);
-            bytes_read = fread(data_ptr, 1, bytes_wanted, fp);
+            fprintf(stderr, "reading bytes %zd\n", out_bytes_wanted);
+            bytes_read = fread(data_ptr, 1, out_bytes_wanted, fp);
             fprintf(stderr, "read bytes %zd\n", bytes_read);
             if ((!read_complete_file && (bytes_to_read <= 0)) || (bytes_read <= 0)) {
                 fprintf(stderr, "end of file\n");
@@ -838,8 +841,8 @@ void *playback_dl_start(void *thread_param) {
             } else {
                 if (!read_complete_file) {
                     bytes_to_read -= bytes_read;
-                    if ((bytes_to_read > 0) && (bytes_to_read < bytes_wanted))
-                        bytes_wanted = bytes_to_read;
+                    if ((bytes_to_read > 0) && (bytes_to_read < out_bytes_wanted))
+                        out_bytes_wanted = bytes_to_read;
                 }
             }
             bytes_remaining = write_length = bytes_read;
