@@ -153,9 +153,6 @@ static unsigned int configured_low_latency_capture_period_size =
 #define MMAP_PERIOD_COUNT_MAX 512
 #define MMAP_PERIOD_COUNT_DEFAULT (MMAP_PERIOD_COUNT_MAX)
 
-#define VOIP_MIC_CHANNEL_COUNT 4
-#define EC_REF_CHANNEL_COUNT 2
-
 /* This constant enables extended precision handling.
  * TODO The flag is off until more testing is done.
  */
@@ -3038,7 +3035,6 @@ static int stop_input_stream(struct stream_in *in)
         return -EINVAL;
     }
 
-
     struct audio_device *adev = in->dev;
     struct stream_in *priority_in = NULL;
 
@@ -3187,16 +3183,6 @@ int start_input_stream(struct stream_in *in)
     uc_info->devices = in->device;
     uc_info->in_snd_device = SND_DEVICE_NONE;
     uc_info->out_snd_device = SND_DEVICE_NONE;
-
-    /* USECASE_AUDIO_RECORD_VOIP need to append ec ref */
-    if (in->usecase == USECASE_AUDIO_RECORD_VOIP) {
-        ALOGD("%s, Add ec channels to USECASE_AUDIO_RECORD_VOIP", __func__);
-
-        uc_info->stream.in->config.channels = VOIP_MIC_CHANNEL_COUNT + EC_REF_CHANNEL_COUNT;
-        uc_info->stream.in->channel_mask = AUDIO_CHANNEL_IN_6;                
-        uc_info->stream.in->device = AUDIO_DEVICE_IN_LOOPBACK | AUDIO_DEVICE_IN_BUILTIN_MIC | AUDIO_DEVICE_BIT_IN;
-        ALOGD("%s, channels : %u, channel_mask : %x", __func__, audio_channel_count_from_in_mask(uc_info->stream.in->channel_mask), uc_info->stream.in->channel_mask);                
-    }
 
     list_add_tail(&adev->usecase_list, &uc_info->list);
     audio_streaming_hint_start();
@@ -7089,58 +7075,16 @@ static ssize_t in_read(struct audio_stream_in *stream, void *buffer,
         } else if (audio_extn_ffv_get_stream() == in) {
             ret = audio_extn_ffv_read(stream, buffer, bytes);
         } else {
- 
-            /* VOIP */
-            if (in->usecase == USECASE_AUDIO_RECORD_VOIP) {
-                int mic_chs  = VOIP_MIC_CHANNEL_COUNT;
-                int ref_chs  = EC_REF_CHANNEL_COUNT;
-                int voip_out_chs = 1;
-                int sample_size = audio_bytes_per_sample(in->format);
-                int frame_cnts = (bytes / sample_size);
-
-                /* alloc buffer with mics data + ref data*/
-                int buffer_mic_ref_bytes = bytes * (mic_chs + ref_chs);
-                char* buffer_mic_ref = (char*) calloc(buffer_mic_ref_bytes , 1);
-
-                /* read in mic data and ref data */
-                ret = pcm_read(in->pcm, buffer_mic_ref, buffer_mic_ref_bytes);               
-
-                /* data from DSP comes in 24_8 format, convert it to 8_24 */
-                if (!ret && bytes > 0 && (in->format == AUDIO_FORMAT_PCM_8_24_BIT)) {
-                    if (audio_extn_utils_convert_format_24_8_to_8_24(buffer, bytes)
-                        != bytes) {
-                        ret = -EINVAL;
-                        free(buffer_mic_ref);
-                        goto exit;
-                    }
-                } else if (ret < 0) {
-                    free(buffer_mic_ref);
-                    ret = -errno;
+            ret = pcm_read(in->pcm, buffer, bytes);
+            /* data from DSP comes in 24_8 format, convert it to 8_24 */
+            if (!ret && bytes > 0 && (in->format == AUDIO_FORMAT_PCM_8_24_BIT)) {
+                if (audio_extn_utils_convert_format_24_8_to_8_24(buffer, bytes)
+                    != bytes) {
+                    ret = -EINVAL;
+                    goto exit;
                 }
-
-                /* copy mic data to buffer */
-                for (int i = 0; i < frame_cnts ; ++i) {
-                    memcpy((char*)buffer + i * voip_out_chs * sample_size, buffer_mic_ref + i * (mic_chs + ref_chs) * sample_size, voip_out_chs * sample_size);
-                }
-
-                //ALOGD("%s, mic_chs : %d, frame_cnts : %d, buffer_bytes : %zu, buffer_mic_ref_bytes : %d, channels : %d, sample_size : %d", __func__, mic_chs, frame_cnts, bytes, buffer_mic_ref_bytes, in->config.channels, sample_size);
-
-                free(buffer_mic_ref);
-            }
-
-            else {
-                 ret = pcm_read(in->pcm, buffer, bytes);               
-
-                /* data from DSP comes in 24_8 format, convert it to 8_24 */
-                if (!ret && bytes > 0 && (in->format == AUDIO_FORMAT_PCM_8_24_BIT)) {
-                    if (audio_extn_utils_convert_format_24_8_to_8_24(buffer, bytes)
-                        != bytes) {
-                        ret = -EINVAL;
-                        goto exit;
-                    }
-                } else if (ret < 0) {
-                    ret = -errno;
-                } 
+            } else if (ret < 0) {
+                ret = -errno;
             }
         }
         /* bytes read is always set to bytes for non compress usecases */
@@ -9508,17 +9452,6 @@ static int adev_open_input_stream(struct audio_hw_device *dev,
         in->usecase = USECASE_AUDIO_RECORD_VOIP;
         in->realtime = false;
         in->config = pcm_config_audio_capture;
-
-        if (in->usecase == USECASE_AUDIO_RECORD_VOIP) {
-            ALOGE("%s: Usecase: Audio-Record-Voip ", __func__);
-            channel_count = VOIP_MIC_CHANNEL_COUNT + EC_REF_CHANNEL_COUNT;          
-    	}        
-
-		in->config.channels = channel_count;
-		in->sample_rate = config->sample_rate;
-
-        ALOGD("%s: in->config.channels=%d, channel_count=%d", __func__, in->config.channels, channel_count);
-    
         frame_size = audio_stream_in_frame_size(&in->stream);
         buffer_size = get_stream_buffer_size(VOIP_CAPTURE_PERIOD_DURATION_MSEC,
                                              config->sample_rate,
@@ -9560,8 +9493,6 @@ static int adev_open_input_stream(struct audio_hw_device *dev,
             in->config = pcm_config_audio_capture;
             in->config.rate = config->sample_rate;
             in->config.format = pcm_format_from_audio_format(config->format);
-		    in->config.channels = channel_count;
-		    in->sample_rate = config->sample_rate;
             in->format = config->format;
             frame_size = audio_stream_in_frame_size(&in->stream);
             buffer_size = get_input_buffer_size(config->sample_rate,
