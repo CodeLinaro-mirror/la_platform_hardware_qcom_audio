@@ -291,6 +291,7 @@ int platform_set_stream_downmix_params(void *platform,
                                        struct mix_matrix_params mm_params);
 int platform_set_edid_channels_configuration(void *platform, int channels,
                                              int backend_idx, snd_device_t snd_device);
+bool platform_spkr_use_default_bit_width(void *platform);
 bool platform_spkr_use_default_sample_rate(void *platform);
 unsigned char platform_map_to_edid_format(int format);
 bool platform_is_edid_supported_format(void *platform, int format);
