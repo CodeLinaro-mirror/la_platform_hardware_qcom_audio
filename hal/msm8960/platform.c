@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2020, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2021, The Linux Foundation. All rights reserved.
  * Not a contribution.
  *
  * Copyright (C) 2013 The Android Open Source Project
@@ -1452,4 +1452,11 @@ void platform_set_native_dsd_speaker_cfg(struct stream_out *out)
 bool platform_get_eccarstate(void *platform)
 {
     return false;
+}
+
+void platform_check_and_set_device_ch_map(void *platform __unused,
+                                          int snd_device __unused)
+{
+     ALOGE("%s: Not implemented", __func__);
+     return;
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2020, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2021, The Linux Foundation. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -515,7 +515,6 @@ static int audio_extn_ip_hdlr_intf_open_adm_event(void *handle,
     void *adsp_hdlr_stream_handle = NULL;
     struct audio_device *dev = NULL;
     struct mixer_ctl *ctl = NULL;
-    struct audio_usecase *uc = NULL;
     char mixer_ctl_name[MIXER_PATH_MAX_LENGTH] = {0};
 
     param = (struct audio_adsp_event *)calloc(1,
@@ -540,13 +539,6 @@ static int audio_extn_ip_hdlr_intf_open_adm_event(void *handle,
         goto done;
     }
 
-    uc = (struct audio_usecase *)calloc(1, sizeof(struct audio_usecase));
-
-    if (uc == NULL) {
-        ret = -ENOMEM;
-        goto done;
-    }
-
     if (usecase == USECASE_AUDIO_TRANSCODE_LOOPBACK_RX) {
         inout = (struct stream_inout *)stream_handle;
         adsp_hdlr_stream_handle = inout->adsp_hdlr_stream_handle;
@@ -556,7 +548,6 @@ static int audio_extn_ip_hdlr_intf_open_adm_event(void *handle,
         adsp_hdlr_stream_handle = out->adsp_hdlr_stream_handle;
         dev = out->dev;
     }
-    uc = get_usecase_from_list(dev, usecase);
 
     reg_ev->adm_info.module_id = TRUMPET_MODULE;
     reg_ev->adm_info.instance_id = 0;
@@ -627,9 +618,6 @@ done:
 
     if (fd_param_data)
         free(fd_param_data);
-
-    if (uc)
-        free(uc);
 
     return ret;
 }

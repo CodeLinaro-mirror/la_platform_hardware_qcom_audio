@@ -1786,6 +1786,9 @@ static void check_usecases_codec_backend(struct audio_device *adev,
             }
         }
 
+        /* Need to set device ch map as adm close would reset the map in driver */
+        platform_check_and_set_device_ch_map(adev->platform, snd_device);
+
         /* Re-route all the usecases on the shared backend other than the
            specified usecase to new snd devices */
         list_for_each(node, &adev->usecase_list) {
@@ -3045,6 +3048,16 @@ static int stop_input_stream(struct stream_in *in)
     }
 
     priority_in = get_priority_input(adev);
+
+    /* Disable echo reference if there are no active input, hfp call
+     * and sound trigger while stop input stream
+     */
+    if (adev_get_active_input(adev) == NULL &&
+        !audio_extn_hfp_is_active(adev) &&
+        !audio_extn_sound_trigger_check_ec_ref_enable())
+        platform_set_echo_reference(adev, false, AUDIO_DEVICE_NONE);
+    else
+        audio_extn_sound_trigger_update_ec_ref_status(false);
 
     if (audio_extn_ext_hw_plugin_usecase_stop(adev->ext_hw_plugin, uc_info))
         ALOGE("%s: failed to stop ext hw plugin", __func__);
@@ -4973,19 +4986,20 @@ static int out_set_parameters(struct audio_stream *stream, const char *kvpairs)
                 if (!voice_is_call_state_active(adev)) {
                     if (adev->mode == AUDIO_MODE_IN_CALL) {
                         adev->current_call_output = out;
-                        if (audio_is_usb_out_device(out->devices & AUDIO_DEVICE_OUT_ALL_USB)) {
-                            service_interval = audio_extn_usb_find_service_interval(true, true /*playback*/);
-                            audio_extn_usb_set_service_interval(true /*playback*/,
-                                                                service_interval,
-                                                                &reconfig);
-                            ALOGD("%s, svc_int(%ld),reconfig(%d)",__func__,service_interval, reconfig);
-                         }
-                         ret = voice_start_call(adev);
+                        ret = voice_start_call(adev);
                     }
                 } else {
                     adev->current_call_output = out;
                     voice_update_devices_for_all_voice_usecases(adev);
                 }
+            }
+
+            if (audio_is_usb_out_device(out->devices & AUDIO_DEVICE_OUT_ALL_USB)) {
+                 service_interval = audio_extn_usb_find_service_interval(false, true /*playback*/);
+                 audio_extn_usb_set_service_interval(true /*playback*/,
+                                                     service_interval,
+                                                     &reconfig);
+                 ALOGD("%s, svc_int(%ld),reconfig(%d)",__func__,service_interval, reconfig);
             }
 
             if (!out->standby) {
@@ -5876,18 +5890,20 @@ static ssize_t out_write(struct audio_stream_out *stream, const void *buffer,
             ret = voice_extn_compress_voip_start_output_stream(out);
         else
             ret = start_output_stream(out);
-        pthread_mutex_unlock(&adev->lock);
         /* ToDo: If use case is compress offload should return 0 */
         if (ret != 0) {
             out->standby = true;
+            pthread_mutex_unlock(&adev->lock);
             goto exit;
         }
         out->started = 1;
-        if (last_known_cal_step != -1) {
+
+        if ((last_known_cal_step != -1) && (adev->platform != NULL)) {
             ALOGD("%s: retry previous failed cal level set", __func__);
-            audio_hw_send_gain_dep_calibration(last_known_cal_step);
+            platform_send_gain_dep_cal(adev->platform, last_known_cal_step);
             last_known_cal_step = -1;
         }
+        pthread_mutex_unlock(&adev->lock);
 
         if ((out->is_iec61937_info_available == true) &&
             (audio_extn_passthru_is_passthrough_stream(out))&&
@@ -9434,6 +9450,7 @@ static int adev_open_input_stream(struct audio_hw_device *dev,
                 config->sample_rate == 48000) &&
                channel_count == 1) {
         in->usecase = USECASE_AUDIO_RECORD_VOIP;
+        in->realtime = false;
         in->config = pcm_config_audio_capture;
         frame_size = audio_stream_in_frame_size(&in->stream);
         buffer_size = get_stream_buffer_size(VOIP_CAPTURE_PERIOD_DURATION_MSEC,
@@ -9451,22 +9468,6 @@ static int adev_open_input_stream(struct audio_hw_device *dev,
         pthread_mutex_lock(&adev->lock);
         ret_val = audio_extn_check_and_set_multichannel_usecase(adev,
                in, config, &channel_mask_updated);
-#ifdef CONCURRENT_CAPTURE_ENABLED
-        /* Acquire lock to avoid two concurrent use cases initialized to
-         * same pcm record use case*/
-
-        if(in->usecase == USECASE_AUDIO_RECORD) {
-           if (!(adev->pcm_record_uc_state)) {
-                ALOGV("%s: using USECASE_AUDIO_RECORD",__func__);
-                adev->pcm_record_uc_state = 1;
-           } else {
-           /* Assign compress record use case for second record */
-                in->usecase = USECASE_AUDIO_RECORD_COMPRESS2;
-                in->flags |= AUDIO_INPUT_FLAG_COMPRESS;
-                ALOGV("%s: overriding usecase with USECASE_AUDIO_RECORD_COMPRESS2 and appending compress flag", __func__);
-           }
-        }
-#endif
         pthread_mutex_unlock(&adev->lock);
 
         if (!ret_val) {
@@ -9483,10 +9484,11 @@ static int adev_open_input_stream(struct audio_hw_device *dev,
             audio_extn_compr_cap_init(in);
         } else if (audio_extn_cin_applicable_stream(in)) {
             in->sample_rate = config->sample_rate;
+            /* Assign compress record use case explicitly for streams with compress or timestamp flag */
+            in->usecase = USECASE_AUDIO_RECORD_COMPRESS2;
             ret = audio_extn_cin_configure_input_stream(in, config);
             if (ret)
                 goto err_open;
-            audio_extn_cin_acquire_usecase(in);
         } else {
             in->config = pcm_config_audio_capture;
             in->config.rate = config->sample_rate;
@@ -9625,15 +9627,6 @@ static void adev_close_input_stream(struct audio_hw_device *dev,
      */
     audio_extn_snd_mon_unregister_listener(stream);
 
-    /* Disable echo reference if there are no active input, hfp call
-     * and sound trigger while closing input stream
-     */
-    if (adev_get_active_input(adev) == NULL &&
-        !audio_extn_hfp_is_active(adev) &&
-        !audio_extn_sound_trigger_check_ec_ref_enable())
-        platform_set_echo_reference(adev, false, AUDIO_DEVICE_NONE);
-    else
-        audio_extn_sound_trigger_update_ec_ref_status(false);
     if (in == NULL) {
         ALOGE("%s: audio_stream_in ptr is NULL", __func__);
         return;
