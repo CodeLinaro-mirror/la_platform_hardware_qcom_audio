@@ -52,6 +52,9 @@
 #define AUDIO_PARAMETER_KEY_DTMF_TONE_GAIN "dtmf_tone_gain"
 #define AUDIO_PARAMETER_KEY_DTMF_DURATION_MS "dtmf_duration_ms"
 
+/*DTMF DETECTOR Params */
+#define AUDIO_PARAMETER_KEY_DTMF_DETECT "dtmf_detect"
+
 
 int AudioVoice::SetMode(const audio_mode_t mode) {
     int ret = 0;
@@ -268,7 +271,9 @@ int AudioVoice::VoiceOutSetParameters(const char *kvpairs) {
     uint16_t low_freq = 0;
     uint16_t gain = 0;
     int16_t duration_ms = 0;
+    uint32_t enable = 0;
     pal_param_dtmf_gen_tone_cfg_t dtmf_gen_cfg;
+    pal_param_module_enable_t module_enable;
 
     ALOGD("%s Enter", __func__);
     parms = str_parms_create_str(kvpairs);
@@ -352,6 +357,19 @@ int AudioVoice::VoiceOutSetParameters(const char *kvpairs) {
             ALOGE("%s: pal set param failed for dtmf generator",__func__);
         }
         ALOGI("%s: pal set param success for dtmf generator", __func__);
+    }
+    err = str_parms_get_str(parms, AUDIO_PARAMETER_KEY_DTMF_DETECT, value, sizeof(value));
+    if (err >= 0) {
+        enable = atoi(value);
+        module_enable.enable = enable;
+        ALOGI("%s module_enable is:%d", __func__, module_enable.enable);
+        ret = pal_set_param(PAL_PARAM_ID_MODULE_ENABLE,
+            (void*)&module_enable,
+            sizeof(pal_param_module_enable_t));
+        if(ret!=0) {
+            ALOGE("%s: pal set param failed for dtmf detector",__func__);
+        }
+        ALOGI("%s: pal set param success for dtmf detector", __func__);
     }
 
 str_parms_destroy(parms);
