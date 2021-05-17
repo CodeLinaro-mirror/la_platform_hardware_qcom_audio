@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2020, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2021, The Linux Foundation. All rights reserved.
  * Not a Contribution.
  *
  * Copyright (C) 2013 The Android Open Source Project
@@ -245,6 +245,8 @@ struct pcm_config pcm_config_mmap_capture = {
 
 #define AFE_PROXY_PLAYBACK_PERIOD_SIZE  768
 #define AFE_PROXY_PLAYBACK_PERIOD_COUNT 4
+
+#define AFE_PROXY_PLAYBACK_DURATION 20
 
 struct pcm_config pcm_config_afe_proxy_playback = {
     .channels = AFE_PROXY_CHANNEL_COUNT,
@@ -6326,7 +6328,11 @@ int adev_open_output_stream(struct audio_hw_device *dev,
                 __func__, ret);
             goto error_open;
         }
-    } else if (out->devices == AUDIO_DEVICE_OUT_TELEPHONY_TX) {
+    } else if (out->devices == AUDIO_DEVICE_OUT_PROXY ||
+                 out->devices == AUDIO_DEVICE_OUT_TELEPHONY_TX) {
+        unsigned int channels = 0;
+        out->usecase = USECASE_AUDIO_PLAYBACK_AFE_PROXY;
+        out->config = pcm_config_afe_proxy_playback;
         if (config->sample_rate == 0)
             config->sample_rate = AFE_PROXY_SAMPLING_RATE;
         if (config->sample_rate != 48000 && config->sample_rate != 16000 &&
@@ -6345,8 +6351,16 @@ int adev_open_output_stream(struct audio_hw_device *dev,
             goto error_open;
         }
         out->format = config->format;
-        out->usecase = USECASE_AUDIO_PLAYBACK_AFE_PROXY;
-        out->config = pcm_config_afe_proxy_playback;
+        out->config.format = pcm_format_from_audio_format(out->format);
+        channels = audio_channel_count_from_out_mask(out->channel_mask);
+        out->config.channels = channels;
+        out->config.period_size = get_output_period_size(config->sample_rate, out->format,
+                                             channels, AFE_PROXY_PLAYBACK_DURATION);
+        if (out->config.period_size <= 0) {
+            ALOGE("Invalid configuration period size is not valid");
+            ret = -EINVAL;
+            goto error_open;
+        }
         adev->voice_tx_output = out;
     } else {
         unsigned int channels = 0;
