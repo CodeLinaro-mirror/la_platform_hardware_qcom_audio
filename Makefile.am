@@ -1,4 +1,4 @@
-SUBDIRS = hal-qal
+SUBDIRS = hal-pal
 
 if QAHW_SUPPORT
 SUBDIRS += qahw_api qahw_api/test

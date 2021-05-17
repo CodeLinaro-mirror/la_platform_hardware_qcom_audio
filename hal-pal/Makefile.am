@@ -1,7 +1,7 @@
 AM_CFLAGS = -Wno-narrowing \
         -I ${WORKSPACE}/system/media/audio_effects/include \
-        -I $(top_srcdir)/hal-qal \
-        -I $(top_srcdir)/hal-qal/audio_extn \
+        -I $(top_srcdir)/hal-pal \
+        -I $(top_srcdir)/hal-pal/audio_extn \
         -I $(top_srcdir)/hal/audio_extn \
         -I $(PKG_CONFIG_SYSROOT_DIR)/usr/include/audio-kernel \
         -I $(STAGING_INCDIR)
@@ -84,7 +84,7 @@ library_includedir = $(includedir)
 lib_LTLIBRARIES = audio.primary.default.la
 audio_primary_default_la_SOURCES = $(c_sources)
 audio_primary_default_la_LIBADD = -lglib-2.0 -llog -lcutils -ltinyalsa
-audio_primary_default_la_LIBADD += -laudioroute -ldl -lexpat -lqal
+audio_primary_default_la_LIBADD += -laudioroute -ldl -lexpat -lpal
 if AUDIO_PARSER
 audio_primary_default_la_LIBADD += -laudioparsers
 endif
