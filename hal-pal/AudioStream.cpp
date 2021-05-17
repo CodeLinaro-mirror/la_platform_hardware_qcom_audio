@@ -52,6 +52,7 @@
 #include <thread>
 
 #include "PalApi.h"
+#include "PalDefs.h"
 #include <audio_effects/effect_aec.h>
 #include <audio_effects/effect_ns.h>
 #include "audio_extn.h"
@@ -105,10 +106,10 @@ std::shared_ptr<audio_hw_device_t> AudioDevice::device_ = nullptr;
 
 static int32_t pal_callback(pal_stream_handle_t *stream_handle,
                             uint32_t event_id, uint32_t *event_data,
-                            uint32_t event_size, void *cookie)
+                            uint32_t event_size, uint64_t cookie)
 {
     stream_callback_event_t event;
-    StreamOutPrimary *astream_out = static_cast<StreamOutPrimary *> (cookie);
+    StreamOutPrimary *astream_out = reinterpret_cast<StreamOutPrimary *> (cookie);
 
     ALOGD("%s: stream_handle (%p), event_id (%x), event_data (%p), cookie (%p)"
           "event_size (%d)", __func__, stream_handle, event_id, event_data,
@@ -1957,7 +1958,7 @@ int StreamOutPrimary::Open() {
                           0,
                           NULL,
                           &pal_callback,
-                          (void *)this,
+                          (uint64_t)this,
                           &pal_stream_handle_);
 
     ALOGD("%s:(%x:ret)%d",__func__,ret, __LINE__);
@@ -2837,7 +2838,7 @@ int StreamInPrimary::Open() {
                          0,
                          NULL,
                          &pal_callback,
-                         (void *)this,
+                         (uint64_t)this,
                          &pal_stream_handle_);
 
     ALOGD("%s:(%x:ret)%d", __func__, ret, __LINE__);

@@ -55,6 +55,23 @@
 /*DTMF DETECTOR Params */
 #define AUDIO_PARAMETER_KEY_DTMF_DETECT "dtmf_detect"
 
+static int32_t pal_dtmf_callback(pal_stream_handle_t *stream_handle,
+                                uint32_t event_id, uint32_t *event_data,
+                                uint32_t event_size, uint64_t cookie)
+{
+    stream_callback_event_t event;
+    dtmf_event_data *data = reinterpret_cast<dtmf_event_data *> (event_data);
+    StreamOutPrimary *astream_out = reinterpret_cast<StreamOutPrimary *> (cookie);
+
+    ALOGE("%s: stream_handle (%p), event_id (%x), event_data (%p), cookie (%p)"
+          "event_size (%d)", __func__, stream_handle, event_id, event_data,
+          cookie, event_size);
+
+    if (event_id == PAL_DTMF_CBK_EVENT) {
+        ALOGE("%s: high_freq:%d , low_freq:%d", __func__,
+        data->dtmf_high_freq, data->dtmf_low_freq);
+    }
+}
 
 int AudioVoice::SetMode(const audio_mode_t mode) {
     int ret = 0;
@@ -541,8 +558,8 @@ int AudioVoice::VoiceStart(voice_session_t *session) {
                           palDevices,
                           0,
                           NULL,
-                          NULL,//callback
-                          (void *)this,
+                          &pal_dtmf_callback,//callback
+                          (uint64_t)this,
                           &session->pal_voice_handle);// Need to add this to the audio stream structure.
 
     ALOGD("%s:pal_stream_open() ret:%d line:%d", __func__, ret, __LINE__);
