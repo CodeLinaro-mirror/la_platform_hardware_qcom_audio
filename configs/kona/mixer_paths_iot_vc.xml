@@ -3239,8 +3239,7 @@
     </path>
 
     <path name="quad-mic">
-        <path name="speaker-qmic" />
-        <ctl name="TX_DEC4 Volume" value="96" />
+        <path name="va-quad-mic" />
     </path>
 
     <path name="unprocessed-quad-mic">
