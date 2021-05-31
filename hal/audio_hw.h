@@ -188,7 +188,6 @@ enum {
     OFFLOAD_CMD_PARTIAL_DRAIN,      /* send a partial drain request to DSP */
     OFFLOAD_CMD_WAIT_FOR_BUFFER,    /* wait for buffer released by DSP */
     OFFLOAD_CMD_ERROR,              /* offload playback hit some error */
-    OFFLOAD_CMD_DUMMY_PARTIAL_DRAIN, /*added for PCM in gapless mode*/
 };
 
 enum {
@@ -241,11 +240,6 @@ struct stream_out {
     pthread_t offload_thread;
     struct listnode offload_cmd_list;
     bool offload_thread_blocked;
-
-    pthread_mutex_t partial_drain_lock;
-    pthread_t partial_drain_thread;
-    pthread_cond_t partial_drain_cond;
-    struct listnode partial_drain_cmd_list;
 
     stream_callback_t offload_callback;
     void *offload_cookie;

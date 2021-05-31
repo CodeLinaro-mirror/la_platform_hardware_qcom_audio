@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2016, 2018,2020, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2016, 2018, The Linux Foundation. All rights reserved.
  * Not a Contribution.
  *
  * Copyright (C) 2013 The Android Open Source Project
@@ -1298,13 +1298,6 @@ void lock_output_stream(struct stream_out *out)
     pthread_mutex_unlock(&out->pre_lock);
 }
 
-void lock_output_stream_partial_drain(struct stream_out *out)
-{
-    pthread_mutex_lock(&out->pre_lock);
-    pthread_mutex_lock(&out->partial_drain_lock);
-    pthread_mutex_unlock(&out->pre_lock);
-}
-
 /* must be called with out->lock locked */
 static int send_offload_cmd_l(struct stream_out* out, int command)
 {
@@ -1320,24 +1313,6 @@ static int send_offload_cmd_l(struct stream_out* out, int command)
     cmd->cmd = command;
     list_add_tail(&out->offload_cmd_list, &cmd->node);
     pthread_cond_signal(&out->offload_cond);
-    return 0;
-}
-
-/* must be called with out->partial_drain_lock locked */
-static int send_partial_drain_cmd_l(struct stream_out* out, int command)
-{
-    struct offload_cmd *cmd = (struct offload_cmd *)calloc(1, sizeof(struct offload_cmd));
-
-    if (!cmd) {
-        ALOGE("failed to allocate mem for command 0x%x", command);
-        return -ENOMEM;
-    }
-
-    ALOGVV("%s %d", __func__, command);
-
-    cmd->cmd = command;
-    list_add_tail(&out->partial_drain_cmd_list, &cmd->node);
-    pthread_cond_signal(&out->partial_drain_cond);
     return 0;
 }
 
@@ -1400,83 +1375,6 @@ static void free_offload_usecase(struct audio_device *adev,
     ALOGV("%s: free offload usecase %d", __func__, uc_id);
 }
 
-static void *partial_drain_thread_loop(void *context)
-{
-    struct stream_out *out = (struct stream_out *) context;
-    struct listnode *item;
-    int ret = 0;
-
-    setpriority(PRIO_PROCESS, 0, ANDROID_PRIORITY_AUDIO);
-    set_sched_policy(0, SP_FOREGROUND);
-    prctl(PR_SET_NAME, (unsigned long)"Partial drain thread", 0, 0, 0);
-
-    ALOGV("%s", __func__);
-    lock_output_stream_partial_drain(out);
-    for (;;) {
-        struct offload_cmd *cmd = NULL;
-        stream_callback_event_t event;
-        bool send_callback = false;
-
-
-        ALOGVV("%s offload_cmd_list %d out->offload_state %d",
-              __func__, list_empty(&out->partial_drain_cmd_list),
-              out->offload_state);
-        if (list_empty(&out->partial_drain_cmd_list)) {
-            ALOGD("%s SLEEPING", __func__);
-            pthread_cond_wait(&out->partial_drain_cond, &out->partial_drain_lock);
-            ALOGD("%s RUNNING", __func__);
-            continue;
-        }
-
-        item = list_head(&out->partial_drain_cmd_list);
-        cmd = node_to_item(item, struct offload_cmd, node);
-        list_remove(item);
-
-        ALOGD("%s STATE %d CMD %d out->compr %p in partial drain thread",
-               __func__, out->offload_state, cmd->cmd, out->compr);
-
-        if (cmd->cmd == OFFLOAD_CMD_EXIT) {
-            free(cmd);
-            break;
-        }
-
-        if (out->compr == NULL && cmd->cmd != OFFLOAD_CMD_ERROR ) {
-            ALOGE("%s: Compress handle is NULL", __func__);
-            pthread_cond_signal(&out->cond);
-            continue;
-        }
-
-        switch(cmd->cmd) {
-            case OFFLOAD_CMD_PARTIAL_DRAIN:
-                ALOGD("copl(%p):calling compress_partial_drain from partial drain thread", out);
-                ret = compress_next_track(out->compr);
-                if(ret == 0) {
-                     ALOGD("copl(%p):calling compress_partial_drain from partial drain thread", out);
-                     ret = compress_partial_drain(out->compr);
-                     ALOGD("copl(%p):out of compress_partial_drain from partial drain thread", out);
-                     if (ret < 0)
-                        ret = -errno;
-                }
-                else if (ret == -ETIMEDOUT)
-                    compress_drain(out->compr);
-                else
-                    ALOGE("%s: Next track returned error %d from partial drain thread",__func__, ret);
-                break;
-            default:
-                ALOGE("%s unknown command received: %d", __func__, cmd->cmd);
-                break;
-            }
-        free(cmd);
-    }
-    while (!list_empty(&out->partial_drain_cmd_list)) {
-        item = list_head(&out->partial_drain_cmd_list);
-        list_remove(item);
-        free(node_to_item(item, struct offload_cmd, node));
-    }
-    pthread_mutex_unlock(&out->partial_drain_lock);
-    return NULL;
-}
-
 static void *offload_thread_loop(void *context)
 {
     struct stream_out *out = (struct stream_out *) context;
@@ -1531,15 +1429,6 @@ static void *offload_thread_loop(void *context)
             ALOGD("copl(%p):out of compress_wait", out);
             send_callback = true;
             event = STREAM_CBK_EVENT_WRITE_READY;
-            break;
-        case OFFLOAD_CMD_DUMMY_PARTIAL_DRAIN:
-            send_callback = true;
-            pthread_mutex_lock(&out->lock);
-            out->send_new_metadata = 1;
-            out->send_next_track_params = true;
-            pthread_mutex_unlock(&out->lock);
-            event = STREAM_CBK_EVENT_DRAIN_READY;
-            ALOGI("copl(%p):send drain callback earlier than usual for PCM, ret %d", out, ret);
             break;
         case OFFLOAD_CMD_PARTIAL_DRAIN:
             ret = compress_next_track(out->compr);
@@ -1602,39 +1491,12 @@ static void *offload_thread_loop(void *context)
     return NULL;
 }
 
-static int create_partial_drain_thread(struct stream_out *out)
-{
-    ALOGD("creating thread for partial_drain");
-    pthread_cond_init(&out->partial_drain_cond, (const pthread_condattr_t *) NULL);
-    list_init(&out->partial_drain_cmd_list);
-    pthread_create(&out->partial_drain_thread, (const pthread_attr_t *) NULL,
-                    partial_drain_thread_loop, out);
-    return 0;
-}
-
 static int create_offload_callback_thread(struct stream_out *out)
 {
     pthread_cond_init(&out->offload_cond, (const pthread_condattr_t *) NULL);
     list_init(&out->offload_cmd_list);
     pthread_create(&out->offload_thread, (const pthread_attr_t *) NULL,
                     offload_thread_loop, out);
-    if (audio_is_linear_pcm(out->format)) {
-        create_partial_drain_thread(out);
-    }
-    return 0;
-}
-
-static int destroy_partial_drain_callback_thread(struct stream_out *out)
-{
-    ALOGD("Destroying partial_drain thread");
-    lock_output_stream_partial_drain(out);
-    stop_compressed_output_l(out);
-    send_partial_drain_cmd_l(out, OFFLOAD_CMD_EXIT);
-
-    pthread_mutex_unlock(&out->partial_drain_lock);
-    pthread_join(out->partial_drain_thread, (void **) NULL);
-    pthread_cond_destroy(&out->partial_drain_cond);
-
     return 0;
 }
 
@@ -2934,23 +2796,12 @@ static int out_drain(struct audio_stream_out* stream, audio_drain_type_t type )
     int status = -ENOSYS;
     ALOGV("%s", __func__);
     if (is_offload_usecase(out->usecase)) {
-        if (audio_is_linear_pcm(out->format)) {
-                lock_output_stream_partial_drain(out);
-        if (type == AUDIO_DRAIN_EARLY_NOTIFY) {
-                status = send_partial_drain_cmd_l(out, OFFLOAD_CMD_PARTIAL_DRAIN);
-                send_offload_cmd_l(out,OFFLOAD_CMD_DUMMY_PARTIAL_DRAIN);
-        }
-        pthread_mutex_unlock(&out->partial_drain_lock);
-        }
-        else {
         lock_output_stream(out);
-        if (type == AUDIO_DRAIN_EARLY_NOTIFY) {
-                status = send_offload_cmd_l(out, OFFLOAD_CMD_PARTIAL_DRAIN);
-        }
+        if (type == AUDIO_DRAIN_EARLY_NOTIFY)
+            status = send_offload_cmd_l(out, OFFLOAD_CMD_PARTIAL_DRAIN);
         else
-                status = send_offload_cmd_l(out, OFFLOAD_CMD_DRAIN);
+            status = send_offload_cmd_l(out, OFFLOAD_CMD_DRAIN);
         pthread_mutex_unlock(&out->lock);
-        }
     }
     return status;
 }
@@ -3909,10 +3760,7 @@ static void adev_close_output_stream(struct audio_hw_device *dev __unused,
 
     if (is_offload_usecase(out->usecase)) {
         audio_extn_dts_remove_state_notifier_node(out->usecase);
-        if(audio_is_linear_pcm(out->format))
-            destroy_partial_drain_callback_thread(out);
-        else
-            destroy_offload_callback_thread(out);
+        destroy_offload_callback_thread(out);
         free_offload_usecase(adev, out->usecase);
         if (out->compr_config.codec != NULL)
             free(out->compr_config.codec);
