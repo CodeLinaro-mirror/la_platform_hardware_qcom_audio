@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2020, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2021, The Linux Foundation. All rights reserved.
  * Not a contribution.
  *
  * Copyright (C) 2013 The Android Open Source Project
@@ -206,6 +206,8 @@ int voice_stop_usecase(struct audio_device *adev, audio_usecase_t usecase_id)
     disable_snd_device(adev, uc_info->out_snd_device);
     disable_snd_device(adev, uc_info->in_snd_device);
 
+    adev->voice.in_ecall = 0;
+
     list_remove(&uc_info->list);
     free(uc_info);
 
@@ -266,6 +268,7 @@ int voice_start_usecase(struct audio_device *adev, audio_usecase_t usecase_id)
     uc_info->out_snd_device = SND_DEVICE_NONE;
     adev->voice.use_device_mute = false;
 
+    adev->voice.in_ecall = uc_info->stream.out->ecall;
     if (audio_is_bluetooth_sco_device(uc_info->devices) && !adev->bt_sco_on) {
         ALOGE("start_call: couldn't find BT SCO, SCO is not ready");
         adev->voice.in_call = false;
@@ -397,6 +400,11 @@ bool voice_is_call_state_active(struct audio_device *adev)
 bool voice_is_in_call(const struct audio_device *adev)
 {
     return adev->voice.in_call;
+}
+
+bool voice_is_in_ecall(const struct audio_device *adev)
+{
+    return adev->voice.in_ecall;
 }
 
 bool voice_is_in_call_rec_stream(const struct stream_in *in)
