@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2020, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2021, The Linux Foundation. All rights reserved.
  * Not a contribution.
  *
  * Copyright (C) 2013 The Android Open Source Project
@@ -66,6 +66,7 @@ struct voice {
     float mic_volume;
 #endif
     bool in_call;
+    bool in_ecall;
 };
 
 enum {
@@ -85,6 +86,7 @@ void voice_get_parameters(struct audio_device *adev, struct str_parms *query,
                           struct str_parms *reply);
 void voice_init(struct audio_device *adev);
 bool voice_is_in_call(const struct audio_device *adev);
+bool voice_is_in_ecall(const struct audio_device *adev);
 bool voice_is_in_call_rec_stream(const struct stream_in *in);
 int voice_set_mic_mute(struct audio_device *dev, bool state, audio_usecase_t
                        usecase_id);
