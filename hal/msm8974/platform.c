@@ -67,6 +67,7 @@
 #define PLATFORM_INFO_XML_PATH_SKUSH  "/etc/audio_platform_info_skush.xml"
 #define PLATFORM_INFO_XML_PATH_SKUW  "/etc/audio_platform_info_skuw.xml"
 #define PLATFORM_INFO_XML_PATH_QRD  "/etc/audio_platform_info_qrd.xml"
+#define PLATFORM_INFO_XML_PATH_IOT_VC "/etc/audio_platform_info_iot_vc.xml"
 #define PLATFORM_INFO_XML_PATH_LAGOON_QRD  "/etc/audio_platform_info_lagoon_qrd.xml"
 #define PLATFORM_INFO_XML_PATH_IOT  "/etc/audio_platform_info_iot.xml"
 #define PLATFORM_INFO_XML_PATH "/etc/audio_platform_info.xml"
@@ -86,6 +87,7 @@
 #define PLATFORM_INFO_XML_PATH_SKUSH "/vendor/etc/audio_platform_info_skush.xml"
 #define PLATFORM_INFO_XML_PATH_SKUW "/vendor/etc/audio_platform_info_skuw.xml"
 #define PLATFORM_INFO_XML_PATH_QRD "/vendor/etc/audio_platform_info_qrd.xml"
+#define PLATFORM_INFO_XML_PATH_IOT_VC "/vendor/etc/audio_platform_info_iot_vc.xml"
 #define PLATFORM_INFO_XML_PATH_LAGOON_QRD  "/vendor/etc/audio_platform_info_lagoon_qrd.xml"
 #define PLATFORM_INFO_XML_PATH_IOT  "/vendor/etc/audio_platform_info_iot.xml"
 #define PLATFORM_INFO_XML_PATH "/vendor/etc/audio_platform_info.xml"
@@ -423,6 +425,7 @@ struct platform_data {
     struct snd_device_to_mic_map mic_map[SND_DEVICE_MAX];
     struct device_chmap *spkr_ch_map;
     struct device_chmap *capture_ch_map;
+    bool use_spkr_default_bit_width;
     bool use_sprk_default_sample_rate;
     bool is_multiple_sample_rate_combo_supported;
     struct listnode custom_mtmx_params_list;
@@ -3315,6 +3318,7 @@ void *platform_init(struct audio_device *adev)
     my_data->declared_mic_count = 0;
     my_data->spkr_ch_map = NULL;
     my_data->capture_ch_map = NULL;
+    my_data->use_spkr_default_bit_width = false;
     my_data->use_sprk_default_sample_rate = true;
     my_data->fluence_in_voice_comm = false;
     my_data->ec_car_state = false;
@@ -3471,6 +3475,9 @@ void *platform_init(struct audio_device *adev)
     else if (!strncmp(snd_card_name, "kona-qrd-snd-card",
                sizeof("kona-qrd-snd-card")))
         platform_info_init(PLATFORM_INFO_XML_PATH_QRD, my_data, PLATFORM);
+    else if (!strncmp(snd_card_name, "kona-iot-vc-snd-card",
+               sizeof("kona-iot-vc-snd-card")))
+        platform_info_init(PLATFORM_INFO_XML_PATH_IOT_VC, my_data, PLATFORM);
     else if (!strncmp(snd_card_name, "kona-iot-snd-card",
                sizeof("kona-iot-snd-card")))
         platform_info_init(PLATFORM_INFO_XML_PATH_IOT, my_data, PLATFORM);
@@ -3591,13 +3598,20 @@ void *platform_init(struct audio_device *adev)
          }
 #endif
 
-    /* CSRA devices support multiple sample rates via I2S at spkr out */
     if (!strncmp(snd_card_name, "qcs405-csra", strlen("qcs405-csra"))) {
-        ALOGE("%s: soundcard: %s supports multiple sample rates", __func__, snd_card_name);
+        /* CSRA devices support default bit width via I2S at spkr out */
+        my_data->use_spkr_default_bit_width = true;
+        ALOGI("%s: soundcard: %s supports only default bit width", __func__, snd_card_name);
+
+        /* CSRA devices support multiple sample rates via I2S at spkr out */
         my_data->use_sprk_default_sample_rate = false;
+        ALOGI("%s: soundcard: %s supports multiple sample rates", __func__, snd_card_name);
     } else {
+        my_data->use_spkr_default_bit_width = false;
+        ALOGI("%s: soundcard: %s supports multiple bit width", __func__, snd_card_name);
+
         my_data->use_sprk_default_sample_rate = true;
-        ALOGE("%s: soundcard: %s supports only default sample rate", __func__, snd_card_name);
+        ALOGI("%s: soundcard: %s supports only default sample rate", __func__, snd_card_name);
     }
 
     my_data->voice_feature_set = VOICE_FEATURE_SET_DEFAULT;
@@ -4044,6 +4058,14 @@ acdb_init_fail:
             strdup("SEC_MI2S_TX SampleRate");
         my_data->current_backend_cfg[HDMI_TX_BACKEND].channels_mixer_ctl =
             strdup("SEC_MI2S_TX Channels");
+    } else if (!strncmp(platform_get_snd_device_backend_interface(SND_DEVICE_IN_HDMI_MIC),
+        "TERT_MI2S_TX", sizeof("TERT_MI2S_TX"))) {
+        my_data->current_backend_cfg[HDMI_TX_BACKEND].bitwidth_mixer_ctl =
+            strdup("TERT_MI2S_TX Format");
+        my_data->current_backend_cfg[HDMI_TX_BACKEND].samplerate_mixer_ctl =
+            strdup("TERT_MI2S_TX SampleRate");
+        my_data->current_backend_cfg[HDMI_TX_BACKEND].channels_mixer_ctl =
+            strdup("TERT_MI2S_TX Channels");
     } else {
         my_data->current_backend_cfg[HDMI_TX_BACKEND].bitwidth_mixer_ctl =
             strdup("QUAT_MI2S_TX Format");
@@ -10218,6 +10240,16 @@ static bool platform_check_codec_backend_cfg(struct audio_device* adev,
             ALOGD("%s:becf: afe: reset to default bitwidth %d", __func__, bit_width);
         }
         /*
+         * In case of CSRA speaker out, Bit Width is fixed, so
+         *  check platform here and reset
+         */
+        if ((bit_width != my_data->current_backend_cfg[backend_idx].bit_width) &&
+            (platform_spkr_use_default_bit_width(adev->platform))) {
+            bit_width = my_data->current_backend_cfg[backend_idx].bit_width;
+            ALOGD("%s:becf: afe: Setting Default Bit Width: %d", __func__, bit_width);
+        }
+
+        /*
          * In case of CSRA speaker out, all sample rates are supported, so
          *  check platform here
          */
@@ -10226,6 +10258,7 @@ static bool platform_check_codec_backend_cfg(struct audio_device* adev,
             ALOGD("%s:becf: afe: playback on codec device not supporting native playback set "
             "default Sample Rate(48k)", __func__);
         }
+
         /* Reset channels for speaker as its fixed and independent of active streams */
         channels = my_data->current_backend_cfg[backend_idx].channels;
     }
@@ -11565,6 +11598,11 @@ int platform_edid_get_highest_supported_sr_v2(void *platform, int controller, in
 int platform_edid_get_highest_supported_sr(void *platform)
 {
     return  platform_edid_get_highest_supported_sr_v2(platform, 0, 0);
+}
+
+bool platform_spkr_use_default_bit_width(void *platform) {
+    struct platform_data *my_data = (struct platform_data *)platform;
+    return my_data->use_spkr_default_bit_width;
 }
 
 bool platform_spkr_use_default_sample_rate(void *platform) {

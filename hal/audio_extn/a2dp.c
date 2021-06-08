@@ -1,5 +1,5 @@
 /*
-* Copyright (c) 2015-2020, The Linux Foundation. All rights reserved.
+* Copyright (c) 2015-2021, The Linux Foundation. All rights reserved.
 *
 * Redistribution and use in source and binary forms, with or without
 * modification, are permitted provided that the following conditions are
@@ -50,8 +50,8 @@
 #endif
 
 #define AUDIO_PARAMETER_A2DP_STARTED "A2dpStarted"
-#define BT_IPC_SOURCE_LIB_NAME  "libbthost_if.so"
-#define BT_IPC_SOURCE_LIB_NAME_QTI "libbthost_if_qti.so"
+#define BT_IPC_SOURCE_LIB_NAME  "btaudio_offload_if.so"
+#define BT_IPC_SOURCE_LIB2_NAME  "libbthost_if.so"
 #define MEDIA_FMT_NONE                                     0
 #define MEDIA_FMT_AAC                                      0x00010DA6
 #define MEDIA_FMT_APTX                                     0x000131ff
@@ -312,6 +312,7 @@ struct a2dp_data {
     struct a2dp_abr_config abr_config;
 
     bool swb_configured;
+    bool support_bt_audio_pre_init;
 };
 
 struct a2dp_data a2dp;
@@ -947,40 +948,7 @@ static void open_a2dp_source() {
     int ret = 0;
 
     ALOGD(" Open A2DP source start ");
-    if (a2dp.bt_lib_source_handle == NULL) {
-            ALOGD(" Requesting for BT lib handle");
-            a2dp.bt_lib_source_handle = dlopen(BT_IPC_SOURCE_LIB_NAME, RTLD_NOW);
-            if (a2dp.bt_lib_source_handle == NULL) {
-                ALOGE("%s: DLOPEN failed for %s", __func__, BT_IPC_SOURCE_LIB_NAME);
-                ret = -ENOSYS;
-                goto init_fail;
-        } else {
-        a2dp.audio_source_open = (audio_source_open_t)
-                      dlsym(a2dp.bt_lib_source_handle, "audio_stream_open");
-        a2dp.audio_source_start = (audio_source_start_t)
-                      dlsym(a2dp.bt_lib_source_handle, "audio_start_stream");
-        a2dp.audio_get_enc_config = (audio_get_enc_config_t)
-                      dlsym(a2dp.bt_lib_source_handle, "audio_get_codec_config");
-        a2dp.audio_source_suspend = (audio_source_suspend_t)
-                      dlsym(a2dp.bt_lib_source_handle, "audio_suspend_stream");
-        a2dp.audio_source_handoff_triggered = (audio_source_handoff_triggered_t)
-                      dlsym(a2dp.bt_lib_source_handle, "audio_handoff_triggered");
-        a2dp.clear_source_a2dpsuspend_flag = (clear_source_a2dpsuspend_flag_t)
-                      dlsym(a2dp.bt_lib_source_handle, "clear_a2dpsuspend_flag");
-        a2dp.audio_source_stop = (audio_source_stop_t)
-                       dlsym(a2dp.bt_lib_source_handle, "audio_stop_stream");
-        a2dp.audio_source_close = (audio_source_close_t)
-                      dlsym(a2dp.bt_lib_source_handle, "audio_stream_close");
-        a2dp.audio_source_check_a2dp_ready = (audio_source_check_a2dp_ready_t)
-                      dlsym(a2dp.bt_lib_source_handle,"audio_check_a2dp_ready");
-        a2dp.audio_sink_get_a2dp_latency = (audio_sink_get_a2dp_latency_t)
-                      dlsym(a2dp.bt_lib_source_handle,"audio_get_a2dp_sink_latency");
-        a2dp.audio_is_source_scrambling_enabled = (audio_is_source_scrambling_enabled_t)
-                      dlsym(a2dp.bt_lib_source_handle,"audio_is_scrambling_enabled");
-        a2dp.audio_is_tws_mono_mode_enable = (audio_is_tws_mono_mode_enable_t)
-                       dlsym(a2dp.bt_lib_source_handle,"isTwsMonomodeEnable");
-        }
-    }
+
     if (a2dp.bt_lib_source_handle && a2dp.audio_source_open) {
         if (a2dp.bt_state_source == A2DP_STATE_DISCONNECTED) {
             ALOGD("calling BT stream open");
@@ -1003,6 +971,60 @@ init_fail:
     if (ret != 0 && (a2dp.bt_lib_source_handle != NULL)) {
         dlclose(a2dp.bt_lib_source_handle);
         a2dp.bt_lib_source_handle = NULL;
+    }
+}
+
+static void a2dp_source_init(){
+    ALOGD(" a2dp_source_init START");
+    if (a2dp.bt_lib_source_handle == NULL) {
+        ALOGD(" Requesting for BT lib handle");
+        a2dp.bt_lib_source_handle = dlopen(BT_IPC_SOURCE_LIB_NAME, RTLD_NOW);
+        if (a2dp.bt_lib_source_handle == NULL) {
+            ALOGE("%s: DLOPEN failed for %s", __func__, BT_IPC_SOURCE_LIB_NAME);
+            ALOGD("%s Falling back to %s since LE uses non-hidl based", __func__, BT_IPC_SOURCE_LIB2_NAME);
+            a2dp.bt_lib_source_handle = dlopen(BT_IPC_SOURCE_LIB2_NAME, RTLD_NOW);
+            a2dp.support_bt_audio_pre_init = false;
+            if(a2dp.bt_lib_source_handle == NULL) {
+                ALOGE("%s: DLOPEN failed for %s", __func__, BT_IPC_SOURCE_LIB2_NAME);
+                return;
+            }
+        }
+    }
+    if (a2dp.support_bt_audio_pre_init)
+        a2dp.bt_audio_pre_init = (bt_audio_pre_init_t)
+                  dlsym(a2dp.bt_lib_source_handle, "bt_audio_pre_init");
+    a2dp.audio_source_open = (audio_source_open_t)
+                      dlsym(a2dp.bt_lib_source_handle, "audio_stream_open");
+    a2dp.audio_source_start = (audio_source_start_t)
+                      dlsym(a2dp.bt_lib_source_handle, "audio_start_stream");
+    a2dp.audio_get_enc_config = (audio_get_enc_config_t)
+                      dlsym(a2dp.bt_lib_source_handle, "audio_get_codec_config");
+    a2dp.audio_source_suspend = (audio_source_suspend_t)
+                      dlsym(a2dp.bt_lib_source_handle, "audio_suspend_stream");
+    a2dp.audio_source_handoff_triggered = (audio_source_handoff_triggered_t)
+                      dlsym(a2dp.bt_lib_source_handle, "audio_handoff_triggered");
+    a2dp.clear_source_a2dpsuspend_flag = (clear_source_a2dpsuspend_flag_t)
+                      dlsym(a2dp.bt_lib_source_handle, "clear_a2dpsuspend_flag");
+    a2dp.audio_source_stop = (audio_source_stop_t)
+                       dlsym(a2dp.bt_lib_source_handle, "audio_stop_stream");
+    a2dp.audio_source_close = (audio_source_close_t)
+                      dlsym(a2dp.bt_lib_source_handle, "audio_stream_close");
+    a2dp.audio_source_check_a2dp_ready = (audio_source_check_a2dp_ready_t)
+                      dlsym(a2dp.bt_lib_source_handle,"audio_check_a2dp_ready");
+    a2dp.audio_sink_get_a2dp_latency = (audio_sink_get_a2dp_latency_t)
+                      dlsym(a2dp.bt_lib_source_handle,"audio_get_a2dp_sink_latency");
+    a2dp.audio_is_source_scrambling_enabled = (audio_is_source_scrambling_enabled_t)
+                      dlsym(a2dp.bt_lib_source_handle,"audio_is_scrambling_enabled");
+    a2dp.audio_is_tws_mono_mode_enable = (audio_is_tws_mono_mode_enable_t)
+                       dlsym(a2dp.bt_lib_source_handle,"isTwsMonomodeEnable");
+
+    if (is_running_with_enhanced_fwk == UNINITIALIZED)
+        is_running_with_enhanced_fwk = check_if_enhanced_fwk();
+
+    if (a2dp.bt_lib_source_handle && is_running_with_enhanced_fwk
+        && a2dp.bt_audio_pre_init) {
+        ALOGD("calling BT module preinit");
+        a2dp.bt_audio_pre_init();
     }
 }
 
@@ -2423,7 +2445,8 @@ void a2dp_init(void *adev,
   a2dp.abr_config.abr_rx_handle = NULL;
   a2dp.is_tws_mono_mode_on = false;
   a2dp.swb_configured = false;
-
+  a2dp.support_bt_audio_pre_init = true;
+  a2dp_source_init();
   // init function pointers
   fp_platform_get_pcm_device_id =
               init_config.fp_platform_get_pcm_device_id;
