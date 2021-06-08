@@ -45,8 +45,8 @@ usecase="USECASE_AUDIO_RECORD_VOIP,USECASE_AUDIO_RECORD_COMPRESS2,USECASE_AUDIO_
         <device name="SND_DEVICE_OUT_SPEAKER" bit_width="24"/>
     </bit_width_configs>
     <interface_names>
-        <device name="AUDIO_DEVICE_IN_BUILTIN_MIC" interface="VA_CDC_DMA_TX_0" codec_type="internal"/>
-        <device name="AUDIO_DEVICE_IN_BACK_MIC" interface="VA_CDC_DMA_TX_0" codec_type="internal"/>
+        <device name="AUDIO_DEVICE_IN_BUILTIN_MIC" interface="TX_CDC_DMA_TX_3" codec_type="internal"/>
+        <device name="AUDIO_DEVICE_IN_BACK_MIC" interface="TX_CDC_DMA_TX_3" codec_type="internal"/>
     </interface_names>
     <module_ids>
         <aec>
@@ -155,6 +155,7 @@ usecase="USECASE_AUDIO_RECORD_VOIP,USECASE_AUDIO_RECORD_COMPRESS2,USECASE_AUDIO_
         <device name="SND_DEVICE_IN_UNPROCESSED_HEADSET_MIC" acdb_id="147"/>
         <device name="SND_DEVICE_IN_HANDSET_GENERIC_QMIC" acdb_id="191"/>
         <device name="SND_DEVICE_IN_VOICE_HEARING_AID" acdb_id="11"/>
+        <device name="SND_DEVICE_IN_HANDSET_6MIC" acdb_id="77"/>
     </acdb_ids>
     <module_ids>
         <aec>
@@ -192,7 +193,7 @@ usecase="USECASE_AUDIO_RECORD_VOIP,USECASE_AUDIO_RECORD_COMPRESS2,USECASE_AUDIO_
         <device name="SND_DEVICE_OUT_VOICE_TTY_VCO_HEADPHONES" backend="headphones" interface="RX_CDC_DMA_RX_0"/>
         <device name="SND_DEVICE_OUT_VOICE_TTY_VCO_HEADSET" backend="headset" interface="RX_CDC_DMA_RX_0"/>
         <device name="SND_DEVICE_OUT_HANDSET" backend="handset" interface="RX_CDC_DMA_RX_0"/>
-        <device name="SND_DEVICE_OUT_SPEAKER" interface="WSA_CDC_DMA_RX_0"/>
+        <device name="SND_DEVICE_OUT_SPEAKER" interface="QUAT_MI2S_RX"/>
         <device name="SND_DEVICE_OUT_SPEAKER_EXTERNAL_1" interface="WSA_CDC_DMA_RX_0"/>
         <device name="SND_DEVICE_OUT_SPEAKER_EXTERNAL_2" interface="WSA_CDC_DMA_RX_0"/>
         <device name="SND_DEVICE_OUT_SPEAKER_REVERSE" interface="WSA_CDC_DMA_RX_0"/>
@@ -201,7 +202,7 @@ usecase="USECASE_AUDIO_RECORD_VOIP,USECASE_AUDIO_RECORD_COMPRESS2,USECASE_AUDIO_
         <device name="SND_DEVICE_OUT_SPEAKER_AND_HEADPHONES_EXTERNAL_2" interface="WSA_CDC_DMA_RX_0-and-RX_CDC_DMA_RX_0"/>
         <device name="SND_DEVICE_OUT_VOICE_HANDSET" backend="handset" interface="RX_CDC_DMA_RX_0"/>
         <device name="SND_DEVICE_OUT_VOICE_HANDSET_TMUS" backend="handset" interface="RX_CDC_DMA_RX_0"/>
-        <device name="SND_DEVICE_IN_HANDSET_GENERIC_QMIC" interface="VA_CDC_DMA_TX_0"/>
+        <device name="SND_DEVICE_IN_HANDSET_GENERIC_QMIC" interface="TX_CDC_DMA_TX_3"/>
         <device name="SND_DEVICE_OUT_VOICE_SPEAKER" interface="WSA_CDC_DMA_RX_0"/>
         <device name="SND_DEVICE_OUT_VOICE_SPEAKER_STEREO" interface="WSA_CDC_DMA_RX_0"/>
         <device name="SND_DEVICE_OUT_VOICE_SPEAKER_VBAT" interface="WSA_CDC_DMA_RX_0"/>
@@ -223,38 +224,38 @@ usecase="USECASE_AUDIO_RECORD_VOIP,USECASE_AUDIO_RECORD_COMPRESS2,USECASE_AUDIO_
         <device name="SND_DEVICE_OUT_SPEAKER_WSA" interface="WSA_CDC_DMA_RX_0"/>
         <device name="SND_DEVICE_OUT_VOICE_SPEAKER_WSA" interface="WSA_CDC_DMA_RX_0"/>
         <device name="SND_DEVICE_OUT_VOICE_SPEAKER_2_WSA" interface="WSA_CDC_DMA_RX_0"/>
-        <device name="SND_DEVICE_IN_HANDSET_MIC" interface="VA_CDC_DMA_TX_0"/>
-        <device name="SND_DEVICE_IN_HANDSET_MIC_SB" interface="VA_CDC_DMA_TX_0"/>
-        <device name="SND_DEVICE_IN_HANDSET_MIC_EXTERNAL" interface="VA_CDC_DMA_TX_0"/>
-        <device name="SND_DEVICE_IN_HANDSET_MIC_AEC" interface="VA_CDC_DMA_TX_0"/>
-        <device name="SND_DEVICE_IN_HANDSET_MIC_AEC_SB" interface="VA_CDC_DMA_TX_0"/>
-        <device name="SND_DEVICE_IN_HANDSET_MIC_NS" interface="VA_CDC_DMA_TX_0"/>
-        <device name="SND_DEVICE_IN_HANDSET_MIC_NS_SB" interface="VA_CDC_DMA_TX_0"/>
-        <device name="SND_DEVICE_IN_HANDSET_MIC_AEC_NS" interface="VA_CDC_DMA_TX_0"/>
-        <device name="SND_DEVICE_IN_HANDSET_MIC_AEC_NS_SB" interface="VA_CDC_DMA_TX_0"/>
-        <device name="SND_DEVICE_IN_HANDSET_DMIC" interface="VA_CDC_DMA_TX_0"/>
-        <device name="SND_DEVICE_IN_HANDSET_DMIC_AEC" interface="VA_CDC_DMA_TX_0"/>
-        <device name="SND_DEVICE_IN_HANDSET_DMIC_AEC_SB" interface="VA_CDC_DMA_TX_0"/>
-        <device name="SND_DEVICE_IN_HANDSET_DMIC_NS" interface="VA_CDC_DMA_TX_0"/>
-        <device name="SND_DEVICE_IN_HANDSET_DMIC_NS_SB" interface="VA_CDC_DMA_TX_0"/>
-        <device name="SND_DEVICE_IN_HANDSET_DMIC_AEC_NS" interface="VA_CDC_DMA_TX_0"/>
-        <device name="SND_DEVICE_IN_HANDSET_DMIC_AEC_NS_SB" interface="VA_CDC_DMA_TX_0"/>
-        <device name="SND_DEVICE_IN_HANDSET_DMIC_STEREO" interface="VA_CDC_DMA_TX_0"/>
-        <device name="SND_DEVICE_IN_SPEAKER_MIC" interface="VA_CDC_DMA_TX_0"/>
-        <device name="SND_DEVICE_IN_SPEAKER_MIC_SB" interface="VA_CDC_DMA_TX_0"/>
-        <device name="SND_DEVICE_IN_SPEAKER_MIC_AEC" interface="VA_CDC_DMA_TX_0"/>
-        <device name="SND_DEVICE_IN_SPEAKER_MIC_AEC_SB" interface="VA_CDC_DMA_TX_0"/>
-        <device name="SND_DEVICE_IN_SPEAKER_MIC_NS" interface="VA_CDC_DMA_TX_0"/>
-        <device name="SND_DEVICE_IN_SPEAKER_MIC_NS_SB" interface="VA_CDC_DMA_TX_0"/>
-        <device name="SND_DEVICE_IN_SPEAKER_MIC_AEC_NS" interface="VA_CDC_DMA_TX_0"/>
-        <device name="SND_DEVICE_IN_SPEAKER_MIC_AEC_NS_SB" interface="VA_CDC_DMA_TX_0"/>
-        <device name="SND_DEVICE_IN_SPEAKER_DMIC" interface="VA_CDC_DMA_TX_0"/>
-        <device name="SND_DEVICE_IN_SPEAKER_DMIC_AEC" interface="VA_CDC_DMA_TX_0"/>
-        <device name="SND_DEVICE_IN_SPEAKER_DMIC_AEC_SB" interface="VA_CDC_DMA_TX_0"/>
-        <device name="SND_DEVICE_IN_SPEAKER_DMIC_NS" interface="VA_CDC_DMA_TX_0"/>
-        <device name="SND_DEVICE_IN_SPEAKER_DMIC_NS_SB" interface="VA_CDC_DMA_TX_0"/>
-        <device name="SND_DEVICE_IN_SPEAKER_DMIC_AEC_NS" interface="VA_CDC_DMA_TX_0"/>
-        <device name="SND_DEVICE_IN_SPEAKER_DMIC_AEC_NS_SB" interface="VA_CDC_DMA_TX_0"/>
+        <device name="SND_DEVICE_IN_HANDSET_MIC" interface="TX_CDC_DMA_TX_3"/>
+        <device name="SND_DEVICE_IN_HANDSET_MIC_SB" interface="TX_CDC_DMA_TX_3"/>
+        <device name="SND_DEVICE_IN_HANDSET_MIC_EXTERNAL" interface="TX_CDC_DMA_TX_3"/>
+        <device name="SND_DEVICE_IN_HANDSET_MIC_AEC" interface="TX_CDC_DMA_TX_3"/>
+        <device name="SND_DEVICE_IN_HANDSET_MIC_AEC_SB" interface="TX_CDC_DMA_TX_3"/>
+        <device name="SND_DEVICE_IN_HANDSET_MIC_NS" interface="TX_CDC_DMA_TX_3"/>
+        <device name="SND_DEVICE_IN_HANDSET_MIC_NS_SB" interface="TX_CDC_DMA_TX_3"/>
+        <device name="SND_DEVICE_IN_HANDSET_MIC_AEC_NS" interface="TX_CDC_DMA_TX_3"/>
+        <device name="SND_DEVICE_IN_HANDSET_MIC_AEC_NS_SB" interface="TX_CDC_DMA_TX_3"/>
+        <device name="SND_DEVICE_IN_HANDSET_DMIC" interface="TX_CDC_DMA_TX_3"/>
+        <device name="SND_DEVICE_IN_HANDSET_DMIC_AEC" interface="TX_CDC_DMA_TX_3"/>
+        <device name="SND_DEVICE_IN_HANDSET_DMIC_AEC_SB" interface="TX_CDC_DMA_TX_3"/>
+        <device name="SND_DEVICE_IN_HANDSET_DMIC_NS" interface="TX_CDC_DMA_TX_3"/>
+        <device name="SND_DEVICE_IN_HANDSET_DMIC_NS_SB" interface="TX_CDC_DMA_TX_3"/>
+        <device name="SND_DEVICE_IN_HANDSET_DMIC_AEC_NS" interface="TX_CDC_DMA_TX_3"/>
+        <device name="SND_DEVICE_IN_HANDSET_DMIC_AEC_NS_SB" interface="TX_CDC_DMA_TX_3"/>
+        <device name="SND_DEVICE_IN_HANDSET_DMIC_STEREO" interface="TX_CDC_DMA_TX_3"/>
+        <device name="SND_DEVICE_IN_SPEAKER_MIC" interface="TX_CDC_DMA_TX_3"/>
+        <device name="SND_DEVICE_IN_SPEAKER_MIC_SB" interface="TX_CDC_DMA_TX_3"/>
+        <device name="SND_DEVICE_IN_SPEAKER_MIC_AEC" interface="TX_CDC_DMA_TX_3"/>
+        <device name="SND_DEVICE_IN_SPEAKER_MIC_AEC_SB" interface="TX_CDC_DMA_TX_3"/>
+        <device name="SND_DEVICE_IN_SPEAKER_MIC_NS" interface="TX_CDC_DMA_TX_3"/>
+        <device name="SND_DEVICE_IN_SPEAKER_MIC_NS_SB" interface="TX_CDC_DMA_TX_3"/>
+        <device name="SND_DEVICE_IN_SPEAKER_MIC_AEC_NS" interface="TX_CDC_DMA_TX_3"/>
+        <device name="SND_DEVICE_IN_SPEAKER_MIC_AEC_NS_SB" interface="TX_CDC_DMA_TX_3"/>
+        <device name="SND_DEVICE_IN_SPEAKER_DMIC" interface="TX_CDC_DMA_TX_3"/>
+        <device name="SND_DEVICE_IN_SPEAKER_DMIC_AEC" interface="TX_CDC_DMA_TX_3"/>
+        <device name="SND_DEVICE_IN_SPEAKER_DMIC_AEC_SB" interface="TX_CDC_DMA_TX_3"/>
+        <device name="SND_DEVICE_IN_SPEAKER_DMIC_NS" interface="TX_CDC_DMA_TX_3"/>
+        <device name="SND_DEVICE_IN_SPEAKER_DMIC_NS_SB" interface="TX_CDC_DMA_TX_3"/>
+        <device name="SND_DEVICE_IN_SPEAKER_DMIC_AEC_NS" interface="TX_CDC_DMA_TX_3"/>
+        <device name="SND_DEVICE_IN_SPEAKER_DMIC_AEC_NS_SB" interface="TX_CDC_DMA_TX_3"/>
         <device name="SND_DEVICE_IN_HEADSET_MIC" backend="headset-mic" interface="TX_CDC_DMA_TX_4"/>
         <device name="SND_DEVICE_IN_HEADSET_MIC_FLUENCE" backend="headset-mic" interface="TX_CDC_DMA_TX_4"/>
         <device name="SND_DEVICE_IN_VOICE_HEADSET_MIC" backend="headset-mic" interface="TX_CDC_DMA_TX_4"/>
@@ -264,62 +265,64 @@ usecase="USECASE_AUDIO_RECORD_VOIP,USECASE_AUDIO_RECORD_COMPRESS2,USECASE_AUDIO_
         <device name="SND_DEVICE_IN_VOICE_REC_HEADSET_MIC" backend="headset-mic" interface="TX_CDC_DMA_TX_4"/>
         <device name="SND_DEVICE_IN_HEADSET_MIC_AEC" backend="headset-mic" interface="TX_CDC_DMA_TX_4"/>
         <device name="SND_DEVICE_IN_HEADSET_MIC_FLUENCE" backend="headset-mic" interface="TX_CDC_DMA_TX_4"/>
-        <device name="SND_DEVICE_IN_VOICE_SPEAKER_MIC" interface="VA_CDC_DMA_TX_0"/>
-        <device name="SND_DEVICE_IN_VOICE_SPEAKER_MIC_SB" interface="VA_CDC_DMA_TX_0"/>
+        <device name="SND_DEVICE_IN_VOICE_SPEAKER_MIC" interface="TX_CDC_DMA_TX_3"/>
+        <device name="SND_DEVICE_IN_VOICE_SPEAKER_MIC_SB" interface="TX_CDC_DMA_TX_3"/>
         <device name="SND_DEVICE_IN_HDMI_MIC" interface="TERT_MI2S_TX"/>
         <device name="SND_DEVICE_IN_BT_SCO_MIC" interface="SLIMBUS_7_TX"/>
         <device name="SND_DEVICE_IN_BT_SCO_MIC_NREC" interface="SLIMBUS_7_TX"/>
         <device name="SND_DEVICE_IN_BT_SCO_MIC_WB" interface="SLIMBUS_7_TX"/>
         <device name="SND_DEVICE_IN_BT_SCO_MIC_WB_NREC" interface="SLIMBUS_7_TX"/>
-        <device name="SND_DEVICE_IN_CAMCORDER_MIC" interface="VA_CDC_DMA_TX_0"/>
-        <device name="SND_DEVICE_IN_VOICE_DMIC" interface="VA_CDC_DMA_TX_0"/>
-        <device name="SND_DEVICE_IN_VOICE_DMIC_SB" interface="VA_CDC_DMA_TX_0"/>
-        <device name="SND_DEVICE_IN_VOICE_SPEAKER_DMIC" interface="VA_CDC_DMA_TX_0"/>
-        <device name="SND_DEVICE_IN_VOICE_SPEAKER_DMIC_SB" interface="VA_CDC_DMA_TX_0"/>
-        <device name="SND_DEVICE_IN_VOICE_SPEAKER_QMIC" interface="VA_CDC_DMA_TX_0"/>
-        <device name="SND_DEVICE_IN_VOICE_TTY_FULL_HEADSET_MIC" interface="VA_CDC_DMA_TX_0"/>
-        <device name="SND_DEVICE_IN_VOICE_TTY_VCO_HANDSET_MIC" interface="VA_CDC_DMA_TX_0"/>
-        <device name="SND_DEVICE_IN_VOICE_TTY_HCO_HEADSET_MIC" interface="VA_CDC_DMA_TX_0"/>
-        <device name="SND_DEVICE_IN_VOICE_REC_MIC" interface="VA_CDC_DMA_TX_0"/>
-        <device name="SND_DEVICE_IN_VOICE_REC_MIC_NS" interface="VA_CDC_DMA_TX_0"/>
-        <device name="SND_DEVICE_IN_VOICE_REC_DMIC_STEREO" interface="VA_CDC_DMA_TX_0"/>
-        <device name="SND_DEVICE_IN_VOICE_REC_DMIC_FLUENCE" interface="VA_CDC_DMA_TX_0"/>
-        <device name="SND_DEVICE_IN_AANC_HANDSET_MIC" interface="VA_CDC_DMA_TX_0"/>
-        <device name="SND_DEVICE_IN_QUAD_MIC" interface="VA_CDC_DMA_TX_0"/>
-        <device name="SND_DEVICE_IN_HANDSET_STEREO_DMIC" interface="VA_CDC_DMA_TX_0"/>
-        <device name="SND_DEVICE_IN_SPEAKER_STEREO_DMIC" interface="VA_CDC_DMA_TX_0"/>
+        <device name="SND_DEVICE_IN_CAMCORDER_MIC" interface="TX_CDC_DMA_TX_3"/>
+        <device name="SND_DEVICE_IN_VOICE_DMIC" interface="TX_CDC_DMA_TX_3"/>
+        <device name="SND_DEVICE_IN_VOICE_DMIC_SB" interface="TX_CDC_DMA_TX_3"/>
+        <device name="SND_DEVICE_IN_VOICE_SPEAKER_DMIC" interface="TX_CDC_DMA_TX_3"/>
+        <device name="SND_DEVICE_IN_VOICE_SPEAKER_DMIC_SB" interface="TX_CDC_DMA_TX_3"/>
+        <device name="SND_DEVICE_IN_VOICE_SPEAKER_QMIC" interface="TX_CDC_DMA_TX_3"/>
+        <device name="SND_DEVICE_IN_VOICE_TTY_FULL_HEADSET_MIC" interface="TX_CDC_DMA_TX_3"/>
+        <device name="SND_DEVICE_IN_VOICE_TTY_VCO_HANDSET_MIC" interface="TX_CDC_DMA_TX_3"/>
+        <device name="SND_DEVICE_IN_VOICE_TTY_HCO_HEADSET_MIC" interface="TX_CDC_DMA_TX_3"/>
+        <device name="SND_DEVICE_IN_VOICE_REC_MIC" interface="TX_CDC_DMA_TX_3"/>
+        <device name="SND_DEVICE_IN_VOICE_REC_MIC_NS" interface="TX_CDC_DMA_TX_3"/>
+        <device name="SND_DEVICE_IN_VOICE_REC_DMIC_STEREO" interface="TX_CDC_DMA_TX_3"/>
+        <device name="SND_DEVICE_IN_VOICE_REC_DMIC_FLUENCE" interface="TX_CDC_DMA_TX_3"/>
+        <device name="SND_DEVICE_IN_AANC_HANDSET_MIC" interface="TX_CDC_DMA_TX_3"/>
+        <device name="SND_DEVICE_IN_QUAD_MIC" interface="TX_CDC_DMA_TX_3"/>
+        <device name="SND_DEVICE_IN_HANDSET_STEREO_DMIC" interface="TX_CDC_DMA_TX_3"/>
+        <device name="SND_DEVICE_IN_SPEAKER_STEREO_DMIC" interface="TX_CDC_DMA_TX_3"/>
         <device name="SND_DEVICE_IN_CAPTURE_VI_FEEDBACK" interface="WSA_CDC_DMA_TX_0"/>
         <device name="SND_DEVICE_IN_CAPTURE_VI_FEEDBACK_MONO_1" interface="WSA_CDC_DMA_TX_0"/>
         <device name="SND_DEVICE_IN_CAPTURE_VI_FEEDBACK_MONO_2" interface="WSA_CDC_DMA_TX_0"/>
-        <device name="SND_DEVICE_IN_VOICE_SPEAKER_DMIC_BROADSIDE" interface="VA_CDC_DMA_TX_0"/>
-        <device name="SND_DEVICE_IN_SPEAKER_DMIC_BROADSIDE" interface="VA_CDC_DMA_TX_0"/>
-        <device name="SND_DEVICE_IN_SPEAKER_DMIC_AEC_BROADSIDE" interface="VA_CDC_DMA_TX_0"/>
-        <device name="SND_DEVICE_IN_SPEAKER_DMIC_NS_BROADSIDE" interface="VA_CDC_DMA_TX_0"/>
-        <device name="SND_DEVICE_IN_SPEAKER_DMIC_AEC_NS_BROADSIDE" interface="VA_CDC_DMA_TX_0"/>
-        <device name="SND_DEVICE_IN_VOICE_FLUENCE_DMIC_AANC" interface="VA_CDC_DMA_TX_0"/>
-        <device name="SND_DEVICE_IN_HANDSET_QMIC" interface="VA_CDC_DMA_TX_0"/>
-        <device name="SND_DEVICE_IN_SPEAKER_QMIC_AEC" interface="VA_CDC_DMA_TX_0"/>
-        <device name="SND_DEVICE_IN_SPEAKER_QMIC_NS" interface="VA_CDC_DMA_TX_0"/>
-        <device name="SND_DEVICE_IN_SPEAKER_QMIC_AEC_NS" interface="VA_CDC_DMA_TX_0"/>
-        <device name="SND_DEVICE_IN_THREE_MIC" interface="VA_CDC_DMA_TX_0"/>
-        <device name="SND_DEVICE_IN_VOICE_HEARING_AID" interface="VA_CDC_DMA_TX_0"/>
-        <device name="SND_DEVICE_IN_HANDSET_TMIC_FLUENCE_PRO" interface="VA_CDC_DMA_TX_0"/>
-        <device name="SND_DEVICE_IN_HANDSET_TMIC" interface="VA_CDC_DMA_TX_0"/>
-        <device name="SND_DEVICE_IN_HANDSET_TMIC_AEC" interface="VA_CDC_DMA_TX_0"/>
-        <device name="SND_DEVICE_IN_HANDSET_TMIC_NS" interface="VA_CDC_DMA_TX_0"/>
-        <device name="SND_DEVICE_IN_HANDSET_TMIC_AEC_NS" interface="VA_CDC_DMA_TX_0"/>
-        <device name="SND_DEVICE_IN_VOICE_REC_TMIC" interface="VA_CDC_DMA_TX_0"/>
-        <device name="SND_DEVICE_IN_UNPROCESSED_MIC" interface="VA_CDC_DMA_TX_0"/>
-        <device name="SND_DEVICE_IN_UNPROCESSED_STEREO_MIC" interface="VA_CDC_DMA_TX_0"/>
-        <device name="SND_DEVICE_IN_UNPROCESSED_THREE_MIC" interface="VA_CDC_DMA_TX_0"/>
-        <device name="SND_DEVICE_IN_UNPROCESSED_QUAD_MIC" interface="VA_CDC_DMA_TX_0"/>
-        <device name="SND_DEVICE_IN_UNPROCESSED_HEADSET_MIC" interface="VA_CDC_DMA_TX_0"/>
+        <device name="SND_DEVICE_IN_VOICE_SPEAKER_DMIC_BROADSIDE" interface="TX_CDC_DMA_TX_3"/>
+        <device name="SND_DEVICE_IN_SPEAKER_DMIC_BROADSIDE" interface="TX_CDC_DMA_TX_3"/>
+        <device name="SND_DEVICE_IN_SPEAKER_DMIC_AEC_BROADSIDE" interface="TX_CDC_DMA_TX_3"/>
+        <device name="SND_DEVICE_IN_SPEAKER_DMIC_NS_BROADSIDE" interface="TX_CDC_DMA_TX_3"/>
+        <device name="SND_DEVICE_IN_SPEAKER_DMIC_AEC_NS_BROADSIDE" interface="TX_CDC_DMA_TX_3"/>
+        <device name="SND_DEVICE_IN_VOICE_FLUENCE_DMIC_AANC" interface="TX_CDC_DMA_TX_3"/>
+        <device name="SND_DEVICE_IN_HANDSET_QMIC" interface="TX_CDC_DMA_TX_3"/>
+        <device name="SND_DEVICE_IN_SPEAKER_QMIC_AEC" interface="TX_CDC_DMA_TX_3"/>
+        <device name="SND_DEVICE_IN_SPEAKER_QMIC_NS" interface="TX_CDC_DMA_TX_3"/>
+        <device name="SND_DEVICE_IN_SPEAKER_QMIC_AEC_NS" interface="TX_CDC_DMA_TX_3"/>
+        <device name="SND_DEVICE_IN_THREE_MIC" interface="TX_CDC_DMA_TX_3"/>
+        <device name="SND_DEVICE_IN_VOICE_HEARING_AID" interface="TX_CDC_DMA_TX_3"/>
+        <device name="SND_DEVICE_IN_HANDSET_TMIC_FLUENCE_PRO" interface="TX_CDC_DMA_TX_3"/>
+        <device name="SND_DEVICE_IN_HANDSET_TMIC" interface="TX_CDC_DMA_TX_3"/>
+        <device name="SND_DEVICE_IN_HANDSET_TMIC_AEC" interface="TX_CDC_DMA_TX_3"/>
+        <device name="SND_DEVICE_IN_HANDSET_TMIC_NS" interface="TX_CDC_DMA_TX_3"/>
+        <device name="SND_DEVICE_IN_HANDSET_TMIC_AEC_NS" interface="TX_CDC_DMA_TX_3"/>
+        <device name="SND_DEVICE_IN_VOICE_REC_TMIC" interface="TX_CDC_DMA_TX_3"/>
+        <device name="SND_DEVICE_IN_UNPROCESSED_MIC" interface="TX_CDC_DMA_TX_3"/>
+        <device name="SND_DEVICE_IN_UNPROCESSED_STEREO_MIC" interface="TX_CDC_DMA_TX_3"/>
+        <device name="SND_DEVICE_IN_UNPROCESSED_THREE_MIC" interface="TX_CDC_DMA_TX_3"/>
+        <device name="SND_DEVICE_IN_UNPROCESSED_QUAD_MIC" interface="TX_CDC_DMA_TX_3"/>
+        <device name="SND_DEVICE_IN_HANDSET_6MIC" interface="TX_CDC_DMA_TX_3"/>
+        <device name="SND_DEVICE_IN_UNPROCESSED_HEADSET_MIC" interface="TX_CDC_DMA_TX_3"/>
         <device name="SND_DEVICE_OUT_VOICE_SPEAKER_AND_VOICE_HEADPHONES" backend="speaker-and-headphones" interface="WSA_CDC_DMA_RX_0-and-RX_CDC_DMA_RX_0"/>
         <device name="SND_DEVICE_OUT_VOICE_SPEAKER_AND_VOICE_ANC_HEADSET" backend="speaker-and-headphones" interface="WSA_CDC_DMA_RX_0-and-RX_CDC_DMA_RX_0"/>
         <device name="SND_DEVICE_OUT_SPEAKER_AND_BT_SCO" backend="speaker-and-bt-sco" interface="WSA_CDC_DMA_RX_0-and-SLIMBUS_7_RX"/>
         <device name="SND_DEVICE_OUT_SPEAKER_AND_BT_SCO_WB" backend="speaker-and-bt-sco-wb" interface="WSA_CDC_DMA_RX_0-and-SLIMBUS_7_RX"/>
         <device name="SND_DEVICE_OUT_SPEAKER_AND_BT_SCO_SWB" backend="speaker-and-bt-sco-swb" interface="WSA_CDC_DMA_RX_0-and-SLIMBUS_7_RX"/>
-	    <device name="SND_DEVICE_IN_HANDSET_QMIC_AND_EC_REF_LOOPBACK" backend="handset-mic-and-ec-ref-loopback" interface="VA_CDC_DMA_TX_0-and-AFE_LOOPBACK_TX"/>
+        <device name="SND_DEVICE_IN_HANDSET_QMIC_AND_EC_REF_LOOPBACK" backend="handset-mic-and-ec-ref-loopback" interface="TX_CDC_DMA_TX_3-and-AFE_LOOPBACK_TX"/>
+        <device name="SND_DEVICE_IN_HANDSET_6MIC_AND_EC_REF_LOOPBACK" backend="handset-mic-and-ec-ref-loopback" interface="TX_CDC_DMA_TX_3-and-AFE_LOOPBACK_TX"/>
 	
     </backend_names>
     <!-- below values are for ref purpose to OEM, doesn't contain actual hardware info on MTP -->
