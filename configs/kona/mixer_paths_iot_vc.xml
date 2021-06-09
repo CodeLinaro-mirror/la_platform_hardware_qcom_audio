@@ -1703,6 +1703,10 @@
         <ctl name="MultiMedia17 Mixer TX_CDC_DMA_TX_4" value="1" />
     </path>
 
+    <path name="audio-record-compress2 hdmi-in">
+      <ctl name="MultiMedia17 Mixer TERT_MI2S_TX" value="1" />
+    </path>
+
     <path name="low-latency-record">
       <ctl name="MultiMedia8 Mixer TX_CDC_DMA_TX_3" value="1" />
     </path>
