@@ -1,5 +1,5 @@
 /*
-* Copyright (c) 2016-2020, The Linux Foundation. All rights reserved.
+* Copyright (c) 2016-2021, The Linux Foundation. All rights reserved.
 *
 * Redistribution and use in source and binary forms, with or without
 * modification, are permitted provided that the following conditions are
@@ -2594,29 +2594,36 @@ int qahw_stream_set_volume(qahw_stream_handle_t *stream_handle,
        return -ENOTSUP;
     }
 
-    /*set voice call vol*/
+    for(i=0; i < vol_data.num_of_channels; i++) {
+        if(vol_data.vol_pair[i].channel == QAHW_CHANNEL_L) {
+            left = vol_data.vol_pair[i].vol;
+            l_found = true;
+        }
+        if(vol_data.vol_pair[i].channel == QAHW_CHANNEL_R) {
+            right = vol_data.vol_pair[i].vol;
+            r_found = true;
+        }
+    }
+    /*set voice call vol, accepts mono and stereo*/
     if (((stream->type == QAHW_VOICE_CALL)||(stream->type == QAHW_ECALL)) &&
-        (vol_data.vol_pair && (vol_data.num_of_channels == 1))) {
-        ALOGV("%s: calling voice set volume with vol value %f\n",
-              __func__, vol_data.vol_pair[0].vol);
-        rc = qahw_set_voice_volume(stream->hw_module,
-                                   vol_data.vol_pair[0].vol);
-        /* Voice Stream picks up only single channel */
-        stream->vol.num_of_channels = vol_data.num_of_channels;
-        stream->vol.vol_pair[0] = vol_data.vol_pair[0];
+        (vol_data.vol_pair)) {
+        if(((l_found && r_found) && (left == right)) ||
+           (vol_data.num_of_channels == 1)) {
+            ALOGV("%s: calling voice set volume with vol value %f\n",
+                  __func__, vol_data.vol_pair[0].vol);
+            rc = qahw_set_voice_volume(stream->hw_module,
+                                       vol_data.vol_pair[0].vol);
+            stream->vol.num_of_channels = vol_data.num_of_channels;
+            for(i=0; i < vol_data.num_of_channels; i++) {
+                stream->vol.vol_pair[i] = vol_data.vol_pair[i];
+            }
+        } else {
+            ALOGE("%s: vol setting requires equal value for both left and \
+                  right channels\n", __func__);
+        }
     } /*currently HAL requires 2 channels only */
     else if (vol_data.num_of_channels == QAHW_CHANNELS_MAX &&
                vol_data.vol_pair) {
-        for(i=0; i < vol_data.num_of_channels; i++) {
-            if(vol_data.vol_pair[i].channel == QAHW_CHANNEL_L) {
-                left = vol_data.vol_pair[i].vol;
-                l_found = true;
-            }
-            if(vol_data.vol_pair[i].channel == QAHW_CHANNEL_R) {
-                right = vol_data.vol_pair[i].vol;
-                r_found = true;
-            }
-        }
         if((l_found && r_found) && (left == right)) {
             switch (stream->dir) {
             case QAHW_STREAM_INPUT:
