@@ -209,11 +209,11 @@ int adsp_post_proc_set_config (adsp_post_proc_stream_t *adsp_stream,
     adsp_stream->config.input.num_buf = 1;
 
     adsp_stream->config.output.buf_size = in_buf_config->max_frame_count *
-                    adsp_stream->config.input.num_channels *
+                    adsp_stream->config.output.num_channels *
                     audio_bytes_per_sample(in_buf_config->format);
 
     adsp_stream->config.input.buf_size = out_buf_config->max_frame_count *
-                    adsp_stream->config.output.num_channels *
+                    adsp_stream->config.input.num_channels *
                     audio_bytes_per_sample(out_buf_config->format);
 
     adsp_stream->config.meta_mode_enabled = 0;
@@ -265,13 +265,12 @@ int adsp_process(adsp_post_proc_stream_handle_t *stream, adsp_post_proc_buffer_t
         return -EINVAL;
 
     buf_config.output_len = in_buf->frame_count *
-                         (adsp_stream->config.input.bits_per_sample / 8) *
-                         adsp_stream->config.input.num_channels;
-
-
-    buf_config.input_len = out_buf->frame_count *
                          (adsp_stream->config.output.bits_per_sample / 8) *
                          adsp_stream->config.output.num_channels;
+
+    buf_config.input_len = out_buf->frame_count *
+                         (adsp_stream->config.input.bits_per_sample / 8) *
+                         adsp_stream->config.input.num_channels;
 
     if (ioctl(adsp_stream->fd, AUDIO_EFFECTS_GET_BUF_AVAIL, &buf_avail) < 0) {
         ALOGE("AUDIO_EFFECTS_GET_BUF_AVAIL failed");
