@@ -535,9 +535,12 @@ void *playback_start(void *thread_param) {
 
     if (params->playback_file != NULL) {
         fp = fopen(params->playback_file, "r");
-    }
-    if (fp== NULL) {
-        fprintf(stderr, "failed to open file %s\n",params->playback_file );
+        if (fp == NULL) {
+            fprintf(stderr, "failed to open file %s\n",params->playback_file );
+            pthread_exit(0);
+        }
+    } else {
+        fprintf(stderr, "invalid playback file" );
         pthread_exit(0);
     }
 
