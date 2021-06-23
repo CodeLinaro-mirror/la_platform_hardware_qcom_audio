@@ -145,7 +145,7 @@ AM_CONDITIONAL([QAHW_V1], [test x$AUDIO_FEATURE_ENABLED_QAHW_1_0 = xtrue])
 
 AC_CONFIG_FILES([ \
         Makefile \
-        hal-qal/Makefile \
+        hal-pal/Makefile \
         post_proc/Makefile \
         qahw_api/Makefile \
         qahw_api/test/Makefile
