@@ -1360,7 +1360,7 @@ int StreamOutPrimary::CreateMmapBuffer(int32_t min_size_frames,
         struct audio_mmap_buffer_info *info)
 {
     int ret;
-    struct pal_mmap_buffer palMmapBuf;
+    struct pal_mmap_buffer palMmapBuf = {};
 
     if (pal_stream_handle_) {
         ALOGE("%s: pal handle already created\n", __func__);
@@ -1380,12 +1380,13 @@ int StreamOutPrimary::CreateMmapBuffer(int32_t min_size_frames,
         Standby();
         return ret;
     }
-#endif
+
     info->shared_memory_address = palMmapBuf.buffer;
     info->shared_memory_fd = palMmapBuf.fd;
     info->buffer_size_frames = palMmapBuf.buffer_size_frames;
     info->burst_size_frames = palMmapBuf.burst_size_frames;
     info->flags = (audio_mmap_buffer_flag) AUDIO_MMAP_APPLICATION_SHAREABLE;
+#endif
 
     return ret;
 }
@@ -1639,12 +1640,20 @@ int StreamOutPrimary::SetVolume(float left , float right) {
     if (left == right) {
         volume_ = (struct pal_volume_data *)malloc(sizeof(struct pal_volume_data)
                     +sizeof(struct pal_channel_vol_kv));
+        if (!volume_) {
+            ret = -ENOMEM;
+            return ret;
+        }
         volume_->no_of_volpair = 1;
         volume_->volume_pair[0].channel_mask = 0x03;
         volume_->volume_pair[0].vol = left;
     } else {
         volume_ = (struct pal_volume_data *)malloc(sizeof(struct pal_volume_data)
                     +sizeof(struct pal_channel_vol_kv) * 2);
+        if (!volume_) {
+            ret = -ENOMEM;
+            return ret;
+        }
         volume_->no_of_volpair = 2;
         volume_->volume_pair[0].channel_mask = 0x01;
         volume_->volume_pair[0].vol = left;
@@ -2238,17 +2247,22 @@ StreamOutPrimary::StreamOutPrimary(
                         visualizer_hal_start_output visualizer_start_output,
                         visualizer_hal_stop_output visualizer_stop_output):
     StreamPrimary(handle, devices, config),
-    flags_(flags)
+    flags_(flags), mNoOfOutDevices(0), mPalOutDevice(nullptr),
+    mPalOutDeviceIds(nullptr)
 {
     stream_ = std::shared_ptr<audio_stream_out> (new audio_stream_out());
     std::shared_ptr<AudioDevice> adevice = AudioDevice::GetInstance();
     mInitialized = false;
     int noPalDevices = 0;
     int ret = 0;
+    writeAt.tv_sec = 0;
+    writeAt.tv_nsec = 0;
+    total_bytes_written_ = 0;
+    convertBuffer = NULL;
 
     if (!stream_) {
         ALOGE("%s: No memory allocated for stream_", __func__);
-        goto error;
+        throw std::runtime_error("No memory allocated for stream_");
     }
     ALOGE("%s: enter: handle (%x) format(%#x) sample_rate(%d) channel_mask(%#x) devices(%#x) flags(%#x)\
           address(%s)", __func__, handle, config->format, config->sample_rate, config->channel_mask,
@@ -2269,7 +2283,7 @@ StreamOutPrimary::StreamOutPrimary(
             ret = pal_get_param(PAL_PARAM_ID_DEVICE_CAPABILITY,
                                 (void **)&device_cap_query,
                                 &payload_size, nullptr);
-            delete device_cap_query;
+            delete[] device_cap_query;
 
             config->sample_rate = dynamic_media_config.sample_rate;
             config->channel_mask = dynamic_media_config.mask;
@@ -2310,11 +2324,6 @@ StreamOutPrimary::StreamOutPrimary(
 
     fnp_visualizer_start_output_ = visualizer_start_output;
     fnp_visualizer_stop_output_ = visualizer_stop_output;
-
-    writeAt.tv_sec = 0;
-    writeAt.tv_nsec = 0;
-    total_bytes_written_ = 0;
-    convertBuffer = NULL;
 
     mNoOfOutDevices = popcount(devices);
     if (!mNoOfOutDevices) {
@@ -2432,7 +2441,7 @@ int StreamInPrimary::CreateMmapBuffer(int32_t min_size_frames,
         struct audio_mmap_buffer_info *info)
 {
     int ret;
-    struct pal_mmap_buffer palMmapBuf;
+    struct pal_mmap_buffer palMmapBuf = {};
 
     if (pal_stream_handle_) {
         ALOGE("%s: pal handle already created\n", __func__);
@@ -2452,12 +2461,13 @@ int StreamInPrimary::CreateMmapBuffer(int32_t min_size_frames,
         Standby();
         return ret;
     }
-#endif
+
     info->shared_memory_address = palMmapBuf.buffer;
     info->shared_memory_fd = palMmapBuf.fd;
     info->buffer_size_frames = palMmapBuf.buffer_size_frames;
     info->burst_size_frames = palMmapBuf.burst_size_frames;
     info->flags = (audio_mmap_buffer_flag)palMmapBuf.flags;
+#endif
 
     return ret;
 }
@@ -2613,6 +2623,10 @@ int StreamInPrimary::SetGain(float gain) {
 
     volume = (struct pal_volume_data*)malloc(sizeof(uint32_t)
                 +sizeof(struct pal_channel_vol_kv));
+    if (!volume) {
+        ret = -ENOMEM;
+        return ret;
+    }
     volume->no_of_volpair = 1;
     volume->volume_pair[0].channel_mask = 0x03;
     volume->volume_pair[0].vol = gain;
@@ -3039,7 +3053,7 @@ StreamInPrimary::StreamInPrimary(audio_io_handle_t handle,
     const char *address __unused,
     audio_source_t source) :
     StreamPrimary(handle, devices, config),
-    flags_(flags)
+    flags_(flags), mPalInDevice(nullptr)
 {
     stream_ = std::shared_ptr<audio_stream_in> (new audio_stream_in());
     std::shared_ptr<AudioDevice> adevice = AudioDevice::GetInstance();
@@ -3068,7 +3082,7 @@ StreamInPrimary::StreamInPrimary(audio_io_handle_t handle,
             ALOGD("%s: usb fs=%d format=%d mask=%x", __func__,
                 dynamic_media_config.sample_rate,
                 dynamic_media_config.format, dynamic_media_config.mask);
-            delete device_cap_query;
+            delete[] device_cap_query;
             config->sample_rate = dynamic_media_config.sample_rate;
             config->channel_mask = dynamic_media_config.mask;
             config->format = (audio_format_t)dynamic_media_config.format;
