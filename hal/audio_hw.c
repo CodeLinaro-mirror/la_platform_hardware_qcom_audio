@@ -6361,7 +6361,6 @@ int adev_open_output_stream(struct audio_hw_device *dev,
             ret = -EINVAL;
             goto error_open;
         }
-        adev->voice_tx_output = out;
     } else {
         unsigned int channels = 0;
         /*Update config params to default if not set by the caller*/
