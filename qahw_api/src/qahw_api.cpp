@@ -1583,6 +1583,7 @@ int qahw_in_set_volume(qahw_stream_handle_t *in_handle, float left, float right)
 ssize_t qahw_out_write(qahw_stream_handle_t *out_handle,
                         qahw_out_buffer_t *out_buf)
 {
+    ALOGV("%d:%s",__LINE__, __func__);
     return qahw_out_write_l(out_handle, out_buf);
 }
 
@@ -2045,7 +2046,7 @@ int qahw_add_flags_source(struct qahw_stream_attributes attr,
         *source = AUDIO_SOURCE_VOICE_UPLINK;
         break;
     case QAHW_AUDIO_CAPTURE_VOICE_CALL_RX_TX:
-        /*unsupported */
+        *source = AUDIO_SOURCE_VOICE_CALL;
         break;
     case QAHW_VOICE_CALL:
     case QAHW_ECALL:
@@ -2205,14 +2206,14 @@ int qahw_stream_open(qahw_module_handle_t *hw_module,
             rc = -EINVAL;
             goto error_exit;
         }
-        rc = qahw_open_output_stream(hw_module, handle, devices[0],
+        rc = qahw_open_output_stream(hw_module,  0x998, devices[0],
                                      (audio_output_flags_t)flags,
                                      &(attr.attr.shared.config),
                                      &stream->out_stream,
                                      address);
         /*ToDO: set cb function, currently registration of callback not supported
           for all stream ignore error incase fails */
-        if (!rc) {
+        if (!rc && cb) {
             rc = qahw_out_set_callback(stream->out_stream, cb, cookie);
             if (rc) {
                 ALOGE("%s: setting callback failed %d \n", __func__, rc);
@@ -2227,7 +2228,7 @@ int qahw_stream_open(qahw_module_handle_t *hw_module,
             rc = -EINVAL;
             goto error_exit;
         }
-        rc = qahw_open_input_stream(hw_module, handle, devices[0],
+        rc = qahw_open_input_stream(hw_module, 0x997, devices[0],
                                     &(attr.attr.shared.config),
                                     &stream->in_stream,
                                     (audio_input_flags_t)flags,
@@ -2860,7 +2861,7 @@ ssize_t qahw_stream_write(qahw_stream_handle_t *stream_handle,
         buff.flags = out_buf->flags;
     }
 
-    if (stream->out_stream) {
+    if (stream && stream->out_stream) {
         rc = qahw_out_write(stream->out_stream, &buff);
     } else {
         ALOGE("%d:%s out stream invalid, write failed", __LINE__, __func__);
@@ -3073,7 +3074,7 @@ int32_t qahw_stream_get_buffer_size(const qahw_stream_handle_t *stream_handle,
     }
     switch (stream->dir) {
     case QAHW_STREAM_OUTPUT:
-        if (stream->out_stream) {
+        if (stream->out_stream && out_buffer) {
             *out_buffer = qahw_out_get_buffer_size(stream->out_stream);
             rc = 0;
         } else
@@ -3081,7 +3082,7 @@ int32_t qahw_stream_get_buffer_size(const qahw_stream_handle_t *stream_handle,
                   , __LINE__, __func__);
         break;
     case QAHW_STREAM_INPUT:
-        if (stream->in_stream) {
+        if (stream->in_stream && in_buffer) {
             *in_buffer = qahw_in_get_buffer_size(stream->in_stream);
             rc = 0;
         } else
@@ -3089,7 +3090,7 @@ int32_t qahw_stream_get_buffer_size(const qahw_stream_handle_t *stream_handle,
                   , __LINE__, __func__);
         break;
     case QAHW_STREAM_INPUT_OUTPUT:
-        if (stream->out_stream) {
+        if (stream->out_stream && out_buffer) {
             *out_buffer = qahw_out_get_buffer_size(stream->out_stream);
             rc = 0;
         } else {
@@ -3097,7 +3098,7 @@ int32_t qahw_stream_get_buffer_size(const qahw_stream_handle_t *stream_handle,
                   , __LINE__, __func__);
             rc = -EINVAL;
         }
-        if (stream->in_stream) {
+        if (stream->in_stream && in_buffer) {
             *in_buffer = qahw_in_get_buffer_size(stream->in_stream);
              rc = 0;
 

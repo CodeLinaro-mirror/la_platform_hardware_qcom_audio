@@ -314,6 +314,9 @@ void *rec_start(void *thread_param) {
         case 1:
             attr.type = QAHW_AUDIO_CAPTURE_VOICE_CALL_TX;
             break;
+        case 2:
+            attr.type = QAHW_AUDIO_CAPTURE_VOICE_CALL_RX_TX;
+            break;
         default:
             fprintf(stderr, " invalid tp direction");
             pthread_exit(0);
@@ -499,6 +502,7 @@ void *playback_start(void *thread_param) {
             attr.attr.audio.config.sample_rate = 48000;
             attr.type = QAHW_AUDIO_PLAYBACK_VOICE_CALL_MUSIC;
             attr.attr.audio.config.format = AUDIO_FORMAT_PCM_16_BIT;
+            attr.attr.audio.config.channel_mask = 0x3;
         } else if ( params->file_type == FILE_AMR_WB_PLUS ) {
             /* Currently the requirement is for AMRWB+ so hardcoding the values,
              * can be changed if more formats supported for
