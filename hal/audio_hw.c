@@ -4416,6 +4416,10 @@ static int out_set_parameters(struct audio_stream *stream, const char *kvpairs)
     err = str_parms_get_str(parms, AUDIO_PARAMETER_STREAM_ROUTING, value, sizeof(value));
     if (err >= 0) {
         val = atoi(value);
+
+        if(out->devices & AUDIO_DEVICE_BIT_IN)
+           goto routing_fail;
+
         lock_output_stream(out);
         pthread_mutex_lock(&adev->lock);
 
