@@ -7044,13 +7044,6 @@ static ssize_t in_read(struct audio_stream_in *stream, void *buffer,
         in->standby = 0;
     }
 
-    /* Avoid read if capture_stopped is set */
-    if (android_atomic_acquire_load(&(in->capture_stopped)) > 0) {
-        ALOGD("%s: force stopped catpure session, ignoring read request", __func__);
-        ret = -EINVAL;
-        goto exit;
-    }
-
     // what's the duration requested by the client?
     long ns = 0;
 
@@ -7062,6 +7055,13 @@ static ssize_t in_read(struct audio_stream_in *stream, void *buffer,
     if (ret != 0)
         goto exit;
     bool use_mmap = is_mmap_usecase(in->usecase) || in->realtime;
+
+    /* Avoid read if capture_stopped is set */
+    if (android_atomic_acquire_load(&(in->capture_stopped)) > 0) {
+        ALOGD("%s: force stopped catpure session, ignoring read request", __func__);
+        ret = -EINVAL;
+        goto exit;
+    }
 
     if (audio_extn_cin_attached_usecase(in)) {
         ret = audio_extn_cin_read(in, buffer, bytes, &bytes_read);
