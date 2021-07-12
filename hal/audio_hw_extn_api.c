@@ -277,15 +277,15 @@ int qahwi_in_stop(struct audio_stream_in* stream) {
     pthread_mutex_lock(&adev->lock);
 
     if (!in->standby) {
+        /* Set the atomic variable when the session is stopped */
+        if (android_atomic_acquire_cas(false, true, &(in->capture_stopped)) == 0)
+            ALOGI("%s: capture_stopped bit set", __func__);
+
         if (in->pcm != NULL ) {
             pcm_stop(in->pcm);
         } else if (audio_extn_cin_attached_usecase(in)) {
             audio_extn_cin_stop_input_stream(in);
         }
-
-        /* Set the atomic variable when the session is stopped */
-        if (android_atomic_acquire_cas(false, true, &(in->capture_stopped)) == 0)
-            ALOGI("%s: capture_stopped bit set", __func__);
     }
 
     pthread_mutex_unlock(&adev->lock);
