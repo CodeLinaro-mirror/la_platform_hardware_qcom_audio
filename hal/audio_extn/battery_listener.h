@@ -1,5 +1,5 @@
 /*
-* Copyright (c) 2018, The Linux Foundation. All rights reserved.
+* Copyright (c) 2018, 2021 The Linux Foundation. All rights reserved.
 *
 * Redistribution and use in source and binary forms, with or without
 * modification, are permitted provided that the following conditions are
@@ -32,13 +32,13 @@ extern "C" {
 #endif
 typedef void (* battery_status_change_fn_t)(bool);
 void audio_extn_battery_properties_listener_init(battery_status_change_fn_t fn);
-void audio_extn_battery_properties_listener_deinit();
-bool audio_extn_battery_properties_is_charging();
+void audio_extn_battery_properties_listener_deinit(void);
+bool audio_extn_battery_properties_is_charging(void);
 #ifdef __cplusplus
 }
 #endif
 #else
 #define audio_extn_battery_properties_listener_init(fn) do { } while(0)
-#define audio_extn_battery_properties_listener_deinit() do { } while(0)
-#define audio_extn_battery_properties_is_charging() (false)
+#define audio_extn_battery_properties_listener_deinit(void) do { } while(0)
+#define audio_extn_battery_properties_is_charging(void) (false)
 #endif
