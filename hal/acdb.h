@@ -15,6 +15,9 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
+ * Changes from Qualcomm Innovation Center are provided under the following license:
+ * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
  */
 
 #ifndef ACDB_H
@@ -34,7 +37,7 @@
 #endif
 
 /* Audio calibration related functions */
-typedef void (*acdb_deallocate_t)();
+typedef void (*acdb_deallocate_t)(void);
 typedef int  (*acdb_init_t)();
 typedef int  (*acdb_init_v2_t)(const char *, char *, int);
 typedef int  (*acdb_init_v3_t)(const char *, char *, struct listnode *);
