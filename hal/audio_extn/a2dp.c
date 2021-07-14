@@ -152,7 +152,7 @@
 static void *vndk_fwk_lib_handle = NULL;
 static int is_running_with_enhanced_fwk = UNINITIALIZED;
 
-typedef int (*vndk_fwk_isVendorEnhancedFwk_t)();
+typedef int (*vndk_fwk_isVendorEnhancedFwk_t)(void);
 static vndk_fwk_isVendorEnhancedFwk_t vndk_fwk_isVendorEnhancedFwk;
 
 /*
