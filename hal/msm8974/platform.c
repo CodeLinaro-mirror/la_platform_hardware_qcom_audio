@@ -76,6 +76,7 @@
 #define PLATFORM_INFO_XML_PATH_SHIMA_QRD "audio_platform_info_shimaqrd.xml"
 #define PLATFORM_INFO_XML_PATH_SCUBA_IDP "audio_platform_info_scubaidp.xml"
 #define PLATFORM_INFO_XML_PATH_SCUBA_QRD "audio_platform_info_scubaqrd.xml"
+#define PLATFORM_INFO_XML_PATH_SA8295_ADP "audio_platform_info_sa8295.xml"
 
 #include <linux/msm_audio.h>
 #if defined (PLATFORM_MSM8998) || (PLATFORM_SDM845) || (PLATFORM_SDM710) || \
@@ -3474,6 +3475,9 @@ void *platform_init(struct audio_device *adev)
     } else if (!strncmp(snd_card_name, "bengal-scubaqrd-snd-card",
                sizeof("bengal-scubaqrd-snd-card"))) {
         platform_info_init(PLATFORM_INFO_XML_PATH_SCUBA_QRD, my_data, PLATFORM);
+    } else if (!strncmp(snd_card_name, "sa8295-adp-star-snd-card",
+               sizeof("sa8295-adp-star-snd-card"))) {
+        platform_info_init(PLATFORM_INFO_XML_PATH_SA8295_ADP, my_data, PLATFORM);
     } else if (my_data->is_internal_codec) {
         platform_info_init(get_xml_file_path(PLATFORM_INFO_XML_PATH_INTCODEC_NAME),
             my_data, PLATFORM);
@@ -3510,18 +3514,25 @@ void *platform_init(struct audio_device *adev)
                          snd_split_handle->form_factor);
         if (!audio_extn_utils_resolve_config_file(mixer_xml_file)) {
             memset(mixer_xml_file, 0, sizeof(mixer_xml_file));
-            snprintf(mixer_xml_file, sizeof(mixer_xml_file), "%s_%s.xml",
-                         MIXER_XML_BASE_STRING, snd_split_handle->variant);
+            snprintf(mixer_xml_file, sizeof(mixer_xml_file), "%s_%s_%s.xml",
+                         MIXER_XML_BASE_STRING, snd_split_handle->device,
+                         snd_split_handle->snd_card);
 
             if (!audio_extn_utils_resolve_config_file(mixer_xml_file)) {
                 memset(mixer_xml_file, 0, sizeof(mixer_xml_file));
                 snprintf(mixer_xml_file, sizeof(mixer_xml_file), "%s_%s.xml",
-                             MIXER_XML_BASE_STRING, snd_split_handle->snd_card);
+                             MIXER_XML_BASE_STRING, snd_split_handle->variant);
 
                 if (!audio_extn_utils_resolve_config_file(mixer_xml_file)) {
                     memset(mixer_xml_file, 0, sizeof(mixer_xml_file));
-                    strlcpy(mixer_xml_file, MIXER_XML_DEFAULT_PATH, MIXER_PATH_MAX_LENGTH);
-                    audio_extn_utils_resolve_config_file(mixer_xml_file);
+                    snprintf(mixer_xml_file, sizeof(mixer_xml_file), "%s_%s.xml",
+                                 MIXER_XML_BASE_STRING, snd_split_handle->snd_card);
+
+                    if (!audio_extn_utils_resolve_config_file(mixer_xml_file)) {
+                        memset(mixer_xml_file, 0, sizeof(mixer_xml_file));
+                        strlcpy(mixer_xml_file, MIXER_XML_DEFAULT_PATH, MIXER_PATH_MAX_LENGTH);
+                        audio_extn_utils_resolve_config_file(mixer_xml_file);
+                    }
                 }
             }
         }
