@@ -4769,6 +4769,14 @@ int platform_set_parameters(void *platform, struct str_parms *parms)
         if (!strncmp("true", value, sizeof("true"))) {
             ALOGD("setting record playback concurrency to true");
             my_data->rec_play_conc_set = true;
+            // reflash output device
+            struct audio_usecase *uc_info = NULL;
+            list_for_each(node, &(my_data->adev)->usecase_list) {
+            uc_info = node_to_item(node, struct audio_usecase, list);
+            if ((uc_info->type == PCM_PLAYBACK) &&
+                (uc_info->out_snd_device != platform_get_output_snd_device(platform, uc_info->stream.out)))
+                    select_devices(my_data->adev, uc_info->id);
+            }
         } else {
             ALOGD("setting record playback concurrency to false");
             my_data->rec_play_conc_set = false;
