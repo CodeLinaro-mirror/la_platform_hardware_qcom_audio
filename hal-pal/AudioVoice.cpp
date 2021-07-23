@@ -71,6 +71,8 @@ static int32_t pal_dtmf_callback(pal_stream_handle_t *stream_handle,
         ALOGE("%s: high_freq:%d , low_freq:%d", __func__,
         data->dtmf_high_freq, data->dtmf_low_freq);
     }
+
+    return 0;
 }
 
 int AudioVoice::SetMode(const audio_mode_t mode) {
