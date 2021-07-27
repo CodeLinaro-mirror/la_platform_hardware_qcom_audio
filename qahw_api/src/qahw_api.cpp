@@ -3256,9 +3256,9 @@ int32_t qahw_stream_set_dtmf_detect_params(qahw_api_stream_t *stream,
 
     if ((stream->type == QAHW_VOICE_CALL) || (stream->type == QAHW_ECALL)) {
         if(dtmf_params->enable) {
-           snprintf(kv, QAHW_KV_PAIR_LENGTH, "dtmf_detect=true");
+           snprintf(kv, QAHW_KV_PAIR_LENGTH, "dtmf_detect=1");
         } else
-           snprintf(kv, QAHW_KV_PAIR_LENGTH, "dtmf_detect=false");
+           snprintf(kv, QAHW_KV_PAIR_LENGTH, "dtmf_detect=0");
 
         ALOGV("%d:%s kv set is %s", __LINE__, __func__, kv);
         rc = qahw_out_set_parameters(stream->out_stream, kv);

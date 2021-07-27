@@ -186,7 +186,7 @@ static int adev_set_voice_volume(struct audio_hw_device *dev, float volume) {
 }
 
 static int adev_pal_global_callback(uint32_t event_id, uint32_t *event_data,
-                                     void *cookie) {
+                                     uint64_t cookie) {
     ALOGD("%s: event_id (%d), event_data (%d), cookie (%p)",
           __func__, event_id, *event_data, cookie);
     switch (event_id) {
@@ -487,7 +487,7 @@ int AudioDevice::Init(hw_device_t **device, const hw_module_t *module) {
         return -EINVAL;
     }
 
-    ret = pal_register_global_callback(&adev_pal_global_callback, this);
+    ret = pal_register_global_callback(&adev_pal_global_callback, (uint64_t)this);
     if (ret) {
         ALOGE("%s:(%d) pal register callback failed ret=(%d)", __func__, __LINE__, ret);
     }
@@ -725,6 +725,10 @@ int AudioDevice::SetParameters(const char *kvpairs) {
         ALOGE("%s: Error in VoiceSetParameters %d", __func__, ret);
 
     parms = str_parms_create_str(kvpairs);
+    if (!parms) {
+        return -EINVAL;
+    }
+
     ret = str_parms_get_str(parms, "screen_state", value, sizeof(value));
 
     if (ret >= 0) {

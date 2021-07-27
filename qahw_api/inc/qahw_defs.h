@@ -532,8 +532,6 @@ typedef struct qahw_hpcm_params {
 /* Session ID for detect implicit derived from voice session */
 typedef struct qahw_dtmf_detect_params {
    bool enable;
-   /* ToDo: Direction flag, framework does not support. Do we add later
-      Currently supported on Rx only */
 } qahw_dtmf_detect_params_t;
 
 struct qahw_in_ttp_offset_param {
