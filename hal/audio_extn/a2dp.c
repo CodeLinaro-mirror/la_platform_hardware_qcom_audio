@@ -1647,7 +1647,19 @@ bool configure_aptx_enc_format(audio_aptx_encoder_config_l *aptx_bt_cfg)
 
     if (a2dp.is_aptx_adaptive) {
         aptx_ad_ctl = mixer_get_ctl_by_name(a2dp.adev->mixer,
-                                    MIXER_ENC_APTX_AD_CONFIG_BLOCK);
+                                        MIXER_ENC_APTX_AD_CONFIG_BLOCK);
+        ALOGV("%s: aptx ad min sink buffering HQ: %d \
+               aptx ad max sink buffering HQ: %d",
+               __func__,
+               aptx_bt_cfg->ad_cfg->min_sink_buffering_HQ,
+               aptx_bt_cfg->ad_cfg->max_sink_buffering_HQ);
+
+        ALOGV("%s: aptx ad min sink buffering LL: %d \
+               aptx ad max sink buffering LL: %d",
+               __func__,
+               aptx_bt_cfg->ad_cfg->min_sink_buffering_LL,
+               aptx_bt_cfg->ad_cfg->max_sink_buffering_LL);
+
         if (aptx_ad_ctl)
             ret = update_aptx_ad_dsp_config_r2(&aptx_ad_dsp_cfg_r2, aptx_bt_cfg);
         else
