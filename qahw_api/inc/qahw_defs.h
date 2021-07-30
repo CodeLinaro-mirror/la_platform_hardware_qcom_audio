@@ -546,6 +546,10 @@ struct qahw_in_ttp_offset_param {
    uint64_t        ttp_offset; /* TTP value is derived from ttp offset*/
 };
 
+struct qahw_out_external_sink_latency_param {
+   uint64_t        external_sink_latency; /* For reporting external sink latency*/
+};
+
 struct qahw_out_channel_status_info {
     /* Channel status is 192 bits each for CH A and CH B*/
     char channel_status[48];
@@ -583,7 +587,8 @@ typedef union {
     struct qahw_in_ttp_offset_param ttp_offset;
     struct qahw_out_channel_status_info ch_status_info;
     struct qahw_device_channel_bit_mask ch_bit_mask;
-} qahw_param_payload;
+    struct qahw_out_external_sink_latency_param external_sink_latency;
+}  qahw_param_payload;
 
 typedef enum {
     QAHW_PARAM_SOURCE_TRACK,
@@ -615,6 +620,7 @@ typedef enum {
     QAHW_PARAM_IN_CHANNEL_MAP,     /* PARAM to set i/p channel map */
     QAHW_PARAM_CHANNEL_STATUS_INFO,
     QAHW_PARAM_CHANNEL_BIT_MASK,
+    QAHW_PARAM_OUT_EXTERNAL_SINK_LATENCY,
 } qahw_param_id;
 
 typedef union {
