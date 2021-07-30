@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2020, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2021, The Linux Foundation. All rights reserved.
  * Not a contribution.
  *
  * Copyright (C) 2013 The Android Open Source Project
@@ -285,6 +285,7 @@ typedef enum render_mode {
     RENDER_MODE_AUDIO_STC_MASTER,
     RENDER_MODE_AUDIO_TTP,
     RENDER_MODE_AUDIO_TTP_PASS_THROUGH,
+    RENDER_MODE_AUDIO_ABSOLUTETIME,
 } render_mode_t;
 
 /* Parameter to be passed when clock switch is needed */

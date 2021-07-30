@@ -7149,7 +7149,7 @@ int adev_open_output_stream(struct audio_hw_device *dev,
         } else if(flags & AUDIO_OUTPUT_FLAG_TIMESTAMP) {
             if (property_get_bool("persist.vendor.audio.ttp.render.mode", false)) {
                 if (out->devices & AUDIO_DEVICE_OUT_ALL_A2DP)
-                    out->render_mode = RENDER_MODE_AUDIO_TTP_PASS_THROUGH;
+                    out->render_mode = RENDER_MODE_AUDIO_ABSOLUTETIME;
                 else
                     out->render_mode = RENDER_MODE_AUDIO_TTP;
             } else {
