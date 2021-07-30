@@ -493,6 +493,10 @@ struct qahw_in_ttp_offset_param {
    uint64_t        ttp_offset; /* TTP value is derived from ttp offset*/
 };
 
+struct qahw_out_external_sink_latency_param {
+   uint64_t        external_sink_latency; /* For reporting external sink latency*/
+};
+
 typedef union {
     struct qahw_source_tracking_param st_params;
     struct qahw_sound_focus_param sf_params;
@@ -516,6 +520,7 @@ typedef union {
     struct qahw_dtmf_detect_params dtmf_detect_params;
     struct qahw_tone_gen_params tone_gen_params;
     struct qahw_in_ttp_offset_param ttp_offset;
+    struct qahw_out_external_sink_latency_param external_sink_latency;
 } qahw_param_payload;
 
 typedef enum {
@@ -544,6 +549,7 @@ typedef enum {
     QAHW_PARAM_DTMF_DETECT,
     QAHW_PARAM_TONE_GEN,
     QAHW_PARAM_IN_TTP_OFFSET,
+    QAHW_PARAM_OUT_EXTERNAL_SINK_LATENCY,
 } qahw_param_id;
 
 typedef union {
