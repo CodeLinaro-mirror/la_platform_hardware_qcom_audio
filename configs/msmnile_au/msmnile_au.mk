@@ -11,7 +11,11 @@ ifneq ($(AUDIO_USE_STUB_HAL), true)
 BOARD_USES_ALSA_AUDIO := true
 
 ifneq ($(TARGET_USES_AOSP_FOR_AUDIO), true)
+ifeq ($(TARGET_FWK_SUPPORTS_FULL_VALUEADDS),true)
 USE_CUSTOM_AUDIO_POLICY := 1
+else
+USE_CUSTOM_AUDIO_POLICY := 0
+endif
 AUDIO_FEATURE_QSSI_COMPLIANCE := true
 AUDIO_FEATURE_ENABLED_COMPRESS_CAPTURE := false
 AUDIO_FEATURE_ENABLED_COMPRESS_INPUT := true
@@ -49,6 +53,8 @@ endif
 
 USE_XML_AUDIO_POLICY_CONF := 1
 BOARD_SUPPORTS_SOUND_TRIGGER := true
+BOARD_SUPPORTS_OPENSOURCE_STHAL := true
+AUDIO_FEATURE_ENABLED_SVA_CHANNEL_IDX := true
 AUDIO_FEATURE_ENABLED_INSTANCE_ID := true
 ifeq ($(TARGET_HAS_GENERIC_KERNEL_HEADERS), true)
 AUDIO_FEATURE_ENABLED_GKI := true
@@ -91,7 +97,7 @@ AUDIO_FEATURE_ENABLED_AUDIO_CONTROL_HAL := true
 ifneq ($(ENABLE_HYP),true)
 AUDIO_FEATURE_ENABLED_AUTO_AUDIOD := true
 
-ifeq ($(TARGET_PRODUCT),msmnile_au)
+ifneq ( ,$(filter msmnile_au msmnile_tb, $(TARGET_PRODUCT)))
 AUDIO_FEATURE_ENABLED_DAEMON_SUPPORT := true
 AUDIO_FEATURE_ENABLED_SILENT_BOOT := true
 else
@@ -319,10 +325,11 @@ PRODUCT_PROPERTY_OVERRIDES += \
 vendor.audio.hal.output.suspend.supported=false
 
 #Enable AAudio MMAP/NOIRQ data path
+#1 is AAUDIO_POLICY_NEVER so it will not try MMAP
 #2 is AAUDIO_POLICY_AUTO so it will try MMAP then fallback to Legacy path
-PRODUCT_PROPERTY_OVERRIDES += aaudio.mmap_policy=2
+PRODUCT_PROPERTY_OVERRIDES += aaudio.mmap_policy=1
 #Allow EXCLUSIVE then fall back to SHARED.
-PRODUCT_PROPERTY_OVERRIDES += aaudio.mmap_exclusive_policy=2
+PRODUCT_PROPERTY_OVERRIDES += aaudio.mmap_exclusive_policy=1
 PRODUCT_PROPERTY_OVERRIDES += aaudio.hw_burst_min_usec=2000
 
 #enable mirror-link feature
