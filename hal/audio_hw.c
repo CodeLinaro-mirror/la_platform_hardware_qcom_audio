@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2020, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2021, The Linux Foundation. All rights reserved.
  * Not a Contribution.
  *
  * Copyright (C) 2013 The Android Open Source Project
@@ -615,6 +615,15 @@ static int parse_snd_card_status(struct str_parms *parms, int *card,
     return 0;
 }
 
+bool is_combo_audio_input_device(audio_devices_t device){
+    if ((!audio_is_output_device(device) &&
+       ((device & AUDIO_DEVICE_IN_BUILTIN_MIC) == AUDIO_DEVICE_IN_BUILTIN_MIC) &&
+       ((device & AUDIO_DEVICE_IN_SPEAKER_MIC2) == AUDIO_DEVICE_IN_SPEAKER_MIC2)))
+        return true;
+    else
+        return false;
+}
+
 static inline void adjust_frames_for_device_delay(struct stream_out *out,
                                                   uint32_t *dsp_frames) {
     // Adjustment accounts for A2dp encoder latency with offload usecases
@@ -1084,7 +1093,8 @@ int enable_audio_route(struct audio_device *adev,
 
     if (usecase->type == PCM_CAPTURE) {
         in = usecase->stream.in;
-        if (in && is_loopback_input_device(in->device)) {
+        if (in && is_loopback_input_device(in->device) ||
+           (in && is_combo_audio_input_device(in->device))) {
             ALOGD("%s: set custom mtmx params v1", __func__);
             audio_extn_set_custom_mtmx_params_v1(adev, usecase, true);
         } else if ((platform_get_backend_index(snd_device) == HDMI_TX_BACKEND) &&
@@ -1124,7 +1134,8 @@ int disable_audio_route(struct audio_device *adev,
 
     if (usecase->type == PCM_CAPTURE) {
         in = usecase->stream.in;
-        if (in && is_loopback_input_device(in->device)) {
+        if ((in && is_loopback_input_device(in->device)) ||
+           (in && is_combo_audio_input_device(in->device))) {
             ALOGD("%s: reset custom mtmx params v1", __func__);
             audio_extn_set_custom_mtmx_params_v1(adev, usecase, false);
         }
