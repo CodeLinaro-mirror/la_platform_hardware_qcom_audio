@@ -2620,8 +2620,7 @@ int qahw_stream_set_volume(qahw_stream_handle_t *stream_handle,
         stream->vol.num_of_channels = vol_data.num_of_channels;
         stream->vol.vol_pair[0] = vol_data.vol_pair[0];
     } /*currently HAL requires 2 channels only */
-    else if (vol_data.num_of_channels == QAHW_CHANNELS_MAX &&
-               vol_data.vol_pair) {
+    else if (vol_data.vol_pair) {
         for(i=0; i < vol_data.num_of_channels; i++) {
             if(vol_data.vol_pair[i].channel == QAHW_CHANNEL_L) {
                 left = vol_data.vol_pair[i].vol;
@@ -2632,7 +2631,17 @@ int qahw_stream_set_volume(qahw_stream_handle_t *stream_handle,
                 r_found = true;
             }
         }
-        if((l_found && r_found) && (left == right)) {
+        if((l_found  == true)&& (r_found == false))
+        {
+            right = left;
+        }
+
+        if((l_found  == false)&& (r_found == true))
+        {
+            left = right;
+        }
+
+        if(left == right) {
             switch (stream->dir) {
             case QAHW_STREAM_INPUT:
                 rc = qahw_in_set_volume(stream->in_stream,
@@ -2648,6 +2657,8 @@ int qahw_stream_set_volume(qahw_stream_handle_t *stream_handle,
                 for(i=0; i < vol_data.num_of_channels; i++) {
                     stream->vol.vol_pair[i] = vol_data.vol_pair[i];
                 }
+
+                stream->vol.num_of_channels = vol_data.num_of_channels;
             }
         } else
             ALOGE("%s: vol setting requires equal value for both left and \

@@ -189,6 +189,9 @@
 #define AUDIO_PARAMETER_KEY_CAPTURE_DEVICE_CHMAP "capture_device_chmap"
 #define AUDIO_PARAMETER_KEY_HFP_ZONE "hfp_zone"
 
+/* Query acdb initialization status */
+#define  AUDIO_PARAMETER_KEY_ACDB_INITIALIZED  "acdb_initialized"
+
 #define EVENT_EXTERNAL_SPK_1 "qc_ext_spk_1"
 #define EVENT_EXTERNAL_SPK_2 "qc_ext_spk_2"
 #define EVENT_EXTERNAL_MIC   "qc_ext_mic"
@@ -854,18 +857,18 @@ static int acdb_device_table[SND_DEVICE_MAX] = {
     [SND_DEVICE_IN_HANDSET_MIC_AEC] = 106,
     [SND_DEVICE_IN_HANDSET_MIC_NS] = 107,
     [SND_DEVICE_IN_HANDSET_MIC_AEC_NS] = 108,
-    [SND_DEVICE_IN_HANDSET_DMIC] = 34,
-    [SND_DEVICE_IN_HANDSET_DMIC_AEC] = 34,
-    [SND_DEVICE_IN_HANDSET_DMIC_NS] = 34,
-    [SND_DEVICE_IN_HANDSET_DMIC_AEC_NS] = 34,
+    [SND_DEVICE_IN_HANDSET_DMIC] = 4,
+    [SND_DEVICE_IN_HANDSET_DMIC_AEC] = 4,
+    [SND_DEVICE_IN_HANDSET_DMIC_NS] = 4,
+    [SND_DEVICE_IN_HANDSET_DMIC_AEC_NS] = 4,
     [SND_DEVICE_IN_SPEAKER_MIC] = 11,
     [SND_DEVICE_IN_SPEAKER_MIC_AEC] = 112,
     [SND_DEVICE_IN_SPEAKER_MIC_NS] = 113,
     [SND_DEVICE_IN_SPEAKER_MIC_AEC_NS] = 114,
-    [SND_DEVICE_IN_SPEAKER_DMIC] = 35,
-    [SND_DEVICE_IN_SPEAKER_DMIC_AEC] = 35,
-    [SND_DEVICE_IN_SPEAKER_DMIC_NS] = 35,
-    [SND_DEVICE_IN_SPEAKER_DMIC_AEC_NS] = 35,
+    [SND_DEVICE_IN_SPEAKER_DMIC] = 11,
+    [SND_DEVICE_IN_SPEAKER_DMIC_AEC] = 11,
+    [SND_DEVICE_IN_SPEAKER_DMIC_NS] = 11,
+    [SND_DEVICE_IN_SPEAKER_DMIC_AEC_NS] = 11,
     [SND_DEVICE_IN_HEADSET_MIC] = 8,
     [SND_DEVICE_IN_HEADSET_MIC_AEC] = 8,
     [SND_DEVICE_IN_HEADSET_MIC_FLUENCE] = 47,
@@ -882,9 +885,9 @@ static int acdb_device_table[SND_DEVICE_MAX] = {
     [SND_DEVICE_IN_BT_SCO_MIC_WB_NREC] = 123,
     [SND_DEVICE_IN_BT_A2DP] = 21,
     [SND_DEVICE_IN_CAMCORDER_MIC] = 4,
-    [SND_DEVICE_IN_VOICE_DMIC] = 34,
+    [SND_DEVICE_IN_VOICE_DMIC] = 4,
     [SND_DEVICE_IN_VOICE_DMIC_TMUS] = 89,
-    [SND_DEVICE_IN_VOICE_SPEAKER_DMIC] = 35,
+    [SND_DEVICE_IN_VOICE_SPEAKER_DMIC] = 11,
     [SND_DEVICE_IN_VOICE_SPEAKER_TMIC] = 161,
     [SND_DEVICE_IN_VOICE_SPEAKER_QMIC] = 19,
     [SND_DEVICE_IN_VOICE_TTY_FULL_HEADSET_MIC] = 16,
@@ -898,7 +901,7 @@ static int acdb_device_table[SND_DEVICE_MAX] = {
     [SND_DEVICE_IN_VOICE_REC_MIC_NS] = 107,
     [SND_DEVICE_IN_VOICE_REC_MIC_AEC] = 112,
     [SND_DEVICE_IN_VOICE_REC_MIC_AEC_NS] = 114,
-    [SND_DEVICE_IN_VOICE_REC_DMIC_STEREO] = 34,
+    [SND_DEVICE_IN_VOICE_REC_DMIC_STEREO] = 4,
     [SND_DEVICE_IN_VOICE_REC_DMIC_FLUENCE] = 41,
     [SND_DEVICE_IN_VOICE_REC_HEADSET_MIC] = 8,
     [SND_DEVICE_IN_USB_HEADSET_MIC] = 44,
@@ -914,8 +917,8 @@ static int acdb_device_table[SND_DEVICE_MAX] = {
     [SND_DEVICE_IN_AANC_HANDSET_MIC] = 104,
     [SND_DEVICE_IN_VOICE_FLUENCE_DMIC_AANC] = 105,
     [SND_DEVICE_IN_QUAD_MIC] = 46,
-    [SND_DEVICE_IN_HANDSET_DMIC_STEREO] = 34,
-    [SND_DEVICE_IN_SPEAKER_DMIC_STEREO] = 35,
+    [SND_DEVICE_IN_HANDSET_DMIC_STEREO] = 4,
+    [SND_DEVICE_IN_SPEAKER_DMIC_STEREO] = 11,
     [SND_DEVICE_IN_CAPTURE_VI_FEEDBACK] = 102,
     [SND_DEVICE_IN_CAPTURE_VI_FEEDBACK_MONO_1] = 102,
     [SND_DEVICE_IN_CAPTURE_VI_FEEDBACK_MONO_2] = 102,
@@ -7658,6 +7661,14 @@ void platform_get_parameters(void *platform,
     if (ret >= 0) {
         snprintf(value, sizeof(value), "%d", platform_get_hfp_zone(my_data));
         str_parms_add_str(reply, AUDIO_PARAMETER_KEY_HFP_ZONE, value);
+    }
+
+    /* acdb initialization status */
+    ret = str_parms_get_str(query, AUDIO_PARAMETER_KEY_ACDB_INITIALIZED,
+                            value, sizeof(value));
+    if (ret >= 0) {
+        str_parms_add_str(reply, AUDIO_PARAMETER_KEY_ACDB_INITIALIZED,
+                          my_data->is_acdb_initialized? "true": "false");
     }
 
     /* Handle audio calibration keys */
