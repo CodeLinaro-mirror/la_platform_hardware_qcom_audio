@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2017, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2020, The Linux Foundation. All rights reserved.
  * Not a Contribution.
  *
  * Copyright (C) 2015 The Android Open Source Project *
@@ -30,6 +30,7 @@
 #include <signal.h>
 #include <cutils/str_parms.h>
 #include <tinyalsa/asoundlib.h>
+#include <stdbool.h>
 #include "qahw_api.h"
 #include "qahw_defs.h"
 #include "qahw_effect_api.h"
@@ -41,6 +42,74 @@ bool kpi_mode;
 bool enable_dump;
 float vol_level;
 uint8_t render_format;
+
+/* Audio formats */
+typedef enum {
+    AUDIO_QAP_FORMAT_PCM_16_BIT,
+    AUDIO_QAP_FORMAT_PCM_8_24_BIT,
+    AUDIO_QAP_FORMAT_PCM_24_BIT_PACKED,
+    AUDIO_QAP_FORMAT_PCM_32_BIT,
+    AUDIO_QAP_FORMAT_AC3,
+    AUDIO_QAP_FORMAT_AC4,
+    AUDIO_QAP_FORMAT_EAC3,
+    AUDIO_QAP_FORMAT_AAC,
+    AUDIO_QAP_FORMAT_AAC_ADTS,
+    AUDIO_QAP_FORMAT_MP2,
+    AUDIO_QAP_FORMAT_MP3,
+    AUDIO_QAP_FORMAT_FLAC,
+    AUDIO_QAP_FORMAT_ALAC,
+    AUDIO_QAP_FORMAT_APE,
+    AUDIO_QAP_FORMAT_DTS,
+    AUDIO_QAP_FORMAT_DTS_HD,
+} audio_qap_format_t;
+
+/* AAC profiles */
+typedef enum {
+    PROFILE_QAP_AAC_MAIN = 0,
+    PROFILE_QAP_AAC_LOW_COMPLEXITY,
+    PROFILE_QAP_AAC_SSR,
+} audio_qap_aac_profile_t;
+
+/* DTS profiles */
+typedef enum {
+    PROFILE_QAP_UNKNOWN = 0,
+    PROFILE_QAP_DTS_LEGACY,
+    PROFILE_QAP_DTS_ES_MATRIX,
+    PROFILE_QAP_DTS_ES_DISCRETE,
+    PROFILE_QAP_DTS_9624,
+    PROFILE_QAP_DTS_ES_8CH_DISCRETE,
+    PROFILE_QAP_DTS_HIRES,
+    PROFILE_QAP_DTS_MA,
+    PROFILE_QAP_DTS_LBR,
+    PROFILE_QAP_DTS_LOSSLESS,
+} audio_qap_dts_profile_t;
+
+static const char * const aac_profile_enum_to_str[] = {
+    [PROFILE_QAP_AAC_MAIN] = "AAC_MAIN",
+    [PROFILE_QAP_AAC_LOW_COMPLEXITY] = "AAC_LC",
+    [PROFILE_QAP_AAC_SSR] = "AAC_SSR",
+};
+
+static const char * const format_enum_to_string[] = {
+    [AUDIO_QAP_FORMAT_AC3] = "DD",
+    [AUDIO_QAP_FORMAT_EAC3] = "DDP",
+    [AUDIO_QAP_FORMAT_AAC] = "AAC",
+    [AUDIO_QAP_FORMAT_AAC_ADTS] = "AAC_ADTS",
+    [AUDIO_QAP_FORMAT_DTS_HD] = "DTS_HD",
+};
+
+static const char * const dts_profile_enum_to_str[] = {
+    [PROFILE_QAP_UNKNOWN] = "UNKNOWN",
+    [PROFILE_QAP_DTS_LEGACY] = "DTS_LEGACY",
+    [PROFILE_QAP_DTS_ES_MATRIX] = "DTS_ES_MATRIX",
+    [PROFILE_QAP_DTS_ES_DISCRETE] = "DTS_ES_DISCRETE",
+    [PROFILE_QAP_DTS_9624] = "DTS_9624",
+    [PROFILE_QAP_DTS_ES_8CH_DISCRETE] = "DTS_ES_8CH_DISCRETE",
+    [PROFILE_QAP_DTS_HIRES] = "DTS_HIRES",
+    [PROFILE_QAP_DTS_MA] = "DTS_MA",
+    [PROFILE_QAP_DTS_LBR] = "DTS_LBR",
+    [PROFILE_QAP_DTS_LOSSLESS] = "DTS_LOSSLESS",
+};
 
 
 enum {
@@ -143,6 +212,7 @@ typedef struct {
     pthread_cond_t input_buffer_available_cond;
     pthread_mutex_t input_buffer_available_lock;
     uint32_t input_buffer_available_size;
+    uint32_t input_buf_size;
 }stream_config;
 
 qahw_module_handle_t * load_hal(audio_devices_t dev);
@@ -168,6 +238,14 @@ int get_wav_header_length (FILE* file_stream);
                    qap_out_hal_handle_t)                                 (0)
 /* Returns the number of decoder output frames and elapsed time in msec. */
 #define get_decoder_output_frames(stream_data, frames, timestamp)        (0)
+#define get_input_buf_size(stream_data, input_buf_size)          (0)
+/* Returns the number of consumed frames and decoded frames */
+#define get_decoder_reported_frames_info(stream_data,\
+                                                 frames_reported_info)   (0)
+/* Returns the ms12 graph latency from lookup table in msec.
+ * pass ms12_graph_latency pointer to get ms12 latency
+ */
+#define get_ms12_graph_latency(stream_data, ms12_graph_latency)          (0)
 #else
 void hal_test_qap_usage();
 char * qap_wrapper_get_single_kvp(const char *key, const char *kv_pairs, int *status);
@@ -188,5 +266,12 @@ int start_playback_through_qap_playlist(char *cmd_kvp_str[], int num_of_streams,
     qahw_module_handle_t *qap_out_hal_handle_t);
 /* Returns the number of decoder output frames and elapsed time in msec. */
 int get_decoder_output_frames(void* stream_data, uint64_t *frames, double *timestamp);
+int get_input_buf_size(void* stream_data, uint32_t *input_buf_size);
+/* Returns the number of decoder consumed and decoded frames */
+int get_decoder_reported_frames_info(void* stream_data, void* frames_reported_info);
+/* Returns the ms12 graph latency from lookup table in msec.
+ * pass ms12_graph_latency pointer to get ms12 latency
+ */
+int get_ms12_graph_latency(void* stream_data, int *ms12_graph_latency);
 #endif
 #endif /* QAHW_PLAYBACK_TEST_H */
