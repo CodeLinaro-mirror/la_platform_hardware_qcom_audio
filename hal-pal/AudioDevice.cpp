@@ -61,6 +61,9 @@
 #include <algorithm>
 #endif
 
+/*HPCM CFG Params */
+#define AUDIO_PARAMETER_KEY_HPCM_CFG "hpcm_cfg"
+
 card_status_t AudioDevice::sndCardState = CARD_STATUS_ONLINE;
 
 AudioDevice::~AudioDevice() {
@@ -718,6 +721,7 @@ int AudioDevice::SetParameters(const char *kvpairs) {
     int device_count = 0;
     int pal_device_count = 0;
     pal_device_id_t* pal_device_ids = NULL;
+    pal_param_hpcm_cfg_t param_hpcm_state;
 
     ALOGD("%s: enter: %s", __func__, kvpairs);
     ret = voice_->VoiceSetParameters(kvpairs);
@@ -923,6 +927,19 @@ int AudioDevice::SetParameters(const char *kvpairs) {
         ALOGI("%s: BTSCO on = %d", __func__, param_bt_sco.bt_sco_on);
         ret = pal_set_param(PAL_PARAM_ID_BT_SCO, (void *)&param_bt_sco,
                             sizeof(pal_param_btsco_t));
+    }
+
+    ret = str_parms_get_str(parms, AUDIO_PARAMETER_KEY_HPCM_CFG, value, sizeof(value));
+    if (ret >= 0) {
+        param_hpcm_state.enable = atoi(value);
+        ALOGI("%s: param_hpcm_state for HPCM CFG %d", __func__, param_hpcm_state.enable);
+        ret = pal_set_param(PAL_PARAM_ID_HPCM_CFG,
+            (void*)&param_hpcm_state,
+            sizeof(pal_param_hpcm_cfg_t));
+        if(ret!=0) {
+            ALOGE("%s: pal set param failed for HPCM CFG, ret %d",__func__, ret);
+        }
+        ALOGI("%s: pal set param success for HPCM CFG", __func__);
     }
 
     ret = str_parms_get_str(parms, AUDIO_PARAMETER_KEY_BT_SCO_WB, value, sizeof(value));

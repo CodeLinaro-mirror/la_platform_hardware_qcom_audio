@@ -66,6 +66,10 @@ typedef void (*audio_error_callback)(void* context);
 
 #define QAHW_SSR_IN_PROGRESS    1
 #define QAHW_SSR_DONE           0
+#define AUDIO_OUTPUT_FLAG_HPCM_RX 0x00040000
+#define AUDIO_OUTPUT_FLAG_HPCM_TX 0x00040002
+#define AUDIO_INPUT_FLAG_HPCM_TX 0x00020000
+#define AUDIO_INPUT_FLAG_HPCM_RX 0x00020002
 /*
 int qahw_ssr_callback(qahw_module_handle_t *hw_module,
                           ssr_callback_t callback,

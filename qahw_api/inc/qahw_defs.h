@@ -184,9 +184,6 @@ typedef enum {
 #define QAHW_INPUT_FLAG_COMPRESS  0x40000000
 #define QAHW_INPUT_FLAG_PASSTHROUGH 0x20000000
 #define QAHW_OUTPUT_FLAG_INCALL_MUSIC 0x10000
-#define QAHW_AUDIO_FLAG_HPCM_TX 0x00020000
-#define QAHW_AUDIO_FLAG_HPCM_RX 0x00040000
-
 
 /* audio output flag for timestamp mode */
 #define QAHW_OUTPUT_FLAG_TIMESTAMP 0x20000000
@@ -525,8 +522,7 @@ typedef enum {
 } qahw_hpcm_direction;
 
 typedef struct qahw_hpcm_params {
-   qahw_hpcm_tap_point tap_point;
-   qahw_hpcm_direction direction;
+    uint16_t state;
 } qahw_hpcm_params_t;
 
 /* Session ID for detect implicit derived from voice session */
@@ -648,7 +644,11 @@ typedef enum {
     QAHW_AUDIO_AFE_LOOPBACK,                 /* Assumption is device[0] is RX and device[1] is TX */
     QAHW_AUDIO_TONE_RX,
     QAHW_AUDIO_COMPRESSED_PLAYBACK_VOICE_CALL_MUSIC, /**< Offload incall music playback */
-    QAHW_ECALL,                                                                 /**< ecall */
+    QAHW_ECALL,
+    QAHW_AUDIO_HOST_PCM_RX_PLAYBACK,
+    QAHW_AUDIO_HOST_PCM_RX_RECORD,
+    QAHW_AUDIO_HOST_PCM_TX_PLAYBACK,
+    QAHW_AUDIO_HOST_PCM_TX_RECORD,                                                                 /**< ecall */
     QAHW_AUDIO_STREAM_TYPE_MAX,
 } qahw_audio_stream_type;
 

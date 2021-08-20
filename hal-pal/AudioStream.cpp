@@ -56,6 +56,7 @@
 #include <audio_effects/effect_aec.h>
 #include <audio_effects/effect_ns.h>
 #include "audio_extn.h"
+#include "audio_defs.h"
 
 #include <audio_utils/format.h>
 
@@ -1215,6 +1216,12 @@ pal_stream_type_t StreamInPrimary::GetPalStreamType(
         case AUDIO_INPUT_FLAG_NONE:
             palStreamType = PAL_STREAM_DEEP_BUFFER;
             break;
+        case AUDIO_INPUT_FLAG_HPCM_TX:
+            palStreamType = PAL_STREAM_HPCM_TX_RECORD;
+            break;
+        case AUDIO_INPUT_FLAG_HPCM_RX:
+            palStreamType = PAL_STREAM_HPCM_TX_PLAYBACK;
+            break;
         default:
             /*
             unsupported from PAL
@@ -1277,6 +1284,10 @@ pal_stream_type_t StreamOutPrimary::GetPalStreamType(
     } else if (halStreamFlags == AUDIO_OUTPUT_FLAG_INCALL_MUSIC) {
         // incall_music_uplink
         palStreamType = PAL_STREAM_VOICE_CALL_MUSIC;
+    } else if (halStreamFlags == AUDIO_OUTPUT_FLAG_HPCM_RX) {
+        palStreamType = PAL_STREAM_HPCM_RX_PLAYBACK;
+    } else if (halStreamFlags == AUDIO_OUTPUT_FLAG_HPCM_TX) {
+        palStreamType = PAL_STREAM_HPCM_RX_RECORD;
     } else {
         palStreamType = PAL_STREAM_GENERIC;
     }
