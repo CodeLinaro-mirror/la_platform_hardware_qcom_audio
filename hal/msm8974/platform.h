@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2020, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2021, The Linux Foundation. All rights reserved.
  * Not a Contribution.
  *
  * Copyright (C) 2013 The Android Open Source Project
@@ -62,6 +62,11 @@ enum {
  */
 #define AUDIO_DEVICE_OUT_ALL_CODEC_BACKEND 0
 
+
+#define AUDIO_DEVICE_OUT_ALL_DEVICES_BACKEND \
+    (AUDIO_DEVICE_OUT_EARPIECE | AUDIO_DEVICE_OUT_SPEAKER | \
+     AUDIO_DEVICE_OUT_WIRED_HEADSET | AUDIO_DEVICE_OUT_WIRED_HEADPHONE)
+
 /*
  * Below are the input devices for which back end is same, SLIMBUS_0_TX.
  * All these devices are handled by the internal HW codec. We can
@@ -69,8 +74,14 @@ enum {
  */
 #ifdef CONCURRENT_CAPTURE_ENABLED
 #define AUDIO_DEVICE_IN_ALL_CODEC_BACKEND 0
+#define AUDIO_DEVICE_IN_ALL_DEVICES_BACKEND \
+    (AUDIO_DEVICE_IN_BUILTIN_MIC | AUDIO_DEVICE_IN_BACK_MIC | \
+     AUDIO_DEVICE_IN_WIRED_HEADSET | AUDIO_DEVICE_IN_VOICE_CALL) & ~AUDIO_DEVICE_BIT_IN
 #else
 #define AUDIO_DEVICE_IN_ALL_CODEC_BACKEND 0
+#define AUDIO_DEVICE_IN_ALL_DEVICES_BACKEND \
+    (AUDIO_DEVICE_IN_BUILTIN_MIC | AUDIO_DEVICE_IN_BACK_MIC | \
+     AUDIO_DEVICE_IN_WIRED_HEADSET | AUDIO_DEVICE_IN_VOICE_CALL) & ~AUDIO_DEVICE_BIT_IN
 #endif
 /* Sound devices specific to the platform
  * The DEVICE_OUT_* and DEVICE_IN_* should be mapped to these sound
