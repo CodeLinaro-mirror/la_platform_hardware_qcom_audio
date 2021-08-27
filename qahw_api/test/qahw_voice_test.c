@@ -83,8 +83,6 @@ static void init_stream(void) {
     stream_params.mute_dir = 0;
     stream_params.tty_mode = 0;
     stream_params.dtmf_gen_enable = 0;
-    stream_params.dtmf_freq_low = 697;
-    stream_params.dtmf_freq_high =  1209;
     stream_params.dtmf_gain = 100;
     stream_params.dtmf_detect_enable = 0;
     stream_params.file_type = FILE_WAV;
@@ -314,6 +312,9 @@ void *rec_start(void *thread_param) {
         case 1:
             attr.type = QAHW_AUDIO_CAPTURE_VOICE_CALL_TX;
             break;
+        case 2:
+            attr.type = QAHW_AUDIO_CAPTURE_VOICE_CALL_RX_TX;
+            break;
         default:
             fprintf(stderr, " invalid tp direction");
             pthread_exit(0);
@@ -499,6 +500,7 @@ void *playback_start(void *thread_param) {
             attr.attr.audio.config.sample_rate = 48000;
             attr.type = QAHW_AUDIO_PLAYBACK_VOICE_CALL_MUSIC;
             attr.attr.audio.config.format = AUDIO_FORMAT_PCM_16_BIT;
+            attr.attr.audio.config.channel_mask = 0x3;
         } else if ( params->file_type == FILE_AMR_WB_PLUS ) {
             /* Currently the requirement is for AMRWB+ so hardcoding the values,
              * can be changed if more formats supported for
@@ -881,6 +883,8 @@ int main(int argc, char *argv[]) {
     uint32_t rc = 0;
     int opt = 0;
     int option_index = 0;
+    char *freq_values;
+    char *freq;
     qahw_stream_direction dir;
     int call_count = 0;
     int call_lenght = 0;
@@ -970,6 +974,7 @@ int main(int argc, char *argv[]) {
             break;
         case 'c':
             stream_params.dtmf_gen_enable = true;
+            freq_values = optarg;
             break;
         case 'o':
             stream_params.file_type = atoll(optarg);
@@ -1095,8 +1100,8 @@ int main(int argc, char *argv[]) {
         }
         if(stream_params.dtmf_gen_enable) {
             qahw_param_payload dtmf;
-            dtmf.dtmf_gen_params.low_freq = stream_params.dtmf_freq_low;
-            dtmf.dtmf_gen_params.high_freq = stream_params.dtmf_freq_high;
+            dtmf.dtmf_gen_params.low_freq = atoll(strtok_r(freq_values, ",", &freq));
+            dtmf.dtmf_gen_params.high_freq = atoll(strtok_r(NULL, ",", &freq));
             dtmf.dtmf_gen_params.gain = stream_params.dtmf_gain;
             dtmf.dtmf_gen_params.enable = true;
             rc = qahw_stream_set_parameters(stream_params.out_voice_handle,
