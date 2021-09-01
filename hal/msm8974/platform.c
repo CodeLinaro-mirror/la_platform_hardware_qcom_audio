@@ -3477,7 +3477,8 @@ void *platform_init(struct audio_device *adev)
         platform_info_init(PLATFORM_INFO_XML_PATH_SCUBA_QRD, my_data, PLATFORM);
     } else if (!strncmp(snd_card_name, "sa8295-adp-star-snd-card",
                sizeof("sa8295-adp-star-snd-card"))) {
-        platform_info_init(PLATFORM_INFO_XML_PATH_SA8295_ADP, my_data, PLATFORM);
+        platform_info_init(get_xml_file_path(PLATFORM_INFO_XML_PATH_SA8295_ADP),
+            my_data, PLATFORM);
     } else if (my_data->is_internal_codec) {
         platform_info_init(get_xml_file_path(PLATFORM_INFO_XML_PATH_INTCODEC_NAME),
             my_data, PLATFORM);
