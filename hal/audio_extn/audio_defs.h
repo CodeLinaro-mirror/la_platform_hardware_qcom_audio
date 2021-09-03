@@ -216,6 +216,11 @@ struct audio_in_ttp_offset_param {
    uint64_t        ttp_offset; /* TTP value is derived from ttp offset*/
 };
 
+struct audio_out_external_sink_latency_param {
+    /*external sink latency for a2dp path*/
+    int64_t        external_sink_latency;
+};
+
 /* Device playback mode passed to keep_alive_start & keep_alive_stop*/
 typedef enum {
     KEEP_ALIVE_OUT_NONE = 0,
@@ -378,6 +383,7 @@ typedef union {
     struct audio_in_ttp_offset_param ttp_offset;
     struct audio_out_channel_status_info channel_status_info;
     struct audio_device_channel_bit_mask ch_bit_mask;
+    struct audio_out_external_sink_latency_param external_sink_latency;
 } audio_extn_param_payload;
 
 typedef enum {
@@ -417,6 +423,7 @@ typedef enum {
     AUDIO_EXTN_PARAM_CHANNEL_STATUS_INFO,
     /* Channel bit mask to monitor channel status bits */
     AUDIO_EXTN_PARAM_CHANNEL_BIT_MASK,
+    AUDIO_EXTN_PARAM_EXTERNAL_SINK_LATENCY,
 } audio_extn_param_id;
 
 typedef union {

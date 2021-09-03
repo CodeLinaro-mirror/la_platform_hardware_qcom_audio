@@ -3915,6 +3915,10 @@ int audio_extn_out_set_param_data(struct stream_out *out,
                     (struct audio_out_channel_status_info *)(payload));
 
             break;
+        case AUDIO_EXTN_PARAM_EXTERNAL_SINK_LATENCY:
+            ret = audio_extn_utils_set_external_sink_latency(out,
+                    (struct audio_out_external_sink_latency_param *)(payload));
+            break;
         default:
             ALOGE("%s:: unsupported param_id %d", __func__, param_id);
             break;
