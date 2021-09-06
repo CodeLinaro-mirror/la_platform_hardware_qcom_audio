@@ -1,5 +1,5 @@
 /*
-* Copyright (c) 2015-2020, The Linux Foundation. All rights reserved.
+* Copyright (c) 2015-2021, The Linux Foundation. All rights reserved.
 *
 * Redistribution and use in source and binary forms, with or without
 * modification, are permitted provided that the following conditions are
@@ -738,7 +738,7 @@ fail:
 }
 
 /* API to configure AFE decoder in DSP */
-static bool configure_a2dp_sink_decoder_format()
+static bool configure_a2dp_sink_decoder_format(bool *use_ttp_generator)
 {
     void *codec_info = NULL;
     codec_t codec_type = CODEC_TYPE_INVALID;
@@ -749,16 +749,19 @@ static bool configure_a2dp_sink_decoder_format()
         return false;
     }
 
+    *use_ttp_generator = true;
     codec_info = a2dp_sink.audio_get_dec_config(&codec_type);
     switch(codec_type) {
         case CODEC_TYPE_SBC:
             ALOGD(" SBC decoder supported BT device");
             is_configured = configure_sbc_dec_format((audio_sbc_dec_config_t *)codec_info);
+            *use_ttp_generator = false;
             break;
         case CODEC_TYPE_AAC:
             ALOGD(" AAC decoder supported BT device");
             is_configured =
               configure_aac_dec_format((audio_aac_dec_config_t *)codec_info);
+            *use_ttp_generator = false;
             break;
         case CODEC_TYPE_APTX_AD:
             ALOGD(" Aptx Adaptive decoder supported BT device");
@@ -780,6 +783,7 @@ static bool configure_a2dp_sink_decoder_format()
             is_configured = false;
             break;
     }
+
     return is_configured;
 }
 
@@ -908,6 +912,7 @@ int audio_extn_a2dp_start_capture()
     int ret = 0;
     struct audio_usecase *uc_info;
     struct listnode *node;
+    bool use_ttp_generator = true;
 
     ALOGD("audio_extn_a2dp_start_capture start");
 
@@ -946,7 +951,7 @@ int audio_extn_a2dp_start_capture()
                 goto fail;
            }
 
-           if (configure_a2dp_sink_decoder_format() == true) {
+           if (configure_a2dp_sink_decoder_format(&use_ttp_generator) == true) {
                 a2dp_sink.a2dp_sink_started = true;
                 ret = 0;
                 ALOGD("Start capture successful to BT library");
@@ -956,12 +961,14 @@ int audio_extn_a2dp_start_capture()
                 goto fail;
            }
 
-           if (a2dp_sink.enable_ttp) {
+           if (a2dp_sink.enable_ttp && use_ttp_generator) {
                 ret = enable_ttp_generator();
                 if (ret < 0) {
                     ALOGE("Failed to enable TTP generator");
                     a2dp_sink.enable_ttp = false;
                 }
+           } else if (!use_ttp_generator) {
+                ALOGD("TTP generator not enabled");
            }
 
            if (!a2dp_send_sink_setup_complete()) {
