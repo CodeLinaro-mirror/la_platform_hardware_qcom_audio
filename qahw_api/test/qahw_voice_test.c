@@ -35,6 +35,7 @@
 #define ID_WAVE 0x45564157
 #define ID_FMT  0x20746d66
 #define ID_DATA 0x61746164
+#define QAHW_KV_PAIR_LENGTH 255
 
 #define FORMAT_PCM 1
 #define WAV_HEADER_LENGTH_MAX 128
@@ -74,7 +75,7 @@ static void init_stream(void) {
     stream_params.in_call_playback = false;
     stream_params.in_dl_call_playback = false;
     stream_params.hpcm = false;
-    stream_params.hpcm_tp = 2;
+    stream_params.hpcm_tp = 0;
     stream_params.tp_dir = 0;
     stream_params.rec_file = "/data/default_rec.wav";
     stream_params.playback_file = NULL;
@@ -292,7 +293,7 @@ void *rec_start(void *thread_param) {
     qahw_module_handle_t *qahw_mod_handle = params->qahw_mod_handle;
     qahw_stream_handle_t *in_handle = NULL;
     uint32_t num_dev = 1;
-    audio_devices_t in_device[1] = { AUDIO_DEVICE_IN_TELEPHONY_RX };
+    audio_devices_t in_device[1] = { AUDIO_DEVICE_IN_WIRED_HEADSET };
     struct qahw_stream_attributes attr;
     qahw_buffer_t in_buf;
     int data_sz = 0;
@@ -326,10 +327,13 @@ void *rec_start(void *thread_param) {
         fprintf(stderr, "setting host pcm params\n");
         switch(params->hpcm_tp) {
             case QAHW_HPCM_TAP_POINT_RX:
-                attr.type = QAHW_AUDIO_HOST_PCM_RX;
+                attr.type = QAHW_AUDIO_HOST_PCM_RX_RECORD;
                 break;
             case QAHW_HPCM_TAP_POINT_TX:
-                attr.type = QAHW_AUDIO_HOST_PCM_TX;
+                attr.type = QAHW_AUDIO_HOST_PCM_TX_RECORD;
+                break;
+            case QAHW_HPCM_TAP_POINT_RX_TX:
+                attr.type = QAHW_AUDIO_HOST_PCM_TX_RX;
                 break;
             default:
                 fprintf(stderr, "unsupported tp %d\n", params->hpcm_tp);
@@ -468,7 +472,7 @@ void *playback_start(void *thread_param) {
     qahw_module_handle_t *qahw_mod_handle = params->qahw_mod_handle;
     qahw_stream_handle_t *out_handle = NULL;
     uint32_t num_dev = 1;
-    audio_devices_t out_device[1] = { AUDIO_DEVICE_OUT_TELEPHONY_TX };
+    audio_devices_t out_device[1] = { AUDIO_DEVICE_OUT_SPEAKER };
     struct qahw_stream_attributes attr;
     size_t in_bytes_wanted = 0;
     size_t out_bytes_wanted = 0;
@@ -489,6 +493,7 @@ void *playback_start(void *thread_param) {
     struct qahw_modifier_kv modifier;
     unsigned int total_bytes_read = 0;
 
+    fprintf(stderr, "\n Enter");
     if (qahw_mod_handle == NULL) {
         fprintf(stderr, " qahw_load_module failed");
         pthread_exit(0);
@@ -518,12 +523,16 @@ void *playback_start(void *thread_param) {
         }
     }
     if(params->hpcm) {
+        fprintf(stderr, "tp %d\n", params->hpcm_tp);
         switch(params->hpcm_tp) {
             case QAHW_HPCM_TAP_POINT_RX:
-                attr.type = QAHW_AUDIO_HOST_PCM_RX;
+                attr.type = QAHW_AUDIO_HOST_PCM_RX_PLAYBACK;
                 break;
             case QAHW_HPCM_TAP_POINT_TX:
-                attr.type = QAHW_AUDIO_HOST_PCM_TX;
+                attr.type = QAHW_AUDIO_HOST_PCM_TX_PLAYBACK;
+                break;
+            case QAHW_HPCM_TAP_POINT_RX_TX:
+                attr.type =  QAHW_AUDIO_HOST_PCM_TX_RX;
                 break;
             default:
                 fprintf(stderr, "unsupported tp %d\n", params->hpcm_tp);
@@ -532,6 +541,7 @@ void *playback_start(void *thread_param) {
         }
         attr.attr.audio.config.sample_rate = 8000;
         attr.attr.audio.config.format = AUDIO_FORMAT_PCM_16_BIT;
+        attr.attr.audio.config.channel_mask = 0x3;
     }
 
 
@@ -545,11 +555,12 @@ void *playback_start(void *thread_param) {
         fprintf(stderr, "invalid playback file" );
         pthread_exit(0);
     }
-
-    if (params->file_type == FILE_WAV ) {
+    if (!params->hpcm) {
+        if (params->file_type == FILE_WAV ) {
         /*
         * Read the wave header
         */
+        fprintf(stderr, "Read the wave header" );
         if ((wav_header_len = get_wav_header_length(fp)) <= 0) {
             fprintf(stderr, "wav header length is invalid:%d\n", wav_header_len);
             pthread_exit(0);
@@ -576,6 +587,8 @@ void *playback_start(void *thread_param) {
     }
     attr.attr.audio.config.sample_rate = attr.attr.audio.config.offload_info.sample_rate;
     attr.attr.audio.config.format = attr.attr.audio.config.offload_info.format;
+    }
+
 
     if (is_offload) {
         rc = qahw_stream_open(qahw_mod_handle,
@@ -728,6 +741,7 @@ void *playback_dl_start(void *thread_param) {
         }
     }
     if(params->hpcm) {
+        fprintf(stderr, "tp %d\n", params->hpcm_tp);
         switch(params->hpcm_tp) {
             case QAHW_HPCM_TAP_POINT_RX:
                 attr.type = QAHW_AUDIO_HOST_PCM_RX;
@@ -891,6 +905,7 @@ int main(int argc, char *argv[]) {
     pthread_t tid_rec;
     pthread_t tid_pb;
     pthread_t tid_dl_pb;
+    char kv[QAHW_KV_PAIR_LENGTH];
 
     init_stream();
 
@@ -1006,6 +1021,14 @@ int main(int argc, char *argv[]) {
     if ((stream_params.qahw_mod_handle = qahw_load_module(QAHW_MODULE_ID_PRIMARY)) == NULL) {
         fprintf(stderr, "failure in Loading primary HAL\n");
         goto exit;
+    }
+    if(stream_params.hpcm) {
+        fprintf(stderr, "calling hpcm set param.\n");
+        qahw_param_payload hpcm;
+        hpcm.hpcm_params.state = 1;
+        snprintf(kv, QAHW_KV_PAIR_LENGTH, "hpcm_cfg=1");
+        fprintf(stderr, "kv set is %s \n", kv);
+        rc = qahw_set_parameters(stream_params.qahw_mod_handle, kv);
     }
 
     struct qahw_stream_attributes attr;
@@ -1124,30 +1147,27 @@ int main(int argc, char *argv[]) {
                                             QAHW_PARAM_DTMF_DETECT, &dtmf_det);
         }
         /*setup hpcm if needed*/
-        if(stream_params.hpcm) {
-            fprintf(stderr, "calling hpcm set param.\n");
-            qahw_param_payload hpcm;
-            hpcm.hpcm_params.tap_point = stream_params.hpcm_tp;
-            hpcm.hpcm_params.direction = stream_params.tp_dir;
-            rc = qahw_stream_set_parameters(stream_params.out_voice_handle,
-                                        QAHW_PARAM_HPCM, &hpcm);
-
+        if(stream_params.hpcm && stream_params.hpcm_tp) {
+            fprintf(stderr, "creating hpcm threads.\n");
             switch(stream_params.tp_dir) {
                 case QAHW_HPCM_DIRECTION_OUT:
-                    fprintf(stderr, "\n Create %s hpcm playback thread \n");
+                    fprintf(stderr, "\n Case:QAHW_HPCM_DIRECTION_OUT");
+                    fprintf(stderr, "\n Create  hpcm playback thread \n");
                     rc = pthread_create(&tid_pb, NULL, playback_start,
                                         (void *)&stream_params);
                     break;
                 case QAHW_HPCM_DIRECTION_IN:
-                    fprintf(stderr, "\n Create %s hpcm record thread \n");
+                    fprintf(stderr, "\n Case:QAHW_HPCM_DIRECTION_IN");
+                    fprintf(stderr, "\n Create  hpcm record thread \n");
                     rc = pthread_create(&tid_rec, NULL, rec_start,
                                         (void *)&stream_params);
                     break;
                 case QAHW_HPCM_DIRECTION_OUT_IN:
-                    fprintf(stderr, "\n Create %s hpcm record thread \n");
+                    fprintf(stderr, "\n Case:QAHW_HPCM_DIRECTION_OUT_IN");
+                    fprintf(stderr, "\n Create hpcm record thread \n");
                     rc = pthread_create(&tid_rec, NULL, rec_start,
                                         (void *)&stream_params);
-                    fprintf(stderr, "\n Create %s hpcm playback thread \n");
+                    fprintf(stderr, "\n Create  hpcm playback thread \n");
                     rc = pthread_create(&tid_pb, NULL, playback_start,
                                         (void *)&stream_params);
                     break;
