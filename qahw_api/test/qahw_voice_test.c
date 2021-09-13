@@ -75,7 +75,8 @@ static void init_stream(void) {
     stream_params.in_call_playback = false;
     stream_params.in_dl_call_playback = false;
     stream_params.hpcm = false;
-    stream_params.hpcm_tp = 0;
+    stream_params.hpcm_tp = 2;
+	stream_params.hpcm_sr = 8000;
     stream_params.tp_dir = 0;
     stream_params.rec_file = "/data/default_rec.wav";
     stream_params.playback_file = NULL;
@@ -304,6 +305,11 @@ void *rec_start(void *thread_param) {
         fprintf(stderr, " qahw_load_module failed\n");
         pthread_exit(0);
     }
+
+    if(stream_params.output_device[0] == AUDIO_DEVICE_OUT_SPEAKER) {
+        in_device[0] = AUDIO_DEVICE_IN_BACK_MIC;
+    }
+
     if(params->in_call_rec) {
         fprintf(stderr, " setting in call record params\n");
         switch (params->tp_dir) {
@@ -340,7 +346,7 @@ void *rec_start(void *thread_param) {
                 pthread_exit(0);
                 break;
         }
-        attr.attr.audio.config.sample_rate = 8000;
+        attr.attr.audio.config.sample_rate = params->hpcm_sr;
     }
     attr.direction = QAHW_STREAM_INPUT;
     attr.attr.audio.config.format = AUDIO_FORMAT_PCM_16_BIT;
@@ -399,13 +405,17 @@ void *rec_start(void *thread_param) {
     fwrite(&hdr, 1, sizeof(hdr), fd);
 
     memset(&in_buf, 0, sizeof(qahw_buffer_t));
-    fprintf(stderr, "file %s opened for write", params->rec_file);
+    fprintf(stderr, "file %s opened for write \n", params->rec_file);
+    if(params->hpcm){
+        in_buffer_size = (params->hpcm_sr * 20 *2) /1000;
+        usleep(20000);
+    }
     while (true && !stop) {
         in_buf.buffer = buffer;
         in_buf.size = in_buffer_size;
-
+        fprintf(stderr, " calling qahw_stream_read, in_buffer_size:%d \n", in_buffer_size);
         bytes_read = qahw_stream_read(in_handle, &in_buf);
-
+        fprintf(stderr, " returned from qahw_stream_read, in_buffer_size:%d \n", in_buffer_size);
         written_size = fwrite(in_buf.buffer, 1, in_buffer_size, fd);
         if (written_size < in_buffer_size) {
             fprintf(stderr, "Error in fwrite\n");
@@ -499,6 +509,7 @@ void *playback_start(void *thread_param) {
         pthread_exit(0);
     }
 
+    out_device[0] = stream_params.output_device[0];
     attr.direction = QAHW_STREAM_OUTPUT;
     if(params->in_call_playback) {
         if (params->file_type == FILE_WAV ) {
@@ -539,7 +550,7 @@ void *playback_start(void *thread_param) {
                 pthread_exit(0);
                 break;
         }
-        attr.attr.audio.config.sample_rate = 8000;
+        attr.attr.audio.config.sample_rate = params->hpcm_sr;
         attr.attr.audio.config.format = AUDIO_FORMAT_PCM_16_BIT;
         attr.attr.audio.config.channel_mask = 0x3;
     }
@@ -625,9 +636,12 @@ void *playback_start(void *thread_param) {
         fprintf(stderr, "failed to allocate data buffer\n");
         pthread_exit(0);
     }
+    if(params->hpcm){
+        out_bytes_wanted = (params->hpcm_sr * 20 *2) /1000;
+        usleep(20000);
+    }
     bytes_to_read = -1;
     read_complete_file = true;
-
     while (!exit && !stop) {
         if (!bytes_remaining) {
             fprintf(stderr, "reading bytes %zd\n", out_bytes_wanted);
@@ -754,7 +768,7 @@ void *playback_dl_start(void *thread_param) {
                 pthread_exit(0);
                 break;
         }
-        attr.attr.audio.config.sample_rate = 8000;
+        attr.attr.audio.config.sample_rate = params->hpcm_sr;
         attr.attr.audio.config.format = AUDIO_FORMAT_PCM_16_BIT;
     }
 
@@ -929,6 +943,7 @@ int main(int argc, char *argv[]) {
         { "in_dl_call_playback",  required_argument,  0, 'e' },
         { "stream_type", no_argument,  0, 'n' },
         { "dtmf_detect", no_argument,  0, 'w' },
+        { "hpcm_sr", required_argument,  0, 's' },
         { 0, 0, 0, 0 }
     };
 
@@ -976,6 +991,9 @@ int main(int argc, char *argv[]) {
             break;
         case 'a':
             stream_params.hpcm_tp = atoll(optarg);
+            break;
+        case 's':
+            stream_params.hpcm_sr = atoll(optarg);
             break;
         case 'v':
             stream_params.vol = atof(optarg);

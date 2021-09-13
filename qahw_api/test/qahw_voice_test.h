@@ -62,6 +62,7 @@ typedef struct {
     bool in_dl_call_playback;
     bool hpcm;
     int hpcm_tp;
+    int hpcm_sr;
     int tp_dir;
     char* rec_file;
     char* playback_file;
