@@ -2061,7 +2061,7 @@ int qahw_add_flags_source(struct qahw_stream_attributes attr,
         /*TODO*/
         break;
     case QAHW_AUDIO_HOST_PCM_TX_PLAYBACK:
-        *flags = AUDIO_INPUT_FLAG_HPCM_RX;
+        *flags = AUDIO_OUTPUT_FLAG_HPCM_TX;
         break;
     case QAHW_AUDIO_HOST_PCM_TX_RECORD:
         *flags = AUDIO_INPUT_FLAG_HPCM_TX;
@@ -2070,7 +2070,7 @@ int qahw_add_flags_source(struct qahw_stream_attributes attr,
         *flags = AUDIO_OUTPUT_FLAG_HPCM_RX;
         break;
     case QAHW_AUDIO_HOST_PCM_RX_RECORD:
-        *flags = AUDIO_OUTPUT_FLAG_HPCM_TX;
+        *flags = AUDIO_INPUT_FLAG_HPCM_RX;
         break;
     case QAHW_AUDIO_HOST_PCM_TX_RX:
         /*TODO*/

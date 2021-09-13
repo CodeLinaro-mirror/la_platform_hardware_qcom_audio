@@ -92,6 +92,7 @@
 #define AUDIO_OUTPUT_FLAG_HPCM_TX 0x00040002
 #define AUDIO_INPUT_FLAG_HPCM_TX 0x00020000
 #define AUDIO_INPUT_FLAG_HPCM_RX 0x00020002
+#define HPCM_BUF_SIZE 320
 
 #define DIV_ROUND_UP(x, y) (((x) + (y) - 1)/(y))
 #define ALIGN(x, y) ((y) * DIV_ROUND_UP((x), (y)))
