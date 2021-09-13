@@ -1,5 +1,5 @@
 /*
-* Copyright (c) 2016-2020, The Linux Foundation. All rights reserved.
+* Copyright (c) 2016-2021, The Linux Foundation. All rights reserved.
 *
 * Redistribution and use in source and binary forms, with or without
 * modification, are permitted provided that the following conditions are
@@ -36,8 +36,10 @@
 #include <cutils/log.h>
 #include <cutils/properties.h>
 #include <cutils/str_parms.h>
+#include <cutils/atomic.h>
 #include <log/log.h>
 #include <pthread.h>
+#include <unistd.h>
 
 #include "audio_hw.h"
 #include "platform.h"
@@ -73,10 +75,23 @@ uint64_t timestamp;
 
 #define COMPRESS_RECORD_NUM_FRAGMENTS 8
 
+#define CIN_STOP_WAIT_TIMEOUT_SEC   0
+#define CIN_STOP_WAIT_TIMEOUT_MSEC  2
+#define CIN_STOP_WAIT_TIMEOUT_USEC  (CIN_STOP_WAIT_TIMEOUT_MSEC * 1000)
+#define CIN_STOP_WAIT_TIMEOUT_NSEC  (CIN_STOP_WAIT_TIMEOUT_MSEC * 1000000)
+
+#define GET_WAIT_TIMESPEC(timeout, t_sec, t_nsec) \
+do {\
+    clock_gettime(CLOCK_REALTIME, &timeout); \
+    timeout.tv_sec += t_sec; \
+    timeout.tv_nsec += t_nsec; \
+} while(0)
+
 struct cin_private_data {
     struct compr_config compr_config;
     struct compress *compr;
     bool usecase_acquired;
+    pthread_mutex_t cin_read_lock;
 };
 
 typedef struct cin_private_data cin_private_data_t;
@@ -294,13 +309,41 @@ int cin_open_input_stream(struct stream_in *in)
 
 void cin_stop_input_stream(struct stream_in *in)
 {
+    int ret;
+    struct timespec tspec;
     cin_private_data_t *cin_data = (cin_private_data_t *) in->cin_extn;
 
-    ALOGV("%s: in %p, cin_data %p", __func__, in, cin_data);
+    ALOGD("%s: in %p, cin_data %p", __func__, in, cin_data);
     if (cin_data->compr) {
+        /*Try to acquire read lock and call compress_stop*/
+        ret = pthread_mutex_trylock(&cin_data->cin_read_lock);
         compress_stop(cin_data->compr);
+        if (ret == 0) {
+            /*if lock is acquired then unlock*/
+            pthread_mutex_unlock(&cin_data->cin_read_lock);
+            ALOGD("%s: stop done", __func__);
+        } else {
+            while (true) {
+                /*if failed to get lock then wait to acquire lock*/
+                GET_WAIT_TIMESPEC(tspec, CIN_STOP_WAIT_TIMEOUT_SEC, CIN_STOP_WAIT_TIMEOUT_NSEC);
+                ALOGD("%s: wait for read completion", __func__);
+                ret = pthread_mutex_timedlock(&cin_data->cin_read_lock, &tspec);
+                if (ret == 0) {
+                    /*if acquired lock then unlock and break*/
+                    ALOGD("%s: stop done", __func__);
+                    pthread_mutex_unlock(&cin_data->cin_read_lock);
+                    break;
+                } else if (ret == ETIMEDOUT) {
+                    ALOGD("%s: stop wait timed out, calling stop", __func__);
+                } else {
+                    ALOGD("%s: unknown issue, force wait and call stop", __func__);
+                    usleep(CIN_STOP_WAIT_TIMEOUT_USEC);
+                }
+                /*if acquired lock timed out then call compress_stop and wait again*/
+                compress_stop(cin_data->compr);
+            }
+        }
     }
-
 }
 
 
@@ -326,6 +369,7 @@ void cin_free_input_stream_resources(struct stream_in *in)
 
     ALOGV("%s: in %p, cin_data %p", __func__, in, cin_data);
     if (cin_data) {
+        pthread_mutex_destroy(&cin_data->cin_read_lock);
         free(cin_data->compr_config.codec);
         free(cin_data);
     }
@@ -340,6 +384,15 @@ int cin_read(struct stream_in *in, void *buffer,
     cin_private_data_t *cin_data = (cin_private_data_t *) in->cin_extn;
 
     if (cin_data->compr) {
+        pthread_mutex_lock(&cin_data->cin_read_lock);
+
+        /* Avoid read if capture_stopped is set */
+        if (android_atomic_acquire_load(&(in->capture_stopped)) > 0) {
+            ALOGI("%s: force stopped catpure session, ignoring read request", __func__);
+            pthread_mutex_unlock(&cin_data->cin_read_lock);
+            goto exit;
+        }
+
         /* start stream if not already done */
         if (!is_compress_running(cin_data->compr))
             compress_start(cin_data->compr);
@@ -349,6 +402,7 @@ int cin_read(struct stream_in *in, void *buffer,
 
         if (buffer && read_size) {
             read_size = compress_read(cin_data->compr, buffer, read_size);
+            pthread_mutex_unlock(&cin_data->cin_read_lock);
             if (read_size == bytes) {
                 /* set ret to 0 if compress_read succeeded*/
                 ret = 0;
@@ -364,8 +418,12 @@ int cin_read(struct stream_in *in, void *buffer,
                 ALOGE("%s: failed error = %d, read = %zd, err_str %s", __func__,
                            ret, read_size, compress_get_error(cin_data->compr));
             }
+        } else {
+            pthread_mutex_unlock(&cin_data->cin_read_lock);
         }
     }
+
+exit:
     ALOGV("%s: in %p, flags 0x%x, buf %p, bytes %zd, read_size %zd, ret %d",
                         __func__, in, in->flags, buffer, bytes, read_size, ret);
     return ret;
@@ -438,6 +496,8 @@ int cin_configure_input_stream(struct stream_in *in, struct audio_config *in_con
         in->render_mode = RENDER_MODE_AUDIO_TTP;
     else
         in->render_mode = RENDER_MODE_AUDIO_NO_TIMESTAMP;
+
+    pthread_mutex_init(&cin_data->cin_read_lock, NULL);
 
     ALOGD("%s: format %d flags 0x%x SR %d CM 0x%x buf_size %d in %p",
           __func__, in->format, in->flags, in->sample_rate, in->channel_mask,
