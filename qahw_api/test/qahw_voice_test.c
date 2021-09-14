@@ -911,8 +911,8 @@ int main(int argc, char *argv[]) {
     uint32_t rc = 0;
     int opt = 0;
     int option_index = 0;
-    char *freq_values;
-    char *freq;
+    char *freq_values = NULL;
+    char *freq = NULL;
     qahw_stream_direction dir;
     int call_count = 0;
     int call_lenght = 0;
@@ -949,7 +949,7 @@ int main(int argc, char *argv[]) {
 
     while ((opt = getopt_long(argc,
                               argv,
-                                "-v:d:l:m:p:r:t:f:a:b:h:i:u:y:c:w:o:e:n:",
+                                "-v:d:l:m:p:r:t:f:a:b:h:i:u:y:c:w:o:e:n:s:",
                               long_options,
                               &option_index)) != -1) {
 
@@ -1141,8 +1141,14 @@ int main(int argc, char *argv[]) {
         }
         if(stream_params.dtmf_gen_enable) {
             qahw_param_payload dtmf;
-            dtmf.dtmf_gen_params.low_freq = atoll(strtok_r(freq_values, ",", &freq));
-            dtmf.dtmf_gen_params.high_freq = atoll(strtok_r(NULL, ",", &freq));
+            char *s = strtok_r(freq_values, ",", &freq);
+            char *s1 = strtok_r(NULL, ",", &freq);
+            if(!s || !s1) {
+                fprintf(stderr, "invalid dtmf gen params\n");
+                goto skip_dtmf_gen;
+            }
+            dtmf.dtmf_gen_params.low_freq = atoll(s);
+            dtmf.dtmf_gen_params.high_freq = atoll(s1);
             dtmf.dtmf_gen_params.gain = stream_params.dtmf_gain;
             dtmf.dtmf_gen_params.enable = true;
             rc = qahw_stream_set_parameters(stream_params.out_voice_handle,
@@ -1152,8 +1158,8 @@ int main(int argc, char *argv[]) {
             dtmf.dtmf_gen_params.enable = false;
             rc = qahw_stream_set_parameters(stream_params.out_voice_handle,
                                             QAHW_PARAM_DTMF_GEN, &dtmf);
-
         }
+skip_dtmf_gen:
         if(stream_params.dtmf_detect_enable) {
             qahw_param_payload dtmf_det;
             dtmf_det.dtmf_detect_params.enable = 1;
