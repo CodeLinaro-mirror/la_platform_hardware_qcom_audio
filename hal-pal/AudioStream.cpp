@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019-2020, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2019-2021, The Linux Foundation. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -1849,7 +1849,7 @@ uint32_t StreamOutPrimary::GetBufferSize() {
                     config_.format);
     } else if ((streamAttributes_.type == PAL_STREAM_HPCM_TX_PLAYBACK) ||
                (streamAttributes_.type == PAL_STREAM_HPCM_RX_PLAYBACK)) {
-        return HPCM_BUF_SIZE;
+        return ((config_.sample_rate * AUDIO_CAPTURE_PERIOD_DURATION_MSEC * 2)/ 1000);
     } else {
        return BUF_SIZE_PLAYBACK * NO_OF_BUF;
     }
@@ -2943,7 +2943,7 @@ uint32_t StreamInPrimary::GetBufferSize() {
                     config_.format);
     } else if ((streamAttributes_.type == PAL_STREAM_HPCM_TX_RECORD) ||
                (streamAttributes_.type == PAL_STREAM_HPCM_RX_RECORD)) {
-        return HPCM_BUF_SIZE;
+        return ((config_.sample_rate * AUDIO_CAPTURE_PERIOD_DURATION_MSEC * 2)/ 1000);
     } else {
         return BUF_SIZE_CAPTURE * NO_OF_BUF;
     }
