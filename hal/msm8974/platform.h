@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2020, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2021, The Linux Foundation. All rights reserved.
  * Not a Contribution.
  *
  * Copyright (C) 2013 The Android Open Source Project
@@ -44,6 +44,7 @@ enum {
     SOURCE_QUAD_MIC  = 0x8,            /* Target contains 4 mics */
     SOURCE_HEX_MIC   = 0x10,           /* Target contains 6 mics */
     SOURCE_OCT_MIC   = 0x20,           /* Target contains 8 mics */
+    SOURCE_DEC_MIC   = 0x40,
 };
 
 enum {
@@ -313,6 +314,7 @@ enum {
     SND_DEVICE_IN_ECALL,
     SND_DEVICE_IN_SPEAKER_MIC2,
     SND_DEVICE_IN_SPEAKER_MIC3,
+    SND_DEVICE_IN_HANDSET_GENERIC_6MIC_AND_SPEAKER_MIC2,
     SND_DEVICE_IN_END,
     SND_DEVICE_MAX = SND_DEVICE_IN_END,
 };
@@ -350,6 +352,7 @@ enum {
     HEADSET_TX_BACKEND,
     SEC_MI2S_RX_BACKEND,
     TERT_MI2S_RX_BACKEND,
+    TERT_MI2S_TX_BACKEND,
     QUAT_MI2S_RX_BACKEND,
     QUAT_TDM_TX_BACKEND,
     SEN_TDM_TX_BACKEND,
