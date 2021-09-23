@@ -107,6 +107,11 @@ static const char * const stream_name_map[QAHW_AUDIO_STREAM_TYPE_MAX] = {
     [QAHW_AUDIO_TONE_RX] = "audio-tone-playback",
     [QAHW_AUDIO_COMPRESSED_PLAYBACK_VOICE_CALL_MUSIC] = "playback-compressed-in-call-music",
     [QAHW_ECALL]="voice-call",
+    [QAHW_AUDIO_HOST_PCM_RX_PLAYBACK]= "host-pcm-rx-playback",
+    [QAHW_AUDIO_HOST_PCM_RX_RECORD]= "host-pcm-rx-record",
+    [QAHW_AUDIO_HOST_PCM_TX_PLAYBACK]= "host-pcm-tx-playback",
+    [QAHW_AUDIO_HOST_PCM_TX_RECORD]= "host-pcm-tx-record",
+
 };
 
 static const char * const tty_mode_map[QAHW_TTY_MODE_MAX] = {
@@ -2055,11 +2060,17 @@ int qahw_add_flags_source(struct qahw_stream_attributes attr,
     case QAHW_AUDIO_TRANSCODE:
         /*TODO*/
         break;
-    case QAHW_AUDIO_HOST_PCM_TX:
-        *flags = QAHW_AUDIO_FLAG_HPCM_TX;
+    case QAHW_AUDIO_HOST_PCM_TX_PLAYBACK:
+        *flags = AUDIO_OUTPUT_FLAG_HPCM_TX;
         break;
-    case QAHW_AUDIO_HOST_PCM_RX:
-        *flags = QAHW_AUDIO_FLAG_HPCM_RX;
+    case QAHW_AUDIO_HOST_PCM_TX_RECORD:
+        *flags = AUDIO_INPUT_FLAG_HPCM_TX;
+        break;
+    case QAHW_AUDIO_HOST_PCM_RX_PLAYBACK:
+        *flags = AUDIO_OUTPUT_FLAG_HPCM_RX;
+        break;
+    case QAHW_AUDIO_HOST_PCM_RX_RECORD:
+        *flags = AUDIO_INPUT_FLAG_HPCM_RX;
         break;
     case QAHW_AUDIO_HOST_PCM_TX_RX:
         /*TODO*/
@@ -2118,11 +2129,13 @@ int qahw_stream_open(qahw_module_handle_t *hw_module,
 
     address = stream_name_map[attr.type];
     /* add flag*/
+    ALOGV("%s: attr type %d", __func__, attr.type);
     rc = qahw_add_flags_source(attr, &flags, &source);
     if (rc) {
         ALOGE("%s: invalid type %d", __func__, attr.type);
         return rc;
     }
+    ALOGV("%s: flag 0x%x", __func__, flags);
 
     if ((attr.type == QAHW_VOICE_CALL)||(attr.type == QAHW_ECALL)) {
         if (strncmp("11C05000",attr.attr.voice.vsid,sizeof("11C05000")) == 0) {
@@ -2450,6 +2463,7 @@ int qahw_stream_stop(qahw_stream_handle_t *stream_handle) {
         strlcat(device_route, dev_s, QAHW_MAX_INT_STRING);
         // to invoke voice_stop send with routing 0
         rc = qahw_out_set_parameters(stream->out_stream, device_route);
+        qahw_set_mode(stream->hw_module, AUDIO_MODE_NORMAL);
     } else if (stream->type == QAHW_AUDIO_AFE_LOOPBACK) {
         rc = qahw_release_audio_patch(stream->hw_module,
                                  stream->patch_handle);
@@ -3209,40 +3223,14 @@ int32_t qahw_stream_set_hpcm_params(qahw_api_stream_t *stream,
     char kv[QAHW_KV_PAIR_LENGTH];
     int32_t tp;
 
+    ALOGE("%s: Enter", __func__);
     if ((stream->type == QAHW_VOICE_CALL) || (stream->type == QAHW_ECALL)) {
-        /*if rx and tx call both mixer commands */
-        if(hpcm_params->tap_point == QAHW_HPCM_TAP_POINT_RX_TX) {
-            snprintf(kv, QAHW_KV_PAIR_LENGTH,
-                     "hpcm_tp=%d;hpcm_dir=%d",
-                     QAHW_HPCM_TAP_POINT_RX,
-                     hpcm_params->direction);
-            ALOGV("%d:%s kv set is %s", __LINE__, __func__, kv);
-            rc = qahw_out_set_parameters(stream->out_stream, kv);
-            if(rc) {
-                ALOGE("%d:%s failed to set hpcm on RX Path", __LINE__,
-                __func__);
-            }
-            snprintf(kv, QAHW_KV_PAIR_LENGTH,
-                     "hpcm_tp=%d;hpcm_dir=%d",
-                     QAHW_HPCM_TAP_POINT_TX,
-                     hpcm_params->direction);
-            ALOGV("%d:%s kv set is %s", __LINE__, __func__, kv);
-            rc = qahw_out_set_parameters(stream->out_stream, kv);
-            if(rc) {
-                ALOGE("%d:%s failed to set hpcm on TX Path", __LINE__,
-                __func__);
-            }
-        } else {
-            snprintf(kv, QAHW_KV_PAIR_LENGTH,
-                     "hpcm_tp=%d;hpcm_dir=%d",
-                     hpcm_params->tap_point,
-                     hpcm_params->direction);
-            ALOGV("%d:%s kv set is %s", __LINE__, __func__, kv);
-            rc = qahw_out_set_parameters(stream->out_stream, kv);
-            if(rc) {
-                ALOGE("%d:%s failed to set hpcm params", __LINE__,
-                __func__);
-            }
+
+        snprintf(kv, QAHW_KV_PAIR_LENGTH, "hpcm_cfg=%d", hpcm_params->state);
+        ALOGV("%d:%s kv set is %s", __LINE__, __func__, kv);
+        rc = qahw_out_set_parameters(stream->out_stream, kv);
+        if(rc) {
+            ALOGE("%d:%s failed to set hpcm on RX Path", __LINE__, __func__);
         }
     } else
         ALOGE("%d:%s cannot set hpcm params on non voice stream",
@@ -3297,6 +3285,7 @@ int32_t qahw_stream_set_parameters(qahw_stream_handle_t *stream_handle,
                                                &param_payload->tty_mode_params);
                 break;
             case QAHW_PARAM_HPCM:
+                ALOGV("%s: case: QAHW_PARAM_HPCM ", __func__);
                 rc = qahw_stream_set_hpcm_params(stream,
                                                  &param_payload->hpcm_params);
                 break;

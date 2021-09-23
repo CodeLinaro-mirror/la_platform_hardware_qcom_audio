@@ -55,6 +55,9 @@
 /*DTMF DETECTOR Params */
 #define AUDIO_PARAMETER_KEY_DTMF_DETECT "dtmf_detect"
 
+/*HPCM CFG Params */
+#define AUDIO_PARAMETER_KEY_HPCM_CFG "hpcm_cfg"
+
 static int32_t pal_dtmf_callback(pal_stream_handle_t *stream_handle,
                                 uint32_t event_id, uint32_t *event_data,
                                 uint32_t event_size, uint64_t cookie)
@@ -293,6 +296,7 @@ int AudioVoice::VoiceOutSetParameters(const char *kvpairs) {
     uint32_t enable = 0;
     pal_param_dtmf_gen_tone_cfg_t dtmf_gen_cfg;
     pal_param_module_enable_t module_enable;
+    pal_param_hpcm_cfg_t param_hpcm_state;
 
     ALOGD("%s Enter", __func__);
     parms = str_parms_create_str(kvpairs);
@@ -389,6 +393,19 @@ int AudioVoice::VoiceOutSetParameters(const char *kvpairs) {
             ALOGE("%s: pal set param failed for dtmf detector",__func__);
         }
         ALOGI("%s: pal set param success for dtmf detector", __func__);
+    }
+
+    err = str_parms_get_str(parms, AUDIO_PARAMETER_KEY_HPCM_CFG, value, sizeof(value));
+    if (err >= 0) {
+        param_hpcm_state.enable= atoi(value);
+        ALOGV("%s: param_hpcm_state for HPCM CFG %d", __func__, param_hpcm_state.enable);
+        ret = pal_set_param(PAL_PARAM_ID_HPCM_CFG,
+            (void*)&param_hpcm_state,
+            sizeof(pal_param_hpcm_cfg_t));
+        if(ret!=0) {
+            ALOGE("%s: pal set param failed for HPCM CFG, ret %d",__func__, ret);
+        }
+        ALOGI("%s: pal set param success for HPCM CFG", __func__);
     }
 
 str_parms_destroy(parms);

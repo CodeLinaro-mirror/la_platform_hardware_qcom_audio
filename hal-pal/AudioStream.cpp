@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019-2020, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2019-2021, The Linux Foundation. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -56,6 +56,7 @@
 #include <audio_effects/effect_aec.h>
 #include <audio_effects/effect_ns.h>
 #include "audio_extn.h"
+#include "audio_defs.h"
 
 #include <audio_utils/format.h>
 
@@ -1215,6 +1216,12 @@ pal_stream_type_t StreamInPrimary::GetPalStreamType(
         case AUDIO_INPUT_FLAG_NONE:
             palStreamType = PAL_STREAM_DEEP_BUFFER;
             break;
+        case AUDIO_INPUT_FLAG_HPCM_TX:
+            palStreamType = PAL_STREAM_HPCM_TX_RECORD;
+            break;
+        case AUDIO_INPUT_FLAG_HPCM_RX:
+            palStreamType = PAL_STREAM_HPCM_RX_RECORD;
+            break;
         default:
             /*
             unsupported from PAL
@@ -1277,6 +1284,10 @@ pal_stream_type_t StreamOutPrimary::GetPalStreamType(
     } else if (halStreamFlags == AUDIO_OUTPUT_FLAG_INCALL_MUSIC) {
         // incall_music_uplink
         palStreamType = PAL_STREAM_VOICE_CALL_MUSIC;
+    } else if (halStreamFlags == AUDIO_OUTPUT_FLAG_HPCM_RX) {
+        palStreamType = PAL_STREAM_HPCM_RX_PLAYBACK;
+    } else if (halStreamFlags == AUDIO_OUTPUT_FLAG_HPCM_TX) {
+        palStreamType = PAL_STREAM_HPCM_TX_PLAYBACK;
     } else {
         palStreamType = PAL_STREAM_GENERIC;
     }
@@ -1836,6 +1847,9 @@ uint32_t StreamOutPrimary::GetBufferSize() {
             audio_bytes_per_frame(
                     audio_channel_count_from_out_mask(config_.channel_mask),
                     config_.format);
+    } else if ((streamAttributes_.type == PAL_STREAM_HPCM_TX_PLAYBACK) ||
+               (streamAttributes_.type == PAL_STREAM_HPCM_RX_PLAYBACK)) {
+        return ((config_.sample_rate * AUDIO_CAPTURE_PERIOD_DURATION_MSEC * 2)/ 1000);
     } else {
        return BUF_SIZE_PLAYBACK * NO_OF_BUF;
     }
@@ -2016,6 +2030,10 @@ int StreamOutPrimary::Open() {
     else if (usecase_ == USECASE_AUDIO_PLAYBACK_DEEP_BUFFER)
          outBufCount = DEEP_BUFFER_PLAYBACK_PERIOD_COUNT;
 
+    if ((streamAttributes_.type == PAL_STREAM_HPCM_RX_PLAYBACK) ||
+        (streamAttributes_.type == PAL_STREAM_HPCM_TX_PLAYBACK)) {
+        outBufCount = 2;
+    }
     if (halInputFormat != halOutputFormat) {
         convertBufSize = outBufSize;
         convertBuffer = realloc(convertBuffer, convertBufSize);
@@ -2876,6 +2894,11 @@ set_buff_size:
         inBufCount = ULL_PERIOD_COUNT_DEFAULT;
     } else
         inBufSize = StreamInPrimary::GetBufferSize();
+
+    if ((streamAttributes_.type == PAL_STREAM_HPCM_TX_RECORD) ||
+        (streamAttributes_.type == PAL_STREAM_HPCM_RX_RECORD)) {
+        inBufCount = 2;
+    }
     if (!handle) {
         ret = pal_stream_set_buffer_size(pal_stream_handle_,(size_t*)&inBufSize,inBufCount,(size_t*)&outBufSize,outBufCount);
         if (ret) {
@@ -2918,6 +2941,9 @@ uint32_t StreamInPrimary::GetBufferSize() {
             audio_bytes_per_frame(
                     audio_channel_count_from_in_mask(config_.channel_mask),
                     config_.format);
+    } else if ((streamAttributes_.type == PAL_STREAM_HPCM_TX_RECORD) ||
+               (streamAttributes_.type == PAL_STREAM_HPCM_RX_RECORD)) {
+        return ((config_.sample_rate * AUDIO_CAPTURE_PERIOD_DURATION_MSEC * 2)/ 1000);
     } else {
         return BUF_SIZE_CAPTURE * NO_OF_BUF;
     }
