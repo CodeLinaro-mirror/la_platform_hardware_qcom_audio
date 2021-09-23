@@ -26,6 +26,7 @@ LOCAL_SRC_FILES:= \
 LOCAL_CFLAGS += \
     -Wall \
     -Werror \
+    -Wno-error \
     -Wno-unused-function \
     -Wno-unused-variable \
 
@@ -94,6 +95,7 @@ LOCAL_SRC_FILES:= \
 LOCAL_CFLAGS += \
     -Wall \
     -Werror \
+    -Wno-error \
     -Wno-unused-function \
     -Wno-unused-variable \
 
@@ -163,6 +165,7 @@ LOCAL_SRC_FILES:= ssr.c \
 LOCAL_CFLAGS += \
     -Wall \
     -Werror \
+    -Wno-error \
     -Wno-unused-function \
     -Wno-unused-variable
 
@@ -234,6 +237,7 @@ LOCAL_SRC_FILES:= \
 LOCAL_CFLAGS += \
     -Wall \
     -Werror \
+    -Wno-error \
     -Wno-unused-function \
     -Wno-unused-variable \
 
@@ -300,6 +304,7 @@ LOCAL_SRC_FILES:= \
 LOCAL_CFLAGS += \
     -Wall \
     -Werror \
+    -Wno-error \
     -Wno-unused-function \
     -Wno-unused-variable \
 
@@ -369,6 +374,7 @@ LOCAL_SRC_FILES:= \
 LOCAL_CFLAGS += \
     -Wall \
     -Werror \
+    -Wno-error \
     -Wno-unused-function \
     -Wno-unused-variable \
 
@@ -436,6 +442,7 @@ LOCAL_SRC_FILES:= \
 LOCAL_CFLAGS += \
     -Wall \
     -Werror \
+    -Wno-error \
     -Wno-unused-function \
     -Wno-unused-variable
 
@@ -505,6 +512,7 @@ LOCAL_SRC_FILES:= \
 LOCAL_CFLAGS += \
     -Wall \
     -Werror \
+    -Wno-error \
     -Wno-unused-function \
     -Wno-unused-variable
 
@@ -575,6 +583,7 @@ LOCAL_SRC_FILES:= \
 LOCAL_CFLAGS += \
     -Wall \
     -Werror \
+    -Wno-error \
     -Wno-unused-function \
     -Wno-unused-variable
 
@@ -647,6 +656,7 @@ LOCAL_SRC_FILES:= \
 LOCAL_CFLAGS += \
     -Wall \
     -Werror \
+    -Wno-error \
     -Wno-unused-function \
     -Wno-unused-variable
 
@@ -775,6 +785,7 @@ LOCAL_SRC_FILES:= \
 LOCAL_CFLAGS += \
     -Wall \
     -Werror \
+    -Wno-error \
     -Wno-unused-function \
     -Wno-unused-variable \
     -DDTSHD_PARSER_ENABLED
@@ -850,6 +861,7 @@ LOCAL_SRC_FILES:= \
 LOCAL_CFLAGS += \
     -Wall \
     -Werror \
+    -Wno-error \
     -Wno-unused-function \
     -Wno-unused-variable \
     -DDTSHD_PARSER_ENABLED
@@ -921,6 +933,7 @@ endif
 LOCAL_CFLAGS += \
     -Wall \
     -Werror \
+    -Wno-error \
     -Wno-unused-function \
     -Wno-unused-variable
 
@@ -983,6 +996,7 @@ LOCAL_SRC_FILES:= \
 LOCAL_CFLAGS += \
     -Wall \
     -Werror \
+    -Wno-error \
     -Wno-unused-function \
     -Wno-unused-variable
 
@@ -1044,6 +1058,7 @@ LOCAL_SRC_FILES:= \
 LOCAL_CFLAGS += \
     -Wall \
     -Werror \
+    -Wno-error \
     -Wno-unused-function \
     -Wno-unused-variable
 
@@ -1109,6 +1124,7 @@ LOCAL_SRC_FILES:= \
 LOCAL_CFLAGS += \
     -Wall \
     -Werror \
+    -Wno-error \
     -Wno-unused-function \
     -Wno-unused-variable
 
