@@ -5457,10 +5457,18 @@ snd_device_t platform_get_output_snd_device(void *platform, struct stream_out *o
                 else
                     snd_device = SND_DEVICE_OUT_VOICE_ANC_HEADSET;
             } else {
-                if (voice_is_in_ecall(adev))
-                    snd_device = SND_DEVICE_OUT_ECALL_HEADPHONES;
-                else
-                    snd_device = SND_DEVICE_OUT_VOICE_HEADPHONES;
+                if ((out->usecase != USECASE_VOICEMMODE1_CALL) && (out->usecase != USECASE_VOICEMMODE2_CALL)) {
+                    if (voice_is_in_ecall(adev))
+                        snd_device = SND_DEVICE_OUT_ECALL_HEADPHONES;
+                    else
+                        snd_device = SND_DEVICE_OUT_VOICE_HEADPHONES;
+                }
+                else {
+                    if (out->ecall == 1)
+                        snd_device = SND_DEVICE_OUT_ECALL_HEADPHONES;
+                    else
+                        snd_device = SND_DEVICE_OUT_VOICE_HEADPHONES;
+                }
             }
         } else if (devices &
                     (AUDIO_DEVICE_OUT_USB_DEVICE |
@@ -5496,39 +5504,55 @@ snd_device_t platform_get_output_snd_device(void *platform, struct stream_out *o
                 snd_device = SND_DEVICE_OUT_BT_SCO;
         } else if (devices & (AUDIO_DEVICE_OUT_SPEAKER | AUDIO_DEVICE_OUT_SPEAKER_SAFE)) {
             if (!adev->enable_hfp) {
-                if (voice_is_in_ecall(adev))
-                    snd_device = SND_DEVICE_OUT_ECALL_SPEAKER;
-                else
-                    snd_device = SND_DEVICE_OUT_VOICE_SPEAKER;
+                if ((out->usecase != USECASE_VOICEMMODE1_CALL) && (out->usecase != USECASE_VOICEMMODE2_CALL)) {
+                    if (voice_is_in_ecall(adev))
+                        snd_device = SND_DEVICE_OUT_ECALL_SPEAKER;
+                    else
+                        snd_device = SND_DEVICE_OUT_VOICE_SPEAKER;
+                }
+                else {
+                    if (out->ecall == 1)
+                        snd_device = SND_DEVICE_OUT_ECALL_SPEAKER;
+                    else
+                        snd_device = SND_DEVICE_OUT_VOICE_SPEAKER;
+                }
             } else {
                 snd_device = SND_DEVICE_OUT_VOICE_SPEAKER_HFP;
             }
         } else if (devices & AUDIO_DEVICE_OUT_SPEAKER) {
-                if (my_data->is_vbat_speaker || my_data->is_bcl_speaker) {
-                    if (hw_info_is_stereo_spkr(my_data->hw_info)) {
-                        if (my_data->mono_speaker == SPKR_1)
-                            snd_device = SND_DEVICE_OUT_VOICE_SPEAKER_VBAT;
-                        else
-                            snd_device = SND_DEVICE_OUT_VOICE_SPEAKER_2_VBAT;
-                    } else
+            if (my_data->is_vbat_speaker || my_data->is_bcl_speaker) {
+                if (hw_info_is_stereo_spkr(my_data->hw_info)) {
+                    if (my_data->mono_speaker == SPKR_1)
                         snd_device = SND_DEVICE_OUT_VOICE_SPEAKER_VBAT;
+                    else
+                        snd_device = SND_DEVICE_OUT_VOICE_SPEAKER_2_VBAT;
+                } else
+                    snd_device = SND_DEVICE_OUT_VOICE_SPEAKER_VBAT;
+            } else {
+                if (hw_info_is_stereo_spkr(my_data->hw_info)) {
+                    if (my_data->voice_speaker_stereo)
+                        snd_device = SND_DEVICE_OUT_VOICE_SPEAKER_STEREO;
+                    else {
+                        if (my_data->mono_speaker == SPKR_1)
+                            snd_device = SND_DEVICE_OUT_VOICE_SPEAKER;
+                        else
+                            snd_device = SND_DEVICE_OUT_VOICE_SPEAKER_2;
+                    }
                 } else {
-                    if (hw_info_is_stereo_spkr(my_data->hw_info)) {
-                        if (my_data->voice_speaker_stereo)
-                            snd_device = SND_DEVICE_OUT_VOICE_SPEAKER_STEREO;
-                        else {
-                            if (my_data->mono_speaker == SPKR_1)
-                                snd_device = SND_DEVICE_OUT_VOICE_SPEAKER;
-                            else
-                                snd_device = SND_DEVICE_OUT_VOICE_SPEAKER_2;
-                        }
-                    } else {
+                    if ((out->usecase != USECASE_VOICEMMODE1_CALL) && (out->usecase != USECASE_VOICEMMODE2_CALL)) {
                         if (voice_is_in_ecall(adev))
                             snd_device = SND_DEVICE_OUT_ECALL_SPEAKER;
                         else
                             snd_device = SND_DEVICE_OUT_VOICE_SPEAKER;
                     }
+                    else {
+                        if (out->ecall == 1)
+                            snd_device = SND_DEVICE_OUT_ECALL_SPEAKER;
+                        else
+                            snd_device = SND_DEVICE_OUT_VOICE_SPEAKER;
+                    }
                 }
+            }
         } else if (devices & AUDIO_DEVICE_OUT_ALL_A2DP) {
             snd_device = SND_DEVICE_OUT_BT_A2DP;
         } else if (devices & AUDIO_DEVICE_OUT_ANLG_DOCK_HEADSET ||
@@ -5555,10 +5579,18 @@ snd_device_t platform_get_output_snd_device(void *platform, struct stream_out *o
             else if (audio_extn_should_use_handset_anc(channel_count))
                 snd_device = SND_DEVICE_OUT_ANC_HANDSET;
             else {
-                if (voice_is_in_ecall(adev))
-                    snd_device = SND_DEVICE_OUT_ECALL_HANDSET;
-                else
-                    snd_device = SND_DEVICE_OUT_VOICE_HANDSET;
+                if ((out->usecase != USECASE_VOICEMMODE1_CALL) && (out->usecase != USECASE_VOICEMMODE2_CALL)) {
+                    if (voice_is_in_ecall(adev))
+                        snd_device = SND_DEVICE_OUT_ECALL_HANDSET;
+                    else
+                        snd_device = SND_DEVICE_OUT_VOICE_HANDSET;
+                }
+                else {
+                    if (out->ecall == 1)
+                        snd_device = SND_DEVICE_OUT_ECALL_HANDSET;
+                    else
+                        snd_device = SND_DEVICE_OUT_VOICE_HANDSET;
+                }
             }
         } else if (devices & AUDIO_DEVICE_OUT_TELEPHONY_TX) {
             voice_extn_get_active_session_id(adev, &session_id);
