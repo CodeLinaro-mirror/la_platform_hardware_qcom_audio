@@ -108,6 +108,7 @@ void voice_check_and_update_aanc_path(struct audio_device *adev,
                                       snd_device_t out_snd_device,
                                       bool enable);
 bool voice_is_call_state_active(struct audio_device *adev);
+bool voice_is_call_usecase_active(struct audio_device *adev, audio_usecase_t usecase_id);
 void voice_set_device_mute_flag (struct audio_device *adev, bool state);
 snd_device_t voice_get_incall_rec_backend_device(struct stream_in *in);
 uint32_t voice_get_active_session_id(struct audio_device *adev);

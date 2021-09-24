@@ -397,6 +397,26 @@ bool voice_is_call_state_active(struct audio_device *adev)
     return call_state;
 }
 
+bool voice_is_call_usecase_active(struct audio_device *adev, audio_usecase_t usecase_id)
+{
+    bool call_state = false;
+    int ret = 0;
+    struct voice_session *session = NULL;
+
+    session = (struct voice_session *)voice_get_session_from_use_case(adev, usecase_id);
+
+    if (!session) {
+        ALOGE("voice_is_call_usecase_active: couldn't find voice session");
+        return call_state;
+    }
+
+    if(session->state.current != CALL_INACTIVE){
+        call_state = true;
+	}
+
+    return call_state;
+}
+
 bool voice_is_in_call(const struct audio_device *adev)
 {
     return adev->voice.in_call;
