@@ -4523,11 +4523,11 @@ static int out_set_parameters(struct audio_stream *stream, const char *kvpairs)
             out->devices = new_dev;
 
             if (output_drives_call(adev, out)) {
-                if (!voice_is_call_state_active(adev)) {
+                if (!voice_is_call_usecase_active(adev, out->usecase)) {
                     out->stream.set_callback = out_set_callback;
                     ret = voice_start_call(adev, out->usecase);
                 } else {
-                    voice_update_devices_for_all_voice_usecases(adev);
+                    select_devices(adev, out->usecase);
                 }
             }
 
