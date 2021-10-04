@@ -762,6 +762,8 @@ enum {
 #define PLATFORM_MAX_MIC_COUNT "input_mic_max_count"
 #define PLATFORM_DEFAULT_MIC_COUNT 2
 
+#define PLATFORM_VOIPCALL_SPEAKER_CFG_IS_STEREO "voip_call_stereo_channel"
+
 #define TX_VOICE_FLUENCE_PROV2 0x10F17
 #define TX_VOICE_TM_FLUENCE_PRO_VC 0x10F35
 #define TX_VOICE_TM_FLUENCE_EF 0x10F33
