@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2014, 2017-2018, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2014, 2017-2018, 2021, The Linux Foundation. All rights reserved.
  * Not a Contribution.
  *
  * Copyright (C) 2013 The Android Open Source Project
@@ -345,6 +345,13 @@ int equalizer_get_parameter(effect_context_t *context, effect_param_t *p,
                 }
                 break;
         }
+
+        if (p->vsize < 1) {
+            p->status = -EINVAL;
+            android_errorWriteLog(0x534e4554, "37536407");
+            break;
+        }
+
         name = (char *)value;
         strlcpy(name, equalizer_get_preset_name(eq_ctxt, param2), p->vsize - 1);
         name[p->vsize - 1] = 0;
