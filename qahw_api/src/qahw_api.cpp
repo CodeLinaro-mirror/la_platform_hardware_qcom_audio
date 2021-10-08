@@ -1,5 +1,5 @@
 /*
-* Copyright (c) 2016-2020, The Linux Foundation. All rights reserved.
+* Copyright (c) 2016-2021, The Linux Foundation. All rights reserved.
 *
 * Redistribution and use in source and binary forms, with or without
 * modification, are permitted provided that the following conditions are
@@ -2580,8 +2580,8 @@ int qahw_stream_set_volume(qahw_stream_handle_t *stream_handle,
     int rc = -EINVAL;
     qahw_audio_stream_type type;
     qahw_api_stream_t *stream = (qahw_api_stream_t *)stream_handle;
-    float left;
-    float right;
+    float left = 0;
+    float right = 0;
     bool l_found = false;
     bool r_found = false;
     int i;
@@ -2639,6 +2639,12 @@ int qahw_stream_set_volume(qahw_stream_handle_t *stream_handle,
         if((l_found  == false)&& (r_found == true))
         {
             left = right;
+        }
+
+        if((l_found  == false)&&(r_found == false))
+        {
+            ALOGE("%s: valid channel type is not sent", __func__);
+            return -ENOTSUP;
         }
 
         if(left == right) {
