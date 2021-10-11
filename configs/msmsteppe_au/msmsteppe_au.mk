@@ -287,7 +287,7 @@ vendor.audio.use.sw.ape.decoder=true
 
 #enable hw aac encoder by default
 PRODUCT_PROPERTY_OVERRIDES += \
-vendor.audio.hw.aac.encoder=true
+vendor.audio.hw.aac.encoder=false
 
 #force offload using hardware decoders for FLAC, WMA & APE
 PRODUCT_PROPERTY_OVERRIDES += \
@@ -456,7 +456,6 @@ PRODUCT_PACKAGES += \
     android.hardware.audio@2.0-service \
     android.hardware.audio@2.0-impl \
     android.hardware.audio.effect@2.0-impl \
-    android.hardware.soundtrigger@2.1-impl \
     android.hardware.audio@4.0 \
     android.hardware.audio.common@4.0 \
     android.hardware.audio.common@4.0-util \
@@ -481,6 +480,10 @@ PRODUCT_PACKAGES += \
     android.hardware.audio@6.0-impl \
     android.hardware.audio.effect@6.0 \
     android.hardware.audio.effect@6.0-impl
+
+# enable sound trigger hidl hal 2.3
+PRODUCT_PACKAGES += \
+    android.hardware.soundtrigger@2.3-impl
 
 PRODUCT_PACKAGES_ENG += \
     VoicePrintTest \
