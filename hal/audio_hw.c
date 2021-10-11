@@ -3355,7 +3355,7 @@ static int stop_output_stream(struct stream_out *out)
         (audio_extn_passthru_is_passthrough_stream(out))) {
         ALOGV("Disable passthrough , reset mixer to pcm");
         /* NO_PASSTHROUGH */
-        out->compr_config.codec->compr_passthr = 0;
+        out->compr_config.codec->reserved[0] = 0;
         audio_extn_passthru_on_stop(out);
         audio_extn_dolby_set_dap_bypass(adev, DAP_STATE_ON);
     }
@@ -5289,7 +5289,7 @@ static ssize_t out_write(struct audio_stream_out *stream, const void *buffer,
             }
 
             if ((channels < (int)audio_channel_count_from_out_mask(out->channel_mask)) &&
-                (out->compr_config.codec->compr_passthr == PASSTHROUGH) &&
+                (out->compr_config.codec->reserved[0] == PASSTHROUGH) &&
                 (out->is_iec61937_info_available == true)) {
                     ALOGE("%s: ERROR: Unsupported channel config in passthrough mode", __func__);
                     ret = -EINVAL;
@@ -7142,7 +7142,7 @@ int adev_open_output_stream(struct audio_hw_device *dev,
 
         if (out->flags & AUDIO_OUTPUT_FLAG_FAST) {
             ALOGD("%s: Setting latency mode to true", __func__);
-            out->compr_config.codec->flags |= audio_extn_utils_get_perf_mode_flag();
+            out->compr_config.codec->reserved[1] |= audio_extn_utils_get_perf_mode_flag();
         }
 
         if (out->usecase == USECASE_INVALID) {
@@ -7197,7 +7197,7 @@ int adev_open_output_stream(struct audio_hw_device *dev,
             out->bit_width = AUDIO_OUTPUT_BIT_WIDTH;
 
         if (out->flags & AUDIO_OUTPUT_FLAG_TIMESTAMP)
-            out->compr_config.codec->flags |= COMPRESSED_TIMESTAMP_FLAG;
+            out->compr_config.codec->reserved[1] |= COMPRESSED_TIMESTAMP_FLAG;
         ALOGVV("%s : out->compr_config.codec->flags -> (%#x) ", __func__, out->compr_config.codec->flags);
 
         /*TODO: Do we need to change it for passthrough */
@@ -7271,8 +7271,6 @@ int adev_open_output_stream(struct audio_hw_device *dev,
         if (out->flags & AUDIO_OUTPUT_FLAG_TIMESTAMP) {
             out->compr_config.fragment_size += sizeof(struct snd_codec_metadata);
         }
-        if (config->offload_info.format == AUDIO_FORMAT_FLAC)
-            out->compr_config.codec->options.flac_dec.sample_size = AUDIO_OUTPUT_BIT_WIDTH;
 
         if (config->offload_info.format == AUDIO_FORMAT_APTX) {
             audio_extn_send_aptx_dec_bt_addr_to_dsp(out);
@@ -7340,7 +7338,7 @@ int adev_open_output_stream(struct audio_hw_device *dev,
         }
         if (config->format == AUDIO_FORMAT_DSD) {
             out->flags |= AUDIO_OUTPUT_FLAG_COMPRESS_PASSTHROUGH;
-            out->compr_config.codec->compr_passthr = PASSTHROUGH_DSD;
+            out->compr_config.codec->reserved[0] = PASSTHROUGH_DSD;
             out->config.channels = audio_channel_count_from_out_mask(out->channel_mask);
         }
 

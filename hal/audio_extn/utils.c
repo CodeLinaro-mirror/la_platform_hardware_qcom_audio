@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2020, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2014-2021, The Linux Foundation. All rights reserved.
  * Not a Contribution.
  *
  * Copyright (C) 2014 The Android Open Source Project
@@ -1742,9 +1742,6 @@ int get_snd_codec_id(audio_format_t format)
     case AUDIO_FORMAT_WMA:
         id = SND_AUDIOCODEC_WMA;
         break;
-    case AUDIO_FORMAT_WMA_PRO:
-        id = SND_AUDIOCODEC_WMA_PRO;
-        break;
     case AUDIO_FORMAT_MP2:
         id = SND_AUDIOCODEC_MP2;
         break;
@@ -1764,12 +1761,6 @@ int get_snd_codec_id(audio_format_t format)
         break;
     case AUDIO_FORMAT_IEC61937:
         id = SND_AUDIOCODEC_IEC61937;
-        break;
-    case AUDIO_FORMAT_DSD:
-        id = SND_AUDIOCODEC_DSD;
-        break;
-    case AUDIO_FORMAT_APTX:
-        id = SND_AUDIOCODEC_APTX;
         break;
     case AUDIO_FORMAT_MAT:
         id = SND_AUDIOCODEC_MAT;

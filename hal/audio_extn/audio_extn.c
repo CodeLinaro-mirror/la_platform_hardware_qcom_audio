@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2020, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2021, The Linux Foundation. All rights reserved.
  * Not a Contribution.
  *
  * Copyright (C) 2013 The Android Open Source Project
@@ -3241,6 +3241,7 @@ int audio_extn_parse_compress_metadata(struct stream_out *out,
         return ret;
     }
 
+#if defined(FLAC_SUPPORT)
     if (out->format == AUDIO_FORMAT_FLAC) {
         ret = str_parms_get_str(parms, AUDIO_OFFLOAD_CODEC_FLAC_MIN_BLK_SIZE, value, sizeof(value));
         if (ret >= 0) {
@@ -3268,8 +3269,9 @@ int audio_extn_parse_compress_metadata(struct stream_out *out,
               out->compr_config.codec->options.flac_dec.min_frame_size,
               out->compr_config.codec->options.flac_dec.max_frame_size);
     }
-
-    else if (out->format == AUDIO_FORMAT_ALAC) {
+#endif
+#if defined(FLAC_SUPPORT)
+    if (out->format == AUDIO_FORMAT_ALAC) {
         ret = str_parms_get_str(parms, AUDIO_OFFLOAD_CODEC_ALAC_FRAME_LENGTH, value, sizeof(value));
         if (ret >= 0) {
             out->compr_config.codec->options.alac.frame_length = atoi(value);
@@ -3340,8 +3342,9 @@ int audio_extn_parse_compress_metadata(struct stream_out *out,
                 out->compr_config.codec->options.alac.avg_bit_rate,
                 out->compr_config.codec->options.alac.sample_rate);
     }
-
-    else if (out->format == AUDIO_FORMAT_APE) {
+#endif
+#if defined(APE_SUPPORT)
+    if (out->format == AUDIO_FORMAT_APE) {
         ret = str_parms_get_str(parms, AUDIO_OFFLOAD_CODEC_APE_COMPATIBLE_VERSION, value, sizeof(value));
         if (ret >= 0) {
             out->compr_config.codec->options.ape.compatible_version = atoi(value);
@@ -3407,8 +3410,9 @@ int audio_extn_parse_compress_metadata(struct stream_out *out,
                 out->compr_config.codec->options.ape.sample_rate,
                 out->compr_config.codec->options.ape.seek_table_present);
     }
-
-    else if (out->format == AUDIO_FORMAT_VORBIS) {
+#endif
+#if defined(VORBIS_SUPPORT)
+    if (out->format == AUDIO_FORMAT_VORBIS) {
         ret = str_parms_get_str(parms, AUDIO_OFFLOAD_CODEC_VORBIS_BITSTREAM_FMT, value, sizeof(value));
         if (ret >= 0) {
         // transcoded bitstream mode
@@ -3416,8 +3420,9 @@ int audio_extn_parse_compress_metadata(struct stream_out *out,
             out->is_compr_metadata_avail = true;
         }
     }
-#ifdef AMR_OFFLOAD_ENABLED
-    else if (out->format == AUDIO_FORMAT_AMR_WB_PLUS) {
+#endif
+#if defined(AMR_OFFLOAD)
+    if (out->format == AUDIO_FORMAT_AMR_WB_PLUS) {
         ret = str_parms_get_str(parms, AUDIO_OFFLOAD_CODEC_AMR_WB_PLUS_BITSTREAM_FMT, value, sizeof(value));
         if (ret >= 0) {
         // transcoded bitstream mode
@@ -3426,8 +3431,8 @@ int audio_extn_parse_compress_metadata(struct stream_out *out,
         }
     }
 #endif
-
-    else if (out->format == AUDIO_FORMAT_WMA || out->format == AUDIO_FORMAT_WMA_PRO) {
+#if defined(WMA_SUPPORT)
+    if (out->format == AUDIO_FORMAT_WMA || out->format == AUDIO_FORMAT_WMA_PRO) {
         ret = str_parms_get_str(parms, AUDIO_OFFLOAD_CODEC_WMA_FORMAT_TAG, value, sizeof(value));
         if (ret >= 0) {
             out->compr_config.codec->format = atoi(value);
@@ -3479,7 +3484,7 @@ int audio_extn_parse_compress_metadata(struct stream_out *out,
                 out->compr_config.codec->options.wma.encodeopt1,
                 out->compr_config.codec->options.wma.encodeopt2);
     }
-
+#endif
     return ret;
 }
 
@@ -3649,12 +3654,6 @@ void audio_extn_send_aptx_dec_bt_addr_to_dsp(struct stream_out *out)
 }
 
 #endif //APTX_DECODER_ENABLED
-
-void audio_extn_set_dsd_dec_params(struct stream_out *out, int blk_size)
-{
-    ALOGV("%s", __func__);
-    out->compr_config.codec->options.dsd_dec.blk_size = blk_size;
-}
 
 int audio_extn_out_set_param_data(struct stream_out *out,
                              audio_extn_param_id param_id,

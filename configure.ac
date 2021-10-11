@@ -106,6 +106,10 @@ if (test x$TARGET_SUPPORT = xsdxprairie); then
          AC_SUBST([TARGET_PLATFORM], ["msm8974"])
          TARGET_CFLAGS="-DPLATFORM_SDX55"
 fi
+if (test x$TARGET_SUPPORT = xsa410m); then
+         AC_SUBST([TARGET_PLATFORM], ["msm8974"])
+         TARGET_CFLAGS="-DPLATFORM_SA410M"
+fi
 AC_SUBST([TARGET_CFLAGS])
 
 AC_ARG_WITH([ion],
@@ -177,11 +181,9 @@ AC_CONFIG_FILES([ \
         Makefile \
         hal/Makefile \
         hal/audio_extn/Makefile \
-        post_proc/Makefile \
         qahw_api/Makefile \
         qahw_api/test/Makefile \
         hdmi_in_test/Makefile \
-        standalone_test_app/Makefile
         ])
 
 AC_OUTPUT
