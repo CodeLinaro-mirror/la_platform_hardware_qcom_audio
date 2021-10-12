@@ -75,11 +75,9 @@ AUDIO_FEATURE_ENABLED_DLKM := true
 AUDIO_FEATURE_ENABLED_SVA_MULTI_STAGE := true
 BOARD_SUPPORTS_SOUND_TRIGGER_CPU_AFFINITY_SET := false
 BOARD_SUPPORTS_FFV_EC_THREAD_RT_PRIORITY := false
-AUDIO_FEATURE_ENABLED_MS12_ARM := true
 AUDIO_FEATURE_ENABLED_QAF := true
 AUDIO_FEATURE_ENABLED_MS12_SECURITY := false
 MM_AUDIO_IP_HDLR_ENABLED := false
-AUDIO_FEATURE_ENABLED_QAP := true
 BOARD_SUPPORTS_QAHW := true
 AUDIO_FEATURE_ENABLED_A2DP_DECODERS := true
 ##AUDIO_FEATURE_FLAGS
@@ -423,8 +421,6 @@ vendor.audio.feature.audiozoom.enable=false \
 vendor.audio.feature.snd_mon.enable=true \
 vendor.audio.feature.quad_speaker.enable=false
 
-PRODUCT_PROPERTY_OVERRIDES += \
-vendor.audio.qap.enabled=true
 
 PRODUCT_PROPERTY_OVERRIDES += \
 vendor.audio.qap.dts_m8=false
