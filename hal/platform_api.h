@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2019, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2019, 2021 The Linux Foundation. All rights reserved.
  * Not a contribution.
  *
  * Copyright (C) 2013 The Android Open Source Project
@@ -111,7 +111,7 @@ struct audio_custom_mtmx_params_info {
 struct audio_custom_mtmx_params {
     struct listnode list;
     struct audio_custom_mtmx_params_info info;
-    uint32_t coeffs[0];
+    uint64_t coeffs[0];
 };
 
 struct audio_custom_mtmx_in_params_info {
@@ -130,6 +130,7 @@ struct audio_custom_mtmx_in_params {
     struct audio_custom_mtmx_in_params_info in_info;
     uint32_t ip_channels;
     uint32_t mic_ch;
+    uint32_t i2s_ch;
     uint32_t ec_ref_ch;
     struct audio_custom_mtmx_params_in_ch_info in_ch_info[MAX_IN_CHANNELS];
 };

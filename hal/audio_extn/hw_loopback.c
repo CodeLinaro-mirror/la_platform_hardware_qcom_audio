@@ -1,5 +1,5 @@
 /*
-* Copyright (c) 2017-2019, The Linux Foundation. All rights reserved.
+* Copyright (c) 2017-2019,2021 The Linux Foundation. All rights reserved.
 *
 * Redistribution and use in source and binary forms, with or without
 * modification, are permitted provided that the following conditions are
@@ -857,6 +857,7 @@ static int create_active_loopback_session(loopback_patch_t*  active_loopback_pat
        (active_loopback_patch->loopback_sink.type == AUDIO_PORT_TYPE_DEVICE)) {
         status = create_loopback_session(active_loopback_patch);
         if (status != 0)
+            pthread_mutex_unlock(&audio_loopback_mod->lock);
             return status;
     }
 
@@ -1055,6 +1056,7 @@ int audio_extn_hw_loopback_get_audio_port(struct audio_hw_device *dev,
         ALOGE("%s, Unable to find a valid matching port in patch \
         database,exiting", __func__);
         status = -EINVAL;
+        pthread_mutex_unlock(&audio_loopback_mod->lock);
         return status;
     }
 

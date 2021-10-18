@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2020, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2021, The Linux Foundation. All rights reserved.
  * Not a contribution.
  *
  * Copyright (C) 2013 The Android Open Source Project
@@ -285,6 +285,7 @@ typedef enum render_mode {
     RENDER_MODE_AUDIO_STC_MASTER,
     RENDER_MODE_AUDIO_TTP,
     RENDER_MODE_AUDIO_TTP_PASS_THROUGH,
+    RENDER_MODE_AUDIO_ABSOLUTETIME,
 } render_mode_t;
 
 /* Parameter to be passed when clock switch is needed */
@@ -776,6 +777,7 @@ size_t get_output_period_size(uint32_t sample_rate,
 #define CHECK(condition) LOG_ALWAYS_FATAL_IF(!(condition), "%s",\
             __FILE__ ":" LITERAL_TO_STRING(__LINE__)\
             " ASSERT_FATAL(" #condition ") failed.")
+bool is_combo_audio_input_device(audio_devices_t device);
 
 static inline bool is_loopback_input_device(audio_devices_t device) {
     if (!audio_is_output_device(device) &&

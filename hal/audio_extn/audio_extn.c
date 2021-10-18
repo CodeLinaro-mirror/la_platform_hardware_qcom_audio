@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2020, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2021, The Linux Foundation. All rights reserved.
  * Not a Contribution.
  *
  * Copyright (C) 2013 The Android Open Source Project
@@ -688,7 +688,7 @@ static int set_custom_mtmx_output_channel_map(struct audio_device *adev,
     struct mixer_ctl *ctl = NULL;
     char mixer_ctl_name[128] = {0};
     int ret = 0;
-    int channel_map[AUDIO_MAX_DSP_CHANNELS] = {0};
+    long channel_map[AUDIO_MAX_DSP_CHANNELS] = {0};
 
     ALOGV("%s channel_count %d", __func__, ch_count);
 
@@ -3613,7 +3613,7 @@ static int audio_extn_set_multichannel_mask(struct audio_device *adev,
 
     int max_mic_count = platform_get_max_mic_count(adev->platform);
     /* validate input params. Avoid updated channel mask if HDMI or loopback device */
-    if ((channel_count == 6) &&
+    if ((channel_count > max_mic_count) &&
         (in->format == AUDIO_FORMAT_PCM_16_BIT) &&
         !((in->device & AUDIO_DEVICE_IN_HDMI) & ~(AUDIO_DEVICE_BIT_IN)) &&
         (!is_loopback_input_device(in->device))) {
@@ -3801,6 +3801,10 @@ int audio_extn_out_set_param_data(struct stream_out *out,
                 audio_extn_utils_parse_configs_from_ch_status(out,
                     (struct audio_out_channel_status_info *)(payload));
 
+            break;
+        case AUDIO_EXTN_PARAM_EXTERNAL_SINK_LATENCY:
+            ret = audio_extn_utils_set_external_sink_latency(out,
+                    (struct audio_out_external_sink_latency_param *)(payload));
             break;
         default:
             ALOGE("%s:: unsupported param_id %d", __func__, param_id);

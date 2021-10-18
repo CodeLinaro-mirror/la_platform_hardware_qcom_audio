@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2019, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2014-2019, 2021 The Linux Foundation. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -1086,6 +1086,10 @@ static void process_custom_mtmx_param_in_ch_info(const XML_Char **attr)
               ENUM_TO_STRING(AUDIO_DEVICE_IN_LOOPBACK),
               sizeof(mtmx_in_params->in_ch_info[in_ch_idx].device)))
         mtmx_in_params->ec_ref_ch = mtmx_in_params->in_ch_info[in_ch_idx].ch_count;
+    else if (!strncmp(mtmx_in_params->in_ch_info[in_ch_idx].device,
+                 ENUM_TO_STRING(AUDIO_DEVICE_IN_SPEAKER_MIC2),
+                 sizeof(mtmx_in_params->in_ch_info[in_ch_idx].device)))
+        mtmx_in_params->i2s_ch = mtmx_in_params->in_ch_info[in_ch_idx].ch_count;
 
     mtmx_in_params->ip_channels += mtmx_in_params->in_ch_info[in_ch_idx].ch_count;
 }
