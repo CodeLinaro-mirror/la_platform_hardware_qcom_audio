@@ -570,7 +570,7 @@ static void update_hardware_info_kona(
     } else if (!strncmp(snd_card_name, "kona-iot-vc-snd-card",
                 sizeof("kona-iot-vc-snd-card"))) {
         strlcpy(hw_info->name, "kona", sizeof(hw_info->name));
-        hw_info->is_stereo_spkr = false;
+        hw_info->is_stereo_spkr = true;
     } else {
         ALOGW("%s: Not a kona device", __func__);
     }

@@ -8651,6 +8651,15 @@ int platform_set_parameters(void *platform, struct str_parms *parms)
         }
     }
 
+    err = str_parms_get_str(parms, PLATFORM_VOIPCALL_SPEAKER_CFG_IS_STEREO, value,len);
+    if (err >= 0) {
+        if (value && !strncmp(value, "false", sizeof("false")))
+            my_data->voice_speaker_stereo = false;
+        else
+            my_data->voice_speaker_stereo = true;
+        str_parms_del(parms, PLATFORM_VOIPCALL_SPEAKER_CFG_IS_STEREO);
+    }
+
     if (hw_info_is_stereo_spkr(my_data->hw_info)) {
         err = str_parms_get_str(parms, AUDIO_PARAMETER_KEY_MONO_SPEAKER, value, len);
         if (err >= 0) {
@@ -10261,6 +10270,15 @@ static bool platform_check_codec_backend_cfg(struct audio_device* adev,
 
         /* Reset channels for speaker as its fixed and independent of active streams */
         channels = my_data->current_backend_cfg[backend_idx].channels;
+
+        if (!my_data->voice_speaker_stereo) {
+            if ((adev->mode == AUDIO_MODE_IN_COMMUNICATION) &&
+                (snd_device == SND_DEVICE_OUT_VOICE_SPEAKER ||
+                snd_device == SND_DEVICE_OUT_VOICE_SPEAKER_2)) {
+                channels = 1;
+                channels_updated = true;
+            }
+        }
     }
 
     if (backend_idx == USB_AUDIO_RX_BACKEND) {
