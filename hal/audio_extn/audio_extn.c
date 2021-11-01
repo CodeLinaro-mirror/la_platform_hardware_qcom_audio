@@ -510,7 +510,7 @@ static void set_custom_mtmx_params_v2(struct audio_device *adev,
     char *capture_mixer_name_prefix = "AudStr Capture";
     char *mixer_name_suffix = "ChMixer Cfg";
     char mixer_ctl_name[128] = {0};
-    int chmixer_cfg[5] = {0}, len = 0;
+    long int chmixer_cfg[5] = {0}, len = 0;
     int be_id = -1, err = 0;
 
     be_id = platform_get_snd_device_backend_index(pinfo->snd_device);
