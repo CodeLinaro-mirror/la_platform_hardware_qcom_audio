@@ -338,6 +338,7 @@ typedef enum render_mode {
     RENDER_MODE_AUDIO_STC_MASTER,
     RENDER_MODE_AUDIO_TTP,
     RENDER_MODE_AUDIO_TTP_PASS_THROUGH,
+    RENDER_MODE_AUDIO_ABSOLUTETIME,
 } render_mode_t;
 
 /* This defines the physical car audio streams supported in

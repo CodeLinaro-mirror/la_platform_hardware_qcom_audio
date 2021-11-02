@@ -3915,6 +3915,10 @@ int audio_extn_out_set_param_data(struct stream_out *out,
                     (struct audio_out_channel_status_info *)(payload));
 
             break;
+        case AUDIO_EXTN_PARAM_EXTERNAL_SINK_LATENCY:
+            ret = audio_extn_utils_set_external_sink_latency(out,
+                    (struct audio_out_external_sink_latency_param *)(payload));
+            break;
         default:
             ALOGE("%s:: unsupported param_id %d", __func__, param_id);
             break;
@@ -5842,10 +5846,10 @@ static void *batt_listener_lib_handle = NULL;
 typedef void (*batt_listener_init_t)(battery_status_change_fn_t);
 static batt_listener_init_t batt_listener_init;
 
-typedef void (*batt_listener_deinit_t)();
+typedef void (*batt_listener_deinit_t)(void);
 static batt_listener_deinit_t batt_listener_deinit;
 
-typedef bool (*batt_prop_is_charging_t)();
+typedef bool (*batt_prop_is_charging_t)(void);
 static batt_prop_is_charging_t batt_prop_is_charging;
 
 void battery_listener_feature_init(bool is_feature_enabled)
