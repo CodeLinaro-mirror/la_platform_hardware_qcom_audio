@@ -92,51 +92,51 @@
     <ctl name="DISPLAY_PORT Mixer MultiMedia14" value="0" />
     <ctl name="DISPLAY_PORT Mixer MultiMedia15" value="0" />
     <ctl name="DISPLAY_PORT Mixer MultiMedia16" value="0" />
-    <ctl name="TERT_TDM_RX_0 Audio Mixer MultiMedia1" value="0" />
+    <ctl name="PRI_TDM_RX_0 Audio Mixer MultiMedia1" value="0" />
     <ctl name="SLIMBUS_6_RX Audio Mixer MultiMedia1" value="0" />
     <ctl name="SLIMBUS_0_RX Audio Mixer MultiMedia2" value="0" />
     <ctl name="SLIMBUS_6_RX Audio Mixer MultiMedia2" value="0" />
     <ctl name="SLIMBUS_0_RX Audio Mixer MultiMedia3" value="0" />
     <ctl name="SLIMBUS_6_RX Audio Mixer MultiMedia3" value="0" />
-    <ctl name="TERT_TDM_RX_0 Audio Mixer MultiMedia4" value="0" />
+    <ctl name="PRI_TDM_RX_0 Audio Mixer MultiMedia4" value="0" />
     <ctl name="SLIMBUS_2_RX Audio Mixer MultiMedia4" value="0" />
     <ctl name="SLIMBUS_5_RX Audio Mixer MultiMedia4" value="0" />
     <ctl name="SLIMBUS_6_RX Audio Mixer MultiMedia4" value="0" />
-    <ctl name="TERT_TDM_RX_0 Audio Mixer MultiMedia5" value="0" />
+    <ctl name="PRI_TDM_RX_0 Audio Mixer MultiMedia5" value="0" />
     <ctl name="SLIMBUS_2_RX Audio Mixer MultiMedia5" value="0" />
     <ctl name="SLIMBUS_6_RX Audio Mixer MultiMedia5" value="0" />
-    <ctl name="TERT_TDM_RX_0 Audio Mixer MultiMedia7" value="0" />
+    <ctl name="PRI_TDM_RX_0 Audio Mixer MultiMedia7" value="0" />
     <ctl name="SLIMBUS_5_RX Audio Mixer MultiMedia7" value="0" />
     <ctl name="SLIMBUS_2_RX Audio Mixer MultiMedia7" value="0" />
     <ctl name="SLIMBUS_6_RX Audio Mixer MultiMedia7" value="0" />
-    <ctl name="TERT_TDM_RX_0 Audio Mixer MultiMedia8" value="0" />
+    <ctl name="PRI_TDM_RX_0 Audio Mixer MultiMedia8" value="0" />
     <ctl name="SLIMBUS_5_RX Audio Mixer MultiMedia8" value="0" />
     <ctl name="SLIMBUS_6_RX Audio Mixer MultiMedia8" value="0" />
-    <ctl name="TERT_TDM_RX_0 Audio Mixer MultiMedia10" value="0" />
+    <ctl name="PRI_TDM_RX_0 Audio Mixer MultiMedia10" value="0" />
     <ctl name="SLIMBUS_5_RX Audio Mixer MultiMedia10" value="0" />
     <ctl name="SLIMBUS_2_RX Audio Mixer MultiMedia10" value="0" />
     <ctl name="SLIMBUS_6_RX Audio Mixer MultiMedia10" value="0" />
-    <ctl name="TERT_TDM_RX_0 Audio Mixer MultiMedia11" value="0" />
+    <ctl name="PRI_TDM_RX_0 Audio Mixer MultiMedia11" value="0" />
     <ctl name="SLIMBUS_5_RX Audio Mixer MultiMedia11" value="0" />
     <ctl name="SLIMBUS_2_RX Audio Mixer MultiMedia11" value="0" />
     <ctl name="SLIMBUS_6_RX Audio Mixer MultiMedia11" value="0" />
-    <ctl name="TERT_TDM_RX_0 Audio Mixer MultiMedia12" value="0" />
+    <ctl name="PRI_TDM_RX_0 Audio Mixer MultiMedia12" value="0" />
     <ctl name="SLIMBUS_5_RX Audio Mixer MultiMedia12" value="0" />
     <ctl name="SLIMBUS_2_RX Audio Mixer MultiMedia12" value="0" />
     <ctl name="SLIMBUS_6_RX Audio Mixer MultiMedia12" value="0" />
-    <ctl name="TERT_TDM_RX_0 Audio Mixer MultiMedia13" value="0" />
+    <ctl name="PRI_TDM_RX_0 Audio Mixer MultiMedia13" value="0" />
     <ctl name="SLIMBUS_5_RX Audio Mixer MultiMedia13" value="0" />
     <ctl name="SLIMBUS_2_RX Audio Mixer MultiMedia13" value="0" />
     <ctl name="SLIMBUS_6_RX Audio Mixer MultiMedia13" value="0" />
-    <ctl name="TERT_TDM_RX_0 Audio Mixer MultiMedia14" value="0" />
+    <ctl name="PRI_TDM_RX_0 Audio Mixer MultiMedia14" value="0" />
     <ctl name="SLIMBUS_5_RX Audio Mixer MultiMedia14" value="0" />
     <ctl name="SLIMBUS_2_RX Audio Mixer MultiMedia14" value="0" />
     <ctl name="SLIMBUS_6_RX Audio Mixer MultiMedia14" value="0" />
-    <ctl name="TERT_TDM_RX_0 Audio Mixer MultiMedia15" value="0" />
+    <ctl name="PRI_TDM_RX_0 Audio Mixer MultiMedia15" value="0" />
     <ctl name="SLIMBUS_5_RX Audio Mixer MultiMedia15" value="0" />
     <ctl name="SLIMBUS_2_RX Audio Mixer MultiMedia15" value="0" />
     <ctl name="SLIMBUS_6_RX Audio Mixer MultiMedia15" value="0" />
-    <ctl name="TERT_TDM_RX_0 Audio Mixer MultiMedia16" value="0" />
+    <ctl name="PRI_TDM_RX_0 Audio Mixer MultiMedia16" value="0" />
     <ctl name="SLIMBUS_5_RX Audio Mixer MultiMedia16" value="0" />
     <ctl name="SLIMBUS_2_RX Audio Mixer MultiMedia16" value="0" />
     <ctl name="SLIMBUS_6_RX Audio Mixer MultiMedia16" value="0" />
@@ -160,7 +160,7 @@
     <ctl name="MultiMedia8 Mixer USB_AUDIO_TX" value="0" />
     <ctl name="MultiMedia10 Mixer USB_AUDIO_TX" value="0" />
     <ctl name="MultiMedia6 Mixer SLIM_0_TX" value="0" />
-    <ctl name="TERT_TDM_RX_0 Audio Mixer MultiMedia4" value="0" />
+    <ctl name="PRI_TDM_RX_0 Audio Mixer MultiMedia4" value="0" />
     <ctl name="SLIM0_RX_VI_FB_LCH_MUX" value="ZERO" />
     <ctl name="SLIM0_RX_VI_FB_RCH_MUX" value="ZERO" />
     <ctl name="AANC_SLIM_0_RX MUX" value="ZERO" />
@@ -279,9 +279,9 @@
     <ctl name="AFE_PCM_RX Audio Mixer MultiMedia3" value="0" />
 
     <!-- hfp-sco -->
-    <ctl name="TERT_TDM_RX_2 Audio Mixer MultiMedia21" value="0" />
-    <ctl name="MultiMedia21 Mixer AUX_PCM_UL_TX" value="0" />
-    <ctl name="AUX_PCM_RX Audio Mixer MultiMedia6" value="0" />
+    <ctl name="PRI_TDM_RX_2 Audio Mixer MultiMedia21" value="0" />
+    <ctl name="MultiMedia21 Mixer SEN_TDM_TX_1" value="0" />
+    <ctl name="SEN_TDM_RX_1 Audio Mixer MultiMedia6" value="0" />
     <ctl name="MultiMedia6 Mixer TERT_TDM_TX_0" value="0" />
 
     <!-- icc-call and anc-loopback -->
@@ -297,7 +297,7 @@
     <!-- EC Reference end -->
 
     <path name="echo-reference">
-        <ctl name="AUDIO_REF_EC_UL1 MUX" value="TERT_TDM_RX_2" />
+        <ctl name="AUDIO_REF_EC_UL1 MUX" value="PRI_TDM_RX_2" />
         <ctl name="EC Reference Channels" value="One" />
         <ctl name="EC Reference Bit Format" value="S16_LE" />
         <ctl name="EC Reference SampleRate" value="48000" />
@@ -331,8 +331,9 @@
     </path>
 
     <path name="deep-buffer-playback">
-        <ctl name="TERT_TDM_RX_0 Channels" value="Six" />
-        <ctl name="TERT_TDM_RX_0 Audio Mixer MultiMedia1" value="1" />
+        <path name="auto-playback" />
+        <ctl name="PRI_TDM_RX_0 Channels" value="Six" />
+        <ctl name="PRI_TDM_RX_0 Audio Mixer MultiMedia1" value="1" />
     </path>
 
     <path name="deep-buffer-playback speaker-protected">
@@ -422,8 +423,9 @@
     </path>
 
     <path name="low-latency-playback">
-        <ctl name="TERT_TDM_RX_0 Channels" value="Six" />
-        <ctl name="TERT_TDM_RX_0 Audio Mixer MultiMedia5" value="1" />
+        <path name="auto-playback" />
+        <ctl name="PRI_TDM_RX_0 Channels" value="Six" />
+        <ctl name="PRI_TDM_RX_0 Audio Mixer MultiMedia5" value="1" />
     </path>
 
     <path name="low-latency-playback speaker-protected">
@@ -517,8 +519,9 @@
     </path>
 
     <path name="audio-ull-playback">
-        <ctl name="TERT_TDM_RX_0 Channels" value="Six" />
-        <ctl name="TERT_TDM_RX_0 Audio Mixer MultiMedia8" value="1" />
+        <path name="auto-playback" />
+        <ctl name="PRI_TDM_RX_0 Channels" value="Six" />
+        <ctl name="PRI_TDM_RX_0 Audio Mixer MultiMedia8" value="1" />
     </path>
 
     <path name="audio-ull-playback speaker-protected">
@@ -605,9 +608,23 @@
         <ctl name="AFE_PCM_RX Audio Mixer MultiMedia2" value="1" />
     </path>
 
+    <path name="compress-offload-tdm-config">
+        <ctl name="PRI_TDM SlotWidth" value="32" />
+        <ctl name="PRI_TDM SlotNumber" value="Eight" />
+        <ctl name="PRI_TDM_RX_0 SampleRate" value="KHZ_48" />
+        <ctl name="PRI_TDM_RX_0 SlotMapping" id ="0" value="0" />
+        <ctl name="PRI_TDM_RX_0 SlotMapping" id ="1" value="4" />
+        <ctl name="PRI_TDM_RX_0 SlotMapping" id ="2" value="8" />
+        <ctl name="PRI_TDM_RX_0 SlotMapping" id ="3" value="12" />
+        <ctl name="PRI_TDM_RX_0 SlotMapping" id ="4" value="16" />
+        <ctl name="PRI_TDM_RX_0 SlotMapping" id ="5" value="20" />
+        <ctl name="PRI_TDM_RX_0 SlotMapping" id ="6" value="65535" />
+    </path>
+
     <path name="compress-offload-playback">
-        <ctl name="TERT_TDM_RX_0 Channels" value="Six" />
-        <ctl name="TERT_TDM_RX_0 Audio Mixer MultiMedia4" value="1" />
+        <path name="compress-offload-tdm-config" />
+        <ctl name="PRI_TDM_RX_0 Channels" value="Six" />
+        <ctl name="PRI_TDM_RX_0 Audio Mixer MultiMedia4" value="1" />
     </path>
 
     <path name="compress-offload-playback speaker-protected">
@@ -708,15 +725,8 @@
         <path name="compress-offload-playback" />
     </path>
 
-    <path name="compress-offload-playback tdm-config">
-        <ctl name="PRI_TDM SlotWidth" value="32" />
-        <ctl name="PRI_TDM SlotNumber" value="Eight" />
-        <ctl name="PRI_TDM_RX_0 SampleRate" value="KHZ_48" />
-        <ctl name="PRI_TDM_RX_0 SlotMapping" value="0 4 8 12 16 20 65535" />
-    </path>
-
     <path name="compress-offload-playback2">
-        <path name="compress-offload-playback tdm-config" />
+        <path name="compress-offload-tdm-config" />
         <ctl name="PRI_TDM_RX_0 Channels" value="Six" />
         <ctl name="PRI_TDM_RX_0 Audio Mixer MultiMedia7" value="1" />
     </path>
@@ -808,7 +818,7 @@
     </path>
 
     <path name="compress-offload-playback3">
-        <path name="compress-offload-playback tdm-config" />
+        <path name="compress-offload-tdm-config" />
         <ctl name="PRI_TDM_RX_0 Channels" value="Six" />
         <ctl name="PRI_TDM_RX_0 Audio Mixer MultiMedia10" value="1" />
     </path>
@@ -880,7 +890,7 @@
     </path>
 
     <path name="compress-offload-playback4">
-        <path name="compress-offload-playback tdm-config" />
+        <path name="compress-offload-tdm-config" />
         <ctl name="PRI_TDM_RX_0 Channels" value="Six" />
         <ctl name="PRI_TDM_RX_0 Audio Mixer MultiMedia11" value="1" />
     </path>
@@ -953,7 +963,7 @@
     </path>
 
     <path name="compress-offload-playback5">
-        <path name="compress-offload-playback tdm-config" />
+        <path name="compress-offload-tdm-config" />
         <ctl name="PRI_TDM_RX_0 Channels" value="Six" />
         <ctl name="PRI_TDM_RX_0 Audio Mixer MultiMedia12" value="1" />
     </path>
@@ -1025,7 +1035,7 @@
     </path>
 
     <path name="compress-offload-playback6">
-        <path name="compress-offload-playback tdm-config" />
+        <path name="compress-offload-tdm-config" />
         <ctl name="PRI_TDM_RX_0 Channels" value="Six" />
         <ctl name="PRI_TDM_RX_0 Audio Mixer MultiMedia13" value="1" />
     </path>
@@ -1097,7 +1107,7 @@
     </path>
 
     <path name="compress-offload-playback7">
-        <path name="compress-offload-playback tdm-config" />
+        <path name="compress-offload-tdm-config" />
         <ctl name="PRI_TDM_RX_0 Channels" value="Six" />
         <ctl name="PRI_TDM_RX_0 Audio Mixer MultiMedia14" value="1" />
     </path>
@@ -1169,7 +1179,7 @@
     </path>
 
     <path name="compress-offload-playback8">
-        <path name="compress-offload-playback tdm-config" />
+        <path name="compress-offload-tdm-config" />
         <ctl name="PRI_TDM_RX_0 Channels" value="Six" />
         <ctl name="PRI_TDM_RX_0 Audio Mixer MultiMedia15" value="1" />
     </path>
@@ -1241,7 +1251,7 @@
     </path>
 
     <path name="compress-offload-playback9">
-        <path name="compress-offload-playback tdm-config" />
+        <path name="compress-offload-tdm-config" />
         <ctl name="PRI_TDM_RX_0 Channels" value="Six" />
         <ctl name="PRI_TDM_RX_0 Audio Mixer MultiMedia16" value="1" />
     </path>
@@ -1316,28 +1326,33 @@
     <path name="auto-playback">
         <ctl name="PRI_TDM SlotWidth" value="32" />
         <ctl name="PRI_TDM SlotNumber" value="Eight" />
+        <ctl name="PRI_TDM_RX_0 SampleRate" value="KHZ_48" />
+        <ctl name="PRI_TDM_RX_0 SlotMapping" id ="0" value="0" />
+        <ctl name="PRI_TDM_RX_0 SlotMapping" id ="1" value="4" />
+        <ctl name="PRI_TDM_RX_0 SlotMapping" id ="2" value="8" />
+        <ctl name="PRI_TDM_RX_0 SlotMapping" id ="3" value="12" />
+        <ctl name="PRI_TDM_RX_0 SlotMapping" id ="4" value="16" />
+        <ctl name="PRI_TDM_RX_0 SlotMapping" id ="5" value="20" />
+        <ctl name="PRI_TDM_RX_0 SlotMapping" id ="6" value="65535" />
     </path>
 
     <path name="media-playback">
         <path name="auto-playback" />
-        <ctl name="PRI_TDM_RX_0 SampleRate" value="KHZ_48" />
-        <ctl name="PRI_TDM_RX_0 SlotMapping" value="0 4 8 12 16 20 65535" />
         <ctl name="PRI_TDM_RX_0 Channels" value="Six" />
         <ctl name="PRI_TDM_RX_0 Audio Mixer MultiMedia1" value="1" />
     </path>
 
     <path name="sys-notification-playback">
         <path name="auto-playback" />
-        <ctl name="PRI_TDM_RX_0 SampleRate" value="KHZ_48" />
-        <ctl name="PRI_TDM_RX_0 SlotMapping" value="0 4 8 12 16 20 65535" />
         <ctl name="PRI_TDM_RX_0 Channels" value="Six" />
         <ctl name="PRI_TDM_RX_0 Audio Mixer MultiMedia5" value="1" />
     </path>
 
     <path name="nav-guidance-playback">
         <path name="auto-playback" />
-        <ctl name="PRI_TDM_RX_0 SampleRate" value="KHZ_48" />
-        <ctl name="PRI_TDM_RX_0 SlotMapping" value="0 4 8 12 16 20 65535" />
+        <ctl name="PRI_TDM_RX_1 SampleRate" value="KHZ_48" />
+        <ctl name="PRI_TDM_RX_1 SlotMapping" id ="0" value="24" />
+        <ctl name="PRI_TDM_RX_1 SlotMapping" id ="1" value="65535" />
         <ctl name="PRI_TDM_RX_1 Channels" value="One" />
         <ctl name="PRI_TDM_RX_1 Audio Mixer MultiMedia2" value="1" />
     </path>
@@ -1345,7 +1360,8 @@
     <path name="phone-playback">
         <path name="auto-playback" />
         <ctl name="PRI_TDM_RX_2 SampleRate" value="KHZ_48" />
-        <ctl name="PRI_TDM_RX_2 SlotMapping" value="28 65535" />
+        <ctl name="PRI_TDM_RX_2 SlotMapping" id ="0" value="28" />
+        <ctl name="PRI_TDM_RX_2 SlotMapping" id ="1" value="65535" />
         <ctl name="PRI_TDM_RX_2 Channels" value="One" />
         <ctl name="PRI_TDM_RX_2 Audio Mixer MultiMedia10" value="1" />
     </path>
@@ -1364,7 +1380,13 @@
         <ctl name="TERT_TDM SlotWidth" value="32" />
         <ctl name="TERT_TDM SlotNumber" value="Eight" />
         <ctl name="TERT_TDM_TX_0 SampleRate" value="KHZ_48" />
-        <ctl name="TERT_TDM_TX_0 SlotMapping" value="0 4 8 12 16 20 65535" />
+        <ctl name="TERT_TDM_TX_0 SlotMapping" id ="0" value="0" />
+        <ctl name="TERT_TDM_TX_0 SlotMapping" id ="1" value="4" />
+        <ctl name="TERT_TDM_TX_0 SlotMapping" id ="2" value="8" />
+        <ctl name="TERT_TDM_TX_0 SlotMapping" id ="3" value="12" />
+        <ctl name="TERT_TDM_TX_0 SlotMapping" id ="4" value="16" />
+        <ctl name="TERT_TDM_TX_0 SlotMapping" id ="5" value="20" />
+        <ctl name="TERT_TDM_TX_0 SlotMapping" id ="6" value="65535" />
     </path>
 
     <path name="audio-record">
@@ -1660,7 +1682,6 @@
         <path name="auto-record" />
         <path name="auto-playback" />
         <ctl name="PRI_TDM_RX_0 SampleRate" value="KHZ_16" />
-        <ctl name="PRI_TDM_RX_0 SlotMapping" value="0 4 8 12 16 20 65535" />
         <ctl name="PRI_TDM_RX_0 Channels" value="Four" />
         <ctl name="PRI_TDM_RX_0 Audio Mixer MultiMedia9" value="1" />
         <ctl name="TERT_TDM_TX_0 Channels" value="Four" />
@@ -1687,6 +1708,11 @@
 
     <path name="hfp-sco">
         <path name="auto-record" />
+        <ctl name="SEN_TDM SlotWidth" value="16" />
+        <ctl name="SEN_TDM SlotNumber" value="Eight" />
+        <ctl name="SEN_TDM_RX_1 Channels" value="One" />
+        <ctl name="SEN_TDM_RX_1 SlotMapping" id ="0" value="0" />
+        <ctl name="SEN_TDM_RX_1 SlotMapping" id ="1" value="65535" />
         <ctl name="SEN_TDM_RX_1 Audio Mixer MultiMedia6" value="1" />
         <ctl name="MultiMedia6 Mixer TERT_TDM_TX_0" value="1" />
     </path>
@@ -1702,7 +1728,7 @@
     </path>
 
     <path name="hfp-sco-wb">
-        <ctl name="PRIM_AUX_PCM_RX SampleRate" value="KHZ_16" />
+        <ctl name="SEN_TDM_RX_1 SampleRate" value="KHZ_16" />
         <path name="hfp-sco" />
     </path>
 
@@ -1723,14 +1749,21 @@
 
     <path name="hfp-sco-downlink">
         <path name="auto-playback" />
+        <ctl name="SEN_TDM SlotWidth" value="16" />
+        <ctl name="SEN_TDM SlotNumber" value="Eight" />
+        <ctl name="SEN_TDM_TX_1 Channels" value="One" />
+        <ctl name="SEN_TDM_TX_1 SlotMapping" id ="0" value="0" />
+        <ctl name="SEN_TDM_TX_1 SlotMapping" id ="1" value="65535" />
+        <ctl name="PRI_TDM_RX_2 Channels" value="One" />
         <ctl name="PRI_TDM_RX_2 SampleRate" value="KHZ_48" />
-        <ctl name="PRI_TDM_RX_2 SlotMapping" value="28 65535" />
+        <ctl name="PRI_TDM_RX_2 SlotMapping" id ="0" value="28" />
+        <ctl name="PRI_TDM_RX_2 SlotMapping" id ="1" value="65535" />
         <ctl name="PRI_TDM_RX_2 Audio Mixer MultiMedia21" value="1" />
         <ctl name="MultiMedia21 Mixer SEN_TDM_TX_1" value="1" />
     </path>
 
     <path name="hfp-sco-wb-downlink">
-        <ctl name="PRIM_AUX_PCM_TX SampleRate" value="KHZ_16" />
+        <ctl name="SEN_TDM_TX_1 SampleRate" value="KHZ_16" />
         <path name="hfp-sco-downlink" />
     </path>
 
@@ -1881,8 +1914,9 @@
 
     <!-- VoIP Rx settings -->
     <path name="audio-playback-voip">
-        <ctl name="TERT_TDM_RX_0 Channels" value="Six" />
-        <ctl name="TERT_TDM_RX_0 Audio Mixer MultiMedia10" value="1" />
+        <path name="auto-playback" />
+        <ctl name="PRI_TDM_RX_0 Channels" value="Six" />
+        <ctl name="PRI_TDM_RX_0 Audio Mixer MultiMedia10" value="1" />
     </path>
 
     <path name="audio-playback-voip headphones">
@@ -1985,7 +2019,7 @@
     </path>
 
     <path name="speaker-mono">
-        <ctl name="TERT_TDM_RX_0 Channels" value="One" />
+        <ctl name="PRI_TDM_RX_0 Channels" value="One" />
     </path>
 
     <path name="speaker-mono-2">
@@ -2486,6 +2520,7 @@
 
     <!-- Quad MIC devices -->
     <path name="speaker-qmic">
+        <path name="auto-record" />
         <ctl name="TERT_TDM_TX_0 Channels" value="Four" />
         <ctl name="MultiMedia1 Mixer TERT_TDM_TX_0" value="1" />
     </path>
@@ -2773,7 +2808,7 @@
     </path>
 
     <path name="mmap-playback">
-        <ctl name="TERT_TDM_RX_0 Audio Mixer MultiMedia16" value="1" />
+        <ctl name="PRI_TDM_RX_0 Audio Mixer MultiMedia16" value="1" />
     </path>
 
     <path name="mmap-playback headphones">
