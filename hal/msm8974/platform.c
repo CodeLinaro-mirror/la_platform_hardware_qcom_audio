@@ -2472,7 +2472,13 @@ static void get_source_mic_type(struct platform_data * my_data)
     // support max to mono, example if max count is 3, usecase supports Three, dual and mono mic
     switch (my_data->max_mic_count) {
         case 10:
-            my_data->source_mic_type |= SOURCE_DEC_MIC;
+            if (my_data->fluence_type == (FLUENCE_QUAD_MIC | FLUENCE_DUAL_MIC)) {
+                my_data->source_mic_type |= (SOURCE_QUAD_MIC | SOURCE_THREE_MIC |
+                                             SOURCE_DUAL_MIC | SOURCE_MONO_MIC);
+                break;
+            } else {
+                my_data->source_mic_type |= SOURCE_DEC_MIC;
+            }
         case 8:
             my_data->source_mic_type |= SOURCE_OCT_MIC;
         case 6:
