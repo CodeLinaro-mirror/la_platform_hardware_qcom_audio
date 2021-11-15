@@ -6060,8 +6060,12 @@ snd_device_t platform_get_input_snd_device(void *platform, audio_devices_t out_d
                             snd_device = SND_DEVICE_IN_HANDSET_GENERIC_6MIC;
                         } else if (my_data->source_mic_type & SOURCE_QUAD_MIC) {
                             snd_device = SND_DEVICE_IN_HANDSET_GENERIC_QMIC;
+                        } else if (my_data->source_mic_type & SOURCE_THREE_MIC) {
+                            snd_device = SND_DEVICE_IN_HANDSET_TMIC_FLUENCE_PRO;
                         } else if (my_data->source_mic_type & SOURCE_DUAL_MIC) {
                             snd_device = SND_DEVICE_IN_HANDSET_GENERIC_DMIC;
+                        } else if (my_data->source_mic_type & SOURCE_MONO_MIC) {
+                            snd_device = SND_DEVICE_IN_HANDSET_MIC_AEC_NS;
                         } else {
                             snd_device = SND_DEVICE_NONE;
                         }
@@ -6251,6 +6255,10 @@ snd_device_t platform_get_input_snd_device(void *platform, audio_devices_t out_d
                 } else if ((my_data->fluence_type & FLUENCE_DUAL_MIC) &&
                     (my_data->source_mic_type & SOURCE_DUAL_MIC)) {
                     snd_device = SND_DEVICE_IN_HANDSET_DMIC;
+                    platform_set_echo_reference(adev, true, out_device);
+                } else if ((my_data->fluence_type & FLUENCE_DUAL_MIC) &&
+                    (my_data->source_mic_type & SOURCE_MONO_MIC)) {
+                    snd_device = SND_DEVICE_IN_HANDSET_MIC;
                     platform_set_echo_reference(adev, true, out_device);
                 }
             }
