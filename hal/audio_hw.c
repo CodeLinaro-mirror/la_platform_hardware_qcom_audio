@@ -2825,6 +2825,10 @@ int select_devices(struct audio_device *adev, audio_usecase_t uc_id)
                                  is_single_device_type_equal(&usecase->device_list,
                                                      AUDIO_DEVICE_IN_VOICE_CALL) ||
                                  (is_single_device_type_equal(&usecase->device_list,
+                                                      AUDIO_DEVICE_IN_BUILTIN_MIC) &&
+                                  is_single_device_type_equal(&vc_usecase->device_list,
+                                                          AUDIO_DEVICE_OUT_USB_HEADSET)) ||
+                                 (is_single_device_type_equal(&usecase->device_list,
                                                      AUDIO_DEVICE_IN_USB_HEADSET) &&
                                  is_single_device_type_equal(&vc_usecase->device_list,
                                                         AUDIO_DEVICE_OUT_USB_HEADSET))||
@@ -9619,8 +9623,15 @@ static int adev_open_input_stream(struct audio_hw_device *dev,
         }
     }
 
-    if ((config->sample_rate == LOW_LATENCY_CAPTURE_SAMPLE_RATE) &&
-               ((in->flags & AUDIO_INPUT_FLAG_MMAP_NOIRQ) != 0)) {
+    /* Additional sample rates added below must also be present
+       in audio_policy_configuration.xml for mmap_no_irq_in */
+    bool valid_mmap_record_rate = (config->sample_rate == 8000 ||
+                                config->sample_rate == 16000 ||
+                                config->sample_rate == 24000 ||
+                                config->sample_rate == 32000 ||
+                                config->sample_rate == 48000);
+    if (valid_mmap_record_rate &&
+        ((in->flags & AUDIO_INPUT_FLAG_MMAP_NOIRQ) != 0)) {
         in->realtime = 0;
         in->usecase = USECASE_AUDIO_RECORD_MMAP;
         in->config = pcm_config_mmap_capture;
