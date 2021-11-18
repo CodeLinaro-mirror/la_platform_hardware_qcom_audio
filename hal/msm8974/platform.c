@@ -77,6 +77,7 @@
 #define PLATFORM_INFO_XML_PATH_CSRA8 "/etc/audio_platform_info_csra8.xml"
 #define PLATFORM_INFO_XML_PATH_CSRA8PLUS2 "/etc/audio_platform_info_csra8plus2.xml"
 #define MIXER_XML_PATH_EXTCODEC_I2S "/etc/mixer_paths_extcodec_i2s.xml"
+#define PLATFORM_INFO_XML_PATH_SCUBA_IDP "/etc/audio_platform_info_scuba.xml"
 #else
 #define PLATFORM_INFO_XML_PATH_INTCODEC  "/vendor/etc/audio_platform_info_intcodec.xml"
 #define PLATFORM_INFO_XML_PATH_SKUSH "/vendor/etc/audio_platform_info_skush.xml"
@@ -1533,7 +1534,9 @@ static void update_codec_type_and_interface(struct platform_data * my_data,
          !strncmp(snd_card_name, "trinket-qrd-snd-card",
                    sizeof("trinket-qrd-snd-card")) ||
          !strncmp(snd_card_name, "trinket-idp-snd-card",
-                   sizeof("trinket-idp-snd-card"))) {
+                   sizeof("trinket-idp-snd-card")) ||
+         !strncmp(snd_card_name, "bengal-scubaidp-snd-card",
+                    sizeof("bengal-scubaidp-snd-card"))) {
          ALOGI("%s: snd_card_name: %s", __func__, snd_card_name);
          my_data->is_internal_codec = true;
          my_data->is_slimbus_interface = false;
@@ -2921,6 +2924,9 @@ void *platform_init(struct audio_device *adev)
     else if (!strncmp(snd_card_name, "sdm670-skuw-snd-card",
                sizeof("sdm670-skuw-snd-card")))
         platform_info_init(PLATFORM_INFO_XML_PATH_SKUW, my_data, PLATFORM);
+    else if (!strncmp(snd_card_name, "bengal-scubaidp-snd-card",
+              sizeof("bengal-scubaidp-snd-card")))
+        platform_info_init(PLATFORM_INFO_XML_PATH_SCUBA_IDP, my_data, PLATFORM);
     else if (!strncmp(snd_card_name, "sm6150-qrd-snd-card",
                sizeof("sm6150-qrd-snd-card")))
         platform_info_init(PLATFORM_INFO_XML_PATH_QRD, my_data, PLATFORM);
@@ -3215,6 +3221,13 @@ acdb_init_fail:
             if (default_rx_backend)
                 free(default_rx_backend);
             default_rx_backend = strdup("WSA_CDC_DMA_RX_0");
+            if (!strncmp(snd_card_name, "bengal-scuba", strlen("bengal-scuba"))) {
+                my_data->current_backend_cfg[DEFAULT_CODEC_BACKEND].bitwidth_mixer_ctl =
+                    strdup("RX_CDC_DMA_RX_0 Format");
+                my_data->current_backend_cfg[DEFAULT_CODEC_BACKEND].samplerate_mixer_ctl =
+                    strdup("RX_CDC_DMA_RX_0 SampleRate");
+                default_rx_backend = strdup("RX_CDC_DMA_RX_0");
+            }
         } else if (!strncmp(snd_card_name, "sdm660", strlen("sdm660")) ||
                !strncmp(snd_card_name, "sdm670", strlen("sdm670")) ||
                !strncmp(snd_card_name, "qcs605", strlen("qcs605"))) {
