@@ -462,13 +462,13 @@ static int audio_extn_compress_in_set_ttp_metadata(struct stream_in *in)
 {
     struct snd_compr_metadata metadata;
     int ret = -EINVAL;
-    cin_private_data_t *cin_data = (cin_private_data_t *) in->cin_extn;
 
     if (!in) {
         ALOGE("%s: Invalid Param", __func__);
         return ret;
     }
 
+    cin_private_data_t *cin_data = (cin_private_data_t *) in->cin_extn;
     metadata.key = SNDRV_COMPRESS_IN_TTP_OFFSET;
     metadata.value[0] = 0xFFFFFFFF & in->ttp_offset_cached; /* LSB */
     metadata.value[1] = \

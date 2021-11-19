@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2020, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2014-2021, The Linux Foundation. All rights reserved.
  * Not a Contribution.
  *
  * Copyright (C) 2014 The Android Open Source Project
@@ -2617,6 +2617,8 @@ int audio_extn_utils_compress_set_render_mode_v2(struct compress *compr,
         metadata.value[0] = SNDRV_COMPRESS_RENDER_MODE_TTP;
     } else if (render_mode == RENDER_MODE_AUDIO_TTP_PASS_THROUGH) {
         metadata.value[0] = SNDRV_COMPRESS_RENDER_MODE_TTP_PASS_THROUGH;
+    } else if (render_mode == RENDER_MODE_AUDIO_ABSOLUTETIME) {
+        metadata.value[0] = SNDRV_COMPRESS_RENDER_MODE_ABSOLUTETIME;
     } else {
         ret = 0;
         ALOGE("%s:: invalid render mode %d", __func__, render_mode);
@@ -2792,6 +2794,47 @@ int audio_extn_utils_compress_set_render_window(
             struct audio_out_render_window_param *render_window __unused)
 {
     ALOGD("%s:: configuring render window not supported", __func__);
+    return 0;
+}
+#endif
+
+#ifdef SNDRV_COMPRESS_OUT_EXTERNAL_SINK_LATENCY
+int audio_extn_utils_set_external_sink_latency(struct stream_out *out,
+            struct audio_out_external_sink_latency_param *latency_param)
+{
+    struct snd_compr_metadata metadata;
+    int ret = -EINVAL;
+
+    if (!(is_offload_usecase(out->usecase))) {
+        ALOGE("%s:: not supported for non offload session", __func__);
+        goto exit;
+    }
+
+    if (!out->compr) {
+        ALOGD("%s:: Invalid compress handle",
+                __func__);
+        goto exit;
+    }
+
+    ALOGD("%s:: set value external sink latency  %d", __func__,
+                                latency_param->external_sink_latency);
+
+    metadata.key = SNDRV_COMPRESS_OUT_EXTERNAL_SINK_LATENCY;
+    metadata.value[0] = 0xFFFFFFFF & latency_param->external_sink_latency; /* LSB */
+    metadata.value[1] = \
+            (0xFFFFFFFF00000000 & latency_param->external_sink_latency) >> 32; /* MSB*/
+
+    ret = compress_set_metadata(out->compr, &metadata);
+    if(ret) {
+        ALOGE("%s::error %s", __func__, compress_get_error(out->compr));
+    }
+exit:
+    return ret;
+}
+#else
+int audio_extn_utils_set_external_sink_latency(struct stream_out *out __unused)
+{
+    ALOGD("%s:: configuring external sink latency not supported", __func__);
     return 0;
 }
 #endif

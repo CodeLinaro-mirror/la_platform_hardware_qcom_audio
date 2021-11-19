@@ -1,6 +1,6 @@
 
 /*
- * Copyright (c) 2013-2020, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2021, The Linux Foundation. All rights reserved.
  * Not a Contribution.
  *
  * Copyright (C) 2013 The Android Open Source Project
@@ -713,6 +713,7 @@ static const char * const device_table[SND_DEVICE_MAX] = {
     [SND_DEVICE_IN_ECALL] = "handset-mic",
     [SND_DEVICE_IN_SPEAKER_MIC2] = "speaker-mic2",
     [SND_DEVICE_IN_SPEAKER_MIC3] = "speaker-mic3",
+    [SND_DEVICE_IN_HANDSET_GENERIC_6MIC_AND_SPEAKER_MIC2] = "handset-6mic-and-speaker-mic2",
 };
 
 // Platform specific backend bit width table
@@ -1153,6 +1154,7 @@ static struct name_to_index snd_device_name_index[SND_DEVICE_MAX] = {
     {TO_NAME_INDEX(SND_DEVICE_IN_HANDSET_GENERIC_8MIC_AND_EC_REF_LOOPBACK)},
     {TO_NAME_INDEX(SND_DEVICE_IN_SPEAKER_MIC2)},
     {TO_NAME_INDEX(SND_DEVICE_IN_SPEAKER_MIC3)},
+    {TO_NAME_INDEX(SND_DEVICE_IN_HANDSET_GENERIC_6MIC_AND_SPEAKER_MIC2)},
 };
 
 static char * backend_tag_table[SND_DEVICE_MAX] = {0};
@@ -2469,6 +2471,14 @@ static void get_source_mic_type(struct platform_data * my_data)
 {
     // support max to mono, example if max count is 3, usecase supports Three, dual and mono mic
     switch (my_data->max_mic_count) {
+        case 10:
+            if (my_data->fluence_type == (FLUENCE_QUAD_MIC | FLUENCE_DUAL_MIC)) {
+                my_data->source_mic_type |= (SOURCE_QUAD_MIC | SOURCE_THREE_MIC |
+                                             SOURCE_DUAL_MIC | SOURCE_MONO_MIC);
+                break;
+            } else {
+                my_data->source_mic_type |= SOURCE_DEC_MIC;
+            }
         case 8:
             my_data->source_mic_type |= SOURCE_OCT_MIC;
         case 6:
@@ -3335,6 +3345,14 @@ acdb_init_fail:
         strdup("TERT_MI2S_RX SampleRate");
     my_data->current_backend_cfg[TERT_MI2S_RX_BACKEND].channels_mixer_ctl =
         strdup("TERT_MI2S_RX Channels");
+
+    my_data->current_backend_cfg[TERT_MI2S_TX_BACKEND].bitwidth_mixer_ctl =
+        strdup("TERT_MI2S_TX Format");
+    my_data->current_backend_cfg[TERT_MI2S_TX_BACKEND].samplerate_mixer_ctl =
+        strdup("TERT_MI2S_TX SampleRate");
+    my_data->current_backend_cfg[TERT_MI2S_TX_BACKEND].channels_mixer_ctl =
+        strdup("TERT_MI2S_TX Channels");
+
     my_data->current_backend_cfg[QUAT_MI2S_RX_BACKEND].bitwidth_mixer_ctl =
         strdup("QUAT_MI2S_RX Format");
     my_data->current_backend_cfg[QUAT_MI2S_RX_BACKEND].samplerate_mixer_ctl =
@@ -4493,10 +4511,15 @@ int platform_get_backend_index(snd_device_t snd_device)
                         port = HDMI_ARC_TX_BACKEND;
                 else if (strcmp(backend_tag_table[snd_device], "headset-mic") == 0)
                         port = HEADSET_TX_BACKEND;
-                else if (strcmp(backend_tag_table[snd_device], "speaker-mic2") == 0)
-                        port = QUAT_TDM_TX_BACKEND;
-                else if (strcmp(backend_tag_table[snd_device], "speaker-mic3") == 0)
+                else if (!strncmp(platform_get_snd_device_backend_interface(snd_device),
+                         "QUAT_TDM_TX_0", sizeof("QUAT_TDM_TX_0")))
+                         port = QUAT_TDM_TX_BACKEND;
+                else if (!strncmp(platform_get_snd_device_backend_interface(snd_device),
+                         "SEN_TDM_TX_0", sizeof("SEN_TDM_TX_0")))
                         port = SEN_TDM_TX_BACKEND;
+                else if (!strncmp(platform_get_snd_device_backend_interface(snd_device),
+                         "TERT_MI2S_TX", sizeof("TERT_MI2S_TX")))
+                        port = TERT_MI2S_TX_BACKEND;
         }
     } else {
         ALOGW("%s:napb: Invalid device - %d ", __func__, snd_device);
@@ -5175,6 +5198,11 @@ int platform_split_snd_device(void *platform,
         *num_devices = 2;
         new_snd_devices[0] = SND_DEVICE_IN_HANDSET_GENERIC_8MIC;
         new_snd_devices[1] = SND_DEVICE_IN_EC_REF_LOOPBACK;
+        ret = 0;
+    } else if (SND_DEVICE_IN_HANDSET_GENERIC_6MIC_AND_SPEAKER_MIC2 == snd_device) {
+        *num_devices = 2;
+        new_snd_devices[0] = SND_DEVICE_IN_HANDSET_GENERIC_6MIC;
+        new_snd_devices[1] = SND_DEVICE_IN_SPEAKER_MIC2;
         ret = 0;
     }
 
@@ -5981,6 +6009,7 @@ snd_device_t platform_get_input_snd_device(void *platform, audio_devices_t out_d
              ((source == AUDIO_SOURCE_CAMCORDER) ||           // AND source is cam/mic/unprocessed
                 (source == AUDIO_SOURCE_UNPROCESSED) ||
                 (source == AUDIO_SOURCE_MIC))) {
+            int ch_count = audio_channel_count_from_in_mask(channel_mask);
             if (my_data->ambisonic_capture == true) {          // Enable Ambisonic capture
                 if (my_data->source_mic_type & SOURCE_QUAD_MIC) {
                     snd_device = SND_DEVICE_IN_HANDSET_GENERIC_QMIC;
@@ -6031,8 +6060,12 @@ snd_device_t platform_get_input_snd_device(void *platform, audio_devices_t out_d
                             snd_device = SND_DEVICE_IN_HANDSET_GENERIC_6MIC;
                         } else if (my_data->source_mic_type & SOURCE_QUAD_MIC) {
                             snd_device = SND_DEVICE_IN_HANDSET_GENERIC_QMIC;
+                        } else if (my_data->source_mic_type & SOURCE_THREE_MIC) {
+                            snd_device = SND_DEVICE_IN_HANDSET_TMIC_FLUENCE_PRO;
                         } else if (my_data->source_mic_type & SOURCE_DUAL_MIC) {
                             snd_device = SND_DEVICE_IN_HANDSET_GENERIC_DMIC;
+                        } else if (my_data->source_mic_type & SOURCE_MONO_MIC) {
+                            snd_device = SND_DEVICE_IN_HANDSET_MIC_AEC_NS;
                         } else {
                             snd_device = SND_DEVICE_NONE;
                         }
@@ -6044,8 +6077,14 @@ snd_device_t platform_get_input_snd_device(void *platform, audio_devices_t out_d
                                 usecase->is_persistent_cal = true;
                         }
                     }
-                } else {
-                    if (my_data->source_mic_type & SOURCE_OCT_MIC) {
+                }  else {
+                    if (my_data->source_mic_type & SOURCE_DEC_MIC) {
+                        if(in_device & AUDIO_DEVICE_IN_SPEAKER_MIC2) {
+                            snd_device = SND_DEVICE_IN_HANDSET_GENERIC_6MIC_AND_SPEAKER_MIC2;
+                        } else if(ch_count == 6) {
+                            snd_device = SND_DEVICE_IN_HANDSET_GENERIC_6MIC;
+                        }
+                    } else if (my_data->source_mic_type & SOURCE_OCT_MIC) {
                         snd_device = SND_DEVICE_IN_HANDSET_GENERIC_8MIC;
                     } else if (my_data->source_mic_type & SOURCE_HEX_MIC) {
                         snd_device = SND_DEVICE_IN_HANDSET_GENERIC_6MIC;
@@ -6216,6 +6255,10 @@ snd_device_t platform_get_input_snd_device(void *platform, audio_devices_t out_d
                 } else if ((my_data->fluence_type & FLUENCE_DUAL_MIC) &&
                     (my_data->source_mic_type & SOURCE_DUAL_MIC)) {
                     snd_device = SND_DEVICE_IN_HANDSET_DMIC;
+                    platform_set_echo_reference(adev, true, out_device);
+                } else if ((my_data->fluence_type & FLUENCE_DUAL_MIC) &&
+                    (my_data->source_mic_type & SOURCE_MONO_MIC)) {
+                    snd_device = SND_DEVICE_IN_HANDSET_MIC;
                     platform_set_echo_reference(adev, true, out_device);
                 }
             }
@@ -8757,6 +8800,10 @@ bool platform_check_and_set_capture_codec_backend_cfg(struct audio_device* adev,
     int ret = 0;
     struct platform_data *my_data = (struct platform_data *)adev->platform;
     struct audio_backend_cfg backend_cfg;
+    struct audio_custom_mtmx_in_params_info in_info = {0};
+    struct audio_custom_mtmx_in_params *in_params = NULL;
+    int new_snd_devices[SND_DEVICE_OUT_END] = {0};
+    int i, num_devices = 1;
 
     backend_cfg.passthrough_enabled = false;
 
@@ -8769,8 +8816,6 @@ bool platform_check_and_set_capture_codec_backend_cfg(struct audio_device* adev,
         /* override config if loopback input device is used */
         if (is_loopback_input_device(usecase->stream.in->device)) {
             int bw = platform_get_snd_device_bit_width(snd_device);
-            struct audio_custom_mtmx_in_params_info in_info = {0};
-            struct audio_custom_mtmx_in_params *in_params = NULL;
             if ((-ENOSYS != bw) && (backend_cfg.bit_width > (uint32_t)bw)) {
                 backend_cfg.bit_width = bw;
                 ALOGD("%s:txbecf: set bitwidth to %d from platform info",
@@ -8815,12 +8860,46 @@ bool platform_check_and_set_capture_codec_backend_cfg(struct audio_device* adev,
           backend_cfg.format,
           backend_idx, usecase->id,
           platform_get_snd_device_name(snd_device));
-    if (platform_check_capture_codec_backend_cfg(adev, backend_idx,
-                                                 &backend_cfg, snd_device)) {
-        ret = platform_set_codec_backend_cfg(adev, snd_device,
+
+    if (is_combo_audio_input_device(usecase->stream.in->device) &&
+        platform_split_snd_device(my_data, snd_device, &num_devices,
+        new_snd_devices) == 0){
+
+        in_info.usecase_id[0] = usecase->id;
+        in_info.op_channels = backend_cfg.channels;
+        in_params = platform_get_custom_mtmx_in_params(adev->platform, &in_info);
+
+        for (i = 0; i < num_devices; i++) {
+            if (in_params) {
+                if(new_snd_devices[i] == SND_DEVICE_IN_SPEAKER_MIC2){
+                    backend_cfg.channels = in_params->i2s_ch;
+                    ALOGD("%s txbecf: set channels to %d from mtmx in params",__func__,in_params->i2s_ch);
+                } else {
+                    ALOGD("%s: txbecf: set channels to %d from mtmx in params",
+                       __func__, in_params->mic_ch);
+                    backend_cfg.channels = in_params->mic_ch;
+                }
+            }
+            if (platform_check_capture_codec_backend_cfg(adev, platform_get_backend_index(new_snd_devices[i]),
+                                                 &backend_cfg, new_snd_devices[i])) {
+                ret = platform_set_codec_backend_cfg(adev, new_snd_devices[i],
                                              backend_cfg);
-        if(!ret)
-            return true;
+                if(!ret)
+                    ret = true;
+                else
+                    ret = false;
+            }
+       }
+       return ret;
+
+    } else {
+        if (platform_check_capture_codec_backend_cfg(adev, backend_idx,
+                                                 &backend_cfg, snd_device)) {
+            ret = platform_set_codec_backend_cfg(adev, snd_device,
+                                             backend_cfg);
+            if(!ret)
+                return true;
+        }
     }
 
     return false;
