@@ -91,6 +91,23 @@ AUDIO_FEATURE_ENABLED_SVA_MULTI_STAGE := true
 AUDIO_FEATURE_ENABLED_BATTERY_LISTENER := false
 ##AUDIO_FEATURE_FLAGS
 
+AUDIO_HARDWARE += audio.a2dp.default
+AUDIO_HARDWARE += audio.usb.default
+AUDIO_HARDWARE += audio.r_submix.default
+AUDIO_HARDWARE += audio.primary.msmnile
+
+#HAL Wrapper
+AUDIO_WRAPPER := libqahw
+AUDIO_WRAPPER += libqahwwrapper
+
+#HAL Test app
+AUDIO_HAL_TEST_APPS := hal_play_test
+AUDIO_HAL_TEST_APPS += hal_rec_test
+
+PRODUCT_PACKAGES += $(AUDIO_HARDWARE)
+PRODUCT_PACKAGES += $(AUDIO_WRAPPER)
+PRODUCT_PACKAGES += $(AUDIO_HAL_TEST_APPS)
+
 AUDIO_FEATURE_ENABLED_AUTO_HAL := true
 AUDIO_FEATURE_ENABLED_EXT_HW_PLUGIN := true
 AUDIO_FEATURE_ENABLED_AUDIO_CONTROL_HAL := true
@@ -125,11 +142,13 @@ PRODUCT_COPY_FILES += \
     vendor/qcom/opensource/audio-hal/primary-hal/configs/msmnile_au/audio_effects.conf:$(TARGET_COPY_OUT_VENDOR)/etc/audio_effects.conf \
     vendor/qcom/opensource/audio-hal/primary-hal/configs/msmnile_au/audio_effects.xml:$(TARGET_COPY_OUT_VENDOR)/etc/audio_effects.xml \
     vendor/qcom/opensource/audio-hal/primary-hal/configs/msmnile_au/mixer_paths_adp.xml:$(TARGET_COPY_OUT_VENDOR)/etc/mixer_paths_adp.xml \
+    vendor/qcom/opensource/audio-hal/primary-hal/configs/msmnile_au/mixer_paths_sa8295_adp.xml:$(TARGET_COPY_OUT_VENDOR)/etc/mixer_paths_sa8295_adp.xml \
     vendor/qcom/opensource/audio-hal/primary-hal/configs/msmnile_au/audio_tuning_mixer.txt:$(TARGET_COPY_OUT_VENDOR)/etc/audio_tuning_mixer.txt \
     vendor/qcom/opensource/audio-hal/primary-hal/configs/msmnile_au/sound_trigger_platform_info.xml:$(TARGET_COPY_OUT_VENDOR)/etc/sound_trigger_platform_info.xml \
     vendor/qcom/opensource/audio-hal/primary-hal/configs/msmnile_au/graphite_ipc_platform_info.xml:$(TARGET_COPY_OUT_VENDOR)/etc/graphite_ipc_platform_info.xml \
     vendor/qcom/opensource/audio-hal/primary-hal/configs/msmnile_au/audio_platform_info.xml:$(TARGET_COPY_OUT_VENDOR)/etc/audio_platform_info.xml \
     vendor/qcom/opensource/audio-hal/primary-hal/configs/msmnile_au/audio_platform_info_qrd.xml:$(TARGET_COPY_OUT_VENDOR)/etc/audio_platform_info_qrd.xml \
+    vendor/qcom/opensource/audio-hal/primary-hal/configs/msmnile_au/audio_platform_info_sa8295.xml:$(TARGET_COPY_OUT_VENDOR)/etc/audio_platform_info_sa8295.xml \
     vendor/qcom/opensource/audio-hal/primary-hal/configs/msmnile_au/mixer_paths_custom.xml:$(TARGET_COPY_OUT_VENDOR)/etc/mixer_paths_custom.xml \
     vendor/qcom/opensource/audio-hal/primary-hal/configs/msmnile_au/sound_trigger_mixer_paths.xml:$(TARGET_COPY_OUT_VENDOR)/etc/sound_trigger_mixer_paths.xml \
     vendor/qcom/opensource/audio-hal/primary-hal/configs/msmnile_au/audio_configs.xml:$(TARGET_COPY_OUT_VENDOR)/etc/audio_configs.xml \
@@ -286,7 +305,7 @@ vendor.audio.use.sw.ape.decoder=true
 
 #enable hw aac encoder by default
 PRODUCT_PROPERTY_OVERRIDES += \
-vendor.audio.hw.aac.encoder=true
+vendor.audio.hw.aac.encoder=false
 
 #force offload using hardware decoders for FLAC, WMA & APE
 PRODUCT_PROPERTY_OVERRIDES += \
@@ -365,7 +384,7 @@ vendor.audio.feature.compr_cap.enable=false \
 vendor.audio.feature.compress_in.enable=false \
 vendor.audio.feature.compress_meta_data.enable=false \
 vendor.audio.feature.compr_voip.enable=false \
-vendor.audio.feature.concurrent_capture.enable=true  \
+vendor.audio.feature.concurrent_capture.enable=false \
 vendor.audio.feature.custom_stereo.enable=false \
 vendor.audio.feature.display_port.enable=false \
 vendor.audio.feature.dsm_feedback.enable=false \
@@ -413,7 +432,7 @@ vendor.audio.feature.compr_cap.enable=false \
 vendor.audio.feature.compress_in.enable=true \
 vendor.audio.feature.compress_meta_data.enable=true \
 vendor.audio.feature.compr_voip.enable=false \
-vendor.audio.feature.concurrent_capture.enable=true \
+vendor.audio.feature.concurrent_capture.enable=false \
 vendor.audio.feature.custom_stereo.enable=true \
 vendor.audio.feature.display_port.enable=true \
 vendor.audio.feature.dsm_feedback.enable=false \
@@ -457,7 +476,6 @@ PRODUCT_PACKAGES += \
     android.hardware.audio@2.0-service \
     android.hardware.audio@2.0-impl \
     android.hardware.audio.effect@2.0-impl \
-    android.hardware.soundtrigger@2.1-impl \
     android.hardware.audio@4.0 \
     android.hardware.audio.common@4.0 \
     android.hardware.audio.common@4.0-util \
@@ -483,6 +501,10 @@ PRODUCT_PACKAGES += \
     android.hardware.audio.effect@6.0 \
     android.hardware.audio.effect@6.0-impl
 
+# enable sound trigger hidl hal 2.3
+PRODUCT_PACKAGES += \
+    android.hardware.soundtrigger@2.3-impl
+
 PRODUCT_PACKAGES_ENG += \
     VoicePrintTest \
     VoicePrintDemo
@@ -491,9 +513,11 @@ PRODUCT_PACKAGES_DEBUG += \
     AudioSettings
 
 # for HIDL related audiocontrol packages
+ifneq ($(PLATFORM_VERSION), 12)
 PRODUCT_PACKAGES += \
     android.hardware.automotive.audiocontrol@2.0-service \
     android.hardware.automotive.audiocontrol@2.0
+endif
 
 ifeq ($(ENABLE_HYP),true)
 PRODUCT_PROPERTY_OVERRIDES += \
@@ -507,3 +531,6 @@ persist.vendor.audio.calfile6=/vendor/etc/acdbdata/ADP/Hdmi_cal.acdb\
 persist.vendor.audio.calfile7=/vendor/etc/acdbdata/ADP/Headset_cal.acdb\
 persist.vendor.audio.calfile8=/vendor/etc/acdbdata/ADP/Speaker_cal.acdb
 endif
+
+#Audio sample file for early services
+PRODUCT_COPY_FILES += device/qcom/msmnile_au/bike_bell.wav:$(TARGET_COPY_OUT_VENDOR)/etc/bike_bell.wav
