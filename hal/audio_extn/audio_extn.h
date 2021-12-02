@@ -33,6 +33,10 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
+ * Changes from Qualcomm Innovation Center are provided under the following license:
+ * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ *
  */
 
 #ifndef AUDIO_EXTN_H
@@ -167,10 +171,8 @@ int audio_extn_parse_compress_metadata(struct stream_out *out,
 #define compress_set_next_track_param(compress, codec_options) (0)
 #endif
 
-#ifndef AUDIO_HW_EXTN_API_ENABLED
 #define compress_set_metadata(compress, metadata) (0)
 #define compress_get_metadata(compress, metadata) (0)
-#endif
 
 #define MAX_LENGTH_MIXER_CONTROL_IN_INT                  (128)
 #define HW_INFO_ARRAY_MAX_SIZE 32
@@ -791,7 +793,6 @@ int audio_extn_get_mi2s_be_dsd_rate_mul_factor(int dsd_format);
 int audio_extn_get_fe_dsd_rate_mul_factor(int dsd_format);
 int audio_extn_get_dsd_in_ch_mask(int channels);
 int audio_extn_get_dsd_out_ch_mask(int channels);
-void audio_extn_set_dsd_dec_params(struct stream_out *out, int blk_size);
 
 #ifdef DS2_DOLBY_DAP_ENABLED
 #define LIB_DS2_DAP_HAL "vendor/lib/libhwdaphal.so"

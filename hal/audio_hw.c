@@ -33,6 +33,10 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
+ * Changes from Qualcomm Innovation Center are provided under the following license:
+ * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ *
  */
 
 #define LOG_TAG "audio_hw_primary"
@@ -3404,7 +3408,6 @@ int start_output_stream(struct stream_out *out)
     char* perf_mode[] = {"ULL", "ULL_PP", "LL"};
     bool a2dp_combo = false;
     bool is_direct_passthough = false;
-    int blk_size = 0;
 
     ATRACE_BEGIN("start_output_stream");
     if ((out->usecase < 0) || (out->usecase >= AUDIO_USECASE_MAX)) {
@@ -3466,38 +3469,6 @@ int start_output_stream(struct stream_out *out)
         goto error_config;
     }
 
-
-    if ((out->format == AUDIO_FORMAT_DSD) && (out->dsd_config_updated == false)) {
-        /* set DSD block size as 1 to maintain backward compatibility */
-        blk_size = 1;
-        const char *hw_interface_name =
-		platform_get_snd_device_backend_interface(
-			platform_get_output_snd_device(adev->platform, out));
-
-        if ((hw_interface_name != NULL) && (strstr(hw_interface_name, "MI2S"))) {
-            out->bit_width = 32;
-            /*
-             * In case of MI2S backend, DSD data comes in 32bit and each data line of MI2S
-             * holds one channel of DSD. The number of channels are multiplied by 2 to properly
-             * configure the MI2S data lines and FE should also have same number of channels to
-             * avoid processing in ADSP.
-             */
-            out->config.channels = out->config.channels << 1;
-            out->channel_mask = audio_extn_get_dsd_out_ch_mask(out->config.channels);
-            /* sampling rate of backend should be DSD bit rate / (bitwidth of BE * 2).
-             * In case of DSD128, 44.1KHz DSD  backend sampling rate would be 44.1K * 128/64
-             */
-            out->sample_rate = out->sample_rate * audio_extn_get_mi2s_be_dsd_rate_mul_factor(out->dsd_format);
-            /* sampling rate of frontend still expects as DSD bit rate.
-             * In case of DSD128, 44.1KHz DSD  backend sampling rate would be 44.1K * 128
-             */
-            out->compr_config.codec->sample_rate = out->compr_config.codec->sample_rate * audio_extn_get_fe_dsd_rate_mul_factor(out->dsd_format);
-            blk_size = out->bit_width >> 3;
-            out->dsd_config_updated = true;
-        }
-        audio_extn_set_dsd_dec_params(out, blk_size);
-    }
-
     uc_info->id = out->usecase;
     uc_info->type = PCM_PLAYBACK;
     uc_info->stream.out = out;
@@ -3542,11 +3513,6 @@ int start_output_stream(struct stream_out *out)
         }
     } else {
          select_devices(adev, out->usecase);
-    }
-
-    if (out->format == AUDIO_FORMAT_DSD) {
-        /* set extra config to output device in DSD format to mute unused speakers */
-        platform_set_native_dsd_speaker_cfg(out);
     }
 
     if (out->usecase == USECASE_INCALL_MUSIC_UPLINK)
