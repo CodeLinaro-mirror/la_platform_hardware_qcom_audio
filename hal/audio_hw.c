@@ -2825,6 +2825,10 @@ int select_devices(struct audio_device *adev, audio_usecase_t uc_id)
                                  is_single_device_type_equal(&usecase->device_list,
                                                      AUDIO_DEVICE_IN_VOICE_CALL) ||
                                  (is_single_device_type_equal(&usecase->device_list,
+                                                      AUDIO_DEVICE_IN_BUILTIN_MIC) &&
+                                  is_single_device_type_equal(&vc_usecase->device_list,
+                                                          AUDIO_DEVICE_OUT_USB_HEADSET)) ||
+                                 (is_single_device_type_equal(&usecase->device_list,
                                                      AUDIO_DEVICE_IN_USB_HEADSET) &&
                                  is_single_device_type_equal(&vc_usecase->device_list,
                                                         AUDIO_DEVICE_OUT_USB_HEADSET))||
@@ -2908,10 +2912,8 @@ int select_devices(struct audio_device *adev, audio_usecase_t uc_id)
 
                     usecase->stream.in->enable_ec_port = false;
 
-                    bool is_ha_usecase = adev->ha_proxy_enable ?
-                        usecase->id == USECASE_AUDIO_RECORD_AFE_PROXY2 :
-                        usecase->id == USECASE_AUDIO_RECORD_AFE_PROXY;
-                    if (is_ha_usecase) {
+                    if (usecase->id == USECASE_AUDIO_RECORD_AFE_PROXY ||
+                        usecase->id == USECASE_AUDIO_RECORD_AFE_PROXY2) {
                         reassign_device_list(&out_devices, AUDIO_DEVICE_OUT_TELEPHONY_TX, "");
                     } else if (voip_usecase) {
                         assign_devices(&out_devices, &voip_usecase->stream.out->device_list);
@@ -3028,6 +3030,8 @@ int select_devices(struct audio_device *adev, audio_usecase_t uc_id)
     if (usecase->out_snd_device != SND_DEVICE_NONE) {
         disable_audio_route(adev, usecase);
         disable_snd_device(adev, usecase->out_snd_device);
+        if (usecase->id == USECASE_AUDIO_PLAYBACK_WITH_HAPTICS)
+            disable_snd_device(adev, SND_DEVICE_OUT_HAPTICS);
     }
 
     if (usecase->in_snd_device != SND_DEVICE_NONE) {
@@ -3121,6 +3125,38 @@ int select_devices(struct audio_device *adev, audio_usecase_t uc_id)
             disable_snd_device(adev, voip_in_usecase->in_snd_device);
             enable_snd_device(adev, voip_in_usecase->in_snd_device);
             enable_audio_route(adev, voip_in_usecase);
+        }
+    }
+    if (voice_extn_compress_voip_is_active(adev)) {
+        struct audio_usecase *voip_usecase = get_usecase_from_list(adev,
+                                                 USECASE_COMPRESS_VOIP_CALL);
+        /*
+         * If only compress voip input is opened voip out will be primary out.
+         * Need to consider re-routing to select correct i/p pair
+         */
+        if ((voip_usecase != NULL) &&
+            (usecase->type == PCM_PLAYBACK) &&
+            (usecase->stream.out == voip_usecase->stream.out)) {
+            in_snd_device = platform_get_input_snd_device(adev->platform,
+                                                         NULL,
+                                                         &usecase->stream.out->device_list,
+                                                         usecase->type);
+            if (voip_usecase->in_snd_device != in_snd_device ) {
+                ALOGD("%s:Re routing compress voip tx  snd device matching voip rx pair",
+                __func__);
+                disable_audio_route(adev, voip_usecase);
+                disable_snd_device(adev, voip_usecase->in_snd_device);
+                voip_usecase->in_snd_device = in_snd_device;
+                voip_usecase->out_snd_device = usecase->out_snd_device;
+                /* Route all TX  usecase to Compress voip BE */
+                check_usecases_capture_codec_backend(adev, voip_usecase, in_snd_device);
+                enable_snd_device(adev, in_snd_device);
+                /* Send Voice related calibration for RX /TX  pair */
+                status = platform_switch_voice_call_device_post(adev->platform,
+                                                               out_snd_device,
+                                                               in_snd_device);
+                enable_audio_route(adev, voip_usecase);
+            }
         }
     }
 
@@ -7779,7 +7815,6 @@ static void in_update_sink_metadata(struct audio_stream_in *stream,
     struct stream_in *in = (struct stream_in *)stream;
     struct audio_device *adev = in->dev;
     struct listnode devices;
-    bool is_ha_usecase = false;
 
     list_init(&devices);
 
@@ -7790,11 +7825,10 @@ static void in_update_sink_metadata(struct audio_stream_in *stream,
     pthread_mutex_lock(&adev->lock);
     ALOGV("%s: in->usecase: %d, device: %x", __func__, in->usecase, get_device_types(&devices));
 
-    is_ha_usecase = adev->ha_proxy_enable ?
-        in->usecase == USECASE_AUDIO_RECORD_AFE_PROXY2 :
-        in->usecase == USECASE_AUDIO_RECORD_AFE_PROXY;
-    if (is_ha_usecase && !list_empty(&devices)
-            && adev->voice_tx_output != NULL) {
+    if ((in->usecase == USECASE_AUDIO_RECORD_AFE_PROXY ||
+         in->usecase == USECASE_AUDIO_RECORD_AFE_PROXY2) &&
+         !list_empty(&devices) &&
+         adev->voice_tx_output != NULL) {
         /* Use the rx device from afe-proxy record to route voice call because
            there is no routing if tx device is on primary hal and rx device
            is on other hal during voice call. */
@@ -9048,6 +9082,9 @@ static int adev_set_parameters(struct audio_hw_device *dev, const char *kvpairs)
                 ALOGV("detected USB connect .. disable proxy");
                 adev->allow_afe_proxy_usage = false;
             }
+        } else if (audio_is_hearing_aid_out_device(device) &&
+                   property_get_bool("persist.vendor.audio.ha_proxy.enabled", false)) {
+            adev->ha_proxy_enable = true;
         }
     }
 
@@ -9070,6 +9107,8 @@ static int adev_set_parameters(struct audio_hw_device *dev, const char *kvpairs)
                 ALOGV("detected USB disconnect .. enable proxy");
                 adev->allow_afe_proxy_usage = true;
             }
+        } else if (audio_is_hearing_aid_out_device(device)) {
+            adev->ha_proxy_enable = false;
         }
     }
 
@@ -9670,8 +9709,15 @@ static int adev_open_input_stream(struct audio_hw_device *dev,
         }
     }
 
-    if ((config->sample_rate == LOW_LATENCY_CAPTURE_SAMPLE_RATE) &&
-               ((in->flags & AUDIO_INPUT_FLAG_MMAP_NOIRQ) != 0)) {
+    /* Additional sample rates added below must also be present
+       in audio_policy_configuration.xml for mmap_no_irq_in */
+    bool valid_mmap_record_rate = (config->sample_rate == 8000 ||
+                                config->sample_rate == 16000 ||
+                                config->sample_rate == 24000 ||
+                                config->sample_rate == 32000 ||
+                                config->sample_rate == 48000);
+    if (valid_mmap_record_rate &&
+        ((in->flags & AUDIO_INPUT_FLAG_MMAP_NOIRQ) != 0)) {
         in->realtime = 0;
         in->usecase = USECASE_AUDIO_RECORD_MMAP;
         in->config = pcm_config_mmap_capture;
@@ -9680,6 +9726,7 @@ static int adev_open_input_stream(struct audio_hw_device *dev,
         in->stream.stop = in_stop;
         in->stream.create_mmap_buffer = in_create_mmap_buffer;
         in->stream.get_mmap_position = in_get_mmap_position;
+        in->config.rate = config->sample_rate;
         ALOGV("%s: USECASE_AUDIO_RECORD_MMAP", __func__);
     } else if (is_usb_dev && may_use_hifi_record) {
         in->usecase = USECASE_AUDIO_RECORD_HIFI;
@@ -10763,6 +10810,7 @@ static int adev_open(const hw_module_t *module, const char *name,
     adev->use_old_pspd_mix_ctrl = false;
     adev->adm_routing_changed = false;
     adev->a2dp_started = false;
+    adev->ha_proxy_enable = false;
 
     audio_extn_perf_lock_init();
 
@@ -10937,7 +10985,6 @@ static int adev_open(const hw_module_t *module, const char *name,
     audio_extn_qdsp_init(adev->platform);
 
     adev->multi_offload_enable = property_get_bool("vendor.audio.offload.multiple.enabled", false);
-    adev->ha_proxy_enable = property_get_bool("persist.vendor.audio.ha_proxy.enabled", false);
     pthread_mutex_unlock(&adev_init_lock);
 
     if (adev->adm_init)
