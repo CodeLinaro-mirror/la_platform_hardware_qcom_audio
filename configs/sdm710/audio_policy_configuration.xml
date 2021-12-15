@@ -236,7 +236,7 @@
                 <route type="mix" sink="Line"
                        sources="primary output,voip_rx"/>
                 <route type="mix" sink="HDMI"
-                       sources="primary output,compress_passthrough"/>
+                       sources="primary output,compress_passthrough,voip_rx"/>
                 <route type="mix" sink="Proxy"
                        sources="primary output"/>
                 <route type="mix" sink="FM"

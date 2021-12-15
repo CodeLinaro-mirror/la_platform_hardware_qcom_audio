@@ -2,8 +2,10 @@
 #
 #AUDIO_FEATURE_FLAGS
 BOARD_USES_ALSA_AUDIO := true
+TARGET_USES_AOSP_FOR_AUDIO := false
 
 ifneq ($(TARGET_USES_AOSP_FOR_AUDIO), true)
+USE_CUSTOM_AUDIO_POLICY := 1
 AUDIO_FEATURE_ENABLED_COMPRESS_CAPTURE := false
 AUDIO_FEATURE_ENABLED_COMPRESS_INPUT := true
 AUDIO_FEATURE_ENABLED_COMPRESS_VOIP := false
@@ -445,6 +447,10 @@ persist.vendor.audio.qap.ecref=off
 
 PRODUCT_PROPERTY_OVERRIDES += \
 vendor.audio.qap.output.block.handling=true
+
+#enable use of display-port for voice usecases
+PRODUCT_PROPERTY_OVERRIDES += \
+vendor.audio.enable.dp.for.voice=false
 
 # for HIDL related packages
 PRODUCT_PACKAGES += \
