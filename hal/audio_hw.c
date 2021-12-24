@@ -3127,6 +3127,38 @@ int select_devices(struct audio_device *adev, audio_usecase_t uc_id)
             enable_audio_route(adev, voip_in_usecase);
         }
     }
+    if (voice_extn_compress_voip_is_active(adev)) {
+        struct audio_usecase *voip_usecase = get_usecase_from_list(adev,
+                                                 USECASE_COMPRESS_VOIP_CALL);
+        /*
+         * If only compress voip input is opened voip out will be primary out.
+         * Need to consider re-routing to select correct i/p pair
+         */
+        if ((voip_usecase != NULL) &&
+            (usecase->type == PCM_PLAYBACK) &&
+            (usecase->stream.out == voip_usecase->stream.out)) {
+            in_snd_device = platform_get_input_snd_device(adev->platform,
+                                                         NULL,
+                                                         &usecase->stream.out->device_list,
+                                                         usecase->type);
+            if (voip_usecase->in_snd_device != in_snd_device ) {
+                ALOGD("%s:Re routing compress voip tx  snd device matching voip rx pair",
+                __func__);
+                disable_audio_route(adev, voip_usecase);
+                disable_snd_device(adev, voip_usecase->in_snd_device);
+                voip_usecase->in_snd_device = in_snd_device;
+                voip_usecase->out_snd_device = usecase->out_snd_device;
+                /* Route all TX  usecase to Compress voip BE */
+                check_usecases_capture_codec_backend(adev, voip_usecase, in_snd_device);
+                enable_snd_device(adev, in_snd_device);
+                /* Send Voice related calibration for RX /TX  pair */
+                status = platform_switch_voice_call_device_post(adev->platform,
+                                                               out_snd_device,
+                                                               in_snd_device);
+                enable_audio_route(adev, voip_usecase);
+            }
+        }
+    }
 
 
     audio_extn_qdsp_set_device(usecase);
@@ -9623,8 +9655,15 @@ static int adev_open_input_stream(struct audio_hw_device *dev,
         }
     }
 
-    if ((config->sample_rate == LOW_LATENCY_CAPTURE_SAMPLE_RATE) &&
-               ((in->flags & AUDIO_INPUT_FLAG_MMAP_NOIRQ) != 0)) {
+    /* Additional sample rates added below must also be present
+       in audio_policy_configuration.xml for mmap_no_irq_in */
+    bool valid_mmap_record_rate = (config->sample_rate == 8000 ||
+                                config->sample_rate == 16000 ||
+                                config->sample_rate == 24000 ||
+                                config->sample_rate == 32000 ||
+                                config->sample_rate == 48000);
+    if (valid_mmap_record_rate &&
+        ((in->flags & AUDIO_INPUT_FLAG_MMAP_NOIRQ) != 0)) {
         in->realtime = 0;
         in->usecase = USECASE_AUDIO_RECORD_MMAP;
         in->config = pcm_config_mmap_capture;
@@ -9633,6 +9672,7 @@ static int adev_open_input_stream(struct audio_hw_device *dev,
         in->stream.stop = in_stop;
         in->stream.create_mmap_buffer = in_create_mmap_buffer;
         in->stream.get_mmap_position = in_get_mmap_position;
+        in->config.rate = config->sample_rate;
         ALOGV("%s: USECASE_AUDIO_RECORD_MMAP", __func__);
     } else if (is_usb_dev && may_use_hifi_record) {
         in->usecase = USECASE_AUDIO_RECORD_HIFI;
