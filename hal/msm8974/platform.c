@@ -854,10 +854,10 @@ static int acdb_device_table[SND_DEVICE_MAX] = {
     [SND_DEVICE_OUT_SPEAKER_PROTECTED_RAS] = 134,
     [SND_DEVICE_OUT_SPEAKER_PROTECTED_VBAT_RAS] = 134,
     [SND_DEVICE_OUT_VOICE_HEARING_AID] = 45,
-    [SND_DEVICE_OUT_BUS_MEDIA] = 78,
-    [SND_DEVICE_OUT_BUS_SYS] = 78,
-    [SND_DEVICE_OUT_BUS_NAV] = 14,
-    [SND_DEVICE_OUT_BUS_PHN] = 94,
+    [SND_DEVICE_OUT_BUS_MEDIA] = 15,
+    [SND_DEVICE_OUT_BUS_SYS] = 15,
+    [SND_DEVICE_OUT_BUS_NAV] = 15,
+    [SND_DEVICE_OUT_BUS_PHN] = 15,
     [SND_DEVICE_IN_HANDSET_MIC] = 4,
     [SND_DEVICE_IN_HANDSET_MIC_SB] = 163,
     [SND_DEVICE_IN_HANDSET_MIC_EXTERNAL] = 4,
@@ -2250,10 +2250,10 @@ static void set_platform_defaults(struct platform_data * my_data)
        Need snd_device to route voice call and use specific acdb tuning.
        Also, BT_RX is a virtual port to indicate bluetooth hearing aid. */
     hw_interface_table[SND_DEVICE_OUT_VOICE_HEARING_AID] = strdup("BT_RX"),
-    hw_interface_table[SND_DEVICE_OUT_BUS_MEDIA] = strdup("TERT_TDM_RX_0");
-    hw_interface_table[SND_DEVICE_OUT_BUS_SYS] = strdup("TERT_TDM_RX_0");
-    hw_interface_table[SND_DEVICE_OUT_BUS_NAV] = strdup("TERT_TDM_RX_1");
-    hw_interface_table[SND_DEVICE_OUT_BUS_PHN] = strdup("TERT_TDM_RX_2");
+    hw_interface_table[SND_DEVICE_OUT_BUS_MEDIA] = strdup("QUAT_TDM_RX_0");
+    hw_interface_table[SND_DEVICE_OUT_BUS_SYS] =   strdup("QUAT_TDM_RX_1");
+    hw_interface_table[SND_DEVICE_OUT_BUS_NAV] =   strdup("QUAT_TDM_RX_2");
+    hw_interface_table[SND_DEVICE_OUT_BUS_PHN] =   strdup("QUAT_TDM_RX_3");
     hw_interface_table[SND_DEVICE_IN_HANDSET_MIC] = strdup("SLIMBUS_0_TX");
     hw_interface_table[SND_DEVICE_IN_HANDSET_MIC_SB] = strdup("SLIMBUS_0_TX");
     hw_interface_table[SND_DEVICE_IN_HANDSET_MIC_EXTERNAL] = strdup("SLIMBUS_0_TX");

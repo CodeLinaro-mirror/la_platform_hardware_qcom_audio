@@ -58,6 +58,30 @@ static struct auto_hal_module *auto_hal = NULL;
 extern struct pcm_config pcm_config_deep_buffer;
 extern struct pcm_config pcm_config_low_latency;
 
+struct pcm_config pcm_config_media = {
+    .channels = 2,
+    .rate = DEFAULT_OUTPUT_SAMPLING_RATE,
+    .period_size = DEEP_BUFFER_OUTPUT_PERIOD_SIZE,
+    .period_count = DEEP_BUFFER_OUTPUT_PERIOD_COUNT,
+    .format = PCM_FORMAT_S16_LE,
+    .start_threshold = DEEP_BUFFER_OUTPUT_PERIOD_SIZE / 4,
+    .stop_threshold = INT_MAX,
+    .avail_min = DEEP_BUFFER_OUTPUT_PERIOD_SIZE / 4,
+};
+
+struct pcm_config pcm_config_system = {
+    .channels = 2,
+    .rate = DEFAULT_OUTPUT_SAMPLING_RATE,
+    .period_size = LOW_LATENCY_OUTPUT_PERIOD_SIZE,
+    .period_count = LOW_LATENCY_OUTPUT_PERIOD_COUNT,
+    .format = PCM_FORMAT_S16_LE,
+    .start_threshold = LOW_LATENCY_OUTPUT_PERIOD_SIZE / 4,
+    .stop_threshold = INT_MAX,
+    .avail_min = LOW_LATENCY_OUTPUT_PERIOD_SIZE / 4,
+};
+
+
+
 static const audio_usecase_t bus_device_usecases[] = {
     USECASE_AUDIO_PLAYBACK_MEDIA,
     USECASE_AUDIO_PLAYBACK_SYS_NOTIFICATION,
@@ -438,7 +462,7 @@ int32_t audio_extn_auto_hal_open_output_stream(struct stream_out *out)
     case CAR_AUDIO_STREAM_MEDIA:
         /* media bus stream shares pcm device with deep-buffer */
         out->usecase = USECASE_AUDIO_PLAYBACK_MEDIA;
-        out->config = pcm_config_deep_buffer;
+        out->config = pcm_config_media;
         out->config.period_size = get_output_period_size(out->sample_rate, out->format,
                                         channels, DEEP_BUFFER_OUTPUT_PERIOD_DURATION);
         if (out->config.period_size <= 0) {
@@ -449,17 +473,19 @@ int32_t audio_extn_auto_hal_open_output_stream(struct stream_out *out)
         if (out->flags == AUDIO_OUTPUT_FLAG_NONE ||
             out->flags == AUDIO_OUTPUT_FLAG_PRIMARY)
             out->flags |= AUDIO_OUTPUT_FLAG_MEDIA;
+	out->volume_l = out->volume_r = 1.0f;
         break;
     case CAR_AUDIO_STREAM_SYS_NOTIFICATION:
         /* sys notification bus stream shares pcm device with low-latency */
         out->usecase = USECASE_AUDIO_PLAYBACK_SYS_NOTIFICATION;
-        out->config = pcm_config_low_latency;
+        out->config = pcm_config_system;
         if (out->flags == AUDIO_OUTPUT_FLAG_NONE)
             out->flags |= AUDIO_OUTPUT_FLAG_SYS_NOTIFICATION;
+	out->volume_l = out->volume_r = 1.0f;
         break;
     case CAR_AUDIO_STREAM_NAV_GUIDANCE:
         out->usecase = USECASE_AUDIO_PLAYBACK_NAV_GUIDANCE;
-        out->config = pcm_config_deep_buffer;
+        out->config = pcm_config_media;
         out->config.period_size = get_output_period_size(out->sample_rate, out->format,
                                         channels, DEEP_BUFFER_OUTPUT_PERIOD_DURATION);
         if (out->config.period_size <= 0) {
@@ -469,12 +495,14 @@ int32_t audio_extn_auto_hal_open_output_stream(struct stream_out *out)
         }
         if (out->flags == AUDIO_OUTPUT_FLAG_NONE)
             out->flags |= AUDIO_OUTPUT_FLAG_NAV_GUIDANCE;
+	out->volume_l = out->volume_r = 1.0f;
         break;
     case CAR_AUDIO_STREAM_PHONE:
         out->usecase = USECASE_AUDIO_PLAYBACK_PHONE;
-        out->config = pcm_config_low_latency;
+        out->config = pcm_config_system;
         if (out->flags == AUDIO_OUTPUT_FLAG_NONE)
             out->flags |= AUDIO_OUTPUT_FLAG_PHONE;
+	out->volume_l = out->volume_r = 1.0f;
         break;
     default:
         ALOGE("%s: Car audio stream %x not supported", __func__,
@@ -511,9 +539,9 @@ snd_device_t audio_extn_auto_hal_get_snd_device_for_car_audio_stream(struct stre
     case CAR_AUDIO_STREAM_NAV_GUIDANCE:
         snd_device = SND_DEVICE_OUT_BUS_NAV;
         break;
-    case CAR_AUDIO_STREAM_PHONE:
+   case CAR_AUDIO_STREAM_PHONE:
         snd_device = SND_DEVICE_OUT_BUS_PHN;
-        break;
+	break;
     default:
         ALOGE("%s: Unknown car audio stream (%x)",
             __func__, out->car_audio_stream);
