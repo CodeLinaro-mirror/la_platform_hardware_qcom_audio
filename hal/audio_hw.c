@@ -1093,8 +1093,9 @@ int enable_audio_route(struct audio_device *adev,
 
     if (usecase->type == PCM_CAPTURE) {
         in = usecase->stream.in;
-        if (in && is_loopback_input_device(in->device) ||
-           (in && is_combo_audio_input_device(in->device))) {
+        if ((in && is_loopback_input_device(in->device)) ||
+           (in && is_combo_audio_input_device(in->device)) ||
+           (in && ((in->device & AUDIO_DEVICE_IN_BUILTIN_MIC) && (in->device & AUDIO_DEVICE_IN_LINE) && (snd_device == SND_DEVICE_IN_HANDSET_GENERIC_6MIC)))) {
             ALOGD("%s: set custom mtmx params v1", __func__);
             audio_extn_set_custom_mtmx_params_v1(adev, usecase, true);
         } else if ((platform_get_backend_index(snd_device) == HDMI_TX_BACKEND) &&
@@ -1135,7 +1136,8 @@ int disable_audio_route(struct audio_device *adev,
     if (usecase->type == PCM_CAPTURE) {
         in = usecase->stream.in;
         if ((in && is_loopback_input_device(in->device)) ||
-           (in && is_combo_audio_input_device(in->device))) {
+           (in && is_combo_audio_input_device(in->device)) ||
+           (in && ((in->device & AUDIO_DEVICE_IN_BUILTIN_MIC) && (in->device & AUDIO_DEVICE_IN_LINE) && (snd_device == SND_DEVICE_IN_HANDSET_GENERIC_6MIC)))) {
             ALOGD("%s: reset custom mtmx params v1", __func__);
             audio_extn_set_custom_mtmx_params_v1(adev, usecase, false);
         }
