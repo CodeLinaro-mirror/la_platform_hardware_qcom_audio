@@ -2485,6 +2485,7 @@ int qahw_stream_stop(qahw_stream_handle_t *stream_handle) {
         strlcat(device_route, dev_s, QAHW_MAX_INT_STRING);
         // to invoke voice_stop send with routing 0
         rc = qahw_out_set_parameters(stream->out_stream, device_route);
+        rc |= qahw_set_mode(stream->hw_module, AUDIO_MODE_NORMAL);
     } else if (stream->type == QAHW_AUDIO_AFE_LOOPBACK) {
         rc = qahw_release_audio_patch(stream->hw_module,
                                  stream->patch_handle);
