@@ -560,6 +560,9 @@ static void update_hardware_info_scuba(
     if (!strncmp(snd_card_name, "bengal-scubaidp-snd-card",
                  sizeof("bengal-scubaidp-snd-card"))) {
         strlcpy(hw_info->name, "bengal", sizeof(hw_info->name));
+    } else if (!strncmp(snd_card_name, "bengal-scubaqrd-snd-card",
+                 sizeof("bengal-scubaqrd-snd-card"))) {
+        strlcpy(hw_info->name, "bengal", sizeof(hw_info->name));
         hw_info->is_stereo_spkr = false;
     } else {
         ALOGW("%s: Not a scuba device", __func__);
