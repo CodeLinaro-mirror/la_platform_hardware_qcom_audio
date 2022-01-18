@@ -3528,10 +3528,11 @@ void *platform_init(struct audio_device *adev)
                                  adev->perf_lock_opts_size);
     if (platform_is_i2s_ext_modem(snd_card_name, my_data) &&
         !is_auto_snd_card(snd_card_name)) {
+        query_platform(snd_card_name, mixer_xml_path);
         ALOGD("%s: Call MIXER_XML_PATH_I2S", __func__);
 
         adev->audio_route = audio_route_init(adev->snd_card,
-                                             MIXER_XML_PATH_I2S);
+                                             mixer_xml_path);
     } else {
         /* Get the codec internal name from the sound card name
          * and form the mixer paths file name dynamically. This
