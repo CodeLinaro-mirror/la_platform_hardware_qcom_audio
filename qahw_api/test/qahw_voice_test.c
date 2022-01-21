@@ -1,5 +1,5 @@
 /*
-* Copyright (c) 2019-2020 The Linux Foundation. All rights reserved.
+* Copyright (c) 2019-2020, The Linux Foundation. All rights reserved.
 *
 * Redistribution and use in source and binary forms, with or without
 * modification, are permitted provided that the following conditions are
@@ -26,6 +26,41 @@
 * OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
 * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
+
+/*
+** Changes from Qualcomm Innovation Center are provided under the following license:
+** Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
+**
+** Redistribution and use in source and binary forms, with or without
+** modification, are permitted (subject to the limitations in the
+** disclaimer below) provided that the following conditions are met:
+**
+**    * Redistributions of source code must retain the above copyright
+**      notice, this list of conditions and the following disclaimer.
+**
+**    * Redistributions in binary form must reproduce the above
+**      copyright notice, this list of conditions and the following
+**      disclaimer in the documentation and/or other materials provided
+**      with the distribution.
+**
+**    * Neither the name of Qualcomm Innovation Center, Inc. nor the names of its
+**      contributors may be used to endorse or promote products derived
+**      from this software without specific prior written permission.
+**
+** NO EXPRESS OR IMPLIED LICENSES TO ANY PARTY'S PATENT RIGHTS ARE
+** GRANTED BY THIS LICENSE. THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT
+** HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED
+** WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
+** MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+** IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR
+** ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+** DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
+** GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+** INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
+** IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
+** OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
+** IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+**/
 
 /* Test app for voice call */
 
@@ -1006,6 +1041,8 @@ int main(int argc, char *argv[]) {
             stream_params.tty_mode = atoll(optarg);
             break;
         case 'c':
+            fprintf(stderr, "DTMF usecase, case-'c'\n");
+            stream_params.dtmf = true;
             stream_params.dtmf_gen_enable = true;
             freq_values = optarg;
             break;
@@ -1016,6 +1053,8 @@ int main(int argc, char *argv[]) {
             stream_params.stream_type = atoll(optarg);
             break;
         case 'w':
+            fprintf(stderr, "DTMF usecase, case-'w'\n");
+            stream_params.dtmf = true;
             stream_params.dtmf_detect_enable = true;
             break;
         case 'h':
@@ -1045,6 +1084,14 @@ int main(int argc, char *argv[]) {
         qahw_param_payload hpcm;
         hpcm.hpcm_params.state = 1;
         snprintf(kv, QAHW_KV_PAIR_LENGTH, "hpcm_cfg=1");
+        fprintf(stderr, "kv set is %s \n", kv);
+        rc = qahw_set_parameters(stream_params.qahw_mod_handle, kv);
+    }
+    if(stream_params.dtmf) {
+        fprintf(stderr, "calling dtmf set param.\n");
+        qahw_param_payload dtmf;
+        dtmf.dtmf_state_params.state = 1;
+        snprintf(kv, QAHW_KV_PAIR_LENGTH, "dtmf_cfg=1");
         fprintf(stderr, "kv set is %s \n", kv);
         rc = qahw_set_parameters(stream_params.qahw_mod_handle, kv);
     }
@@ -1163,6 +1210,9 @@ skip_dtmf_gen:
         if(stream_params.dtmf_detect_enable) {
             qahw_param_payload dtmf_det;
             dtmf_det.dtmf_detect_params.enable = 1;
+            dtmf_det.dtmf_detect_params.dir = stream_params.tp_dir;
+            fprintf(stderr, "dtmf detect, enable=%d, dir=%d\n",
+                dtmf_det.dtmf_detect_params.enable, dtmf_det.dtmf_detect_params.dir);
             rc = qahw_stream_set_parameters(stream_params.out_voice_handle,
                                             QAHW_PARAM_DTMF_DETECT, &dtmf_det);
             usleep(50000000);
