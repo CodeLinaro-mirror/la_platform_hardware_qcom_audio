@@ -1093,8 +1093,9 @@ int enable_audio_route(struct audio_device *adev,
 
     if (usecase->type == PCM_CAPTURE) {
         in = usecase->stream.in;
-        if (in && is_loopback_input_device(in->device) ||
-           (in && is_combo_audio_input_device(in->device))) {
+        if ((in && is_loopback_input_device(in->device)) ||
+           (in && is_combo_audio_input_device(in->device)) ||
+           (in && ((in->device & AUDIO_DEVICE_IN_BUILTIN_MIC) && (in->device & AUDIO_DEVICE_IN_LINE) && (snd_device == SND_DEVICE_IN_HANDSET_GENERIC_6MIC)))) {
             ALOGD("%s: set custom mtmx params v1", __func__);
             audio_extn_set_custom_mtmx_params_v1(adev, usecase, true);
         } else if ((platform_get_backend_index(snd_device) == HDMI_TX_BACKEND) &&
@@ -1135,7 +1136,8 @@ int disable_audio_route(struct audio_device *adev,
     if (usecase->type == PCM_CAPTURE) {
         in = usecase->stream.in;
         if ((in && is_loopback_input_device(in->device)) ||
-           (in && is_combo_audio_input_device(in->device))) {
+           (in && is_combo_audio_input_device(in->device)) ||
+           (in && ((in->device & AUDIO_DEVICE_IN_BUILTIN_MIC) && (in->device & AUDIO_DEVICE_IN_LINE) && (snd_device == SND_DEVICE_IN_HANDSET_GENERIC_6MIC)))) {
             ALOGD("%s: reset custom mtmx params v1", __func__);
             audio_extn_set_custom_mtmx_params_v1(adev, usecase, false);
         }
@@ -1701,7 +1703,7 @@ static void check_usecases_capture_codec_backend(struct audio_device *adev,
          * TODO: Enhance below condition to handle BT sco/USB multi recording
          */
         if (usecase->type != PCM_PLAYBACK &&
-                usecase != uc_info) {
+                usecase != uc_info && (usecase->id != USECASE_AUDIO_SPKR_CALIB_TX)) {
             uc_derive_snd_device = derive_capture_snd_device(adev->platform,
                                                usecase, uc_info, snd_device);
             ALOGD("%s: usecase snd device %d, derived snd device %d",
@@ -1709,8 +1711,7 @@ static void check_usecases_capture_codec_backend(struct audio_device *adev,
             if ((uc_derive_snd_device != usecase->in_snd_device || force_routing) &&
                 ((uc_info->devices & backend_check_cond) &&
                  (((usecase->devices & ~AUDIO_DEVICE_BIT_IN) & AUDIO_DEVICE_IN_ALL_CODEC_BACKEND) ||
-                  (usecase->type == VOIP_CALL))) &&
-                (usecase->id != USECASE_AUDIO_SPKR_CALIB_TX)) {
+                  (usecase->type == VOIP_CALL)))) {
                 ALOGV("%s: Usecase (%s) is active on (%s) - disabling ..",
                        __func__, use_case_table[usecase->id],
                        platform_get_snd_device_name(usecase->in_snd_device));
