@@ -131,6 +131,7 @@
         <usecase name="USECASE_AUDIO_HFP_SCO_DOWNLINK" type="out" id="36" />
         <usecase name="USECASE_AUDIO_HFP_SCO_WB_DOWNLINK" type="in" id="36" />
         <usecase name="USECASE_AUDIO_HFP_SCO_WB_DOWNLINK" type="out" id="36" />
+        <usecase name="USECASE_AUDIO_RECORD_COMPRESS2" type="in" id="31" />
     </pcm_ids>
 
     <config_params>
