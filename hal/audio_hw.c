@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2021, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2022, The Linux Foundation. All rights reserved.
  * Not a Contribution.
  *
  * Copyright (C) 2013 The Android Open Source Project
@@ -7124,7 +7124,11 @@ exit:
             pthread_mutex_unlock(&adev->lock);
             in->standby = true;
         }
-        if (!audio_extn_cin_attached_usecase(in)) {
+        /* In hdmi-in compress usecase to during playback if hdmi cable is
+         * disconnected then read function is in block state.
+         * to unblock read call, needs to send silent buffer in case of hdmi-in
+         */
+        if (!audio_extn_cin_attached_usecase(in) || (true == in->hdmi_in_status)) {
             bytes_read = bytes;
             memset(buffer, 0, bytes);
         }
