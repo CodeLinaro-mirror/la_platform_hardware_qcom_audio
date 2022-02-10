@@ -169,7 +169,7 @@ int acdb_init_v2(struct mixer *mixer)
 
         ctl = mixer_get_ctl_by_name(mixer, CVD_VERSION_MIXER_CTL);
         if (!ctl) {
-            ALOGD("%s: Could not get ctl for mixer cmd - %s",  __func__, CVD_VERSION_MIXER_CTL);
+            ALOGE("%s: Could not get ctl for mixer cmd - %s",  __func__, CVD_VERSION_MIXER_CTL);
             #ifdef PLATFORM_AUTO
 		 ALOGE("%s: Ctl check bypassed in automotive platform for mixer cmd - %s",  __func__, CVD_VERSION_MIXER_CTL);
                 goto get_sound_card_name;
