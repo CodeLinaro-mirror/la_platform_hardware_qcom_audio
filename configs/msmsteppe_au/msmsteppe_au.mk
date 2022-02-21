@@ -287,7 +287,7 @@ vendor.audio.use.sw.ape.decoder=true
 
 #enable hw aac encoder by default
 PRODUCT_PROPERTY_OVERRIDES += \
-vendor.audio.hw.aac.encoder=true
+vendor.audio.hw.aac.encoder=false
 
 #force offload using hardware decoders for FLAC, WMA & APE
 PRODUCT_PROPERTY_OVERRIDES += \
@@ -364,7 +364,7 @@ vendor.audio.feature.compr_cap.enable=false \
 vendor.audio.feature.compress_in.enable=false \
 vendor.audio.feature.compress_meta_data.enable=false \
 vendor.audio.feature.compr_voip.enable=false \
-vendor.audio.feature.concurrent_capture.enable=false  \
+vendor.audio.feature.concurrent_capture.enable=true  \
 vendor.audio.feature.custom_stereo.enable=false \
 vendor.audio.feature.display_port.enable=false \
 vendor.audio.feature.dsm_feedback.enable=false \
@@ -412,7 +412,7 @@ vendor.audio.feature.compr_cap.enable=false \
 vendor.audio.feature.compress_in.enable=true \
 vendor.audio.feature.compress_meta_data.enable=true \
 vendor.audio.feature.compr_voip.enable=false \
-vendor.audio.feature.concurrent_capture.enable=false \
+vendor.audio.feature.concurrent_capture.enable=true \
 vendor.audio.feature.custom_stereo.enable=true \
 vendor.audio.feature.display_port.enable=true \
 vendor.audio.feature.dsm_feedback.enable=false \
@@ -456,7 +456,6 @@ PRODUCT_PACKAGES += \
     android.hardware.audio@2.0-service \
     android.hardware.audio@2.0-impl \
     android.hardware.audio.effect@2.0-impl \
-    android.hardware.soundtrigger@2.1-impl \
     android.hardware.audio@4.0 \
     android.hardware.audio.common@4.0 \
     android.hardware.audio.common@4.0-util \
@@ -482,6 +481,10 @@ PRODUCT_PACKAGES += \
     android.hardware.audio.effect@6.0 \
     android.hardware.audio.effect@6.0-impl
 
+# enable sound trigger hidl hal 2.3
+PRODUCT_PACKAGES += \
+    android.hardware.soundtrigger@2.3-impl
+
 PRODUCT_PACKAGES_ENG += \
     VoicePrintTest \
     VoicePrintDemo
@@ -490,7 +493,7 @@ PRODUCT_PACKAGES_DEBUG += \
     AudioSettings
 
 # for HIDL related audiocontrol packages
-ifneq ($(PLATFORM_VERSION), 12)
+ifeq ( ,$(filter 12 Tiramisu,$(PLATFORM_VERSION)))
 PRODUCT_PACKAGES += \
     android.hardware.automotive.audiocontrol@2.0-service \
     android.hardware.automotive.audiocontrol@2.0
