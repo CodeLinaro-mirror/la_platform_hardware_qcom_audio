@@ -4231,18 +4231,15 @@ void audio_extn_fm_set_parameters(struct audio_device *adev,
 //END: FM_POWER_OPT_FEATURE ================================================================
 
 //START: HDMI_EDID =========================================================================
-#ifdef __LP64__
+
 #if LINUX_ENABLED
-#define HDMI_EDID_LIB_PATH  "/usr/lib64/audio.hdmi.edid.so"
+#   define HDMI_EDID_LIB_PATH  STR_CAT(LE_LIBDIR, "/audio.hdmi.edid.so")
 #else
-#define HDMI_EDID_LIB_PATH  "/vendor/lib64/libhdmiedid.so"
-#endif
-#else
-#if LINUX_ENABLED
-#define HDMI_EDID_LIB_PATH  "/usr/lib/audio.hdmi.edid.so"
-#else
-#define HDMI_EDID_LIB_PATH  "/vendor/lib/libhdmiedid.so"
-#endif
+#   ifdef __LP64__
+#       define HDMI_EDID_LIB_PATH  "/vendor/lib64/libhdmiedid.so"
+#   else
+#       define HDMI_EDID_LIB_PATH  "/vendor/lib/libhdmiedid.so"
+#   endif
 #endif
 
 static void *hdmi_edid_lib_handle = NULL;
