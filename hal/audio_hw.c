@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2021, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2022, The Linux Foundation. All rights reserved.
  * Not a Contribution.
  *
  * Copyright (C) 2013 The Android Open Source Project
@@ -1511,6 +1511,20 @@ int enable_snd_device(struct audio_device *adev,
         }
 
         if (SND_DEVICE_OUT_BT_A2DP == snd_device) {
+
+            struct audio_usecase *usecase;
+            struct listnode *node;
+            /* Disable SCO Devices and enable handset mic for active input stream */
+            list_for_each(node, &adev->usecase_list) {
+                usecase = node_to_item(node, struct audio_usecase, list);
+                if (usecase->stream.in && (usecase->type == PCM_CAPTURE) &&
+                    is_sco_in_device_type(&usecase->stream.in->device_list)) {
+                    ALOGD("a2dp resumed, switch bt sco mic to handset mic");
+                    reassign_device_list(&usecase->stream.in->device_list,
+                                         AUDIO_DEVICE_IN_BUILTIN_MIC, "");
+                    select_devices(adev, usecase->id);
+                }
+            }
             if (audio_extn_a2dp_start_playback() < 0) {
                 ALOGE(" fail to configure A2dp Source control path ");
                 goto err;
@@ -2052,7 +2066,7 @@ static void check_usecases_capture_codec_backend(struct audio_device *adev,
                 ((uc_info->type == VOICE_CALL &&
                  is_single_device_type_equal(&usecase->device_list,
                                             AUDIO_DEVICE_IN_VOICE_CALL)) ||
-                 platform_check_backends_match(snd_device,\
+                 platform_check_all_backends_match(snd_device,\
                                               usecase->in_snd_device))) &&
                 (usecase->id != USECASE_AUDIO_SPKR_CALIB_TX)) {
             ALOGD("%s: Usecase (%s) is active on (%s) - disabling ..",
@@ -5165,6 +5179,7 @@ int route_output_stream(struct stream_out *out,
     /*handles device and call state changes*/
     audio_extn_extspk_update(adev->extspk);
 
+    clear_devices(&new_devices);
 error:
     ALOGV("%s: exit: code(%d)", __func__, ret);
     return ret;
@@ -7534,6 +7549,7 @@ static int add_remove_audio_effect(const struct audio_stream *stream,
         ALOGD("NS enable %d", enable);
         if (!in->standby) {
             if (in->source == AUDIO_SOURCE_VOICE_COMMUNICATION ||
+                in->source == AUDIO_SOURCE_VOICE_RECOGNITION ||
                 in->dev->mode == AUDIO_MODE_IN_COMMUNICATION) {
                 if (enable_disable_effect(in->dev, EFFECT_NS, enable) == ENOSYS)
                     select_devices(in->dev, in->usecase);
@@ -8904,25 +8920,6 @@ static int adev_set_parameters(struct audio_hw_device *dev, const char *kvpairs)
         }
     }
 
-    ret = str_parms_get_str(parms, "A2dpSuspended", value, sizeof(value));
-    if (ret >= 0) {
-        if (!strncmp(value, "false", 5) &&
-            audio_extn_a2dp_source_is_suspended()) {
-            struct audio_usecase *usecase;
-            struct listnode *node;
-            list_for_each(node, &adev->usecase_list) {
-                usecase = node_to_item(node, struct audio_usecase, list);
-                if (usecase->stream.in && (usecase->type == PCM_CAPTURE) &&
-                    is_sco_in_device_type(&usecase->stream.in->device_list)) {
-                    ALOGD("a2dp resumed, switch bt sco mic to handset mic");
-                    reassign_device_list(&usecase->stream.in->device_list,
-                                         AUDIO_DEVICE_IN_BUILTIN_MIC, "");
-                    select_devices(adev, usecase->id);
-                }
-            }
-        }
-    }
-
     status = voice_set_parameters(adev, parms);
     if (status != 0)
         goto done;
@@ -9617,7 +9614,7 @@ static int adev_open_input_stream(struct audio_hw_device *dev,
         ret = audio_extn_auto_hal_open_echo_reference_stream(in);
     }
 
-    if (in->source == AUDIO_SOURCE_FM_TUNER) {
+    if ((in->source == AUDIO_SOURCE_FM_TUNER) || (devices == AUDIO_DEVICE_IN_FM_TUNER)) {
         if(!get_usecase_from_list(adev, USECASE_AUDIO_RECORD_FM_VIRTUAL))
             in->usecase = USECASE_AUDIO_RECORD_FM_VIRTUAL;
         else {
@@ -10284,10 +10281,12 @@ int adev_create_audio_patch(struct audio_hw_device *dev,
 
     // Update routing for stream
     if (stream != NULL) {
-        if (p_info->patch_type == PATCH_PLAYBACK)
+        if (p_info->patch_type == PATCH_PLAYBACK) {
             ret = route_output_stream((struct stream_out *) stream, &devices);
-        else if (p_info->patch_type == PATCH_CAPTURE)
+            clear_devices(&devices);
+        } else if (p_info->patch_type == PATCH_CAPTURE) {
             ret = route_input_stream((struct stream_in *) stream, &devices, input_source);
+        }
         if (ret < 0) {
             pthread_mutex_lock(&adev->lock);
             s_info->patch_handle = AUDIO_PATCH_HANDLE_NONE;
