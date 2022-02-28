@@ -1,6 +1,6 @@
 
 /*
- * Copyright (c) 2013-2021, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2022, The Linux Foundation. All rights reserved.
  * Not a Contribution.
  *
  * Copyright (C) 2013 The Android Open Source Project
@@ -7182,6 +7182,7 @@ snd_device_t platform_get_input_snd_device(void *platform,
     if (in == NULL)
         in = adev_get_active_input(adev);
 
+    in->hdmi_in_status = false;
     int format = (in == NULL) ? AUDIO_FORMAT_DEFAULT : in->format;
     audio_source_t source = (in == NULL) ? AUDIO_SOURCE_DEFAULT : in->source;
     audio_devices_t in_device =
@@ -7724,8 +7725,10 @@ snd_device_t platform_get_input_snd_device(void *platform,
         } else if (in_device & AUDIO_DEVICE_IN_AUX_DIGITAL) {
             if (format ==  AUDIO_FORMAT_DSD)
                 snd_device = SND_DEVICE_IN_HDMI_MIC_DSD;
-            else
+            else {
                 snd_device = SND_DEVICE_IN_HDMI_MIC;
+                in->hdmi_in_status = true;
+            }
         } else if (in_device & AUDIO_DEVICE_IN_HDMI_ARC) {
             snd_device = SND_DEVICE_IN_HDMI_ARC;
         } else if (in_device & AUDIO_DEVICE_IN_ANLG_DOCK_HEADSET ||
@@ -7794,6 +7797,7 @@ snd_device_t platform_get_input_snd_device(void *platform,
             }
         } else if (out_device & AUDIO_DEVICE_OUT_AUX_DIGITAL) {
             snd_device = SND_DEVICE_IN_HDMI_MIC;
+            in->hdmi_in_status = true;
         } else if (out_device & AUDIO_DEVICE_OUT_ANLG_DOCK_HEADSET ||
                    out_device & AUDIO_DEVICE_OUT_DGTL_DOCK_HEADSET) {
             snd_device = SND_DEVICE_IN_USB_HEADSET_MIC;

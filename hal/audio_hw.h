@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2020, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2022, The Linux Foundation. All rights reserved.
  * Not a contribution.
  *
  * Copyright (C) 2013 The Android Open Source Project
@@ -598,6 +598,10 @@ struct stream_in {
 
     bool dsd_config_updated;
     uint64_t ttp_offset_cached;
+    bool hdmi_in_status;
+    long hdmi_in_wait_ns;
+    bool calc_timeout;
+    timer_t timer_handle;
 #ifndef LINUX_ENABLED
     error_log_t *error_log;
 #endif
