@@ -2,6 +2,8 @@
  * Copyright (c) 2013-2022, The Linux Foundation. All rights reserved.
  * Not a Contribution.
  *
+ * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ *
  * Copyright (C) 2013 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -1939,7 +1941,7 @@ static void reset_hdmi_sink_caps(struct stream_out *out) {
 /* must be called with hw device mutex locked */
 static int read_hdmi_sink_caps(struct stream_out *out)
 {
-    int ret = 0, i = 0, j = 0;
+    int ret = 0, i = 0, j = 0, rc = 0;
     int channels = platform_edid_get_max_channels_v2(out->dev->platform,
                                                      out->extconn.cs.controller,
                                                      out->extconn.cs.stream);
@@ -1947,11 +1949,11 @@ static int read_hdmi_sink_caps(struct stream_out *out)
     reset_hdmi_sink_caps(out);
 
     /* Cache ext disp type */
-    ret = platform_get_ext_disp_type_v2(adev->platform,
+    rc = platform_get_ext_disp_type_v2(adev->platform,
                                       out->extconn.cs.controller,
                                       out->extconn.cs.stream);
-    if(ret < 0) {
-        ALOGE("%s: Failed to query disp type, ret:%d", __func__, ret);
+    if(rc < 0) {
+        ALOGE("%s: Failed to query disp type, rc:%d", __func__, rc);
         return -EINVAL;
     }
 
@@ -1967,6 +1969,10 @@ static int read_hdmi_sink_caps(struct stream_out *out)
         out->supported_channel_masks[i++] = AUDIO_CHANNEL_OUT_QUAD;
         out->supported_channel_masks[i++] = AUDIO_CHANNEL_OUT_SURROUND;
         out->supported_channel_masks[i++] = AUDIO_CHANNEL_OUT_2POINT1;
+    case 2:
+        ALOGV("%s: HDMI supports 2 channels", __func__);
+        out->supported_channel_masks[i++] = AUDIO_CHANNEL_OUT_STEREO;
+        out->supported_channel_masks[i++] = AUDIO_CHANNEL_OUT_MONO;
         break;
     default:
         ALOGE("invalid/nonstandard channal count[%d]",channels);
@@ -2014,7 +2020,6 @@ static int read_hdmi_sink_caps(struct stream_out *out)
         ALOGV(":%s HDMI supports IEC61937 format", __func__);
         out->supported_formats[i++] = AUDIO_FORMAT_IEC61937;
     }
-
 
     // check sample rate caps
     i = 0;
@@ -4856,6 +4861,8 @@ static int out_set_parameters(struct audio_stream *stream, const char *kvpairs)
     if (err == 0) {
         out->extconn.cs.controller = ext_controller;
         out->extconn.cs.stream = ext_stream;
+        adev->ext_controller = out->extconn.cs.controller;
+        adev->ext_stream = out->extconn.cs.stream;
         ALOGD("%s: usecase(%s) new controller/stream (%d/%d)", __func__,
               use_case_table[out->usecase], out->extconn.cs.controller,
               out->extconn.cs.stream);
@@ -4881,6 +4888,7 @@ static int out_set_parameters(struct audio_stream *stream, const char *kvpairs)
                                            out->extconn.cs.controller,
                                            out->extconn.cs.stream) != 0)) {
             out->extconn.cs.controller = out->extconn.cs.stream = -1;
+            adev->ext_controller = out->extconn.cs.controller;
             val = AUDIO_DEVICE_OUT_SPEAKER;
         }
         /*
@@ -7716,6 +7724,8 @@ int adev_open_output_stream(struct audio_hw_device *dev,
     out->pspd_coeff_sent = false;
 
     out->dsd_config_updated = false;
+    out->extconn.cs.controller = adev->ext_controller;
+    out->extconn.cs.stream = adev->ext_stream;
 
     if ((flags & AUDIO_OUTPUT_FLAG_BD) &&
         (property_get_bool("vendor.audio.matrix.limiter.enable", false)))
@@ -7723,8 +7733,7 @@ int adev_open_output_stream(struct audio_hw_device *dev,
 
     if (direct_dev &&
         (audio_is_linear_pcm(out->format) ||
-         config->format == AUDIO_FORMAT_DEFAULT) &&
-        out->flags == AUDIO_OUTPUT_FLAG_NONE) {
+         config->format == AUDIO_FORMAT_DEFAULT)) {
         audio_format_t req_format = config->format;
         audio_channel_mask_t req_channel_mask = config->channel_mask;
         uint32_t req_sample_rate = config->sample_rate;

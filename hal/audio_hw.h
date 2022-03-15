@@ -2,6 +2,8 @@
  * Copyright (c) 2013-2022, The Linux Foundation. All rights reserved.
  * Not a contribution.
  *
+ * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ *
  * Copyright (C) 2013 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -820,6 +822,8 @@ struct audio_device {
     bool ecall_flag;
     spdif_channel_status_t spdif_coaxial_status;
     spdif_channel_status_t spdif_optical_status;
+    int ext_controller;
+    int ext_stream;
 };
 
 struct audio_patch_record {
