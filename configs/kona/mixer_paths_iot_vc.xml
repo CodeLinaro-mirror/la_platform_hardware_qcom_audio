@@ -664,8 +664,16 @@
         <path name="deep-buffer-playback" />
     </path>
 
+    <path name="hdmi">
+    </path>
+
     <path name="low-latency-playback">
         <ctl name="QUAT_MI2S_RX Audio Mixer MultiMedia5" value="1" />
+    </path>
+
+    <path name="low-latency-playback hdmi">
+        <ctl name="PRI_MI2S_RX Audio Mixer MultiMedia5" value="1" />
+        <ctl name="PRIM_MI2S_RX Format" value="S32_LE" />
     </path>
 
     <path name="low-latency-playback voice-speaker-2">
@@ -985,6 +993,10 @@
 
     <path name="compress-offload-playback2">
         <ctl name="QUAT_MI2S_RX Audio Mixer MultiMedia7" value="1" />
+    </path>
+
+    <path name="compress-offload-playback2 hdmi">
+        <ctl name="PRI_MI2S_RX Audio Mixer MultiMedia7" value="1" />
     </path>
 
     <path name="compress-offload-playback2 handset">
@@ -2225,6 +2237,11 @@
     <path name="speaker-safe-and-bt-a2dp">
         <path name="speaker-safe" />
         <path name="bt-a2dp" />
+    </path>
+
+    <path name="deep-buffer-playback hdmi">
+        <ctl name="PRI_MI2S_RX Audio Mixer MultiMedia1" value="1" />
+        <ctl name="PRIM_MI2S_RX Format" value="S32_LE" />
     </path>
 
     <path name="deep-buffer-playback bt-a2dp">
