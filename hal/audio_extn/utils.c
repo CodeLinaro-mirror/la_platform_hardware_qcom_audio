@@ -15,6 +15,40 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
+ * Changes from Qualcomm Innovation Center are provided under the following license:
+ *
+ * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted (subject to the limitations in the
+ * disclaimer below) provided that the following conditions are met:
+ *
+ *     * Redistributions of source code must retain the above copyright
+ *       notice, this list of conditions and the following disclaimer.
+ *
+ *     * Redistributions in binary form must reproduce the above
+ *       copyright notice, this list of conditions and the following
+ *       disclaimer in the documentation and/or other materials provided
+ *       with the distribution.
+ *
+ *     * Neither the name of Qualcomm Innovation Center, Inc. nor the names of its
+ *       contributors may be used to endorse or promote products derived
+ *       from this software without specific prior written permission.
+ *
+ * NO EXPRESS OR IMPLIED LICENSES TO ANY PARTY'S PATENT RIGHTS ARE
+ * GRANTED BY THIS LICENSE. THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT
+ * HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED
+ * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
+ * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ * IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR
+ * ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
+ * GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
+ * IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
+ * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
+ * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
 #define LOG_TAG "audio_hw_utils"
@@ -110,6 +144,11 @@
 #else
 #define VNDK_FWK_LIB_PATH "/vendor/lib/libqti_vndfwk_detect.so"
 #endif
+
+/* 24 KHz ECNR support */
+#define ECNS_USE_CASE_ACDB_DEV_ID 95
+#define ECNS_UNSUPPORTED_CAPTURE_SAMPLE_RATE_FOR_ADM 24000
+#define ECNS_SUPPORTED_CAPTURE_SAMPLE_RATE_FOR_ADM 48000
 
 typedef struct vndkfwk_s {
     void *lib_handle;
@@ -750,6 +789,13 @@ void audio_extn_utils_update_stream_input_app_type_cfg(void *platform,
     app_type_cfg->app_type = platform_get_default_app_type_v2(platform, PCM_CAPTURE);
     app_type_cfg->sample_rate = CODEC_BACKEND_DEFAULT_SAMPLE_RATE;
     app_type_cfg->bit_width = 16;
+
+    if ((flags & AUDIO_INPUT_FLAG_TIMESTAMP) == 0 &&
+        (flags & AUDIO_INPUT_FLAG_COMPRESS) == 0 &&
+        (flags & AUDIO_INPUT_FLAG_FAST) != 0) {
+        // Support low latency record for different sample rates
+        app_type_cfg->sample_rate = sample_rate;
+    }
 }
 
 void audio_extn_utils_update_stream_output_app_type_cfg(void *platform,
@@ -838,6 +884,12 @@ void audio_extn_utils_update_stream_output_app_type_cfg(void *platform,
     app_type_cfg->app_type = platform_get_default_app_type(platform);
     app_type_cfg->sample_rate = CODEC_BACKEND_DEFAULT_SAMPLE_RATE;
     app_type_cfg->bit_width = 16;
+
+    if (compare_device_type(devices, AUDIO_DEVICE_OUT_BUS) && (flags &
+                        (audio_output_flags_t)AUDIO_OUTPUT_FLAG_FAST)) {
+        // Support low latency playback for different sample rates
+        app_type_cfg->sample_rate = sample_rate;
+    }
 }
 
 static bool audio_is_this_native_usecase(struct audio_usecase *uc)
@@ -1304,6 +1356,7 @@ int audio_extn_utils_get_app_sample_rate_for_device(
 {
     char value[PROPERTY_VALUE_MAX] = {0};
     int sample_rate = DEFAULT_OUTPUT_SAMPLING_RATE;
+    int acdb_dev_id = 0;
 
     if ((usecase->type == PCM_PLAYBACK) && (usecase->stream.out != NULL)) {
         property_get("vendor.audio.playback.mch.downsample",value,"");
@@ -1342,8 +1395,12 @@ int audio_extn_utils_get_app_sample_rate_for_device(
             usecase->stream.out->sample_rate == OUTPUT_SAMPLING_RATE_44100) ||
             (usecase->stream.out->sample_rate < OUTPUT_SAMPLING_RATE_44100)) ||
             (compare_device_type(&usecase->stream.out->device_list,AUDIO_DEVICE_OUT_SPEAKER))) {
-            /* Reset to default if no native stream is active or default device is speaker*/
-            usecase->stream.out->app_type_cfg.sample_rate = DEFAULT_OUTPUT_SAMPLING_RATE;
+            if (!(compare_device_type(&usecase->device_list, AUDIO_DEVICE_OUT_BUS) && ((usecase->
+                stream.out->flags & (audio_output_flags_t)AUDIO_OUTPUT_FLAG_SYS_NOTIFICATION) ||
+                (usecase->stream.out->flags & (audio_output_flags_t)AUDIO_OUTPUT_FLAG_PHONE)))) {
+                /* Reset to default if no native stream is active or default device is speaker*/
+                usecase->stream.out->app_type_cfg.sample_rate = DEFAULT_OUTPUT_SAMPLING_RATE;
+            }
         }
         audio_extn_btsco_get_sample_rate(snd_device, &usecase->stream.out->app_type_cfg.sample_rate);
         sample_rate = usecase->stream.out->app_type_cfg.sample_rate;
@@ -1378,6 +1435,17 @@ int audio_extn_utils_get_app_sample_rate_for_device(
             else
                 sample_rate = SAMPLE_RATE_8000;
         }
+        /* ECNR module in DSP does not support 24 KHz sample rate. As a workaround,
+           run ADM at 48 KHz when ECNR is enabled in ACDB topology (e.g. device id = 95)
+        */
+        acdb_dev_id = platform_get_snd_device_acdb_id(snd_device);
+        if (sample_rate == ECNS_UNSUPPORTED_CAPTURE_SAMPLE_RATE_FOR_ADM &&
+            acdb_dev_id == ECNS_USE_CASE_ACDB_DEV_ID) {
+            sample_rate = ECNS_SUPPORTED_CAPTURE_SAMPLE_RATE_FOR_ADM;
+            ALOGD("%s: update sample rate from 24K to 48K to support ECNR in PCM_CAPTURE,"
+                 " sample_rate=%d",__func__,sample_rate);
+        }
+
     } else if (usecase->type == TRANSCODE_LOOPBACK_RX) {
         sample_rate = usecase->stream.inout->out_config.sample_rate;
     }
