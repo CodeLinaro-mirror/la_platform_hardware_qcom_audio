@@ -202,6 +202,7 @@ static bool audio_extn_battery_listener_enabled = false;
 static bool audio_extn_maxx_audio_enabled = false;
 static bool audio_extn_audiozoom_enabled = false;
 static bool audio_extn_hifi_filter_enabled = false;
+static bool audio_extn_concurrent_pcm_record_enabled = false;
 
 #define AUDIO_PARAMETER_KEY_AANC_NOISE_LEVEL "aanc_noise_level"
 #define AUDIO_PARAMETER_KEY_ANC        "anc_enabled"
@@ -5625,6 +5626,19 @@ void concurrent_capture_feature_init(bool is_feature_enabled)
 }
 // END: CONCURRENT_CAPTURE ====================================================
 
+// START: CONCURRENT_PCM_RECORD ===============================================
+bool audio_extn_is_concurrent_pcm_record_enabled()
+{
+    return audio_extn_concurrent_pcm_record_enabled;
+}
+
+void concurrent_pcm_record_feature_init(bool is_feature_enabled)
+{
+    audio_extn_concurrent_pcm_record_enabled = is_feature_enabled;
+    ALOGD("%s: ---- Feature CONCURRENT_PCM_RECORD is %s----", __func__, is_feature_enabled? "ENABLED": "NOT ENABLED");
+}
+// END: CONCURRENT_PCM_RECORD =================================================
+
 // START: COMPRESS_IN ==================================================
 void compress_in_feature_init(bool is_feature_enabled)
 {
@@ -6512,10 +6526,13 @@ static void* power_policy_thread_func(void* arg __unused) {
         goto exit;
     }
     ALOGD("%s: Launching Power Policy Client", __func__);
-    launch_power_policy();
+    power_policy_init_config_t init_config;
+    init_config.fp_in_set_power_policy = in_set_power_policy;
+    init_config.fp_out_set_power_policy = out_set_power_policy;
+    launch_power_policy(init_config);
 
 exit:
-    pthread_exit(NULL);
+    return NULL;
 }
 
 static int power_policy_feature_init(bool is_feature_enabled)
@@ -6698,6 +6715,9 @@ void audio_extn_feature_init()
     power_policy_feature_init(
         property_get_bool("vendor.audio.feature.powerpolicy.enable",
                        false));
+    concurrent_pcm_record_feature_init(
+        property_get_bool("vendor.audio.feature.concurrent_pcm_record.enable",
+                           false));
 }
 
 void audio_extn_set_parameters(struct audio_device *adev,
