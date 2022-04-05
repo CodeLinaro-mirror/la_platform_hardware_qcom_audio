@@ -588,9 +588,9 @@ static struct audio_custom_mtmx_params *update_channel_weightage_params(
 
     /*
      * Allocate memory for coefficients in audio_custom_mtmx_params.
-     * Coefficent in audio_custom_mtmx_params is of type uint32_t.
+     * Coefficent in audio_custom_mtmx_params is of type long int.
      */
-    size += sizeof(uint32_t) * ip_channels * op_channels;
+    size += sizeof(long int) * ip_channels * op_channels;
     params = (struct audio_custom_mtmx_params *) calloc(1, size);
 
     if (!params) {
