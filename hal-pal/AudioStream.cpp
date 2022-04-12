@@ -1332,14 +1332,17 @@ int StreamOutPrimary::GetMmapPosition(struct audio_mmap_position *position)
     struct pal_mmap_position pal_mmap_pos;
     int32_t ret = 0;
 
+    stream_mutex_.lock();
     if (pal_stream_handle_ == nullptr) {
         ALOGE("%s: pal handle is null\n", __func__);
+        stream_mutex_.unlock();
         return -EINVAL;
     }
 
     ret = pal_stream_get_mmap_position(pal_stream_handle_, &pal_mmap_pos);
     if (ret) {
         ALOGE("%s: failed to get mmap position %d\n", __func__, ret);
+        stream_mutex_.unlock();
         return ret;
     }
     position->position_frames = pal_mmap_pos.position_frames;
@@ -1354,6 +1357,7 @@ int StreamOutPrimary::GetMmapPosition(struct audio_mmap_position *position)
     position->time_nanoseconds += mmap_time_offset_micros * (int64_t)1000;
 #endif
 
+    stream_mutex_.unlock();
     return 0;
 }
 
@@ -1373,14 +1377,17 @@ int StreamOutPrimary::CreateMmapBuffer(int32_t min_size_frames,
     int ret;
     struct pal_mmap_buffer palMmapBuf = {};
 
+    stream_mutex_.lock();
     if (pal_stream_handle_) {
         ALOGE("%s: pal handle already created\n", __func__);
+        stream_mutex_.unlock();
         return -EINVAL;
     }
 
     ret = Open();
     if (ret) {
         ALOGE("%s: failed to open stream.", __func__);
+        stream_mutex_.unlock();
         return ret;
     }
 #ifndef LINUX_ENABLED
@@ -1388,6 +1395,7 @@ int StreamOutPrimary::CreateMmapBuffer(int32_t min_size_frames,
             min_size_frames, &palMmapBuf);
     if (ret) {
         ALOGE("%s: failed to create mmap buffer: %d", __func__, ret);
+        stream_mutex_.unlock();
         Standby();
         return ret;
     }
@@ -1399,12 +1407,14 @@ int StreamOutPrimary::CreateMmapBuffer(int32_t min_size_frames,
     info->flags = (audio_mmap_buffer_flag) AUDIO_MMAP_APPLICATION_SHAREABLE;
 #endif
 
+    stream_mutex_.unlock();
     return ret;
 }
 
 int StreamOutPrimary::Stop() {
     int ret = -ENOSYS;
 
+    stream_mutex_.lock();
     if (usecase_ == USECASE_AUDIO_PLAYBACK_MMAP &&
             pal_stream_handle_ && stream_started_) {
 
@@ -1414,12 +1424,14 @@ int StreamOutPrimary::Stop() {
             stream_paused_ = false;
         }
     }
+    stream_mutex_.unlock();
     return ret;
 }
 
 int StreamOutPrimary::Start() {
     int ret = -ENOSYS;
 
+    stream_mutex_.lock();
     if (usecase_ == USECASE_AUDIO_PLAYBACK_MMAP &&
             pal_stream_handle_ && !stream_started_) {
 
@@ -1427,41 +1439,48 @@ int StreamOutPrimary::Start() {
         if (ret == 0)
             stream_started_ = true;
     }
+    stream_mutex_.unlock();
     return ret;
 }
 
 int StreamOutPrimary::Pause() {
     int ret = 0;
 
+    stream_mutex_.lock();
     if (pal_stream_handle_) {
         ret = pal_stream_pause(pal_stream_handle_);
     }
     if (ret)
-        return -EINVAL;
+        ret = -EINVAL;
     else
     {
         stream_paused_ = true;
-        return ret;
     }
+    stream_mutex_.unlock();
+    return ret;
 }
 
 int StreamOutPrimary::Resume() {
     int ret = 0;
 
+    stream_mutex_.lock();
     if (pal_stream_handle_) {
         ret = pal_stream_resume(pal_stream_handle_);
     }
     if (ret)
-        return -EINVAL;
+        ret = -EINVAL;
     else {
         stream_paused_ = false;
-        return ret;
     }
+    stream_mutex_.unlock();
+    return ret;
 }
 
 int StreamOutPrimary::Flush() {
     int ret = 0;
     ALOGD("%s: Enter", __func__);
+
+    stream_mutex_.lock();
     if (pal_stream_handle_) {
         if(stream_paused_ == true)
         {
@@ -1476,12 +1495,12 @@ int StreamOutPrimary::Flush() {
         }
         total_bytes_written_ = 0;
     }
+    stream_mutex_.unlock();
 
     if (ret)
-        return -EINVAL;
-    else {
-        return ret;
-    }
+        ret =-EINVAL;
+
+    return ret;
 }
 
 int StreamOutPrimary::Drain(audio_drain_type_t type) {
@@ -1500,9 +1519,11 @@ int StreamOutPrimary::Drain(audio_drain_type_t type) {
            return -EINVAL;
     }
 
+    stream_mutex_.lock();
     if (pal_stream_handle_)
         ret = pal_stream_drain(pal_stream_handle_, palDrainType);
 
+    stream_mutex_.unlock();
     if (ret) {
         ALOGE("%s: Invalid drain type:%d", __func__, type);
     }
@@ -1513,11 +1534,12 @@ int StreamOutPrimary::Drain(audio_drain_type_t type) {
 int StreamOutPrimary::Standby() {
     int ret = 0;
 
+    stream_mutex_.lock();
     if (pal_stream_handle_) {
         ret = pal_stream_stop(pal_stream_handle_);
         if (ret) {
             ALOGE("%s: failed to stop stream.", __func__);
-            return -EINVAL;
+            ret = -EINVAL;
         }
     }
 
@@ -1533,9 +1555,10 @@ int StreamOutPrimary::Standby() {
     }
 
     if (ret)
-        return -EINVAL;
-    else
-        return ret;
+        ret = -EINVAL;
+
+    stream_mutex_.unlock();
+    return ret;
 }
 
 int StreamOutPrimary::SetParameters(struct str_parms *parms) {
@@ -1642,6 +1665,7 @@ int StreamOutPrimary::SetVolume(float left , float right) {
     int ret = 0;
     ALOGD("%s: left %f, right %f", __func__, left, right);
 
+    stream_mutex_.lock();
     /* free previously cached volume if any */
     if (volume_) {
         free(volume_);
@@ -1653,7 +1677,7 @@ int StreamOutPrimary::SetVolume(float left , float right) {
                     +sizeof(struct pal_channel_vol_kv));
         if (!volume_) {
             ret = -ENOMEM;
-            return ret;
+            goto done;
         }
         volume_->no_of_volpair = 1;
         volume_->volume_pair[0].channel_mask = 0x03;
@@ -1663,7 +1687,7 @@ int StreamOutPrimary::SetVolume(float left , float right) {
                     +sizeof(struct pal_channel_vol_kv) * 2);
         if (!volume_) {
             ret = -ENOMEM;
-            return ret;
+            goto done;
         }
         volume_->no_of_volpair = 2;
         volume_->volume_pair[0].channel_mask = 0x01;
@@ -1679,6 +1703,8 @@ int StreamOutPrimary::SetVolume(float left , float right) {
             ALOGE("Pal Stream volume Error (%x)", ret);
         }
     }
+done:
+    stream_mutex_.unlock();
     return ret;
 }
 
@@ -1716,6 +1742,7 @@ uint64_t StreamOutPrimary::GetFramesWritten(struct timespec *timestamp)
     size_t size = 0, kernel_buffer_size = 0;
     int32_t ret;
 
+    stream_mutex_.lock();
     /* This adjustment accounts for buffering after app processor
      * It is based on estimated DSP latency per use case, rather than exact.
      */
@@ -1724,6 +1751,7 @@ uint64_t StreamOutPrimary::GetFramesWritten(struct timespec *timestamp)
 
     if (!timestamp) {
        ALOGE("%s: timestamp NULL", __func__);
+       stream_mutex_.unlock();
        return 0;
     }
     written_frames = total_bytes_written_ / audio_bytes_per_frame(
@@ -1758,6 +1786,7 @@ uint64_t StreamOutPrimary::GetFramesWritten(struct timespec *timestamp)
 
         }
     }
+    stream_mutex_.unlock();
 
     if (signed_frames <= 0) {
        clock_gettime(CLOCK_MONOTONIC, timestamp);
@@ -2123,10 +2152,13 @@ ssize_t StreamOutPrimary::Write(const void *buffer, size_t bytes) {
     palBuffer.offset = 0;
 
     ALOGV("%s: handle_ %x Bytes:(%zu)", __func__, handle_, bytes);
+
+    stream_mutex_.lock();
     if (!pal_stream_handle_) {
         ret = Open();
         if (ret) {
             ALOGE("%s: failed to open stream.", __func__);
+            stream_mutex_.unlock();
             return -EINVAL;
         }
     }
@@ -2145,6 +2177,7 @@ ssize_t StreamOutPrimary::Write(const void *buffer, size_t bytes) {
             ALOGE("%s:failed to start stream. ret=%d", __func__, ret);
             pal_stream_close(pal_stream_handle_);
             pal_stream_handle_ = NULL;
+            stream_mutex_.unlock();
             return -EINVAL;
         }
 
@@ -2172,6 +2205,7 @@ ssize_t StreamOutPrimary::Write(const void *buffer, size_t bytes) {
     }
     local_bytes_written = pal_stream_write(pal_stream_handle_, &palBuffer);
     total_bytes_written_ += local_bytes_written;
+    stream_mutex_.unlock();
     clock_gettime(CLOCK_MONOTONIC, &writeAt);
     return local_bytes_written;
 }
@@ -2403,6 +2437,7 @@ StreamOutPrimary::~StreamOutPrimary() {
     ALOGD("%s: close stream, handle(%x), pal_stream_handle (%p)", __func__,
           handle_, pal_stream_handle_);
 
+    stream_mutex_.lock();
     if (pal_stream_handle_) {
         if (CheckOffloadEffectsType(streamAttributes_.type)) {
             StopOffloadEffects(handle_, pal_stream_handle_);
@@ -2417,6 +2452,7 @@ StreamOutPrimary::~StreamOutPrimary() {
     }
     if (convertBuffer)
         free(convertBuffer);
+    stream_mutex_.unlock();
 }
 
 bool StreamInPrimary::isDeviceAvailable(pal_device_id_t deviceId)
@@ -2432,6 +2468,7 @@ bool StreamInPrimary::isDeviceAvailable(pal_device_id_t deviceId)
 int StreamInPrimary::Stop() {
     int ret = -ENOSYS;
 
+    stream_mutex_.lock();
     if (usecase_ == USECASE_AUDIO_RECORD_MMAP &&
             pal_stream_handle_ && stream_started_) {
 
@@ -2439,12 +2476,14 @@ int StreamInPrimary::Stop() {
         if (ret == 0)
             stream_started_ = false;
     }
+    stream_mutex_.unlock();
     return ret;
 }
 
 int StreamInPrimary::Start() {
     int ret = -ENOSYS;
 
+    stream_mutex_.lock();
     if (usecase_ == USECASE_AUDIO_RECORD_MMAP &&
             pal_stream_handle_ && !stream_started_) {
 
@@ -2452,6 +2491,7 @@ int StreamInPrimary::Start() {
         if (ret == 0)
             stream_started_ = true;
     }
+    stream_mutex_.unlock();
     return ret;
 }
 
@@ -2461,14 +2501,17 @@ int StreamInPrimary::CreateMmapBuffer(int32_t min_size_frames,
     int ret;
     struct pal_mmap_buffer palMmapBuf = {};
 
+    stream_mutex_.lock();
     if (pal_stream_handle_) {
         ALOGE("%s: pal handle already created\n", __func__);
+        stream_mutex_.unlock();
         return -EINVAL;
     }
 
     ret = Open();
     if (ret) {
         ALOGE("%s: failed to open stream.", __func__);
+        stream_mutex_.unlock();
         return ret;
     }
 #ifndef LINUX_ENABLED
@@ -2476,6 +2519,7 @@ int StreamInPrimary::CreateMmapBuffer(int32_t min_size_frames,
             min_size_frames, &palMmapBuf);
     if (ret) {
         ALOGE("%s: failed to create mmap buffer: %d", __func__, ret);
+        stream_mutex_.unlock();
         Standby();
         return ret;
     }
@@ -2487,6 +2531,7 @@ int StreamInPrimary::CreateMmapBuffer(int32_t min_size_frames,
     info->flags = (audio_mmap_buffer_flag)palMmapBuf.flags;
 #endif
 
+    stream_mutex_.unlock();
     return ret;
 }
 
@@ -2495,19 +2540,23 @@ int StreamInPrimary::GetMmapPosition(struct audio_mmap_position *position)
     struct pal_mmap_position pal_mmap_pos;
     int32_t ret = 0;
 
+    stream_mutex_.lock();
     if (pal_stream_handle_ == nullptr) {
         ALOGE("%s: pal handle is null\n", __func__);
+        stream_mutex_.unlock();
         return -EINVAL;
     }
 
     ret = pal_stream_get_mmap_position(pal_stream_handle_, &pal_mmap_pos);
     if (ret) {
         ALOGE("%s: failed to get mmap position %d\n", __func__, ret);
+        stream_mutex_.unlock();
         return ret;
     }
     position->position_frames = pal_mmap_pos.position_frames;
     position->time_nanoseconds = pal_mmap_pos.time_nanoseconds;
 
+    stream_mutex_.unlock();
     return 0;
 }
 
@@ -2515,6 +2564,7 @@ int StreamInPrimary::Standby() {
     int ret = 0;
     std::shared_ptr<AudioDevice> adevice = AudioDevice::GetInstance();
 
+    stream_mutex_.lock();
     if (pal_stream_handle_) {
         if (!is_st_session) {
             ret = pal_stream_stop(pal_stream_handle_);
@@ -2535,9 +2585,10 @@ int StreamInPrimary::Standby() {
     }
 
     if (ret)
-        return -EINVAL;
-    else
-        return ret;
+        ret = -EINVAL;
+
+    stream_mutex_.unlock();
+    return ret;
 }
 
 int StreamInPrimary::addRemoveAudioEffect(const struct audio_stream *stream __unused,
@@ -2639,11 +2690,12 @@ int StreamInPrimary::SetGain(float gain) {
     struct pal_volume_data* volume;
     int ret = 0;
 
+    stream_mutex_.lock();
     volume = (struct pal_volume_data*)malloc(sizeof(uint32_t)
                 +sizeof(struct pal_channel_vol_kv));
     if (!volume) {
         ret = -ENOMEM;
-        return ret;
+        goto done;
     }
     volume->no_of_volpair = 1;
     volume->volume_pair[0].channel_mask = 0x03;
@@ -2655,6 +2707,8 @@ int StreamInPrimary::SetGain(float gain) {
         ALOGE("Pal Stream volume Error (%x)", ret);
     }
 
+done:
+    stream_mutex_.unlock();
     return ret;
 }
 
@@ -2981,6 +3035,8 @@ ssize_t StreamInPrimary::Read(const void *buffer, size_t bytes) {
     std::shared_ptr<AudioDevice> adevice = AudioDevice::GetInstance();
 
     ALOGD("%s: Bytes:(%zu)", __func__, bytes);
+
+    stream_mutex_.lock();
     if (!pal_stream_handle_) {
         ret = Open();
     }
@@ -3040,6 +3096,7 @@ ssize_t StreamInPrimary::Read(const void *buffer, size_t bytes) {
 exit:
     ALOGV("%s: Exit, bytes read %u", __func__, local_bytes_read);
 
+    stream_mutex_.unlock();
     return local_bytes_read;
 }
 
