@@ -418,4 +418,6 @@ int platform_set_hdmi_channels_v2(void *platform, int channel_count,
                                   int controller, int stream);
 int platform_get_display_port_ctl_index(int controller, int stream);
 void platform_check_and_set_device_ch_map(void *platform, int snd_device);
+bool platform_set_fluence_nn_state(void *platform, bool start);
+int platform_get_fluence_nn_state(void *platform);
 #endif // AUDIO_PLATFORM_API_H
