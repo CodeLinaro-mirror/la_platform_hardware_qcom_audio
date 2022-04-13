@@ -2472,7 +2472,13 @@ static void get_source_mic_type(struct platform_data * my_data)
     // support max to mono, example if max count is 3, usecase supports Three, dual and mono mic
     switch (my_data->max_mic_count) {
         case 10:
-            my_data->source_mic_type |= SOURCE_DEC_MIC;
+            if (my_data->fluence_type == (FLUENCE_QUAD_MIC | FLUENCE_DUAL_MIC)) {
+                my_data->source_mic_type |= (SOURCE_QUAD_MIC | SOURCE_THREE_MIC |
+                                             SOURCE_DUAL_MIC | SOURCE_MONO_MIC);
+                break;
+            } else {
+                my_data->source_mic_type |= SOURCE_DEC_MIC;
+            }
         case 8:
             my_data->source_mic_type |= SOURCE_OCT_MIC;
         case 6:
@@ -6054,8 +6060,12 @@ snd_device_t platform_get_input_snd_device(void *platform, audio_devices_t out_d
                             snd_device = SND_DEVICE_IN_HANDSET_GENERIC_6MIC;
                         } else if (my_data->source_mic_type & SOURCE_QUAD_MIC) {
                             snd_device = SND_DEVICE_IN_HANDSET_GENERIC_QMIC;
+                        } else if (my_data->source_mic_type & SOURCE_THREE_MIC) {
+                            snd_device = SND_DEVICE_IN_HANDSET_TMIC_FLUENCE_PRO;
                         } else if (my_data->source_mic_type & SOURCE_DUAL_MIC) {
                             snd_device = SND_DEVICE_IN_HANDSET_GENERIC_DMIC;
+                        } else if (my_data->source_mic_type & SOURCE_MONO_MIC) {
+                            snd_device = SND_DEVICE_IN_HANDSET_MIC_AEC_NS;
                         } else {
                             snd_device = SND_DEVICE_NONE;
                         }
@@ -6245,6 +6255,10 @@ snd_device_t platform_get_input_snd_device(void *platform, audio_devices_t out_d
                 } else if ((my_data->fluence_type & FLUENCE_DUAL_MIC) &&
                     (my_data->source_mic_type & SOURCE_DUAL_MIC)) {
                     snd_device = SND_DEVICE_IN_HANDSET_DMIC;
+                    platform_set_echo_reference(adev, true, out_device);
+                } else if ((my_data->fluence_type & FLUENCE_DUAL_MIC) &&
+                    (my_data->source_mic_type & SOURCE_MONO_MIC)) {
+                    snd_device = SND_DEVICE_IN_HANDSET_MIC;
                     platform_set_echo_reference(adev, true, out_device);
                 }
             }
