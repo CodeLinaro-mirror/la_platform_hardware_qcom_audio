@@ -38,6 +38,9 @@ AUDIO_FEATURE_ENABLED_A2DP_OFFLOAD := true
 AUDIO_FEATURE_ENABLED_3D_AUDIO := false
 DOLBY_ENABLE := false
 AUDIO_FEATURE_ENABLED_EXTENDED_COMPRESS_FORMAT := true
+SOONG_CONFIG_NAMESPACES += tinycompressnamespace
+SOONG_CONFIG_tinycompressnamespace := ext_compress_format_enabled
+SOONG_CONFIG_tinycompressnamespace_ext_compress_format_enabled := true
 endif
 
 USE_XML_AUDIO_POLICY_CONF := 1
@@ -400,7 +403,8 @@ vendor.audio.feature.audiozoom.enable=false \
 vendor.audio.feature.snd_mon.enable=false \
 vendor.audio.feature.auto_hal.enable=true \
 vendor.audio.feature.synth.enable=true \
-vendor.audio.feature.powerpolicy.enable=true
+vendor.audio.feature.powerpolicy.enable=true \
+vendor.audio.feature.concurrent_pcm_record.enable=true
 else
 # Non-Generic ODM varient related
 PRODUCT_ODM_PROPERTIES += \
@@ -448,7 +452,8 @@ vendor.audio.feature.audiozoom.enable=false \
 vendor.audio.feature.snd_mon.enable=false \
 vendor.audio.feature.auto_hal.enable=true \
 vendor.audio.feature.synth.enable=true \
-vendor.audio.feature.powerpolicy.enable=true
+vendor.audio.feature.powerpolicy.enable=true \
+vendor.audio.feature.concurrent_pcm_record.enable=true
 endif
 
 # for HIDL related packages
@@ -493,7 +498,7 @@ PRODUCT_PACKAGES_DEBUG += \
     AudioSettings
 
 # for HIDL related audiocontrol packages
-ifneq ($(PLATFORM_VERSION), 12)
+ifeq ( ,$(filter 12 Tiramisu,$(PLATFORM_VERSION)))
 PRODUCT_PACKAGES += \
     android.hardware.automotive.audiocontrol@2.0-service \
     android.hardware.automotive.audiocontrol@2.0
