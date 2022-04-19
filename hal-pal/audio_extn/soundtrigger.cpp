@@ -1,5 +1,7 @@
 /* Copyright (c) 2013-2014, 2016-2019 The Linux Foundation. All rights reserved.
  *
+ * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
  * met:
@@ -307,6 +309,7 @@ void* audio_extn_sound_trigger_check_and_get_session(StreamInPrimary *in_stream)
     struct sound_trigger_info *st_ses_info = nullptr;
     struct listnode *node = nullptr;
     void *handle = nullptr;
+    in_stream->is_st_session = false;
 
     ALOGV("%s: Enter", __func__);
     if (!st_dev || !in_stream) {
@@ -315,7 +318,6 @@ void* audio_extn_sound_trigger_check_and_get_session(StreamInPrimary *in_stream)
     }
 
     pthread_mutex_lock(&st_dev->lock);
-    in_stream->is_st_session = false;
     ALOGV("%s: list %d capture_handle %d", __func__,
           list_empty(&st_dev->st_ses_list), in_stream->GetHandle());
     list_for_each(node, &st_dev->st_ses_list) {
