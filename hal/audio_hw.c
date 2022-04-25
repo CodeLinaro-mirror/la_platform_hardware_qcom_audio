@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2020, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2020, 2022, The Linux Foundation. All rights reserved.
  * Not a Contribution.
  *
  * Copyright (C) 2013 The Android Open Source Project
@@ -526,9 +526,12 @@ static void enable_gcov()
 }
 #endif
 
+#if ANDROID_PLATFORM_SDK_VERSION >= 29
 static int in_set_microphone_direction(const struct audio_stream_in *stream,
                                            audio_microphone_direction_t dir);
+
 static int in_set_microphone_field_dimension(const struct audio_stream_in *stream, float zoom);
+#endif
 
 static bool may_use_noirq_mode(struct audio_device *adev, audio_usecase_t uc_id,
                                int flags __unused)
@@ -2388,14 +2391,16 @@ static inline int source_priority(int inputSource)
         return 9;
     case AUDIO_SOURCE_CAMCORDER:
         return 8;
+#if ANDROID_PLATFORM_SDK_VERSION >= 29
     case AUDIO_SOURCE_VOICE_PERFORMANCE:
         return 7;
+    case AUDIO_SOURCE_ECHO_REFERENCE:
+        return 4;
+#endif
     case AUDIO_SOURCE_UNPROCESSED:
         return 6;
     case AUDIO_SOURCE_MIC:
         return 5;
-    case AUDIO_SOURCE_ECHO_REFERENCE:
-        return 4;
     case AUDIO_SOURCE_FM_TUNER:
         return 3;
     case AUDIO_SOURCE_VOICE_RECOGNITION:
@@ -3049,8 +3054,11 @@ int start_input_stream(struct stream_in *in)
     }
 
     check_and_enable_effect(adev);
+
+#if ANDROID_PLATFORM_SDK_VERSION >= 29
     audio_extn_audiozoom_set_microphone_direction(in, in->zoom);
     audio_extn_audiozoom_set_microphone_field_dimension(in, in->direction);
+#endif
 
     if (is_loopback_input_device(in->device))
         audio_extn_keep_alive_start(KEEP_ALIVE_OUT_PRIMARY);
@@ -4724,6 +4732,7 @@ error:
     return ret;
 }
 
+#if ANDROID_PLATFORM_SDK_VERSION >= 29
 static int in_set_microphone_direction(const struct audio_stream_in *stream,
                                            audio_microphone_direction_t dir) {
     struct stream_in *in = (struct stream_in *)stream;
@@ -4753,7 +4762,7 @@ static int in_set_microphone_field_dimension(const struct audio_stream_in *strea
 
     return audio_extn_audiozoom_set_microphone_field_dimension(in, zoom);
 }
-
+#endif
 
 static bool stream_get_parameter_channels(struct str_parms *query,
                                           struct str_parms *reply,
@@ -7130,6 +7139,7 @@ static int adev_get_microphones(const struct audio_hw_device *dev,
     return ret;
 }
 
+#if ANDROID_PLATFORM_SDK_VERSION >= 29
 static void in_update_sink_metadata(struct audio_stream_in *stream,
                                     const struct sink_metadata *sink_metadata) {
 
@@ -7175,6 +7185,7 @@ static void in_update_sink_metadata(struct audio_stream_in *stream,
     pthread_mutex_unlock(&adev->lock);
     pthread_mutex_unlock(&in->lock);
 }
+#endif
 
 int adev_open_output_stream(struct audio_hw_device *dev,
                             audio_io_handle_t handle,
@@ -7197,8 +7208,10 @@ int adev_open_output_stream(struct audio_hw_device *dev,
     bool use_db_as_primary =
          property_get_bool("vendor.audio.feature.deepbuffer_as_primary.enable",
                             false);
+#if ANDROID_PLATFORM_SDK_VERSION >= 29
     bool force_haptic_path =
             property_get_bool("vendor.audio.test_haptic", false);
+#endif
     bool is_voip_rx = flags & AUDIO_OUTPUT_FLAG_VOIP_RX;
 
     if (is_usb_dev && (!audio_extn_usb_connected(NULL))) {
@@ -7841,7 +7854,9 @@ int adev_open_output_stream(struct audio_hw_device *dev,
         } else if (flags & AUDIO_OUTPUT_FLAG_TTS) {
             out->usecase = USECASE_AUDIO_PLAYBACK_TTS;
             out->config = pcm_config_deep_buffer;
-        } else if (config->channel_mask & AUDIO_CHANNEL_HAPTIC_ALL) {
+        }
+#if ANDROID_PLATFORM_SDK_VERSION >= 29
+        else if (config->channel_mask & AUDIO_CHANNEL_HAPTIC_ALL) {
             out->usecase = USECASE_AUDIO_PLAYBACK_WITH_HAPTICS;
             out->config = pcm_config_haptics_audio;
             if (force_haptic_path)
@@ -7857,7 +7872,9 @@ int adev_open_output_stream(struct audio_hw_device *dev,
                 adev->haptics_config.channels = 1;
             } else
                 adev->haptics_config.channels = audio_channel_count_from_out_mask(out->channel_mask & AUDIO_CHANNEL_HAPTIC_ALL);
-        } else if (out->devices & AUDIO_DEVICE_OUT_BUS) {
+        }
+#endif
+        else if (out->devices & AUDIO_DEVICE_OUT_BUS) {
             ret = audio_extn_auto_hal_open_output_stream(out);
             if (ret) {
                 ALOGE("%s: Failed to open output stream for bus device", __func__);
@@ -8755,9 +8772,11 @@ static int adev_open_input_stream(struct audio_hw_device *dev,
     in->stream.get_input_frames_lost = in_get_input_frames_lost;
     in->stream.get_capture_position = in_get_capture_position;
     in->stream.get_active_microphones = in_get_active_microphones;
+#if ANDROID_PLATFORM_SDK_VERSION >= 29
     in->stream.set_microphone_direction = in_set_microphone_direction;
     in->stream.set_microphone_field_dimension = in_set_microphone_field_dimension;
     in->stream.update_sink_metadata = in_update_sink_metadata;
+#endif
 
     in->device = devices;
     in->source = source;
@@ -8767,7 +8786,9 @@ static int adev_open_input_stream(struct audio_hw_device *dev,
     in->flags = flags;
     in->bit_width = 16;
     in->af_period_multiplier = 1;
+#if ANDROID_PLATFORM_SDK_VERSION >= 29
     in->direction = MIC_DIRECTION_UNSPECIFIED;
+#endif
     in->zoom = 0;
     list_init(&in->aec_list);
     list_init(&in->ns_list);
@@ -9872,7 +9893,9 @@ static int adev_open(const hw_module_t *module, const char *name,
     adev->is_charging = audio_extn_battery_properties_is_charging();
     audio_extn_sound_trigger_init(adev); /* dependent on snd_mon_init() */
     audio_extn_sound_trigger_update_battery_status(adev->is_charging);
+#if ANDROID_PLATFORM_SDK_VERSION >= 29
     audio_extn_audiozoom_init();
+#endif
     pthread_mutex_unlock(&adev->lock);
     /* Allocate memory for Device config params */
     adev->device_cfg_params = (struct audio_device_config_param*)

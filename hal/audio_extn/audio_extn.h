@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2019, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2019, 2022, The Linux Foundation. All rights reserved.
  * Not a Contribution.
  *
  * Copyright (C) 2013 The Android Open Source Project
@@ -345,6 +345,7 @@ typedef struct a2dp_offload_init_config a2dp_offload_init_config_t;
 typedef int (*fp_platform_set_parameters_t)(void*, struct str_parms*);
 
 // START: AUDIOZOOM FEATURE ==================================================
+#if ANDROID_PLATFORM_SDK_VERSION >= 29
 int audio_extn_audiozoom_init();
 int audio_extn_audiozoom_set_microphone_direction(struct stream_in *stream,
                                            audio_microphone_direction_t dir);
@@ -355,6 +356,7 @@ struct audiozoom_init_config {
     fp_platform_set_parameters_t fp_platform_set_parameters;
 };
 typedef struct audiozoom_init_config audiozoom_init_config_t;
+#endif
 // END:   AUDIOZOOM FEATURE ==================================================
 
 // START: MAXX_AUDIO FEATURE ==================================================

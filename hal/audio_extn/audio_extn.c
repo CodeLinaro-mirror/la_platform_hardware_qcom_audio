@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2021, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2021, 2022, The Linux Foundation. All rights reserved.
  * Not a Contribution.
  *
  * Copyright (C) 2013 The Android Open Source Project
@@ -191,7 +191,6 @@ static bool audio_extn_concurrent_capture_enabled = false;
 static bool audio_extn_compress_in_enabled = false;
 static bool audio_extn_battery_listener_enabled = false;
 static bool audio_extn_maxx_audio_enabled = false;
-static bool audio_extn_audiozoom_enabled = false;
 static bool audio_extn_hifi_filter_enabled = false;
 
 #define AUDIO_PARAMETER_KEY_AANC_NOISE_LEVEL "aanc_noise_level"
@@ -776,7 +775,7 @@ static int update_custom_mtmx_coefficients_v1(struct audio_device *adev,
     mixer_ctl_set_value(ctl, 0, rule);
 
     /* Send channel coefficients for each output channel */
-    for (i = 0; i < mtrx_row_cnt; i++) {
+    for (i = 0; i < (int)mtrx_row_cnt; i++) {
         snprintf(mixer_ctl_name, sizeof(mixer_ctl_name), "%s %s%d",
                  mixer_name_prefix, "Output Channel", i+1);
         ctl = mixer_get_ctl_by_name(adev->mixer, mixer_ctl_name);
@@ -3652,16 +3651,16 @@ void hdmi_edid_feature_init(bool is_feature_enabled)
         //map each function
         //on any faliure to map any function, disble feature
         if (((hdmi_edid_is_supported_sr =
-             (hdmi_edid_is_supported_sr_t)dlsym(hdmi_edid_lib_handle, 
+             (hdmi_edid_is_supported_sr_t)dlsym(hdmi_edid_lib_handle,
                                                 "edid_is_supported_sr")) == NULL) ||
             ((hdmi_edid_is_supported_bps =
              (hdmi_edid_is_supported_bps_t)dlsym(hdmi_edid_lib_handle,
                                                 "edid_is_supported_bps")) == NULL) ||
             ((hdmi_edid_get_highest_supported_sr =
-             (hdmi_edid_get_highest_supported_sr_t)dlsym(hdmi_edid_lib_handle, 
+             (hdmi_edid_get_highest_supported_sr_t)dlsym(hdmi_edid_lib_handle,
                                                 "edid_get_highest_supported_sr")) == NULL) ||
             ((hdmi_edid_get_sink_caps =
-             (hdmi_edid_get_sink_caps_t)dlsym(hdmi_edid_lib_handle, 
+             (hdmi_edid_get_sink_caps_t)dlsym(hdmi_edid_lib_handle,
                                                 "edid_get_sink_caps")) == NULL)) {
             ALOGE("%s: dlsym failed", __func__);
             goto feature_disabled;
@@ -5254,12 +5253,15 @@ bool audio_extn_is_hifi_filter_enabled(struct audio_device* adev, struct stream_
 // END: HiFi Filter Feature ==============================================================
 
 // START: AUDIOZOOM_FEATURE =====================================================================
+#if ANDROID_PLATFORM_SDK_VERSION >= 29
+
 #ifdef __LP64__
 #define AUDIOZOOM_LIB_PATH "/vendor/lib64/libaudiozoom.so"
 #else
 #define AUDIOZOOM_LIB_PATH "/vendor/lib/libaudiozoom.so"
 #endif
 
+static bool audio_extn_audiozoom_enabled = false;
 static void *audiozoom_lib_handle = NULL;
 
 typedef int (*audiozoom_init_t)(audiozoom_init_config_t);
@@ -5350,6 +5352,7 @@ int audio_extn_audiozoom_set_microphone_field_dimension(struct stream_in *stream
 
     return ret_val;
 }
+#endif
 // END:   AUDIOZOOM_FEATURE =====================================================================
 
 // START: MAXX_AUDIO =====================================================================
@@ -5591,9 +5594,11 @@ void audio_extn_feature_init()
     maxx_audio_feature_init(
         property_get_bool("vendor.audio.feature.maxx_audio.enable",
                            true));
+#if ANDROID_PLATFORM_SDK_VERSION >= 29
     audiozoom_feature_init(
         property_get_bool("vendor.audio.feature.audiozoom.enable",
                            true));
+#endif
 }
 
 void audio_extn_set_parameters(struct audio_device *adev,

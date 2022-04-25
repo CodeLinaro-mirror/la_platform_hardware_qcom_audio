@@ -146,9 +146,12 @@ LOCAL_SHARED_LIBRARIES := \
     libhwbinder \
     libhidlbase \
     libhidltransport \
-    libprocessgroup \
     libutils \
     libhardware_legacy
+
+ifeq ($(strip $(USE_LIB_PROCESS_GROUP)),true)
+LOCAL_SHARED_LIBRARIES += libprocessgroup
+endif
 
 LOCAL_C_INCLUDES += \
     external/tinyalsa/include \
@@ -378,6 +381,8 @@ LOCAL_MODULE_TAGS := optional
 LOCAL_MODULE_OWNER := qti
 
 LOCAL_VENDOR_MODULE := true
+
+LOCAL_CFLAGS += -DANDROID_PLATFORM_SDK_VERSION=$(PLATFORM_SDK_VERSION)
 
 include $(BUILD_SHARED_LIBRARY)
 

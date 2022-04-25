@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2019, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2019, 2022, The Linux Foundation. All rights reserved.
  * Not a contribution.
  *
  * Copyright (C) 2013 The Android Open Source Project
@@ -473,7 +473,9 @@ struct stream_in {
     card_status_t card_status;
     int capture_started;
     float zoom;
+#if ANDROID_PLATFORM_SDK_VERSION >= 29
     audio_microphone_direction_t direction;
+#endif
 
     volatile int32_t capture_stopped;
 
