@@ -1,0 +1,10 @@
+prefix=@prefix@
+exec_prefix=@exec_prefix@
+libdir=@libdir@
+includedir=@includedir@
+
+Name: hal-pal
+Description: hal-pal library
+Version: @VERSION@
+Libs: -L${libdir} -lhal-pal
+Cflags: -I${includedir}/hal-pal
