@@ -2,6 +2,8 @@
  * Copyright (c) 2013-2021, The Linux Foundation. All rights reserved.
  * Not a Contribution.
  *
+ * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ *
  * Copyright (C) 2013 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -703,7 +705,7 @@ enum {
 };
 
 // START: MST ==================================================
-#define MAX_CONTROLLERS 1
+#define MAX_CONTROLLERS 2
 #define MAX_STREAMS_PER_CONTROLLER 2
 // END: MST ==================================================
 
