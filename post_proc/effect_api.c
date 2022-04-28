@@ -188,7 +188,7 @@ static int bassboost_send_params(eff_mode_t mode, void *ctl,
     *p_param_values++ = 0; /* num of commands*/
     if (param_send_flags & OFFLOAD_SEND_BASSBOOST_ENABLE_FLAG) {
         *p_param_values++ = BASS_BOOST_ENABLE;
-        *p_param_values++ = CONFIG_SET;
+        *p_param_values++ = AUDIO_EFFECTS_CONFIG_SET;
         *p_param_values++ = 0; /* start offset if param size if greater than 128  */
         *p_param_values++ = BASS_BOOST_ENABLE_PARAM_LEN;
         *p_param_values++ = bassboost->enable_flag;
@@ -196,7 +196,7 @@ static int bassboost_send_params(eff_mode_t mode, void *ctl,
     }
     if (param_send_flags & OFFLOAD_SEND_BASSBOOST_STRENGTH) {
         *p_param_values++ = BASS_BOOST_STRENGTH;
-        *p_param_values++ = CONFIG_SET;
+        *p_param_values++ = AUDIO_EFFECTS_CONFIG_SET;
         *p_param_values++ = 0; /* start offset if param size if greater than 128  */
         *p_param_values++ = BASS_BOOST_STRENGTH_PARAM_LEN;
         *p_param_values++ = bassboost->strength;
@@ -204,7 +204,7 @@ static int bassboost_send_params(eff_mode_t mode, void *ctl,
     }
     if (param_send_flags & OFFLOAD_SEND_BASSBOOST_MODE) {
         *p_param_values++ = BASS_BOOST_MODE;
-        *p_param_values++ = CONFIG_SET;
+        *p_param_values++ = AUDIO_EFFECTS_CONFIG_SET;
         *p_param_values++ = 0; /* start offset if param size if greater than 128  */
         *p_param_values++ = BASS_BOOST_MODE_PARAM_LEN;
         *p_param_values++ = bassboost->mode;
@@ -272,7 +272,7 @@ static int pbe_send_params(eff_mode_t mode, void *ctl,
     *p_param_values++ = 0; /* num of commands*/
     if (param_send_flags & OFFLOAD_SEND_PBE_ENABLE_FLAG) {
         *p_param_values++ = PBE_ENABLE;
-        *p_param_values++ = CONFIG_SET;
+        *p_param_values++ = AUDIO_EFFECTS_CONFIG_SET;
         *p_param_values++ = 0; /* start offset if param size if greater than 128  */
         *p_param_values++ = PBE_ENABLE_PARAM_LEN;
         *p_param_values++ = pbe->enable_flag;
@@ -280,7 +280,7 @@ static int pbe_send_params(eff_mode_t mode, void *ctl,
     }
     if (param_send_flags & OFFLOAD_SEND_PBE_CONFIG) {
         *p_param_values++ = PBE_CONFIG;
-        *p_param_values++ = CONFIG_SET;
+        *p_param_values++ = AUDIO_EFFECTS_CONFIG_SET;
         *p_param_values++ = 0; /* start offset if param size if greater than 128  */
         *p_param_values++ = pbe->cfg_len;
         cfg = (int *)&pbe->config;
@@ -378,7 +378,7 @@ static int virtualizer_send_params(eff_mode_t mode, void *ctl,
     *p_param_values++ = 0; /* num of commands*/
     if (param_send_flags & OFFLOAD_SEND_VIRTUALIZER_ENABLE_FLAG) {
         *p_param_values++ = VIRTUALIZER_ENABLE;
-        *p_param_values++ = CONFIG_SET;
+        *p_param_values++ = AUDIO_EFFECTS_CONFIG_SET;
         *p_param_values++ = 0; /* start offset if param size if greater than 128  */
         *p_param_values++ = VIRTUALIZER_ENABLE_PARAM_LEN;
         *p_param_values++ = virtualizer->enable_flag;
@@ -386,7 +386,7 @@ static int virtualizer_send_params(eff_mode_t mode, void *ctl,
     }
     if (param_send_flags & OFFLOAD_SEND_VIRTUALIZER_STRENGTH) {
         *p_param_values++ = VIRTUALIZER_STRENGTH;
-        *p_param_values++ = CONFIG_SET;
+        *p_param_values++ = AUDIO_EFFECTS_CONFIG_SET;
         *p_param_values++ = 0; /* start offset if param size if greater than 128  */
         *p_param_values++ = VIRTUALIZER_STRENGTH_PARAM_LEN;
         *p_param_values++ = virtualizer->strength;
@@ -394,7 +394,7 @@ static int virtualizer_send_params(eff_mode_t mode, void *ctl,
     }
     if (param_send_flags & OFFLOAD_SEND_VIRTUALIZER_OUT_TYPE) {
         *p_param_values++ = VIRTUALIZER_OUT_TYPE;
-        *p_param_values++ = CONFIG_SET;
+        *p_param_values++ = AUDIO_EFFECTS_CONFIG_SET;
         *p_param_values++ = 0; /* start offset if param size if greater than 128  */
         *p_param_values++ = VIRTUALIZER_OUT_TYPE_PARAM_LEN;
         *p_param_values++ = virtualizer->out_type;
@@ -402,7 +402,7 @@ static int virtualizer_send_params(eff_mode_t mode, void *ctl,
     }
     if (param_send_flags & OFFLOAD_SEND_VIRTUALIZER_GAIN_ADJUST) {
         *p_param_values++ = VIRTUALIZER_GAIN_ADJUST;
-        *p_param_values++ = CONFIG_SET;
+        *p_param_values++ = AUDIO_EFFECTS_CONFIG_SET;
         *p_param_values++ = 0; /* start offset if param size if greater than 128  */
         *p_param_values++ = VIRTUALIZER_GAIN_ADJUST_PARAM_LEN;
         *p_param_values++ = virtualizer->gain_adjust;
@@ -504,7 +504,7 @@ static int eq_send_params(eff_mode_t mode, void *ctl, struct eq_params *eq,
     *p_param_values++ = 0; /* num of commands*/
     if (param_send_flags & OFFLOAD_SEND_EQ_ENABLE_FLAG) {
         *p_param_values++ = EQ_ENABLE;
-        *p_param_values++ = CONFIG_SET;
+        *p_param_values++ = AUDIO_EFFECTS_CONFIG_SET;
         *p_param_values++ = 0; /* start offset if param size if greater than 128  */
         *p_param_values++ = EQ_ENABLE_PARAM_LEN;
         *p_param_values++ = eq->enable_flag;
@@ -512,7 +512,7 @@ static int eq_send_params(eff_mode_t mode, void *ctl, struct eq_params *eq,
     }
     if (param_send_flags & OFFLOAD_SEND_EQ_PRESET) {
         *p_param_values++ = EQ_CONFIG;
-        *p_param_values++ = CONFIG_SET;
+        *p_param_values++ = AUDIO_EFFECTS_CONFIG_SET;
         *p_param_values++ = 0; /* start offset if param size if greater than 128  */
         *p_param_values++ = EQ_CONFIG_PARAM_LEN;
         *p_param_values++ = eq->config.eq_pregain;
@@ -523,7 +523,7 @@ static int eq_send_params(eff_mode_t mode, void *ctl, struct eq_params *eq,
     }
     if (param_send_flags & OFFLOAD_SEND_EQ_BANDS_LEVEL) {
         *p_param_values++ = EQ_CONFIG;
-        *p_param_values++ = CONFIG_SET;
+        *p_param_values++ = AUDIO_EFFECTS_CONFIG_SET;
         *p_param_values++ = 0; /* start offset if param size if greater than 128  */
         *p_param_values++ = EQ_CONFIG_PARAM_LEN +
                             eq->config.num_bands * EQ_CONFIG_PER_BAND_PARAM_LEN;
@@ -688,7 +688,7 @@ static int reverb_send_params(eff_mode_t mode, void *ctl,
 
     if (param_send_flags & OFFLOAD_SEND_REVERB_ENABLE_FLAG) {
         *p_param_values++ = REVERB_ENABLE;
-        *p_param_values++ = CONFIG_SET;
+        *p_param_values++ = AUDIO_EFFECTS_CONFIG_SET;
         *p_param_values++ = 0; /* start offset if param size if greater than 128  */
         *p_param_values++ = REVERB_ENABLE_PARAM_LEN;
         *p_param_values++ = reverb->enable_flag;
@@ -696,7 +696,7 @@ static int reverb_send_params(eff_mode_t mode, void *ctl,
     }
     if (param_send_flags & OFFLOAD_SEND_REVERB_MODE) {
         *p_param_values++ = REVERB_MODE;
-        *p_param_values++ = CONFIG_SET;
+        *p_param_values++ = AUDIO_EFFECTS_CONFIG_SET;
         *p_param_values++ = 0; /* start offset if param size if greater than 128  */
         *p_param_values++ = REVERB_MODE_PARAM_LEN;
         *p_param_values++ = reverb->mode;
@@ -704,7 +704,7 @@ static int reverb_send_params(eff_mode_t mode, void *ctl,
     }
     if (param_send_flags & OFFLOAD_SEND_REVERB_PRESET) {
         *p_param_values++ = REVERB_PRESET;
-        *p_param_values++ = CONFIG_SET;
+        *p_param_values++ = AUDIO_EFFECTS_CONFIG_SET;
         *p_param_values++ = 0; /* start offset if param size if greater than 128  */
         *p_param_values++ = REVERB_PRESET_PARAM_LEN;
         *p_param_values++ = reverb->preset;
@@ -712,7 +712,7 @@ static int reverb_send_params(eff_mode_t mode, void *ctl,
     }
     if (param_send_flags & OFFLOAD_SEND_REVERB_WET_MIX) {
         *p_param_values++ = REVERB_WET_MIX;
-        *p_param_values++ = CONFIG_SET;
+        *p_param_values++ = AUDIO_EFFECTS_CONFIG_SET;
         *p_param_values++ = 0; /* start offset if param size if greater than 128  */
         *p_param_values++ = REVERB_WET_MIX_PARAM_LEN;
         *p_param_values++ = reverb->wet_mix;
@@ -720,7 +720,7 @@ static int reverb_send_params(eff_mode_t mode, void *ctl,
     }
     if (param_send_flags & OFFLOAD_SEND_REVERB_GAIN_ADJUST) {
         *p_param_values++ = REVERB_GAIN_ADJUST;
-        *p_param_values++ = CONFIG_SET;
+        *p_param_values++ = AUDIO_EFFECTS_CONFIG_SET;
         *p_param_values++ = 0; /* start offset if param size if greater than 128  */
         *p_param_values++ = REVERB_GAIN_ADJUST_PARAM_LEN;
         *p_param_values++ = reverb->gain_adjust;
@@ -728,7 +728,7 @@ static int reverb_send_params(eff_mode_t mode, void *ctl,
     }
     if (param_send_flags & OFFLOAD_SEND_REVERB_ROOM_LEVEL) {
         *p_param_values++ = REVERB_ROOM_LEVEL;
-        *p_param_values++ = CONFIG_SET;
+        *p_param_values++ = AUDIO_EFFECTS_CONFIG_SET;
         *p_param_values++ = 0; /* start offset if param size if greater than 128  */
         *p_param_values++ = REVERB_ROOM_LEVEL_PARAM_LEN;
         *p_param_values++ = reverb->room_level;
@@ -736,7 +736,7 @@ static int reverb_send_params(eff_mode_t mode, void *ctl,
     }
     if (param_send_flags & OFFLOAD_SEND_REVERB_ROOM_HF_LEVEL) {
         *p_param_values++ = REVERB_ROOM_HF_LEVEL;
-        *p_param_values++ = CONFIG_SET;
+        *p_param_values++ = AUDIO_EFFECTS_CONFIG_SET;
         *p_param_values++ = 0; /* start offset if param size if greater than 128  */
         *p_param_values++ = REVERB_ROOM_HF_LEVEL_PARAM_LEN;
         *p_param_values++ = reverb->room_hf_level;
@@ -744,7 +744,7 @@ static int reverb_send_params(eff_mode_t mode, void *ctl,
     }
     if (param_send_flags & OFFLOAD_SEND_REVERB_DECAY_TIME) {
         *p_param_values++ = REVERB_DECAY_TIME;
-        *p_param_values++ = CONFIG_SET;
+        *p_param_values++ = AUDIO_EFFECTS_CONFIG_SET;
         *p_param_values++ = 0; /* start offset if param size if greater than 128  */
         *p_param_values++ = REVERB_DECAY_TIME_PARAM_LEN;
         *p_param_values++ = reverb->decay_time;
@@ -752,7 +752,7 @@ static int reverb_send_params(eff_mode_t mode, void *ctl,
     }
     if (param_send_flags & OFFLOAD_SEND_REVERB_DECAY_HF_RATIO) {
         *p_param_values++ = REVERB_DECAY_HF_RATIO;
-        *p_param_values++ = CONFIG_SET;
+        *p_param_values++ = AUDIO_EFFECTS_CONFIG_SET;
         *p_param_values++ = 0; /* start offset if param size if greater than 128  */
         *p_param_values++ = REVERB_DECAY_HF_RATIO_PARAM_LEN;
         *p_param_values++ = reverb->decay_hf_ratio;
@@ -760,7 +760,7 @@ static int reverb_send_params(eff_mode_t mode, void *ctl,
     }
     if (param_send_flags & OFFLOAD_SEND_REVERB_REFLECTIONS_LEVEL) {
         *p_param_values++ = REVERB_REFLECTIONS_LEVEL;
-        *p_param_values++ = CONFIG_SET;
+        *p_param_values++ = AUDIO_EFFECTS_CONFIG_SET;
         *p_param_values++ = 0; /* start offset if param size if greater than 128  */
         *p_param_values++ = REVERB_REFLECTIONS_LEVEL_PARAM_LEN;
         *p_param_values++ = reverb->reflections_level;
@@ -768,7 +768,7 @@ static int reverb_send_params(eff_mode_t mode, void *ctl,
     }
     if (param_send_flags & OFFLOAD_SEND_REVERB_REFLECTIONS_DELAY) {
         *p_param_values++ = REVERB_REFLECTIONS_DELAY;
-        *p_param_values++ = CONFIG_SET;
+        *p_param_values++ = AUDIO_EFFECTS_CONFIG_SET;
         *p_param_values++ = 0; /* start offset if param size if greater than 128  */
         *p_param_values++ = REVERB_REFLECTIONS_DELAY_PARAM_LEN;
         *p_param_values++ = reverb->reflections_delay;
@@ -776,7 +776,7 @@ static int reverb_send_params(eff_mode_t mode, void *ctl,
     }
     if (param_send_flags & OFFLOAD_SEND_REVERB_LEVEL) {
         *p_param_values++ = REVERB_LEVEL;
-        *p_param_values++ = CONFIG_SET;
+        *p_param_values++ = AUDIO_EFFECTS_CONFIG_SET;
         *p_param_values++ = 0; /* start offset if param size if greater than 128  */
         *p_param_values++ = REVERB_LEVEL_PARAM_LEN;
         *p_param_values++ = reverb->level;
@@ -784,7 +784,7 @@ static int reverb_send_params(eff_mode_t mode, void *ctl,
     }
     if (param_send_flags & OFFLOAD_SEND_REVERB_DELAY) {
         *p_param_values++ = REVERB_DELAY;
-        *p_param_values++ = CONFIG_SET;
+        *p_param_values++ = AUDIO_EFFECTS_CONFIG_SET;
         *p_param_values++ = 0; /* start offset if param size if greater than 128  */
         *p_param_values++ = REVERB_DELAY_PARAM_LEN;
         *p_param_values++ = reverb->delay;
@@ -792,7 +792,7 @@ static int reverb_send_params(eff_mode_t mode, void *ctl,
     }
     if (param_send_flags & OFFLOAD_SEND_REVERB_DIFFUSION) {
         *p_param_values++ = REVERB_DIFFUSION;
-        *p_param_values++ = CONFIG_SET;
+        *p_param_values++ = AUDIO_EFFECTS_CONFIG_SET;
         *p_param_values++ = 0; /* start offset if param size if greater than 128  */
         *p_param_values++ = REVERB_DIFFUSION_PARAM_LEN;
         *p_param_values++ = reverb->diffusion;
@@ -800,7 +800,7 @@ static int reverb_send_params(eff_mode_t mode, void *ctl,
     }
     if (param_send_flags & OFFLOAD_SEND_REVERB_DENSITY) {
         *p_param_values++ = REVERB_DENSITY;
-        *p_param_values++ = CONFIG_SET;
+        *p_param_values++ = AUDIO_EFFECTS_CONFIG_SET;
         *p_param_values++ = 0; /* start offset if param size if greater than 128  */
         *p_param_values++ = REVERB_DENSITY_PARAM_LEN;
         *p_param_values++ = reverb->density;
@@ -867,7 +867,7 @@ int offload_soft_volume_send_params(struct mixer_ctl *ctl,
     *p_param_values++ = 0; /* num of commands*/
     if (param_send_flags & OFFLOAD_SEND_SOFT_VOLUME_ENABLE_FLAG) {
         *p_param_values++ = SOFT_VOLUME_ENABLE;
-        *p_param_values++ = CONFIG_SET;
+        *p_param_values++ = AUDIO_EFFECTS_CONFIG_SET;
         *p_param_values++ = 0; /* start offset if param size if greater than 128  */
         *p_param_values++ = SOFT_VOLUME_ENABLE_PARAM_LEN;
         *p_param_values++ = vol.enable_flag;
@@ -875,7 +875,7 @@ int offload_soft_volume_send_params(struct mixer_ctl *ctl,
     }
     if (param_send_flags & OFFLOAD_SEND_SOFT_VOLUME_GAIN_MASTER) {
         *p_param_values++ = SOFT_VOLUME_GAIN_MASTER;
-        *p_param_values++ = CONFIG_SET;
+        *p_param_values++ = AUDIO_EFFECTS_CONFIG_SET;
         *p_param_values++ = 0; /* start offset if param size if greater than 128  */
         *p_param_values++ = SOFT_VOLUME_GAIN_MASTER_PARAM_LEN;
         *p_param_values++ = vol.master_gain;
@@ -883,7 +883,7 @@ int offload_soft_volume_send_params(struct mixer_ctl *ctl,
     }
     if (param_send_flags & OFFLOAD_SEND_SOFT_VOLUME_GAIN_2CH) {
         *p_param_values++ = SOFT_VOLUME_GAIN_2CH;
-        *p_param_values++ = CONFIG_SET;
+        *p_param_values++ = AUDIO_EFFECTS_CONFIG_SET;
         *p_param_values++ = 0; /* start offset if param size if greater than 128  */
         *p_param_values++ = SOFT_VOLUME_GAIN_2CH_PARAM_LEN;
         *p_param_values++ = vol.left_gain;
@@ -932,7 +932,7 @@ int offload_transition_soft_volume_send_params(struct mixer_ctl *ctl,
     *p_param_values++ = 0; /* num of commands*/
     if (param_send_flags & OFFLOAD_SEND_TRANSITION_SOFT_VOLUME_ENABLE_FLAG) {
         *p_param_values++ = SOFT_VOLUME2_ENABLE;
-        *p_param_values++ = CONFIG_SET;
+        *p_param_values++ = AUDIO_EFFECTS_CONFIG_SET;
         *p_param_values++ = 0; /* start offset if param size if greater than 128  */
         *p_param_values++ = SOFT_VOLUME2_ENABLE_PARAM_LEN;
         *p_param_values++ = vol.enable_flag;
@@ -940,7 +940,7 @@ int offload_transition_soft_volume_send_params(struct mixer_ctl *ctl,
     }
     if (param_send_flags & OFFLOAD_SEND_TRANSITION_SOFT_VOLUME_GAIN_MASTER) {
         *p_param_values++ = SOFT_VOLUME2_GAIN_MASTER;
-        *p_param_values++ = CONFIG_SET;
+        *p_param_values++ = AUDIO_EFFECTS_CONFIG_SET;
         *p_param_values++ = 0; /* start offset if param size if greater than 128  */
         *p_param_values++ = SOFT_VOLUME2_GAIN_MASTER_PARAM_LEN;
         *p_param_values++ = vol.master_gain;
@@ -948,7 +948,7 @@ int offload_transition_soft_volume_send_params(struct mixer_ctl *ctl,
     }
     if (param_send_flags & OFFLOAD_SEND_TRANSITION_SOFT_VOLUME_GAIN_2CH) {
         *p_param_values++ = SOFT_VOLUME2_GAIN_2CH;
-        *p_param_values++ = CONFIG_SET;
+        *p_param_values++ = AUDIO_EFFECTS_CONFIG_SET;
         *p_param_values++ = 0; /* start offset if param size if greater than 128  */
         *p_param_values++ = SOFT_VOLUME2_GAIN_2CH_PARAM_LEN;
         *p_param_values++ = vol.left_gain;
