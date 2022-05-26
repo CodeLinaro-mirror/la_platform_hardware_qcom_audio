@@ -5,7 +5,7 @@ BOARD_USES_ALSA_AUDIO := true
 
 ifneq ($(TARGET_USES_AOSP_FOR_AUDIO), true)
 ifeq ($(TARGET_FWK_SUPPORTS_FULL_VALUEADDS),true)
-USE_CUSTOM_AUDIO_POLICY := 1
+USE_CUSTOM_AUDIO_POLICY := 0
 else
 USE_CUSTOM_AUDIO_POLICY := 0
 endif
@@ -38,6 +38,9 @@ AUDIO_FEATURE_ENABLED_A2DP_OFFLOAD := true
 AUDIO_FEATURE_ENABLED_3D_AUDIO := false
 DOLBY_ENABLE := false
 AUDIO_FEATURE_ENABLED_EXTENDED_COMPRESS_FORMAT := true
+SOONG_CONFIG_NAMESPACES += tinycompressnamespace
+SOONG_CONFIG_tinycompressnamespace := ext_compress_format_enabled
+SOONG_CONFIG_tinycompressnamespace_ext_compress_format_enabled := true
 endif
 
 USE_XML_AUDIO_POLICY_CONF := 1
@@ -400,7 +403,8 @@ vendor.audio.feature.audiozoom.enable=false \
 vendor.audio.feature.snd_mon.enable=false \
 vendor.audio.feature.auto_hal.enable=true \
 vendor.audio.feature.synth.enable=true \
-vendor.audio.feature.powerpolicy.enable=true
+vendor.audio.feature.powerpolicy.enable=true \
+vendor.audio.feature.concurrent_pcm_record.enable=true
 else
 # Non-Generic ODM varient related
 PRODUCT_ODM_PROPERTIES += \
@@ -448,7 +452,8 @@ vendor.audio.feature.audiozoom.enable=false \
 vendor.audio.feature.snd_mon.enable=false \
 vendor.audio.feature.auto_hal.enable=true \
 vendor.audio.feature.synth.enable=true \
-vendor.audio.feature.powerpolicy.enable=true
+vendor.audio.feature.powerpolicy.enable=true \
+vendor.audio.feature.concurrent_pcm_record.enable=true
 endif
 
 # for HIDL related packages
