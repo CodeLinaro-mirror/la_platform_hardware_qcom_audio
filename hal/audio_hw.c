@@ -4383,7 +4383,7 @@ static int out_set_parameters(struct audio_stream *stream, const char *kvpairs)
     if (err >= 0) {
         val = atoi(value);
 
-        if(out->devices & AUDIO_DEVICE_BIT_IN)
+        if(val & AUDIO_DEVICE_BIT_IN)
            goto routing_fail;
 
         lock_output_stream(out);
