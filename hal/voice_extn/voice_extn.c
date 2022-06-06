@@ -15,6 +15,10 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
+ * Changes from Qualcomm Innovation Center are provided under the following license:
+ * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ *
  */
 
 #define LOG_TAG "voice_extn"
@@ -610,8 +614,18 @@ int voice_extn_out_set_parameters(struct stream_out *out,
 
     err = str_parms_has_key(parms, AUDIO_PARAMETER_KEY_DTMF_TONE_OFF);
     if (err > 0) {
+        struct voice_session *session = NULL;
+
         str_parms_del(parms, AUDIO_PARAMETER_KEY_DTMF_TONE_OFF);
-        voice_extn_dtmf_set_rx_tone_off(out);
+        ret = voice_extn_get_session_from_use_case(out->dev, out->usecase, &session);
+        if (session != NULL) {
+            voice_extn_dtmf_generate_rx_tone_session(out, 0,
+                                                     0,
+                                                     0,
+                                                     session->vsid);
+        } else {
+            voice_extn_dtmf_set_rx_tone_off(out);
+        }
     }
 
     err = str_parms_get_str(parms, AUDIO_PARAMETER_KEY_DTMF_DETECT, str_value,
