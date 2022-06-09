@@ -2918,7 +2918,6 @@ int start_input_stream(struct stream_in *in)
             ATRACE_END();
             if (errno == ENETRESET && !pcm_is_ready(in->pcm)) {
                 ALOGE("%s: pcm_open failed errno:%d\n", __func__, errno);
-                adev->card_status = CARD_STATUS_OFFLINE;
                 in->card_status = CARD_STATUS_OFFLINE;
                 ret = -ENETRESET;
                 goto error_open;
@@ -3613,7 +3612,6 @@ int start_output_stream(struct stream_out *out)
             if (errno == ENETRESET && !pcm_is_ready(out->pcm)) {
                 ALOGE("%s: pcm_open failed errno:%d\n", __func__, errno);
                 out->card_status = CARD_STATUS_OFFLINE;
-                adev->card_status = CARD_STATUS_OFFLINE;
                 ret = -ENETRESET;
                 goto error_open;
             }
@@ -3673,7 +3671,6 @@ int start_output_stream(struct stream_out *out)
         ATRACE_END();
         if (errno == ENETRESET && !is_compress_ready(out->compr)) {
                 ALOGE("%s: compress_open failed errno:%d\n", __func__, errno);
-                adev->card_status = CARD_STATUS_OFFLINE;
                 out->card_status = CARD_STATUS_OFFLINE;
                 ret = -ENETRESET;
                 goto error_open;
@@ -5958,7 +5955,6 @@ static int out_create_mmap_buffer(const struct audio_stream_out *stream,
     if (errno == ENETRESET && !pcm_is_ready(out->pcm)) {
         ALOGE("%s: pcm_open failed errno:%d\n", __func__, errno);
         out->card_status = CARD_STATUS_OFFLINE;
-        adev->card_status = CARD_STATUS_OFFLINE;
         ret = -ENETRESET;
         goto exit;
     }
@@ -6756,7 +6752,6 @@ static int in_create_mmap_buffer(const struct audio_stream_in *stream,
     if (errno == ENETRESET && !pcm_is_ready(in->pcm)) {
         ALOGE("%s: pcm_open failed errno:%d\n", __func__, errno);
         in->card_status = CARD_STATUS_OFFLINE;
-        adev->card_status = CARD_STATUS_OFFLINE;
         ret = -EIO;
         goto exit;
     }
