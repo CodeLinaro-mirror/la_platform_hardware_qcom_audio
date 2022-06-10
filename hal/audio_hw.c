@@ -8818,6 +8818,8 @@ static int adev_set_parameters(struct audio_hw_device *dev, const char *kvpairs)
             (val & AUDIO_DEVICE_OUT_AUX_DIGITAL)) {
             ALOGV("cache new ext disp type and edid");
             platform_get_controller_stream_from_params(parms, &controller, &stream);
+            adev->ext_controller = controller;
+            adev->ext_stream = stream;
             platform_set_ext_display_device_v2(adev->platform, controller, stream);
             ret = platform_get_ext_disp_type_v2(adev->platform, controller, stream);
             if (ret < 0) {
