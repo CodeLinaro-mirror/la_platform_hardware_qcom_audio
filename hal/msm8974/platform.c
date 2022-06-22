@@ -7522,17 +7522,17 @@ snd_device_t platform_get_input_snd_device(void *platform,
                 }
             }
             else if (my_data->source_mic_type & SOURCE_DEC_MIC) {
-                if(compare_device_type(&in_devices, AUDIO_DEVICE_IN_BUILTIN_MIC|AUDIO_DEVICE_IN_SPEAKER_MIC2))
+                if(compare_device_type(&in_devices, AUDIO_DEVICE_IN_BUILTIN_MIC|AUDIO_DEVICE_IN_SPEAKER_MIC2) && (channel_count == 10))
                     snd_device = SND_DEVICE_IN_HANDSET_GENERIC_6MIC_AND_SPEAKER_MIC2;
                 else if(channel_count == 6)
                     snd_device = SND_DEVICE_IN_HANDSET_GENERIC_6MIC;
-            } else if (my_data->source_mic_type & SOURCE_OCT_MIC) {
+            } else if ((my_data->source_mic_type & SOURCE_OCT_MIC) && (channel_count == 8)) {
                    snd_device = SND_DEVICE_IN_HANDSET_GENERIC_8MIC;
-            } else if (my_data->source_mic_type & SOURCE_HEX_MIC) {
+            } else if ((my_data->source_mic_type & SOURCE_HEX_MIC) && (channel_count == 6)) {
                    snd_device = SND_DEVICE_IN_HANDSET_GENERIC_6MIC;
-            } else if (my_data->source_mic_type & SOURCE_QUAD_MIC) {
+            } else if ((my_data->source_mic_type & SOURCE_QUAD_MIC) && (channel_count == 4)) {
                    snd_device = SND_DEVICE_IN_HANDSET_GENERIC_QMIC;
-            } else if (my_data->source_mic_type & SOURCE_DUAL_MIC) {
+            } else if ((my_data->source_mic_type & SOURCE_DUAL_MIC) && (channel_count == 2)) {
                    snd_device = SND_DEVICE_IN_HANDSET_GENERIC_DMIC;
             }  else
                 snd_device = SND_DEVICE_NONE;
