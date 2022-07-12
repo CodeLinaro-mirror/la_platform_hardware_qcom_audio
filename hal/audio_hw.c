@@ -712,8 +712,8 @@ static void register_out_stream(struct stream_out *out)
     if (!adev->adm_set_config)
         return;
 
-    if (out->realtime)
-        adev->adm_set_config(adev->adm_data,
+    if (out->realtime || (out->flags & AUDIO_OUTPUT_FLAG_SYS_NOTIFICATION))
+       adev->adm_set_config(adev->adm_data,
                              out->handle,
                              out->pcm, &out->config);
 }
@@ -3589,7 +3589,8 @@ int start_input_stream(struct stream_in *in)
             in->pcm = NULL;
             goto error_open;
         }
-        register_in_stream(in);
+        if (in->flags == AUDIO_INPUT_FLAG_FAST)
+            register_in_stream(in);
         if (in->realtime) {
             ATRACE_BEGIN("pcm_in_start");
             ret = pcm_start(in->pcm);
@@ -4445,7 +4446,8 @@ int start_output_stream(struct stream_out *out)
     }
 
     if (ret == 0) {
-        register_out_stream(out);
+        if (out->flags == AUDIO_OUTPUT_FLAG_FAST)
+            register_out_stream(out);
         if (out->realtime) {
             if (out->pcm == NULL || !pcm_is_ready(out->pcm)) {
                 ALOGE("%s: pcm stream not ready", __func__);
@@ -5766,16 +5768,28 @@ static int out_set_soft_volume_params(struct audio_stream_out *stream)
         ret = platform_get_soft_step_volume_params(volume_params,out->usecase);
         if (ret < 0) {
             ALOGE("%s : platform_get_soft_step_volume_params is fialed", __func__);
-            return -EINVAL;
+            ret = -EINVAL;
+            goto ERR_EXIT;
         }
 
     }
     ret = mixer_ctl_set_array(ctl, volume_params, sizeof(struct soft_step_volume_params)/sizeof(int));
     if (ret < 0) {
         ALOGE("%s: Could not set ctl, error:%d ", __func__, ret);
-        return -EINVAL;
+        ret = -EINVAL;
+        goto ERR_EXIT;
+    }
+
+    if (volume_params) {
+        free(volume_params);
     }
     return 0;
+
+ERR_EXIT:
+    if (volume_params) {
+        free(volume_params);
+    }
+    return ret;
 }
 #endif
 
@@ -10001,7 +10015,26 @@ static int adev_open_input_stream(struct audio_hw_device *dev,
         in->config.rate = config->sample_rate;
         in->af_period_multiplier = 1;
     } else if (in->realtime) {
-        in->config = pcm_config_audio_capture_rt;
+        switch(config->sample_rate)
+        {
+            case 48000:
+                in->config = pcm_config_audio_capture_rt_48KHz;
+                break;
+            case 32000:
+                in->config = pcm_config_audio_capture_rt_32KHz;
+                break;
+            case 24000:
+                in->config = pcm_config_audio_capture_rt_24KHz;
+                break;
+            case 16000:
+                in->config = pcm_config_audio_capture_rt_16KHz;
+                break;
+            case 8000:
+                in->config = pcm_config_audio_capture_rt_8KHz;
+                break;
+            default:
+                in->config = pcm_config_audio_capture_rt_48KHz;
+        }
         in->config.format = pcm_format_from_audio_format(config->format);
         in->af_period_multiplier = af_period_multiplier;
     } else {
@@ -10089,30 +10122,6 @@ static int adev_open_input_stream(struct audio_hw_device *dev,
                 }
             }
         }
-    }
-    if (in->realtime) {
-        switch(config->sample_rate)
-        {
-            case 48000:
-                in->config = pcm_config_audio_capture_rt_48KHz;
-                break;
-            case 32000:
-                in->config = pcm_config_audio_capture_rt_32KHz;
-                break;
-            case 24000:
-                in->config = pcm_config_audio_capture_rt_24KHz;
-                break;
-            case 16000:
-                in->config = pcm_config_audio_capture_rt_16KHz;
-                break;
-            case 8000:
-                in->config = pcm_config_audio_capture_rt_8KHz;
-                break;
-            default:
-                in->config = pcm_config_audio_capture_rt_48KHz;
-        }
-        in->config.format = pcm_format_from_audio_format(config->format);
-        in->af_period_multiplier = af_period_multiplier;
     }
 
     if (audio_extn_ssr_get_stream() != in)
