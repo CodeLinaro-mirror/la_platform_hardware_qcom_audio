@@ -671,7 +671,7 @@ int auto_hal_set_audio_port_config(struct audio_hw_device *dev,
                     /* millibel = 1/100 dB = 1/1000 bel
                      * q13 = (10^(mdb/100/20))*(2^13)
                      */
-                    if(config->gain.values[0] <= (MIN_VOLUME_VALUE_MB + STEP_VALUE_MB))
+                    if(config->gain.values[0] < (MIN_VOLUME_VALUE_MB + STEP_VALUE_MB))
                         volume = MIN_VOLUME_GAIN;
                     else
                         volume = powf(10.0f, ((float)config->gain.values[0] / 2000));
