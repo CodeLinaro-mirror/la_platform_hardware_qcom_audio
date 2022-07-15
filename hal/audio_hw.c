@@ -6452,7 +6452,7 @@ static ssize_t in_read(struct audio_stream_in *stream, void *buffer,
      * usecases so that other clients do not have access to voice recognition
      * data.
      */
-    if ((ret == 0 && voice_get_mic_mute(adev, in->usecase) &&
+    if ((ret == 0 &&
          !voice_is_in_call_rec_stream(in) &&
          in->usecase != USECASE_AUDIO_RECORD_AFE_PROXY) ||
         (adev->num_va_sessions &&
