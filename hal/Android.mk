@@ -366,6 +366,16 @@ endif
 
 LOCAL_CFLAGS += -D_GNU_SOURCE
 LOCAL_CFLAGS += -Wall -Werror
+LOCAL_CFLAGS += -Wno-unused-variable
+LOCAL_CFLAGS += -Wno-sign-compare
+LOCAL_CFLAGS += -Wno-unused-parameter
+LOCAL_CFLAGS += -Wno-unused-label
+LOCAL_CFLAGS += -Wno-gnu-designator
+LOCAL_CFLAGS += -Wno-typedef-redefinition
+LOCAL_CFLAGS += -Wno-shorten-64-to-32
+LOCAL_CFLAGS += -Wno-tautological-compare
+LOCAL_CFLAGS += -Wno-unused-function
+LOCAL_CFLAGS += -Wno-unused-local-typedef
 
 LOCAL_COPY_HEADERS_TO   := mm-audio
 LOCAL_COPY_HEADERS      := audio_extn/audio_defs.h
@@ -397,17 +407,6 @@ ifneq ($(filter kona lahaina holi,$(TARGET_BOARD_PLATFORM)),)
 LOCAL_SANITIZE := integer_overflow
 endif
 include $(BUILD_SHARED_LIBRARY)
-
-LOCAL_CFLAGS += -Wno-unused-variable
-LOCAL_CFLAGS += -Wno-sign-compare
-LOCAL_CFLAGS += -Wno-unused-parameter
-LOCAL_CFLAGS += -Wno-unused-label
-LOCAL_CFLAGS += -Wno-gnu-designator
-LOCAL_CFLAGS += -Wno-typedef-redefinition
-LOCAL_CFLAGS += -Wno-shorten-64-to-32
-LOCAL_CFLAGS += -Wno-tautological-compare
-LOCAL_CFLAGS += -Wno-unused-function
-LOCAL_CFLAGS += -Wno-unused-local-typedef
 
 endif
 endif
