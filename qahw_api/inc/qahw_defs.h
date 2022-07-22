@@ -16,6 +16,41 @@
  * limitations under the License.
  */
 
+/*
+** Changes from Qualcomm Innovation Center are provided under the following license:
+** Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
+**
+** Redistribution and use in source and binary forms, with or without
+** modification, are permitted (subject to the limitations in the
+** disclaimer below) provided that the following conditions are met:
+**
+**    * Redistributions of source code must retain the above copyright
+**      notice, this list of conditions and the following disclaimer.
+**
+**    * Redistributions in binary form must reproduce the above
+**      copyright notice, this list of conditions and the following
+**      disclaimer in the documentation and/or other materials provided
+**      with the distribution.
+**
+**    * Neither the name of Qualcomm Innovation Center, Inc. nor the names of its
+**      contributors may be used to endorse or promote products derived
+**      from this software without specific prior written permission.
+**
+** NO EXPRESS OR IMPLIED LICENSES TO ANY PARTY'S PATENT RIGHTS ARE
+** GRANTED BY THIS LICENSE. THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT
+** HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED
+** WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
+** MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+** IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR
+** ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+** DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
+** GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+** INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
+** IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
+** OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
+** IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+**/
+
 #include <sys/cdefs.h>
 #include <stdint.h>
 #include <system/audio.h>
@@ -525,9 +560,14 @@ typedef struct qahw_hpcm_params {
     uint16_t state;
 } qahw_hpcm_params_t;
 
+typedef struct qahw_dtmf_params {
+    uint16_t state;
+} qahw_dtmf_params_t;
+
 /* Session ID for detect implicit derived from voice session */
 typedef struct qahw_dtmf_detect_params {
    bool enable;
+   bool dir;
 } qahw_dtmf_detect_params_t;
 
 struct qahw_in_ttp_offset_param {
@@ -554,6 +594,7 @@ typedef union {
     struct qahw_dtmf_gen_params dtmf_gen_params;
     struct qahw_tty_params tty_mode_params;
     struct qahw_hpcm_params hpcm_params;
+    struct qahw_dtmf_params dtmf_state_params;
     struct qahw_dtmf_detect_params dtmf_detect_params;
     struct qahw_tone_gen_params tone_gen_params;
     struct qahw_in_ttp_offset_param ttp_offset;

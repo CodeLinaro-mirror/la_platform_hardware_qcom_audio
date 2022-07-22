@@ -27,6 +27,41 @@
  * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+/*
+** Changes from Qualcomm Innovation Center are provided under the following license:
+** Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
+**
+** Redistribution and use in source and binary forms, with or without
+** modification, are permitted (subject to the limitations in the
+** disclaimer below) provided that the following conditions are met:
+**
+**    * Redistributions of source code must retain the above copyright
+**      notice, this list of conditions and the following disclaimer.
+**
+**    * Redistributions in binary form must reproduce the above
+**      copyright notice, this list of conditions and the following
+**      disclaimer in the documentation and/or other materials provided
+**      with the distribution.
+**
+**    * Neither the name of Qualcomm Innovation Center, Inc. nor the names of its
+**      contributors may be used to endorse or promote products derived
+**      from this software without specific prior written permission.
+**
+** NO EXPRESS OR IMPLIED LICENSES TO ANY PARTY'S PATENT RIGHTS ARE
+** GRANTED BY THIS LICENSE. THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT
+** HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED
+** WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
+** MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+** IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR
+** ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+** DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
+** GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+** INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
+** IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
+** OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
+** IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+**/
+
 #define LOG_TAG "ahal_AudioVoice"
 #define ATRACE_TAG (ATRACE_TAG_AUDIO|ATRACE_TAG_HAL)
 #define LOG_NDEBUG 0
@@ -54,6 +89,7 @@
 
 /*DTMF DETECTOR Params */
 #define AUDIO_PARAMETER_KEY_DTMF_DETECT "dtmf_detect"
+#define AUDIO_PARAMETER_KEY_DTMF_DETECT_DIR "dtmf_dir"
 
 /*HPCM CFG Params */
 #define AUDIO_PARAMETER_KEY_HPCM_CFG "hpcm_cfg"
@@ -66,14 +102,16 @@ static int32_t pal_dtmf_callback(pal_stream_handle_t *stream_handle,
     dtmf_event_data *data = reinterpret_cast<dtmf_event_data *> (event_data);
     StreamOutPrimary *astream_out = reinterpret_cast<StreamOutPrimary *> (cookie);
 
-    ALOGE("%s: stream_handle (%p), event_id (%x), event_data (%p), cookie (%p)"
-          "event_size (%d)", __func__, stream_handle, event_id, event_data,
-          cookie, event_size);
+    ALOGD("%s: Enter", __func__);
+
+    ALOGD("%s: event_id (%x)", __func__, event_id);
 
     if (event_id == PAL_DTMF_CBK_EVENT) {
         ALOGE("%s: high_freq:%d , low_freq:%d", __func__,
         data->dtmf_high_freq, data->dtmf_low_freq);
     }
+
+    ALOGD("%s: Exit", __func__);
 
     return 0;
 }
@@ -294,6 +332,7 @@ int AudioVoice::VoiceOutSetParameters(const char *kvpairs) {
     uint16_t gain = 0;
     int16_t duration_ms = 0;
     uint32_t enable = 0;
+    uint32_t dir = 0;
     pal_param_dtmf_gen_tone_cfg_t dtmf_gen_cfg;
     pal_param_module_enable_t module_enable;
     pal_param_hpcm_cfg_t param_hpcm_state;
@@ -384,15 +423,21 @@ int AudioVoice::VoiceOutSetParameters(const char *kvpairs) {
     err = str_parms_get_str(parms, AUDIO_PARAMETER_KEY_DTMF_DETECT, value, sizeof(value));
     if (err >= 0) {
         enable = atoi(value);
+    }
+    err = str_parms_get_str(parms, AUDIO_PARAMETER_KEY_DTMF_DETECT_DIR, value, sizeof(value));
+    if (err >= 0) {
+        dir = atoi(value);
         module_enable.enable = enable;
-        ALOGI("%s module_enable is:%d", __func__, module_enable.enable);
+        module_enable.dir = dir;
+        ALOGD("%s module_enable is:%d, Direction is:%d", __func__,
+            module_enable.enable, module_enable.dir);
         ret = pal_set_param(PAL_PARAM_ID_MODULE_ENABLE,
             (void*)&module_enable,
             sizeof(pal_param_module_enable_t));
         if(ret!=0) {
             ALOGE("%s: pal set param failed for dtmf detector",__func__);
         }
-        ALOGI("%s: pal set param success for dtmf detector", __func__);
+        ALOGD("%s: pal set param success for dtmf detector", __func__);
     }
 
     err = str_parms_get_str(parms, AUDIO_PARAMETER_KEY_HPCM_CFG, value, sizeof(value));
