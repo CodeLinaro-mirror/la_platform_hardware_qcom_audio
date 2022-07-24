@@ -346,6 +346,7 @@ static int update_audio_ack_state(const struct audio_device *adev,
     int ctl_index = 0;
     struct mixer_ctl *ctl = NULL;
     const char *ctl_prefix = "External Display";
+    const char *ctl_prefix2 = "External HDMI";
     const char *ctl_suffix = "Audio Ack";
     char mixer_ctl_name[MIXER_PATH_MAX_LENGTH] = {0};
 
@@ -356,9 +357,12 @@ static int update_audio_ack_state(const struct audio_device *adev,
         return -EINVAL;
     }
 
-    if (0 == ctl_index)
+    if ((ctl_index % 2) == 0)
         snprintf(mixer_ctl_name, sizeof(mixer_ctl_name),
                  "%s %s", ctl_prefix, ctl_suffix);
+    else if ((ctl_index % 2) != 0)
+        snprintf(mixer_ctl_name, sizeof(mixer_ctl_name),
+                 "%s %s", ctl_prefix2, ctl_suffix);
     else
         snprintf(mixer_ctl_name, sizeof(mixer_ctl_name),
                  "%s%d %s", ctl_prefix, ctl_index, ctl_suffix);

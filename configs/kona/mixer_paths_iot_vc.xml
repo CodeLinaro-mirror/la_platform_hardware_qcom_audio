@@ -665,6 +665,7 @@
     </path>
 
     <path name="hdmi">
+        <ctl name="PRIM_MI2S_RX Format" value="S32_LE" />
     </path>
 
     <path name="low-latency-playback">
@@ -673,7 +674,6 @@
 
     <path name="low-latency-playback hdmi">
         <ctl name="PRI_MI2S_RX Audio Mixer MultiMedia5" value="1" />
-        <ctl name="PRIM_MI2S_RX Format" value="S32_LE" />
     </path>
 
     <path name="low-latency-playback voice-speaker-2">
@@ -2245,7 +2245,6 @@
 
     <path name="deep-buffer-playback hdmi">
         <ctl name="PRI_MI2S_RX Audio Mixer MultiMedia1" value="1" />
-        <ctl name="PRIM_MI2S_RX Format" value="S32_LE" />
     </path>
 
     <path name="deep-buffer-playback bt-a2dp">
