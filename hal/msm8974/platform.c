@@ -542,6 +542,8 @@ static int pcm_device_table[AUDIO_USECASE_MAX][2] = {
                                              NAV_GUIDANCE_PCM_DEVICE},
     [USECASE_AUDIO_PLAYBACK_PHONE] = {PHONE_PCM_DEVICE,
                                       PHONE_PCM_DEVICE},
+    [USECASE_AUDIO_PLAYBACK_ALERTS] = {ALERTS_PCM_DEVICE,
+                                      ALERTS_PCM_DEVICE},
     [USECASE_AUDIO_PLAYBACK_FRONT_PASSENGER] = {FRONT_PASSENGER_PCM_DEVICE,
                                                 FRONT_PASSENGER_PCM_DEVICE},
     [USECASE_AUDIO_PLAYBACK_REAR_SEAT] = {REAR_SEAT_PCM_DEVICE,
@@ -661,6 +663,7 @@ static const char * const device_table[SND_DEVICE_MAX] = {
     [SND_DEVICE_OUT_BUS_SYS] = "bus-speaker",
     [SND_DEVICE_OUT_BUS_NAV] = "bus-speaker",
     [SND_DEVICE_OUT_BUS_PHN] = "bus-speaker",
+    [SND_DEVICE_OUT_BUS_ALR] = "bus-speaker",
     [SND_DEVICE_OUT_BUS_PAX] = "bus-speaker",
     [SND_DEVICE_OUT_BUS_RSE] = "bus-speaker",
     [SND_DEVICE_OUT_CALL_PROXY] = "call-proxy",
@@ -979,6 +982,7 @@ static int acdb_device_table[SND_DEVICE_MAX] = {
     [SND_DEVICE_OUT_BUS_SYS] = 60,
     [SND_DEVICE_OUT_BUS_NAV] = 14,
     [SND_DEVICE_OUT_BUS_PHN] = 94,
+    [SND_DEVICE_OUT_BUS_ALR] = 60,
     [SND_DEVICE_OUT_BUS_PAX] = 60,
     [SND_DEVICE_OUT_BUS_RSE] = 60,
     [SND_DEVICE_OUT_CALL_PROXY] = 32,
@@ -1238,6 +1242,7 @@ static struct name_to_index snd_device_name_index[SND_DEVICE_MAX] = {
     {TO_NAME_INDEX(SND_DEVICE_OUT_BUS_SYS)},
     {TO_NAME_INDEX(SND_DEVICE_OUT_BUS_NAV)},
     {TO_NAME_INDEX(SND_DEVICE_OUT_BUS_PHN)},
+    {TO_NAME_INDEX(SND_DEVICE_OUT_BUS_ALR)},
     {TO_NAME_INDEX(SND_DEVICE_OUT_BUS_PAX)},
     {TO_NAME_INDEX(SND_DEVICE_OUT_BUS_RSE)},
     {TO_NAME_INDEX(SND_DEVICE_OUT_CALL_PROXY)},
@@ -1477,6 +1482,7 @@ static struct name_to_index usecase_name_index[AUDIO_USECASE_MAX] = {
     {TO_NAME_INDEX(USECASE_AUDIO_PLAYBACK_SYS_NOTIFICATION)},
     {TO_NAME_INDEX(USECASE_AUDIO_PLAYBACK_NAV_GUIDANCE)},
     {TO_NAME_INDEX(USECASE_AUDIO_PLAYBACK_PHONE)},
+    {TO_NAME_INDEX(USECASE_AUDIO_PLAYBACK_ALERTS)},
     {TO_NAME_INDEX(USECASE_AUDIO_PLAYBACK_FRONT_PASSENGER)},
     {TO_NAME_INDEX(USECASE_AUDIO_PLAYBACK_REAR_SEAT)},
     {TO_NAME_INDEX(USECASE_AUDIO_RECORD_VOIP_LOW_LATENCY)},
@@ -2585,6 +2591,7 @@ static void set_platform_defaults(struct platform_data * my_data)
     hw_interface_table[SND_DEVICE_OUT_BUS_SYS] = strdup("TERT_TDM_RX_0");
     hw_interface_table[SND_DEVICE_OUT_BUS_NAV] = strdup("TERT_TDM_RX_1");
     hw_interface_table[SND_DEVICE_OUT_BUS_PHN] = strdup("TERT_TDM_RX_2");
+    hw_interface_table[SND_DEVICE_OUT_BUS_ALR] = strdup("TERT_TDM_RX_0");
     hw_interface_table[SND_DEVICE_OUT_BUS_PAX] = strdup("QUAT_TDM_RX_0");
     hw_interface_table[SND_DEVICE_OUT_BUS_RSE] = strdup("QUIN_TDM_RX_0");
     hw_interface_table[SND_DEVICE_OUT_CALL_PROXY] = strdup("CALL_PROXY_RX");
@@ -7029,6 +7036,7 @@ snd_device_t platform_get_output_snd_device(void *platform, struct stream_out *o
         ALOGE("%s: Unknown device(s) %#x", __func__, get_device_types(&devices));
     }
 exit:
+    clear_devices(&devices);
     ALOGV("%s: exit: snd_device(%s)", __func__, device_table[snd_device]);
     return snd_device;
 }
@@ -7522,17 +7530,17 @@ snd_device_t platform_get_input_snd_device(void *platform,
                 }
             }
             else if (my_data->source_mic_type & SOURCE_DEC_MIC) {
-                if(compare_device_type(&in_devices, AUDIO_DEVICE_IN_BUILTIN_MIC|AUDIO_DEVICE_IN_SPEAKER_MIC2) && (channel_count == 10))
+                if(compare_device_type(&in_devices, AUDIO_DEVICE_IN_BUILTIN_MIC|AUDIO_DEVICE_IN_SPEAKER_MIC2))
                     snd_device = SND_DEVICE_IN_HANDSET_GENERIC_6MIC_AND_SPEAKER_MIC2;
                 else if(channel_count == 6)
                     snd_device = SND_DEVICE_IN_HANDSET_GENERIC_6MIC;
-            } else if ((my_data->source_mic_type & SOURCE_OCT_MIC) && (channel_count == 8)) {
+            } else if (my_data->source_mic_type & SOURCE_OCT_MIC) {
                    snd_device = SND_DEVICE_IN_HANDSET_GENERIC_8MIC;
-            } else if ((my_data->source_mic_type & SOURCE_HEX_MIC) && (channel_count == 6)) {
+            } else if (my_data->source_mic_type & SOURCE_HEX_MIC) {
                    snd_device = SND_DEVICE_IN_HANDSET_GENERIC_6MIC;
-            } else if ((my_data->source_mic_type & SOURCE_QUAD_MIC) && (channel_count == 4)) {
+            } else if (my_data->source_mic_type & SOURCE_QUAD_MIC) {
                    snd_device = SND_DEVICE_IN_HANDSET_GENERIC_QMIC;
-            } else if ((my_data->source_mic_type & SOURCE_DUAL_MIC) && (channel_count == 2)) {
+            } else if (my_data->source_mic_type & SOURCE_DUAL_MIC) {
                    snd_device = SND_DEVICE_IN_HANDSET_GENERIC_DMIC;
             }  else
                 snd_device = SND_DEVICE_NONE;
@@ -7892,6 +7900,7 @@ snd_device_t platform_get_input_snd_device(void *platform,
         }
     }
 exit:
+    clear_devices(&in_devices);
     ALOGV("%s: exit: in_snd_device(%s)", __func__, device_table[snd_device]);
     return snd_device;
 }
@@ -9242,6 +9251,7 @@ int64_t platform_render_latency(struct stream_out *out)
         case USECASE_AUDIO_PLAYBACK_SYS_NOTIFICATION:
         case USECASE_AUDIO_PLAYBACK_FRONT_PASSENGER:
         case USECASE_AUDIO_PLAYBACK_PHONE:
+        case USECASE_AUDIO_PLAYBACK_ALERTS:
             delay = LOW_LATENCY_PLATFORM_DELAY;
             break;
         case USECASE_AUDIO_PLAYBACK_OFFLOAD:
