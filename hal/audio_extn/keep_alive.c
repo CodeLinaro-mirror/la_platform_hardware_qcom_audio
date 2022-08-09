@@ -198,13 +198,14 @@ void keep_alive_start(ka_mode_t ka_mode)
     struct listnode out_devices;
 
     pthread_mutex_lock(&ka.lock);
+    list_init(&out_devices);
+
     ALOGV("%s: mode %x", __func__, ka_mode);
     if ((ka.state == STATE_DISABLED)||(ka.state == STATE_DEINIT)) {
         ALOGE(" %s : Unexpected state %x",__func__, ka.state);
         goto exit;
     }
 
-    list_init(&out_devices);
     get_device_id_from_mode(ka_mode, &out_devices);
     if (compare_devices(&out_devices, &ka.active_devices) &&
             (ka.state == STATE_ACTIVE)) {
