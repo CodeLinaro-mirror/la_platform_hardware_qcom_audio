@@ -278,6 +278,9 @@ audio_primary_default_la_LIBADD += -lm -lc -lresolv
 if AUDIO_PARSER
 audio_primary_default_la_LIBADD += -laudioparsers
 endif
+if COMPRESS_INPUT
+audio_primary_default_la_LIBADD += -lrt
+endif
 audio_primary_default_la_CFLAGS = $(AM_CFLAGS) $(GLIB_CFLAGS)
 audio_primary_default_la_CFLAGS += -Dstrlcat=g_strlcat
 audio_primary_default_la_CFLAGS += -DINT_MAX=0x7fffffff
