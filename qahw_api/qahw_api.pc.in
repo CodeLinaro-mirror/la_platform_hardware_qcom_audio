@@ -1,0 +1,10 @@
+prefix=@prefix@
+exec_prefix=@exec_prefix@
+libdir=@libdir@
+includedir=@includedir@
+
+Name: qahw_api
+Description: qahw_api library
+Version: @VERSION@
+Libs: -L${libdir} -lqahw_api
+Cflags: -I${includedir}/qahw_api

@@ -9,7 +9,7 @@ AC_PREREQ([2.69])
 # Initialize the hal-interface package version 1.0.0
 AC_INIT(halinterface,1.0.0)
 # Does not strictly follow GNU Coding standards
-AM_INIT_AUTOMAKE([foreign])
+AM_INIT_AUTOMAKE([foreign subdir-objects])
 # Disables auto rebuilding of configure, Makefile.ins
 #AM_MAINTAINER_MODE
 # defines some macros variable to be included by source
@@ -94,6 +94,12 @@ if (test x$TARGET_SUPPORT = xsdmsteppe); then
          TARGET_CFLAGS="-DPLATFORM_MSMSTEPPE"
 fi
 AC_SUBST([TARGET_CFLAGS])
+
+AC_ARG_WITH([openwrt],
+    AS_HELP_STRING([use openwrt (default is no)]),
+    [with_openwrt=$withval],
+    [with_openwrt=no])
+AM_CONDITIONAL([BUILDSYSTEM_OPENWRT], [test "x${with_openwrt}" = "xyes"])
 
 AM_CONDITIONAL([QTI_AUDIO_SERVER_ENABLED],[test x$BOARD_SUPPORTS_QTI_AUDIO_SERVER = xtrue])
 AM_CONDITIONAL([QAHW_SUPPORT], [test x$BOARD_SUPPORTS_QAHW = xtrue])

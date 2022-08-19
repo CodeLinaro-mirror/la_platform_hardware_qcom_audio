@@ -7,15 +7,9 @@
 # Requires autoconf tool later than 2.61
 AC_PREREQ(2.69)
 # Initialize the smwrapper package version 1.0.0
-AC_INIT([qahw],1.0.0)
+AC_INIT([qahw_api],1.0.0)
 # Does not strictly follow GNU Coding standards
 AM_INIT_AUTOMAKE([foreign subdir-objects])
-# Disables auto rebuilding of configure, Makefile.ins
-#AM_MAINTAINER_MODE
-# defines some macros variable to be included by source
-AC_CONFIG_HEADERS([config.h])
-# defines some macros variable to be included by source
-AC_CONFIG_MACRO_DIR([m4])
 
 # Checks for programs.
 AC_PROG_CC
@@ -30,7 +24,7 @@ AC_PROG_MAKE_SET
 PKG_PROG_PKG_CONFIG
 
 AM_CONDITIONAL([SVA_AUDIO_CONCURRENCY],[test x$BOARD_SUPPORTS_SVA_AUDIO_CONCURRENCY = xtrue])
-AM_CONDITIONAL([QAHW_V1], [test x$AUDIO_FEATURE_ENABLED_QAHW_1_0 = xtrue])
+AM_CONDITIONAL([QAHW_V1], [test x$AUDIO_FEATURE_ENABLED_QAHW = xtrue])
 AC_ARG_WITH([glib],
       AC_HELP_STRING([--with-glib],
          [enable glib, Build against glib. Use this when building for HLOS systems which use glib]))
@@ -55,5 +49,9 @@ AC_ARG_WITH([openwrt],
     [with_openwrt=no])
 AM_CONDITIONAL([BUILDSYSTEM_OPENWRT], [test "x${with_openwrt}" = "xyes"])
 
-AC_CONFIG_FILES([ Makefile qahw.pc ])
+AM_CONDITIONAL([AUDIO_PARSER], [test x$AUDIO_FEATURE_ENABLED_PARSER = xtrue])
+AM_CONDITIONAL([QTI_AUDIO_SERVER_ENABLED],[test x$BOARD_SUPPORTS_QTI_AUDIO_SERVER = xtrue])
+AM_CONDITIONAL([QAP], [test x$AUDIO_FEATURE_ENABLED_QAP = xtrue])
+
+AC_CONFIG_FILES([ Makefile qahw_api.pc ])
 AC_OUTPUT
