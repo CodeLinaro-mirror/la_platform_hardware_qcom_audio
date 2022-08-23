@@ -35,6 +35,41 @@
  * limitations under the License.
  */
 
+/*
+** Changes from Qualcomm Innovation Center are provided under the following license:
+** Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
+**
+** Redistribution and use in source and binary forms, with or without
+** modification, are permitted (subject to the limitations in the
+** disclaimer below) provided that the following conditions are met:
+**
+**    * Redistributions of source code must retain the above copyright
+**      notice, this list of conditions and the following disclaimer.
+**
+**    * Redistributions in binary form must reproduce the above
+**      copyright notice, this list of conditions and the following
+**      disclaimer in the documentation and/or other materials provided
+**      with the distribution.
+**
+**    * Neither the name of Qualcomm Innovation Center, Inc. nor the names of its
+**      contributors may be used to endorse or promote products derived
+**      from this software without specific prior written permission.
+**
+** NO EXPRESS OR IMPLIED LICENSES TO ANY PARTY'S PATENT RIGHTS ARE
+** GRANTED BY THIS LICENSE. THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT
+** HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED
+** WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
+** MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+** IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR
+** ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+** DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
+** GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+** INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
+** IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
+** OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
+** IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+**/
+
 #define LOG_TAG "ahal_AudioDevice"
 #define ATRACE_TAG (ATRACE_TAG_AUDIO|ATRACE_TAG_HAL)
 /*#define LOG_NDEBUG 0*/
@@ -63,6 +98,9 @@
 
 /*HPCM CFG Params */
 #define AUDIO_PARAMETER_KEY_HPCM_CFG "hpcm_cfg"
+
+/*DTMF CFG Params */
+#define AUDIO_PARAMETER_KEY_DTMF_CFG "dtmf_cfg"
 
 card_status_t AudioDevice::sndCardState = CARD_STATUS_ONLINE;
 
@@ -722,6 +760,7 @@ int AudioDevice::SetParameters(const char *kvpairs) {
     int pal_device_count = 0;
     pal_device_id_t* pal_device_ids = NULL;
     pal_param_hpcm_cfg_t param_hpcm_state;
+    pal_param_dtmf_cfg_t param_dtmf_state;
 
     ALOGD("%s: enter: %s", __func__, kvpairs);
     ret = voice_->VoiceSetParameters(kvpairs);
@@ -940,6 +979,20 @@ int AudioDevice::SetParameters(const char *kvpairs) {
             ALOGE("%s: pal set param failed for HPCM CFG, ret %d",__func__, ret);
         }
         ALOGI("%s: pal set param success for HPCM CFG", __func__);
+    }
+
+    ret = str_parms_get_str(parms, AUDIO_PARAMETER_KEY_DTMF_CFG, value, sizeof(value));
+    if (ret >= 0) {
+        ALOGI("%s: param_dtmf_state for DTMF CFG", __func__);
+        param_dtmf_state.enable = atoi(value);
+        ALOGI("%s: param_dtmf_state for DTMF CFG %d", __func__, param_dtmf_state.enable);
+        ret = pal_set_param(PAL_PARAM_ID_DTMF_CFG,
+            (void*)&param_dtmf_state,
+            sizeof(pal_param_dtmf_cfg_t));
+        if(ret!=0) {
+            ALOGE("%s: pal set param failed for DTMF CFG, ret %d",__func__, ret);
+        }
+        ALOGI("%s: pal set param success for DTMF CFG", __func__);
     }
 
     ret = str_parms_get_str(parms, AUDIO_PARAMETER_KEY_BT_SCO_WB, value, sizeof(value));

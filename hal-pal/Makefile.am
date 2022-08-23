@@ -1,24 +1,34 @@
+if BUILDSYSTEM_OPENWRT
+
+pkgconfigdir = $(libdir)/pkgconfig
+pkgconfig_DATA = hal-pal.pc
+EXTRA_DIST = $(pkgconfig_DATA)
+
+AM_CFLAGS = -I ./ \
+        -I ./audio_extn
+
+else
+
 AM_CFLAGS = -Wno-narrowing \
         -I ${WORKSPACE}/system/media/audio_effects/include \
-        -I $(top_srcdir)/hal-pal \
-        -I $(top_srcdir)/hal-pal/audio_extn \
-        -I $(top_srcdir)/hal/audio_extn \
+        -I $(top_srcdir)/ \
+        -I $(top_srcdir)/audio_extn \
         -I $(PKG_CONFIG_SYSROOT_DIR)/usr/include/audio-kernel \
         -I $(STAGING_INCDIR)
+endif
 
 c_sources = AudioStream.cpp \
-    AudioDevice.cpp \
-    AudioVoice.cpp \
-    audio_extn/AudioExtn.cpp \
-    audio_extn/soundtrigger.cpp \
-    audio_extn/Gef.cpp
+     AudioDevice.cpp \
+     AudioVoice.cpp \
+     audio_extn/AudioExtn.cpp \
+     audio_extn/soundtrigger.cpp \
+     audio_extn/Gef.cpp
 
 #if LISTEN
 #AM_CFLAGS += -DAUDIO_LISTEN_ENABLED
 #AM_CFLAGS += -I ${WORKSPACE}/audio/mm-audio-external-noship/audio-listen
 #c_sources += audio_extn/listen.c
 #endif
-
 
 if FLAC_SUPPORT
 AM_CFLAGS += -DFLAC_OFFLOAD_ENABLED
@@ -49,10 +59,6 @@ endif
 
 if APTX_DECODER
 AM_CFLAGS += -DAPTX_DECODER_ENABLED
-endif
-
-if AFE_PROXY
-AM_CFLAGS += -DAFE_PROXY_ENABLED
 endif
 
 if RUN_KEEP_ALIVE_IN_ARM_FFV

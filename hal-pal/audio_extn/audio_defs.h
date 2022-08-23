@@ -27,10 +27,23 @@
  * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+/*
+ * Changes from Qualcomm Innovation Center are provided under the following license:
+ *
+ * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
+ */
+
 #ifndef AUDIO_DEFS_H
 #define AUDIO_DEFS_H
+#ifdef FEATURE_IPQ_OPENWRT
+#include <audio_android_q/audio.h>
+#include <audio-base.h>
+#else
 #include <system/audio-base.h>
 #include <system/audio.h>
+#endif
+
 #include <errno.h>
 
 

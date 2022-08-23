@@ -27,6 +27,13 @@
  * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+/*
+ * Changes from Qualcomm Innovation Center are provided under the following license:
+ *
+ * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
+ */
+
 #define LOG_TAG "ahal_AudioStream"
 #define ATRACE_TAG (ATRACE_TAG_AUDIO | ATRACE_TAG_HAL)
 /*#define LOG_NDEBUG 0*/
@@ -58,7 +65,11 @@
 #include "audio_extn.h"
 #include "audio_defs.h"
 
+#ifdef FEATURE_IPQ_OPENWRT
+#include <format.h>
+#else
 #include <audio_utils/format.h>
+#endif
 
 #define COMPRESS_OFFLOAD_FRAGMENT_SIZE (32 * 1024)
 #define FLAC_COMPRESS_OFFLOAD_FRAGMENT_SIZE (256 * 1024)

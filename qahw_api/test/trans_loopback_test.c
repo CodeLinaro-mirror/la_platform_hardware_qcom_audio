@@ -27,6 +27,13 @@
 * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
+/*
+ * Changes from Qualcomm Innovation Center are provided under the following license:
+ *
+ * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
+ */
+
 /* Test app to capture event updates from kernel */
 /*#define LOG_NDEBUG 0*/
 #include <fcntl.h>
@@ -53,7 +60,7 @@
 
 static int sock_event_fd = -1;
 
-pthread_t data_event_th = -1;
+pthread_t data_event_th;
 pthread_attr_t data_event_attr;
 
 typedef struct tlb_hdmi_config {
