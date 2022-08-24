@@ -16,6 +16,13 @@
  * limitations under the License.
  */
 
+/*
+ * Changes from Qualcomm Innovation Center are provided under the following license:
+ *
+ * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
+ */
+
 /* Test app to record multiple audio sessions at the HAL layer */
 
 #include <getopt.h>
@@ -573,10 +580,12 @@ int read_config_params_from_user(struct audio_config_params *thread_param) {
     }
 
     printf(" \n Enter the format (1 ->16 bit pcm recording, 6 -> 24 bit packed pcm recording) ::::: ");
-    scanf(" %d", &thread_param->config.format);
+    fgets(usr_input, sizeof(usr_input), stdin);
+    thread_param->config.format = (int)strtol(usr_input, NULL, 10);
 
     printf(" \n Enter input flag to be used (0 -> none, 1 -> fast ...) ::::: ");
-    scanf(" %d", &thread_param->flags);
+    fgets(usr_input, sizeof(usr_input), stdin);
+    thread_param->flags = (int)strtol(usr_input, NULL, 10);
 
     printf(" \n Enter the sample rate (48000, 16000 etc) :::: ");
     scanf(" %d", &thread_param->config.sample_rate);
@@ -588,7 +597,8 @@ int read_config_params_from_user(struct audio_config_params *thread_param) {
     scanf(" %s", thread_param->profile);
 
     printf("\n Enter the audio source ( ref: system/media/audio/include/system/audio.h) :::: ");
-    scanf(" %d", &thread_param->source);
+    fgets(usr_input, sizeof(usr_input), stdin);
+    thread_param->source = (int)strtol(usr_input, NULL, 10);;
 
     printf("\n Enter the record duration in seconds ::::  ");
     scanf(" %lf", &thread_param->record_length);

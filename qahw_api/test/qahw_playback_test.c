@@ -16,6 +16,13 @@
  * limitations under the License.
  */
 
+/*
+ * Changes from Qualcomm Innovation Center are provided under the following license:
+ *
+ * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
+ */
+
 /* Test app to play audio at the HAL layer */
 
 #include "qahw_playback_test.h"
@@ -1364,7 +1371,7 @@ int measure_kpi_values(qahw_stream_handle_t* out_handle, bool is_offload) {
     char  *data = NULL;
     int ret = 0, count = 0;
     struct timespec ts_cold, ts_cont = { 0,0 };
-    uint64_t tcold, tcont, scold = 0, uscold = 0, scont = 0, uscont = 0;
+    unsigned int tcold, tcont, scold = 0, uscold = 0, scont = 0, uscont = 0;
 
     if (is_offload) {
         fprintf(log_file, "Set callback for offload stream in kpi mesaurement usecase\n");
@@ -1432,11 +1439,11 @@ int measure_kpi_values(qahw_stream_handle_t* out_handle, bool is_offload) {
 
     char latency_buf[200] = {0};
     fread((void *) latency_buf, 100, 1, fd_latency_node);
-    sscanf(latency_buf, " %llu,%llu,%*llu,%*llu,%llu,%llu", &scold, &uscold, &scont, &uscont);
+    sscanf(latency_buf, " %u,%u,%*u,%*u,%u,%u", &scold, &uscold, &scont, &uscont);
     tcold = scold*1000 - ((uint64_t)ts_cold.tv_sec)*1000 + uscold/1000 - ((uint64_t)ts_cold.tv_nsec)/1000000;
     tcont = scont*1000 - ((uint64_t)ts_cont.tv_sec)*1000 + uscont/1000 - ((uint64_t)ts_cont.tv_nsec)/1000000;
     fprintf(log_file, "\n values from debug node %s\n", latency_buf);
-    fprintf(log_file, " cold latency %llums, continuous latency %llums,\n", tcold, tcont);
+    fprintf(log_file, " cold latency %ums, continuous latency %ums,\n", tcold, tcont);
     fprintf(log_file, " **Note: please add DSP Pipe/PP latency numbers to this, for final latency values\n");
 exit:
     fclose(fd_latency_node);
@@ -2423,7 +2430,7 @@ int main(int argc, char* argv[]) {
             if (strcasecmp(log_filename, "stdout") &&
                 strcasecmp(log_filename, "1") &&
                 (log_file = fopen(log_filename,"wb")) == NULL) {
-                fprintf(log_file, "Cannot open log file %s\n", log_filename);
+                //fprintf(log_file, "Cannot open log file %s\n", log_filename);
                 fprintf(stderr, "Cannot open log file %s\n", log_filename);
                 /* continue to log to std out. */
                 log_file = stdout;

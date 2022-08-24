@@ -7,15 +7,9 @@
 # Requires autoconf tool later than 2.61
 AC_PREREQ(2.69)
 # Initialize the smwrapper package version 1.0.0
-AC_INIT([qahw],1.0.0)
+AC_INIT([hal-pal],1.0.0)
 # Does not strictly follow GNU Coding standards
 AM_INIT_AUTOMAKE([foreign subdir-objects])
-# Disables auto rebuilding of configure, Makefile.ins
-#AM_MAINTAINER_MODE
-# defines some macros variable to be included by source
-AC_CONFIG_HEADERS([config.h])
-# defines some macros variable to be included by source
-AC_CONFIG_MACRO_DIR([m4])
 
 # Checks for programs.
 AC_PROG_CC
@@ -54,6 +48,17 @@ AC_ARG_WITH([openwrt],
     [with_openwrt=$withval],
     [with_openwrt=no])
 AM_CONDITIONAL([BUILDSYSTEM_OPENWRT], [test "x${with_openwrt}" = "xyes"])
+AM_CONDITIONAL([FLAC_SUPPORT], [test x$AUDIO_FEATURE_ENABLED_EXTN_FLAC_DECODER = xtrue])
+AM_CONDITIONAL([DTSHD_PARSER], [test x$AUDIO_FEATURE_ENABLED_DTSHD_PARSER = xtrue])
+AM_CONDITIONAL([ALAC_SUPPORT], [test x$AUDIO_FEATURE_ENABLED_EXTN_ALAC_DECODER = xtrue])
+AM_CONDITIONAL([VORBIS_SUPPORT], [test x$AUDIO_FEATURE_ENABLED_EXTN_VORBIS_DECODER = xtrue])
+AM_CONDITIONAL([WMA_SUPPORT], [test x$AUDIO_FEATURE_ENABLED_EXTN_WMA_DECODER = xtrue])
+AM_CONDITIONAL([AUDIO_PARSER], [test x$AUDIO_FEATURE_ENABLED_PARSER = xtrue])
+AM_CONDITIONAL([APTX_DECODER], [test x$AUDIO_FEATURE_ENABLED_APTX_DECODER = xtrue])
+AM_CONDITIONAL([CUSTOM_STEREO], [test x$AUDIO_FEATURE_ENABLED_CUSTOM_STEREO = xtrue])
+AM_CONDITIONAL([RUN_KEEP_ALIVE_IN_ARM_FFV], [test x$AUDIO_FEATURE_ENABLED_KEEP_ALIVE_ARM_FFV = xtrue])
+AM_CONDITIONAL([INSTANCE_ID], [test x$AUDIO_FEATURE_ENABLED_INSTANCE_ID = xtrue])
+AM_CONDITIONAL([LL_AS_PRIMARY_OUTPUT], [test x$AUDIO_USE_LL_AS_PRIMARY_OUTPUT = xtrue])
 
-AC_CONFIG_FILES([ Makefile qahw.pc ])
+AC_CONFIG_FILES([ Makefile hal-pal.pc ])
 AC_OUTPUT
