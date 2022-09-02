@@ -103,6 +103,9 @@ PRODUCT_PACKAGES += $(AUDIO_HAL_TEST_APPS)
 AUDIO_FEATURE_ENABLED_AUTO_HAL := true
 AUDIO_FEATURE_ENABLED_EXT_HW_PLUGIN := true
 AUDIO_FEATURE_ENABLED_AUDIO_CONTROL_HAL := true
+ifneq ( ,$(filter T Tiramisu 13, $(PLATFORM_VERSION)))
+AUDIO_FEATURE_ENABLED_AUDIO_CONTROL_HAL_AIDL := true
+endif
 ifneq ($(ENABLE_HYP),true)
 AUDIO_FEATURE_ENABLED_AUTO_AUDIOD := true
 AUDIO_FEATURE_ENABLED_DAEMON_SUPPORT := true
@@ -501,7 +504,7 @@ PRODUCT_PACKAGES_DEBUG += \
     AudioSettings
 
 # for HIDL related audiocontrol packages
-ifeq ( ,$(filter 12 Tiramisu,$(PLATFORM_VERSION)))
+ifeq ( ,$(filter 12 13,$(PLATFORM_VERSION)))
 PRODUCT_PACKAGES += \
     android.hardware.automotive.audiocontrol@2.0-service \
     android.hardware.automotive.audiocontrol@2.0
