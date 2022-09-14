@@ -130,6 +130,17 @@ struct pcm_config default_pcm_config_voip_copp = {
     .stop_threshold = INT_MAX,
 };
 
+#ifndef COMPRESSED_TIMESTAMP_FLAG
+#define COMPRESSED_TIMESTAMP_FLAG 0
+ struct snd_codec_metadata {
+    __u32 length;
+    __u32 offset;
+    __u64 timestamp;
+    __u32 flags;
+    __u32 reserved[3];
+ };
+#endif
+
 #define MIN_CHANNEL_COUNT                1
 #define DEFAULT_CHANNEL_COUNT            2
 #define MAX_HIFI_CHANNEL_COUNT           8
