@@ -4375,7 +4375,9 @@ static int out_set_parameters(struct audio_stream *stream, const char *kvpairs)
     struct audio_device *adev = out->dev;
     struct str_parms *parms;
     char value[32];
-    int ret = 0, val = 0, err;
+    char *ptr;
+    int ret = 0, err;
+    uint32_t val = 0;
     bool bypass_a2dp = false;
     bool reconfig = false;
     unsigned long service_interval = 0;
@@ -4389,7 +4391,7 @@ static int out_set_parameters(struct audio_stream *stream, const char *kvpairs)
         goto error;
     err = str_parms_get_str(parms, AUDIO_PARAMETER_STREAM_ROUTING, value, sizeof(value));
     if (err >= 0) {
-        val = atoi(value);
+        val = strtoul(value, &ptr, 10);
 
         if(val & AUDIO_DEVICE_BIT_IN)
            goto routing_fail;
@@ -4397,43 +4399,6 @@ static int out_set_parameters(struct audio_stream *stream, const char *kvpairs)
         lock_output_stream(out);
         pthread_mutex_lock(&adev->lock);
 
-        /*
-         * When HDMI cable is unplugged the music playback is paused and
-         * the policy manager sends routing=0. But the audioflinger continues
-         * to write data until standby time (3sec). As the HDMI core is
-         * turned off, the write gets blocked.
-         * Avoid this by routing audio to speaker until standby.
-         */
-        if ((out->devices == AUDIO_DEVICE_OUT_AUX_DIGITAL) &&
-                (val == AUDIO_DEVICE_NONE) &&
-                !audio_extn_passthru_is_passthrough_stream(out) &&
-                (platform_get_edid_info(adev->platform) != 0) /* HDMI disconnected */) {
-            val = AUDIO_DEVICE_OUT_SPEAKER;
-        }
-        /*
-         * When A2DP is disconnected the
-         * music playback is paused and the policy manager sends routing=0
-         * But the audioflinger continues to write data until standby time
-         * (3sec). As BT is turned off, the write gets blocked.
-         * Avoid this by routing audio to speaker until standby.
-         */
-        if ((out->devices & AUDIO_DEVICE_OUT_ALL_A2DP) &&
-                (val == AUDIO_DEVICE_NONE) &&
-                !audio_extn_a2dp_source_is_ready()) {
-                val = AUDIO_DEVICE_OUT_SPEAKER;
-        }
-        /*
-        * When USB headset is disconnected the music platback paused
-        * and the policy manager send routing=0. But if the USB is connected
-        * back before the standby time, AFE is not closed and opened
-        * when USB is connected back. So routing to speker will guarantee
-        * AFE reconfiguration and AFE will be opend once USB is connected again
-        */
-        if ((out->devices & AUDIO_DEVICE_OUT_ALL_USB) &&
-                (val == AUDIO_DEVICE_NONE) &&
-                 !audio_extn_usb_connected(parms)) {
-                 val = AUDIO_DEVICE_OUT_SPEAKER;
-         }
         /* To avoid a2dp to sco overlapping / BT device improper state
          * check with BT lib about a2dp streaming support before routing
          */
