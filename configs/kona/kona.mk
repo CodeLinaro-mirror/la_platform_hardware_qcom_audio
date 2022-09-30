@@ -235,7 +235,7 @@ persist.vendor.audio.apptype.multirec.enabled=false
 ##fluencetype can be "fluence" or "fluencepro" or "none"
 PRODUCT_PROPERTY_OVERRIDES += \
 ro.vendor.audio.sdk.fluencetype=fluencepro\
-ro.vendor.audio.sdk.fluence.nn.enabled=false\
+ro.vendor.audio.sdk.fluence.nn.enabled=true\
 persist.vendor.audio.fluence.voicecall=true\
 persist.vendor.audio.fluence.voicerec=true\
 persist.vendor.audio.fluence.audiorec=true\
