@@ -6965,7 +6965,7 @@ snd_device_t platform_get_output_snd_device(void *platform, struct stream_out *o
                 snd_device = SND_DEVICE_OUT_HEADPHONES_HIFI_FILTER;
         } else if (NATIVE_AUDIO_MODE_MULTIPLE_MIX_IN_DSP == na_mode &&
                    (sample_rate % OUTPUT_SAMPLING_RATE_44100 == 0) &&
-                   (strcmp(my_data->codec_variant,"WCD9335"))) {
+                   (strstr(my_data->codec_version, "WCD9335"))) {
                 if (devices & AUDIO_DEVICE_OUT_LINE)
                     snd_device = SND_DEVICE_OUT_LINE_44_1;
                 else
@@ -10277,7 +10277,7 @@ static bool platform_check_codec_backend_cfg(struct audio_device* adev,
                  * Sample rate which are multiples of 44.1Khz to 44.1Khz
                  * and Reset Bit Width to 24 if greater than 24bit
                  */
-                if (strcmp(my_data->codec_variant,"WCD9335")) {
+                if (strstr(my_data->codec_version, "WCD9335")) {
                     if (bit_width > 24)
                         bit_width = 24;
 
