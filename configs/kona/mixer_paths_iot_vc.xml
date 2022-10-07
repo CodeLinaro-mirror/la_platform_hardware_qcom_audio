@@ -381,10 +381,10 @@
     <ctl name="TX_DEC1 Volume" value="96" />
     <ctl name="TX_DEC2 Volume" value="96" />
     <ctl name="TX_DEC3 Volume" value="96" />
-    <ctl name="TX_DEC4 Volume" value="84" />
-    <ctl name="TX_DEC5 Volume" value="84" />
-    <ctl name="TX_DEC6 Volume" value="84" />
-    <ctl name="TX_DEC7 Volume" value="84" />
+    <ctl name="TX_DEC4 Volume" value="104" />
+    <ctl name="TX_DEC5 Volume" value="104" />
+    <ctl name="TX_DEC6 Volume" value="104" />
+    <ctl name="TX_DEC7 Volume" value="104" />
 
     <ctl name="ADC1 Volume" value="12" />
     <ctl name="ADC2 Volume" value="12" />
@@ -3307,10 +3307,10 @@
 
     <path name="quad-mic">
         <path name="speaker-qmic" />
-        <ctl name="TX_DEC1 Volume" value="112" />
-		<ctl name="TX_DEC2 Volume" value="112" />
-		<ctl name="TX_DEC3 Volume" value="112" />
-		<ctl name="TX_DEC4 Volume" value="112" />
+        <ctl name="TX_DEC1 Volume" value="104" />
+		<ctl name="TX_DEC2 Volume" value="104" />
+		<ctl name="TX_DEC3 Volume" value="104" />
+		<ctl name="TX_DEC4 Volume" value="104" />
     </path>
 
     <path name="unprocessed-quad-mic">

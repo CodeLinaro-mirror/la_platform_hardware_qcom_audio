@@ -784,6 +784,7 @@ enum {
 #define TX_VOICE_FV5ECNS_DM 0x10F0A
 #define TX_VOICE_FLUENCE_SM_SB 0x10F38
 #define TX_VOICE_FLUENCE_MM_SB 0x10F39
+#define TX_VOICE_FLUENCE_NN    0x10B0F
 #define TX_VOICE_FLUENCE_NN_NS 0x10F3E
 
 /* multi-mic surround ECNS zone control */
