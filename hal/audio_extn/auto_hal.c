@@ -432,7 +432,13 @@ int auto_hal_open_output_stream(struct stream_out *out)
         out->volume_l = out->volume_r = MAX_VOLUME_GAIN;
         break;
     case CAR_AUDIO_STREAM_PHONE:
-        out->usecase = USECASE_AUDIO_PLAYBACK_PHONE;
+        if (out->flags == AUDIO_OUTPUT_FLAG_PRIMARY) {
+            out->usecase = USECASE_AUDIO_PLAYBACK_PHONE;
+            out->flags = AUDIO_OUTPUT_FLAG_PHONE;
+        }
+        else if (out->flags == AUDIO_OUTPUT_FLAG_NONE) {
+            out->usecase = USECASE_AUDIO_PLAYBACK_PHONE_LL;
+        }
         switch(out->sample_rate)
         {
             case 48000:
@@ -1072,6 +1078,7 @@ snd_device_t auto_hal_get_output_snd_device(struct audio_device *adev,
             snd_device = SND_DEVICE_OUT_BUS_NAV;
             break;
         case USECASE_AUDIO_PLAYBACK_PHONE:
+        case USECASE_AUDIO_PLAYBACK_PHONE_LL:
             snd_device = SND_DEVICE_OUT_BUS_PHN;
             break;
         case USECASE_AUDIO_PLAYBACK_ALERTS:
