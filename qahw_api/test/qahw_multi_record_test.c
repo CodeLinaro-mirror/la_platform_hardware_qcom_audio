@@ -27,6 +27,7 @@
 
 #include <getopt.h>
 #include <stdio.h>
+#include <inttypes.h>
 #include <string.h>
 #include <time.h>
 #include <pthread.h>
@@ -463,7 +464,7 @@ void *start_input(void *thread_param)
       bytes_read = qahw_in_read(in_handle, &in_buf);
 
       if (params->timestamp_mode)
-          fprintf(fd_in_ts, "timestamp:%lld\n", timestamp);
+          fprintf(fd_in_ts, "timestamp:%" PRIu64 "\n", timestamp);
       if (kpi_mode) {
           if (count == 0) {
               ret = clock_gettime(CLOCK_MONOTONIC, &tsColdF);
@@ -517,14 +518,14 @@ void *start_input(void *thread_param)
           fclose(fdLatencyNode);
           fdLatencyNode = NULL;
       }
-      sscanf(latencyBuf, " %llu,%llu", &tsec, &tusec);
+      sscanf(latencyBuf, " %" PRIu64 ",%" PRIu64 "", &tsec, &tusec);
       tCont = ((uint64_t)tsCont.tv_sec)*1000 - tsec*1000 + ((uint64_t)tsCont.tv_nsec)/1000000 - tusec/1000;
       if (log_file != stdout) {
-          fprintf(stdout, "\n cold latency %llums, continuous latency %llums, handle(%d)\n", tCold, tCont, params->handle);
+          fprintf(stdout, "\n cold latency %" PRIu64 "ms, continuous latency %" PRIu64 "ms, handle(%d)\n", tCold, tCont, params->handle);
           fprintf(stdout, " **Note: please add DSP Pipe/PP latency numbers to this, for final latency values\n");
       }
       fprintf(log_file, "\n values from debug node %s, handle(%d)\n", latencyBuf, params->handle);
-      fprintf(log_file, "\n cold latency %llums, continuous latency %llums, handle(%d)\n", tCold, tCont, params->handle);
+      fprintf(log_file, "\n cold latency %" PRIu64 "ms, continuous latency %" PRIu64 "ms, handle(%d)\n", tCold, tCont, params->handle);
       fprintf(log_file, " **Note: please add DSP Pipe/PP latency numbers to this, for final latency values\n");
   }
 
