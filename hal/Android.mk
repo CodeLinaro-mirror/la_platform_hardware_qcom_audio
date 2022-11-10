@@ -221,6 +221,10 @@ ifneq ($(BOARD_OPENSOURCE_DIR), )
   endif # BOARD_OPENSOURCE_DIR
 endif
 
+ifeq ($(ENABLE_AUDIO_LEGACY_TECHPACK),true)
+  LOCAL_HEADER_LIBRARIES += qti_legacy_audio_kernel_uapi
+endif
+
 ifeq ($(strip $(AUDIO_FEATURE_ENABLED_EXTENDED_COMPRESS_FORMAT)),true)
   LOCAL_CFLAGS += -DENABLE_EXTENDED_COMPRESS_FORMAT
 endif
@@ -290,6 +294,10 @@ LOCAL_HEADER_LIBRARIES += audio_qaf_headers
 LOCAL_SHARED_LIBRARIES += libqap_wrapper liblog
 endif
 
+ifeq ($(ENABLE_AUDIO_LEGACY_TECHPACK),true)
+  LOCAL_HEADER_LIBRARIES += qti_legacy_audio_kernel_uapi
+endif
+
 ifeq ($(strip $(AUDIO_FEATURE_ENABLED_LISTEN)),true)
     LOCAL_CFLAGS += -DAUDIO_LISTEN_ENABLED
     LOCAL_C_INCLUDES += $(TARGET_OUT_HEADERS)/mm-audio/audio-listen
@@ -345,6 +353,11 @@ ifeq ($(ST_FEATURE_ENABLE), true)
 ifneq ($(filter msm8996,$(TARGET_BOARD_PLATFORM)),)
     LOCAL_HEADER_LIBRARIES += sound_trigger.primary_headers
 endif
+
+ifeq ($(ENABLE_AUDIO_LEGACY_TECHPACK),true)
+  LOCAL_HEADER_LIBRARIES += qti_legacy_audio_kernel_uapi
+endif
+
 endif
 
 # Legacy feature
