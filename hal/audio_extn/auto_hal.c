@@ -375,15 +375,28 @@ int auto_hal_open_output_stream(struct stream_out *out)
 
     switch(out->car_audio_stream) {
     case CAR_AUDIO_STREAM_MEDIA:
-        /* media bus stream shares pcm device with deep-buffer */
-        out->usecase = USECASE_AUDIO_PLAYBACK_MEDIA;
-        out->config = pcm_config_media;
-        out->config.period_size = fp_get_output_period_size(out->sample_rate, out->format,
+        if (out->flags == AUDIO_OUTPUT_FLAG_PRIMARY) {
+            /* media bus stream shares pcm device with deep-buffer */
+            out->usecase = USECASE_AUDIO_PLAYBACK_MEDIA;
+            out->config = pcm_config_media;
+            out->config.period_size = fp_get_output_period_size(out->sample_rate, out->format,
                                         channels, DEEP_BUFFER_OUTPUT_PERIOD_DURATION);
-        if (out->config.period_size <= 0) {
-            ALOGE("Invalid configuration period size is not valid");
-            ret = -EINVAL;
-            goto error;
+            if (out->config.period_size <= 0) {
+                ALOGE("Invalid configuration period size is not valid");
+                ret = -EINVAL;
+                goto error;
+            }
+        }
+        else {
+            out->usecase = USECASE_AUDIO_PLAYBACK_MEDIA_LL;
+            switch(out->sample_rate)
+            {
+            case 48000:
+                out->config=pcm_config_system_48KHz;
+                break;;
+            default:
+                out->config=pcm_config_system_48KHz;
+            }
         }
         if (out->flags == AUDIO_OUTPUT_FLAG_NONE ||
             out->flags == AUDIO_OUTPUT_FLAG_PRIMARY)
@@ -418,14 +431,47 @@ int auto_hal_open_output_stream(struct stream_out *out)
         out->volume_l = out->volume_r = MAX_VOLUME_GAIN;
         break;
     case CAR_AUDIO_STREAM_NAV_GUIDANCE:
-        out->usecase = USECASE_AUDIO_PLAYBACK_NAV_GUIDANCE;
-        out->config = pcm_config_media;
-        out->config.period_size = fp_get_output_period_size(out->sample_rate, out->format,
+        if (out->flags == AUDIO_OUTPUT_FLAG_PRIMARY) {
+            out->usecase = USECASE_AUDIO_PLAYBACK_NAV_GUIDANCE;
+            out->config = pcm_config_media;
+            out->config.period_size = fp_get_output_period_size(out->sample_rate, out->format,
                                         channels, DEEP_BUFFER_OUTPUT_PERIOD_DURATION);
-        if (out->config.period_size <= 0) {
-            ALOGE("Invalid configuration period size is not valid");
-            ret = -EINVAL;
-            goto error;
+                if (out->config.period_size <= 0) {
+                    ALOGE("Invalid configuration period size is not valid");
+                    ret = -EINVAL;
+                    goto error;
+                }
+            out->flags |= AUDIO_OUTPUT_FLAG_NAV_GUIDANCE;
+        }
+        else {
+            out->usecase = USECASE_AUDIO_PLAYBACK_NAV_GUIDANCE_LL;
+            switch(out->sample_rate)
+            {
+            case 48000:
+                out->config=pcm_config_system_48KHz;
+                break;
+            case 32000:
+                out->config=pcm_config_system_32KHz;
+                break;
+            case 24000:
+                out->config=pcm_config_system_24KHz;
+                break;
+            case 16000:
+                out->config=pcm_config_system_16KHz;
+                break;
+            case 8000:
+                out->config=pcm_config_system_8KHz;
+                break;
+            default:
+                 out->config = pcm_config_media;
+                 out->config.period_size = fp_get_output_period_size(out->sample_rate, out->format,
+                                        channels, DEEP_BUFFER_OUTPUT_PERIOD_DURATION);
+                if (out->config.period_size <= 0) {
+                    ALOGE("Invalid configuration period size is not valid");
+                    ret = -EINVAL;
+                    goto error;
+                }
+            }
         }
         if (out->flags == AUDIO_OUTPUT_FLAG_NONE)
             out->flags |= AUDIO_OUTPUT_FLAG_NAV_GUIDANCE;
@@ -464,8 +510,33 @@ int auto_hal_open_output_stream(struct stream_out *out)
         out->volume_l = out->volume_r = MAX_VOLUME_GAIN;
         break;
     case CAR_AUDIO_STREAM_ALERTS:
-        out->usecase = USECASE_AUDIO_PLAYBACK_ALERTS;
-        out->config = pcm_config_system;
+        if (out->flags == AUDIO_OUTPUT_FLAG_PRIMARY) {
+            out->usecase = USECASE_AUDIO_PLAYBACK_ALERTS;
+            out->flags = AUDIO_OUTPUT_FLAG_ALERTS;
+        }
+        else {
+            out->usecase = USECASE_AUDIO_PLAYBACK_ALERTS_LL;
+        }
+        switch(out->sample_rate)
+        {
+            case 48000:
+                out->config=pcm_config_system_48KHz;
+                break;
+            case 32000:
+                out->config=pcm_config_system_32KHz;
+                break;
+            case 24000:
+                out->config=pcm_config_system_24KHz;
+                break;
+            case 16000:
+                out->config=pcm_config_system_16KHz;
+                break;
+            case 8000:
+                out->config=pcm_config_system_8KHz;
+                break;
+            default:
+                out->config=pcm_config_system_48KHz;
+        }
         if (out->flags == AUDIO_OUTPUT_FLAG_NONE)
             out->flags |= AUDIO_OUTPUT_FLAG_ALERTS;
         out->volume_l = out->volume_r = MAX_VOLUME_GAIN;
@@ -1025,6 +1096,7 @@ snd_device_t auto_hal_get_output_snd_device(struct audio_device *adev,
             snd_device = SND_DEVICE_OUT_VOICE_SPEAKER;
             break;
         case USECASE_AUDIO_PLAYBACK_MEDIA:
+        case USECASE_AUDIO_PLAYBACK_MEDIA_LL:
             snd_device = SND_DEVICE_OUT_BUS_MEDIA;
             break;
         case USECASE_AUDIO_PLAYBACK_OFFLOAD:
@@ -1075,6 +1147,7 @@ snd_device_t auto_hal_get_output_snd_device(struct audio_device *adev,
             snd_device = SND_DEVICE_OUT_BUS_SYS;
             break;
         case USECASE_AUDIO_PLAYBACK_NAV_GUIDANCE:
+        case USECASE_AUDIO_PLAYBACK_NAV_GUIDANCE_LL:
             snd_device = SND_DEVICE_OUT_BUS_NAV;
             break;
         case USECASE_AUDIO_PLAYBACK_PHONE:
@@ -1082,6 +1155,7 @@ snd_device_t auto_hal_get_output_snd_device(struct audio_device *adev,
             snd_device = SND_DEVICE_OUT_BUS_PHN;
             break;
         case USECASE_AUDIO_PLAYBACK_ALERTS:
+        case USECASE_AUDIO_PLAYBACK_ALERTS_LL:
             snd_device = SND_DEVICE_OUT_BUS_ALR;
             break;
         case USECASE_AUDIO_PLAYBACK_FRONT_PASSENGER:
