@@ -932,10 +932,10 @@ static struct audio_effect_config effect_config_table[GET_IN_DEVICE_INDEX(SND_DE
     [GET_IN_DEVICE_INDEX(SND_DEVICE_IN_HANDSET_MIC_SB)][EFFECT_AEC] = {TX_VOICE_FLUENCE_SM_SB, 0x8000, 0x10EAF, 0x01},
     [GET_IN_DEVICE_INDEX(SND_DEVICE_IN_HANDSET_MIC_SB)][EFFECT_NS] = {TX_VOICE_FLUENCE_SM_SB, 0x8000, 0x10EAF, 0x02},
 
-    [GET_IN_DEVICE_INDEX(SND_DEVICE_IN_SPEAKER_MIC_NN)][EFFECT_AEC] = {TX_VOICE_FLUENCE_NN_NS, 0x8000, 0x10EAF, 0x01},
-    [GET_IN_DEVICE_INDEX(SND_DEVICE_IN_SPEAKER_MIC_NN)][EFFECT_NS] = {TX_VOICE_FLUENCE_NN_NS, 0x8000, 0x10EAF, 0x02},
-    [GET_IN_DEVICE_INDEX(SND_DEVICE_IN_HANDSET_MIC_NN)][EFFECT_AEC] = {TX_VOICE_FLUENCE_NN_NS, 0x8000, 0x10EAF, 0x01},
-    [GET_IN_DEVICE_INDEX(SND_DEVICE_IN_HANDSET_MIC_NN)][EFFECT_NS] = {TX_VOICE_FLUENCE_NN_NS, 0x8000, 0x10EAF, 0x02},
+    [GET_IN_DEVICE_INDEX(SND_DEVICE_IN_SPEAKER_MIC_NN)][EFFECT_AEC] = {TX_VOICE_FLUENCE_NN, 0x8000, 0x10EAF, 0x01},
+    [GET_IN_DEVICE_INDEX(SND_DEVICE_IN_SPEAKER_MIC_NN)][EFFECT_NS] = {TX_VOICE_FLUENCE_NN, 0x8000, 0x10EAF, 0x02},
+    [GET_IN_DEVICE_INDEX(SND_DEVICE_IN_HANDSET_MIC_NN)][EFFECT_AEC] = {TX_VOICE_FLUENCE_NN, 0x8000, 0x10EAF, 0x01},
+    [GET_IN_DEVICE_INDEX(SND_DEVICE_IN_HANDSET_MIC_NN)][EFFECT_NS] = {TX_VOICE_FLUENCE_NN, 0x8000, 0x10EAF, 0x02},
     [GET_IN_DEVICE_INDEX(SND_DEVICE_IN_SPEAKER_QMIC_AEC_NS_NN)][EFFECT_AEC] = {TX_VOICE_FLUENCE_PRO_VC, 0x0, 0x10EAF, 0x01},
     [GET_IN_DEVICE_INDEX(SND_DEVICE_IN_SPEAKER_QMIC_AEC_NS_NN)][EFFECT_NS] = {TX_VOICE_FLUENCE_PRO_VC,  0x0, 0x10EAF, 0x02},
 };
@@ -2147,7 +2147,6 @@ void platform_set_echo_reference(struct audio_device *adev, bool enable,
     char ec_ref_mixer_path[MIXER_PATH_MAX_LENGTH] = "echo-reference";
 
     audio_extn_sound_trigger_update_ec_ref_status(enable);
-
     if (strcmp(my_data->ec_ref_mixer_path, "")) {
         ALOGV("%s: disabling %s", __func__, my_data->ec_ref_mixer_path);
         audio_route_reset_and_update_path(adev->audio_route,
@@ -6966,7 +6965,7 @@ snd_device_t platform_get_output_snd_device(void *platform, struct stream_out *o
                 snd_device = SND_DEVICE_OUT_HEADPHONES_HIFI_FILTER;
         } else if (NATIVE_AUDIO_MODE_MULTIPLE_MIX_IN_DSP == na_mode &&
                    (sample_rate % OUTPUT_SAMPLING_RATE_44100 == 0) &&
-                   (strcmp(my_data->codec_variant,"WCD9335"))) {
+                   (strstr(my_data->codec_version, "WCD9335"))) {
                 if (devices & AUDIO_DEVICE_OUT_LINE)
                     snd_device = SND_DEVICE_OUT_LINE_44_1;
                 else
@@ -7162,6 +7161,7 @@ static snd_device_t get_snd_device_for_voice_comm_ecns_disabled(struct platform_
                 adev->acdb_settings |= DMIC_FLAG;
             } else
                 snd_device = my_data->fluence_sb_enabled ?
+                                 SND_DEVICE_IN_SPEAKER_MIC_AEC_NS_SB
                                  : (my_data->fluence_nn_enabled?
                                         SND_DEVICE_IN_SPEAKER_MIC_AEC_NS_NN
                                         : SND_DEVICE_IN_SPEAKER_MIC_AEC_NS);
@@ -7179,6 +7179,7 @@ static snd_device_t get_snd_device_for_voice_comm_ecns_disabled(struct platform_
                 adev->acdb_settings |= DMIC_FLAG;
             } else
                 snd_device = my_data->fluence_sb_enabled ?
+                                 SND_DEVICE_IN_SPEAKER_MIC_AEC_NS_SB
                                  : (my_data->fluence_nn_enabled ?
                                         SND_DEVICE_IN_HANDSET_MIC_AEC_NS_NN
                                         : SND_DEVICE_IN_HANDSET_MIC_AEC_NS);
@@ -10276,7 +10277,7 @@ static bool platform_check_codec_backend_cfg(struct audio_device* adev,
                  * Sample rate which are multiples of 44.1Khz to 44.1Khz
                  * and Reset Bit Width to 24 if greater than 24bit
                  */
-                if (strcmp(my_data->codec_variant,"WCD9335")) {
+                if (strstr(my_data->codec_version, "WCD9335")) {
                     if (bit_width > 24)
                         bit_width = 24;
 

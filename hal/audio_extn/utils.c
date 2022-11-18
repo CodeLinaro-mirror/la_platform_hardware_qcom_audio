@@ -2184,17 +2184,15 @@ int audio_extn_utils_get_codec_version(const char *snd_card_name,
     char procfs_path[50];
     FILE *fp;
 
-    if (strstr(snd_card_name, "tasha")) {
-        snprintf(procfs_path, sizeof(procfs_path),
-                 "/proc/asound/card%d/codecs/tasha/version", card_num);
-        if ((fp = fopen(procfs_path, "r")) != NULL) {
-            fgets(codec_version, CODEC_VERSION_MAX_LENGTH, fp);
-            fclose(fp);
-        } else {
-            ALOGE("%s: ERROR. cannot open %s", __func__, procfs_path);
-            return -ENOENT;
-        }
+    snprintf(procfs_path, sizeof(procfs_path),
+             "/proc/asound/card%d/codecs/tasha/version", card_num);
+    if ((fp = fopen(procfs_path, "r")) != NULL) {
+        fgets(codec_version, CODEC_VERSION_MAX_LENGTH, fp);
         ALOGD("%s: codec version %s", __func__, codec_version);
+        fclose(fp);
+    } else if (strstr(snd_card_name, "tasha")) {
+        ALOGE("%s: ERROR. cannot open %s", __func__, procfs_path);
+        return -ENOENT;
     }
 
     return 0;
