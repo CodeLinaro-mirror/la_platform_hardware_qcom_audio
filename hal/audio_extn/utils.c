@@ -4,6 +4,8 @@
  *
  * Copyright (C) 2014 The Android Open Source Project
  *
+ * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -860,6 +862,7 @@ void audio_extn_utils_update_stream_app_type_cfg_for_usecase(
         ALOGV("%s Selected apptype: %d", __func__, usecase->stream.out->app_type_cfg.app_type);
         break;
     case PCM_CAPTURE:
+    case TRANSCODE_LOOPBACK_TX :
         if (usecase->id == USECASE_AUDIO_RECORD_VOIP)
             usecase->stream.in->app_type_cfg.app_type = APP_TYPE_VOIP_AUDIO;
         else
@@ -1143,7 +1146,7 @@ static int send_app_type_cfg_for_device(struct audio_device *adev,
           platform_get_snd_device_name(split_snd_device));
 
     if (usecase->type != PCM_PLAYBACK && usecase->type != PCM_CAPTURE &&
-        usecase->type != TRANSCODE_LOOPBACK_RX) {
+        usecase->type != TRANSCODE_LOOPBACK_RX && usecase->type != TRANSCODE_LOOPBACK_TX) {
         ALOGE("%s: not a playback/capture path, no need to cfg app type", __func__);
         rc = 0;
         goto exit_send_app_type_cfg;
@@ -1154,6 +1157,7 @@ static int send_app_type_cfg_for_device(struct audio_device *adev,
         (usecase->id != USECASE_AUDIO_PLAYBACK_ULL) &&
         (usecase->id != USECASE_AUDIO_PLAYBACK_VOIP) &&
         (usecase->id != USECASE_AUDIO_TRANSCODE_LOOPBACK_RX) &&
+        (usecase->id != USECASE_AUDIO_TRANSCODE_LOOPBACK_TX) &&
         (!is_interactive_usecase(usecase->id)) &&
         (!is_offload_usecase(usecase->id)) &&
         (usecase->type != PCM_CAPTURE) &&
@@ -1174,7 +1178,7 @@ static int send_app_type_cfg_for_device(struct audio_device *adev,
         pcm_device_id = platform_get_pcm_device_id(usecase->id, PCM_PLAYBACK);
         snprintf(mixer_ctl_name, sizeof(mixer_ctl_name),
             "Audio Stream %d App Type Cfg", pcm_device_id);
-    } else if (usecase->type == PCM_CAPTURE) {
+    } else if (usecase->type == PCM_CAPTURE || usecase->type == TRANSCODE_LOOPBACK_TX) {
         pcm_device_id = platform_get_pcm_device_id(usecase->id, PCM_CAPTURE);
         snprintf(mixer_ctl_name, sizeof(mixer_ctl_name),
             "Audio Stream Capture %d App Type Cfg", pcm_device_id);
@@ -1252,6 +1256,22 @@ static int send_app_type_cfg_for_device(struct audio_device *adev,
             app_type_cfg[len++] = snd_device_be_idx;
         ALOGI("%s CAPTURE app_type %d, acdb_dev_id %d, sample_rate %d, snd_device_be_idx %d",
            __func__, app_type, acdb_dev_id, sample_rate, snd_device_be_idx);
+    } else if ((usecase->type == TRANSCODE_LOOPBACK_TX) && (usecase->stream.in != NULL)) {
+        app_type = usecase->stream.in->app_type_cfg.app_type;
+        app_type_cfg[len++] = app_type;
+        app_type_cfg[len++] = acdb_dev_id;
+        if (usecase->stream.in->device & AUDIO_DEVICE_IN_BLUETOOTH_A2DP
+                & ~AUDIO_DEVICE_BIT_IN) {
+            audio_extn_a2dp_get_dec_sample_rate(&usecase->stream.in->app_type_cfg.sample_rate);
+            ALOGI("%s using %d sample rate for A2DP dec CoPP in loopback",
+                    __func__, usecase->stream.in->app_type_cfg.sample_rate);
+        }
+        sample_rate = usecase->stream.in->app_type_cfg.sample_rate;
+        app_type_cfg[len++] = sample_rate;
+        if (snd_device_be_idx > 0)
+            app_type_cfg[len++] = snd_device_be_idx;
+        ALOGI("%s TRANSCODE_LOOPBACK_TX app_type %d, acdb_dev_id %d, sample_rate %d, snd_device_be_idx %d",
+                __func__, app_type, acdb_dev_id, sample_rate, snd_device_be_idx);
     } else {
         app_type = platform_get_default_app_type_v2(adev->platform, usecase->type);
         if(usecase->type == TRANSCODE_LOOPBACK_RX) {
@@ -1263,7 +1283,7 @@ static int send_app_type_cfg_for_device(struct audio_device *adev,
         if (snd_device_be_idx > 0)
             app_type_cfg[len++] = snd_device_be_idx;
         ALOGI("%s default app_type %d, acdb_dev_id %d, sample_rate %d, snd_device_be_idx %d",
-              __func__, app_type, acdb_dev_id, sample_rate, snd_device_be_idx);
+                __func__, app_type, acdb_dev_id, sample_rate, snd_device_be_idx);
     }
 
     if(ctl)
@@ -1381,6 +1401,7 @@ int audio_extn_utils_send_app_type_cfg(struct audio_device *adev,
         }
         break;
     case PCM_CAPTURE:
+    case TRANSCODE_LOOPBACK_TX:
         ALOGD("%s: usecase->in_snd_device %s",
               __func__, platform_get_snd_device_name(usecase->in_snd_device));
         if (voice_is_in_call_rec_stream(usecase->stream.in)) {
@@ -1710,6 +1731,9 @@ void audio_extn_utils_send_audio_calibration(struct audio_device *adev,
                (type == TRANSCODE_LOOPBACK_RX && usecase->stream.inout != NULL)) {
         platform_send_audio_calibration(adev->platform, usecase,
                          platform_get_default_app_type_v2(adev->platform, usecase->type));
+    }  else if (type == TRANSCODE_LOOPBACK_TX && usecase->stream.in != NULL) {
+         platform_send_audio_calibration(adev->platform, usecase,
+                          platform_get_default_app_type_v2(adev->platform, usecase->type));
     } else {
         /* No need to send audio calibration for voice and voip call usecases */
         if ((type != VOICE_CALL) && (type != VOIP_CALL))

@@ -350,10 +350,15 @@ ifeq ($(strip $(AUDIO_FEATURE_ENABLED_GCOV)),true)
     LOCAL_STATIC_LIBRARIES += libprofile_rt
 endif
 
-#ifeq ($(strip $(AUDIO_FEATURE_ENABLED_AUTO_HAL)),true)
-#    LOCAL_CFLAGS += -DAUDIO_EXTN_AUTO_HAL_ENABLED
-#    LOCAL_SRC_FILES += audio_extn/auto_hal.c
-#endif
+ifeq ($(strip $(AUDIO_FEATURE_ENABLED_AUTO_HAL)),true)
+    LOCAL_CFLAGS += -DAUDIO_EXTN_AUTO_HAL_ENABLED
+    LOCAL_SRC_FILES += audio_extn/auto_hal.c
+endif
+
+ifeq ($(strip $(AUDIO_FEATURE_ENABLED_HW_LOOPBACK)),true)
+    LOCAL_CFLAGS += -DAUDIO_HW_LOOPBACK_ENABLED
+    LOCAL_SRC_FILES += audio_extn/hw_loopback.c
+endif
 
 LOCAL_SHARED_LIBRARIES += libbase libhidlbase libhwbinder libutils android.hardware.power@1.2 liblog
 LOCAL_SRC_FILES += audio_perf.cpp

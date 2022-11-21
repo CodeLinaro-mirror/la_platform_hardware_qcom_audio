@@ -1,4 +1,5 @@
 /* Copyright (c) 2013-2014, 2016-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -613,7 +614,7 @@ void audio_extn_sound_trigger_update_stream_status(struct audio_usecase *uc_info
                 ALOGW("%s:invalid event %d, for usecase %d",
                                       __func__, event, uc_info->id);
             }
-        } else if ((uc_info->type == PCM_CAPTURE) || (uc_info->type == VOICE_CALL)) {
+        } else if ((uc_info->type == PCM_CAPTURE) || (uc_info->type == VOICE_CALL) || (uc_info->type == TRANSCODE_LOOPBACK_TX)) {
             if (event == ST_EVENT_STREAM_BUSY)
                 ev = AUDIO_EVENT_CAPTURE_STREAM_ACTIVE;
             else

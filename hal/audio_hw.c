@@ -4,6 +4,8 @@
  *
  * Copyright (C) 2013 The Android Open Source Project
  *
+ * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -2438,7 +2440,7 @@ static struct stream_in *get_priority_input(struct audio_device *adev)
 
     list_for_each(node, &adev->usecase_list) {
         usecase = node_to_item(node, struct audio_usecase, list);
-        if (usecase->type == PCM_CAPTURE) {
+        if (usecase->type == PCM_CAPTURE || usecase->type == TRANSCODE_LOOPBACK_TX) {
             in = usecase->stream.in;
             if (!in)
                 continue;
@@ -2499,13 +2501,6 @@ int select_devices(struct audio_device *adev, audio_usecase_t uc_id)
         out_snd_device = platform_get_output_snd_device(adev->platform,
                                                         &stream_out);
         usecase->devices = out_snd_device;
-    } else if (usecase->type == TRANSCODE_LOOPBACK_TX ) {
-        if (usecase->stream.inout == NULL) {
-            ALOGE("%s: stream.inout is NULL", __func__);
-            return -EINVAL;
-        }
-        in_snd_device = platform_get_input_snd_device(adev->platform, NULL, AUDIO_DEVICE_NONE);
-        usecase->devices = in_snd_device;
     } else {
         /*
          * If the voice call is active, use the sound devices of voice call usecase
@@ -2595,7 +2590,8 @@ int select_devices(struct audio_device *adev, audio_usecase_t uc_id)
                 if (usecase->stream.out == voip_out && voip_in != NULL)
                     select_devices(adev, voip_in->usecase);
             }
-        } else if (usecase->type == PCM_CAPTURE) {
+        } else if ((usecase->type == PCM_CAPTURE) ||
+                (usecase->type == TRANSCODE_LOOPBACK_TX)) {
             if (usecase->stream.in == NULL) {
                 ALOGE("%s: stream.in is NULL", __func__);
                 return -EINVAL;
@@ -9419,7 +9415,7 @@ int adev_create_audio_patch(struct audio_hw_device *dev,
                                         num_sinks,
                                         sinks,
                                         handle);
-    ret |= audio_extn_auto_hal_create_audio_patch(dev,
+    ret &= audio_extn_auto_hal_create_audio_patch(dev,
                                         num_sources,
                                         sources,
                                         num_sinks,
@@ -9434,7 +9430,7 @@ int adev_release_audio_patch(struct audio_hw_device *dev,
     int ret;
 
     ret = audio_extn_hw_loopback_release_audio_patch(dev, handle);
-    ret |= audio_extn_auto_hal_release_audio_patch(dev, handle);
+    ret &= audio_extn_auto_hal_release_audio_patch(dev, handle);
     return ret;
 }
 
@@ -9443,7 +9439,7 @@ int adev_get_audio_port(struct audio_hw_device *dev, struct audio_port *config)
     int ret = 0;
 
     ret = audio_extn_hw_loopback_get_audio_port(dev, config);
-    ret |= audio_extn_auto_hal_get_audio_port(dev, config);
+    ret &= audio_extn_auto_hal_get_audio_port(dev, config);
     return ret;
 }
 
@@ -9453,7 +9449,7 @@ int adev_set_audio_port_config(struct audio_hw_device *dev,
     int ret = 0;
 
     ret = audio_extn_hw_loopback_set_audio_port_config(dev, config);
-    ret |= audio_extn_auto_hal_set_audio_port_config(dev, config);
+    ret &= audio_extn_auto_hal_set_audio_port_config(dev, config);
     return ret;
 }
 
@@ -9694,7 +9690,7 @@ static int adev_open(const hw_module_t *module, const char *name,
 #endif
 
     /* default audio HAL major version */
-    uint32_t maj_version = 2;
+    uint32_t maj_version = 3;
     if(property_get("vendor.audio.hal.maj.version", value, NULL))
         maj_version = atoi(value);
 
