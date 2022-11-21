@@ -130,6 +130,17 @@ struct pcm_config default_pcm_config_voip_copp = {
     .stop_threshold = INT_MAX,
 };
 
+#ifndef COMPRESSED_TIMESTAMP_FLAG
+#define COMPRESSED_TIMESTAMP_FLAG 0
+ struct snd_codec_metadata {
+    __u32 length;
+    __u32 offset;
+    __u64 timestamp;
+    __u32 flags;
+    __u32 reserved[3];
+ };
+#endif
+
 #define MIN_CHANNEL_COUNT                1
 #define DEFAULT_CHANNEL_COUNT            2
 #define MAX_HIFI_CHANNEL_COUNT           8
@@ -2922,7 +2933,6 @@ int start_input_stream(struct stream_in *in)
             ATRACE_END();
             if (errno == ENETRESET && !pcm_is_ready(in->pcm)) {
                 ALOGE("%s: pcm_open failed errno:%d\n", __func__, errno);
-                adev->card_status = CARD_STATUS_OFFLINE;
                 in->card_status = CARD_STATUS_OFFLINE;
                 ret = -ENETRESET;
                 goto error_open;
@@ -3579,7 +3589,6 @@ int start_output_stream(struct stream_out *out)
             if (errno == ENETRESET && !pcm_is_ready(out->pcm)) {
                 ALOGE("%s: pcm_open failed errno:%d\n", __func__, errno);
                 out->card_status = CARD_STATUS_OFFLINE;
-                adev->card_status = CARD_STATUS_OFFLINE;
                 ret = -ENETRESET;
                 goto error_open;
             }
@@ -3639,7 +3648,6 @@ int start_output_stream(struct stream_out *out)
         ATRACE_END();
         if (errno == ENETRESET && !is_compress_ready(out->compr)) {
                 ALOGE("%s: compress_open failed errno:%d\n", __func__, errno);
-                adev->card_status = CARD_STATUS_OFFLINE;
                 out->card_status = CARD_STATUS_OFFLINE;
                 ret = -ENETRESET;
                 goto error_open;
@@ -4367,7 +4375,9 @@ static int out_set_parameters(struct audio_stream *stream, const char *kvpairs)
     struct audio_device *adev = out->dev;
     struct str_parms *parms;
     char value[32];
-    int ret = 0, val = 0, err;
+    char *ptr;
+    int ret = 0, err;
+    uint32_t val = 0;
     bool bypass_a2dp = false;
     bool reconfig = false;
     unsigned long service_interval = 0;
@@ -4381,7 +4391,7 @@ static int out_set_parameters(struct audio_stream *stream, const char *kvpairs)
         goto error;
     err = str_parms_get_str(parms, AUDIO_PARAMETER_STREAM_ROUTING, value, sizeof(value));
     if (err >= 0) {
-        val = atoi(value);
+        val = strtoul(value, &ptr, 10);
 
         if(val & AUDIO_DEVICE_BIT_IN)
            goto routing_fail;
@@ -4389,43 +4399,6 @@ static int out_set_parameters(struct audio_stream *stream, const char *kvpairs)
         lock_output_stream(out);
         pthread_mutex_lock(&adev->lock);
 
-        /*
-         * When HDMI cable is unplugged the music playback is paused and
-         * the policy manager sends routing=0. But the audioflinger continues
-         * to write data until standby time (3sec). As the HDMI core is
-         * turned off, the write gets blocked.
-         * Avoid this by routing audio to speaker until standby.
-         */
-        if ((out->devices == AUDIO_DEVICE_OUT_AUX_DIGITAL) &&
-                (val == AUDIO_DEVICE_NONE) &&
-                !audio_extn_passthru_is_passthrough_stream(out) &&
-                (platform_get_edid_info(adev->platform) != 0) /* HDMI disconnected */) {
-            val = AUDIO_DEVICE_OUT_SPEAKER;
-        }
-        /*
-         * When A2DP is disconnected the
-         * music playback is paused and the policy manager sends routing=0
-         * But the audioflinger continues to write data until standby time
-         * (3sec). As BT is turned off, the write gets blocked.
-         * Avoid this by routing audio to speaker until standby.
-         */
-        if ((out->devices & AUDIO_DEVICE_OUT_ALL_A2DP) &&
-                (val == AUDIO_DEVICE_NONE) &&
-                !audio_extn_a2dp_source_is_ready()) {
-                val = AUDIO_DEVICE_OUT_SPEAKER;
-        }
-        /*
-        * When USB headset is disconnected the music platback paused
-        * and the policy manager send routing=0. But if the USB is connected
-        * back before the standby time, AFE is not closed and opened
-        * when USB is connected back. So routing to speker will guarantee
-        * AFE reconfiguration and AFE will be opend once USB is connected again
-        */
-        if ((out->devices & AUDIO_DEVICE_OUT_ALL_USB) &&
-                (val == AUDIO_DEVICE_NONE) &&
-                 !audio_extn_usb_connected(parms)) {
-                 val = AUDIO_DEVICE_OUT_SPEAKER;
-         }
         /* To avoid a2dp to sco overlapping / BT device improper state
          * check with BT lib about a2dp streaming support before routing
          */
@@ -5924,7 +5897,6 @@ static int out_create_mmap_buffer(const struct audio_stream_out *stream,
     if (errno == ENETRESET && !pcm_is_ready(out->pcm)) {
         ALOGE("%s: pcm_open failed errno:%d\n", __func__, errno);
         out->card_status = CARD_STATUS_OFFLINE;
-        adev->card_status = CARD_STATUS_OFFLINE;
         ret = -ENETRESET;
         goto exit;
     }
@@ -6456,7 +6428,7 @@ static ssize_t in_read(struct audio_stream_in *stream, void *buffer,
      * usecases so that other clients do not have access to voice recognition
      * data.
      */
-    if ((ret == 0 && voice_get_mic_mute(adev, in->usecase) &&
+    if ((ret == 0 &&
          !voice_is_in_call_rec_stream(in) &&
          in->usecase != USECASE_AUDIO_RECORD_AFE_PROXY) ||
         (adev->num_va_sessions &&
@@ -6722,7 +6694,6 @@ static int in_create_mmap_buffer(const struct audio_stream_in *stream,
     if (errno == ENETRESET && !pcm_is_ready(in->pcm)) {
         ALOGE("%s: pcm_open failed errno:%d\n", __func__, errno);
         in->card_status = CARD_STATUS_OFFLINE;
-        adev->card_status = CARD_STATUS_OFFLINE;
         ret = -EIO;
         goto exit;
     }

@@ -25,6 +25,10 @@
 * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
 * OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
 * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+*
+* Changes from Qualcomm Innovation Center are provided under the following license:
+* Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
+*
 */
 
 #define LOG_TAG "qahwi"
@@ -52,9 +56,13 @@
 /* default timestamp metadata definition if not defined in kernel*/
 #ifndef COMPRESSED_TIMESTAMP_FLAG
 #define COMPRESSED_TIMESTAMP_FLAG 0
-struct snd_codec_metadata {
-uint64_t timestamp;
-};
+ struct snd_codec_metadata {
+    __u32 length;
+    __u32 offset;
+    __u64 timestamp;
+    __u32 flags;
+    __u32 reserved[3];
+ };
 #endif
 
 ssize_t qahwi_out_write_v2(struct audio_stream_out *stream, const void* buffer,

@@ -25,6 +25,10 @@
 * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
 * OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
 * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+*
+* Changes from Qualcomm Innovation Center are provided under the following license:
+* Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
+*
 */
 
 #define LOG_TAG "audio_adsp_hdlr_event"
@@ -375,22 +379,6 @@ static void *event_callback_thread_loop(void *context)
                         uint32_t *ptr = (uint32_t *)received_evt->payload;
                         if (received_evt->event_type == AUDIO_STREAM_IEC_61937_FMT_UPDATE_EVENT) {
                             switch (ptr[0]) {
-                            case SND_AUDIOCODEC_AC3:
-                                ptr[0] = AUDIO_FORMAT_AC3;
-                                ALOGD("%s: Event AUDIO_FORMAT_AC3\n", __func__);
-                                break;
-                            case SND_AUDIOCODEC_EAC3:
-                                ptr[0] = AUDIO_FORMAT_E_AC3;
-                                ALOGD("%s: Event AUDIO_FORMAT_E_AC3\n", __func__);
-                                break;
-                            case SND_AUDIOCODEC_DTS:
-                                ptr[0] = AUDIO_FORMAT_DTS;
-                                ALOGD("%s: Event AUDIO_FORMAT_DTS\n", __func__);
-                                break;
-                            case SND_AUDIOCODEC_TRUEHD:
-                                ptr[0] = AUDIO_FORMAT_DOLBY_TRUEHD;
-                                ALOGD("%s: Event AUDIO_FORMAT_DOLBY_TRUEHD\n", __func__);
-                                break;
                             case SND_AUDIOCODEC_AAC:
                                 ptr[0] = AUDIO_FORMAT_AAC;
                                 ALOGD("%s: Event AUDIO_FORMAT_AAC\n", __func__);

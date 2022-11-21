@@ -197,7 +197,11 @@ static int add_new_sndcard(int card, int fd)
         free(s);
         return -1;
     }
+#ifdef PLATFORM_SA410M
+    bool online = state && !strcmp(state, "1");
+#else
     bool online = state && !strcmp(state, "ONLINE");
+#endif
 
     ALOGV("card %d initial state %s %d", card, state, online);
 
@@ -262,9 +266,13 @@ static int enum_sndcards()
             ALOGW("Skip over non-ADSP snd card %s", card_id);
             continue;
         }
-
+#ifdef PLATFORM_SA410M
+        snprintf(path, sizeof(path), "/sys/kernel/snd_card/card_state", ptr);
+        ALOGV("Opening sound card state : %s", path);
+#else
         snprintf(path, sizeof(path), "/proc/asound/card%s/state", ptr);
         ALOGV("Opening sound card state : %s", path);
+#endif
 
         fd = open(path, O_RDONLY);
         if (fd == -1) {

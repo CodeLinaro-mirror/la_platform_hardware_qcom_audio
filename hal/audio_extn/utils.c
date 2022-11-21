@@ -15,6 +15,10 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
+ * Changes from Qualcomm Innovation Center are provided under the following license:
+ * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ *
  */
 
 #define LOG_TAG "audio_hw_utils"
@@ -1741,20 +1745,6 @@ int get_snd_codec_id(audio_format_t format)
         break;
     case AUDIO_FORMAT_WMA:
         id = SND_AUDIOCODEC_WMA;
-        break;
-    case AUDIO_FORMAT_MP2:
-        id = SND_AUDIOCODEC_MP2;
-        break;
-    case AUDIO_FORMAT_AC3:
-        id = SND_AUDIOCODEC_AC3;
-        break;
-    case AUDIO_FORMAT_E_AC3:
-    case AUDIO_FORMAT_E_AC3_JOC:
-        id = SND_AUDIOCODEC_EAC3;
-        break;
-    case AUDIO_FORMAT_DTS:
-    case AUDIO_FORMAT_DTS_HD:
-        id = SND_AUDIOCODEC_DTS;
         break;
     case AUDIO_FORMAT_DOLBY_TRUEHD:
         id = SND_AUDIOCODEC_TRUEHD;
