@@ -23,7 +23,12 @@ SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR
 BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
 WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
 OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
-IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.*/
+IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ *
+ * Changes from Qualcomm Innovation Center are provided under the following license:
+ * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
+*/
 
 #define LOG_TAG "audio_hw_hfp"
 /*#define LOG_NDEBUG 0*/
@@ -58,6 +63,7 @@ IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.*/
 #define AUDIO_PARAMETER_HFP_PCM_RX_LINEOUT_DEV_ID "hfp_pcm_rx_lineout_dev_id"
 #define AUDIO_PARAMETER_HFP_PCM_RX_SPEAKER_DEV_ID "hfp_pcm_rx_speaker_dev_id"
 #define AUDIO_PARAMETER_HFP_ENABLE_MULTI_INTERFACES "hfp_enable_on_multi_interfaces"
+#define AUDIO_PARAMETER_HFP_FORCE_ROUTE_SPEAKER "hfp_route_spkr"
 
 #define AUDIO_PARAMETER_KEY_HFP_MIC_VOLUME "hfp_mic_volume"
 #define PLAYBACK_VOLUME_MAX 0x2000
@@ -184,6 +190,9 @@ static struct pcm_config pcm_config_hfp_multichannel = {
 
 /* global variable, updated by hfp_set_parameters() */
 static int current_hfp_num = SIG_HFP;
+
+/* global variable, updated by hfp_set_parameters() */
+static bool route_spkr = false;
 
 //external feature dependency
 static fp_platform_set_mic_mute_t                   fp_platform_set_mic_mute;
@@ -438,6 +447,11 @@ static int32_t start_hfp(struct audio_device *adev,
     uc_info->in_snd_device = SND_DEVICE_NONE;
     uc_info->out_snd_device = SND_DEVICE_NONE;
 
+    if (route_spkr) {
+        uc_info->devices = AUDIO_DEVICE_OUT_SPEAKER;
+        uc_info->stream.out->devices = AUDIO_DEVICE_OUT_SPEAKER;
+    }
+
     list_add_tail(&adev->usecase_list, &uc_info->list);
 
     fp_select_devices(adev, hfpmod->ucid);
@@ -565,6 +579,7 @@ static int32_t stop_hfp(struct audio_device *adev, int hfp_num)
         return -EINVAL;
 
     hfpmod->is_hfp_running = false;
+    route_spkr = false;
 
     /* 1. Close the PCM devices */
     if (hfpmod->hfp_sco_rx) {
@@ -721,6 +736,7 @@ void hfp_set_parameters(struct audio_device *adev, struct str_parms *parms)
     float vol;
     char value[32]={0};
     struct hfp_module *hfpmod = &hfpmod_sig;
+    struct audio_usecase *uc_info = NULL;
 
     ALOGD("%s: enter", __func__);
 
@@ -815,14 +831,36 @@ void hfp_set_parameters(struct audio_device *adev, struct str_parms *parms)
         }
     }
 
-    if (hfpmod->is_hfp_running) {
-        memset(value, 0, sizeof(value));
-        ret = str_parms_get_str(parms, AUDIO_PARAMETER_STREAM_ROUTING,
+    memset(value, 0, sizeof(value));
+    ret = str_parms_get_str(parms, AUDIO_PARAMETER_HFP_FORCE_ROUTE_SPEAKER, value,sizeof(value));
+
+    if(ret >= 0){
+        route_spkr = true;
+        ALOGE("%s: Set force route to speaker", __func__);
+    }
+
+    memset(value, 0, sizeof(value));
+    ret = str_parms_get_str(parms, AUDIO_PARAMETER_STREAM_ROUTING,
                                 value, sizeof(value));
-        if (ret >= 0) {
-            val = atoi(value);
-            if (val > 0)
-                fp_select_devices(adev, hfpmod->ucid);
+    if (ret >= 0) {
+        val = atoi(value);
+        if (val > 0) {
+            if (hfpmod->is_hfp_running) {
+                if (route_spkr) {
+                    if (val != AUDIO_DEVICE_OUT_SPEAKER)
+                        ALOGI("%s: HFP call in progress, cannot route to device %d", __func__, val);
+                } else {
+                    uc_info = fp_get_usecase_from_list(adev, hfpmod->ucid);
+
+                    if (uc_info != NULL) {
+                        uc_info->devices = val;
+                        uc_info->stream.out->devices = val;
+                        fp_select_devices(adev, hfpmod->ucid);
+                    }
+                }
+
+                str_parms_del(parms, AUDIO_PARAMETER_STREAM_ROUTING);
+            }
         }
     }
 

@@ -33,6 +33,10 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
+ * Changes from Qualcomm Innovation Center are provided under the following license:
+ * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 #define LOG_TAG "audio_hw_extn"
@@ -5014,18 +5018,14 @@ void audio_extn_sco_reset_configuration()
 // END: A2DP_OFFLOAD =====================================================================
 
 // START: HFP ======================================================================
-#ifdef __LP64__
 #if LINUX_ENABLED
-#define HFP_LIB_PATH "/usr/lib64/hfp.so"
+#   define HFP_LIB_PATH STR_CAT(LE_LIBDIR, "/hfp.so")
 #else
-#define HFP_LIB_PATH "/vendor/lib64/libhfp.so"
-#endif
-#else
-#if LINUX_ENABLED
-#define HFP_LIB_PATH "/usr/lib/hfp.so"
-#else
-#define HFP_LIB_PATH "/vendor/lib/libhfp.so"
-#endif
+#   ifdef __LP64__
+#       define HFP_LIB_PATH "/vendor/lib64/libhfp.so"
+#   else
+#       define HFP_LIB_PATH "/vendor/lib/libhfp.so"
+#   endif
 #endif
 
 static void *hfp_lib_handle = NULL;
