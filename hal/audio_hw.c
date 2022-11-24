@@ -433,6 +433,7 @@ const char * const use_case_table[AUDIO_USECASE_MAX] = {
     [USECASE_AUDIO_RECORD_COMPRESS5] = "audio-record-compress5",
     [USECASE_AUDIO_RECORD_COMPRESS6] = "audio-record-compress6",
     [USECASE_AUDIO_RECORD_LOW_LATENCY] = "low-latency-record",
+    [USECASE_AUDIO_RECORD_LOW_LATENCY2] = "low-latency-record2",
     [USECASE_AUDIO_RECORD_FM_VIRTUAL] = "fm-virtual-record",
     [USECASE_AUDIO_RECORD_MMAP] = "mmap-record",
     [USECASE_AUDIO_RECORD_HIFI] = "hifi-record",
@@ -489,10 +490,14 @@ const char * const use_case_table[AUDIO_USECASE_MAX] = {
     [USECASE_AUDIO_A2DP_ABR_FEEDBACK] = "a2dp-abr-feedback",
 
     [USECASE_AUDIO_PLAYBACK_MEDIA] = "media-playback",
+    [USECASE_AUDIO_PLAYBACK_MEDIA_LL] = "media-playback-ll",
     [USECASE_AUDIO_PLAYBACK_SYS_NOTIFICATION] = "sys-notification-playback",
     [USECASE_AUDIO_PLAYBACK_NAV_GUIDANCE] = "nav-guidance-playback",
+    [USECASE_AUDIO_PLAYBACK_NAV_GUIDANCE_LL] = "nav-guidance-playback-ll",
     [USECASE_AUDIO_PLAYBACK_PHONE] = "phone-playback",
+    [USECASE_AUDIO_PLAYBACK_PHONE_LL] = "phone-playback-ll",
     [USECASE_AUDIO_PLAYBACK_ALERTS] = "alerts-playback",
+    [USECASE_AUDIO_PLAYBACK_ALERTS_LL] = "alerts-playback-ll",
     [USECASE_AUDIO_PLAYBACK_FRONT_PASSENGER] = "front-passenger-playback",
     [USECASE_AUDIO_PLAYBACK_REAR_SEAT] = "rear-seat-playback",
     [USECASE_AUDIO_FM_TUNER_EXT] = "fm-tuner-ext",
@@ -598,6 +603,11 @@ static const audio_usecase_t record_usecases[] = {
     USECASE_AUDIO_RECORD3,
 };
 
+static const audio_usecase_t low_latency_record_usecases[] = {
+    USECASE_AUDIO_RECORD_LOW_LATENCY,
+    USECASE_AUDIO_RECORD_LOW_LATENCY2,
+};
+
 static struct audio_device *adev = NULL;
 static pthread_mutex_t adev_init_lock = PTHREAD_MUTEX_INITIALIZER;
 static unsigned int audio_device_ref_count;
@@ -679,6 +689,53 @@ static void free_record_usecase(struct audio_device *adev,
     ALOGV("%s: free pcm record usecase %d", __func__, uc_id);
 }
 
+static bool is_pcm_low_latency_record_usecase(audio_usecase_t uc_id)
+{
+    unsigned int record_uc_index;
+    unsigned int num_usecase = sizeof(low_latency_record_usecases)/sizeof(low_latency_record_usecases[0]);
+    ALOGD("%s: Check low latency pcm record usecase", __func__);
+
+    for (record_uc_index = 0; record_uc_index < num_usecase; record_uc_index++) {
+        if (uc_id == low_latency_record_usecases[record_uc_index])
+            return true;
+    }
+    return false;
+}
+
+static audio_usecase_t get_low_latency_record_usecase(struct audio_device *adev)
+{
+    audio_usecase_t ret_uc = USECASE_INVALID;
+    unsigned int record_uc_index;
+    unsigned int num_usecase = sizeof(low_latency_record_usecases)/sizeof(low_latency_record_usecases[0]);
+
+    ALOGD("%s: get_low_latency_record_usecase: %d", __func__, num_usecase);
+    for (record_uc_index = 0; record_uc_index < num_usecase; record_uc_index++) {
+        if (!(adev->pcm_low_latency_record_uc_state & (0x1 << record_uc_index))) {
+            adev->pcm_low_latency_record_uc_state |= 0x1 << record_uc_index;
+            ALOGD("%s: get_low_latency_record_usecase: %d", __func__, record_uc_index);
+            ret_uc = low_latency_record_usecases[record_uc_index];
+            break;
+        }
+    }
+
+    ALOGD("%s: low latency pcm record usecase is %d", __func__, ret_uc);
+    return ret_uc;
+}
+
+static void free_low_latency_record_usecase(struct audio_device *adev,
+                                audio_usecase_t uc_id)
+{
+    unsigned int record_uc_index;
+    unsigned int num_usecase = sizeof(low_latency_record_usecases)/sizeof(low_latency_record_usecases[0]);
+
+    for (record_uc_index = 0; record_uc_index < num_usecase; record_uc_index++) {
+        if (low_latency_record_usecases[record_uc_index] == uc_id) {
+            adev->pcm_low_latency_record_uc_state &= ~(0x1 << record_uc_index);
+            break;
+        }
+    }
+    ALOGD("%s: free low latency pcm record usecase %d", __func__, uc_id);
+}
 static bool may_use_noirq_mode(struct audio_device *adev, audio_usecase_t uc_id,
                                int flags __unused)
 {
@@ -715,11 +772,17 @@ static void register_out_stream(struct stream_out *out)
 
     if (!adev->adm_set_config)
         return;
-
+#ifdef PLATFORM_AUTO
     if (out->realtime || (out->flags & AUDIO_OUTPUT_FLAG_SYS_NOTIFICATION))
        adev->adm_set_config(adev->adm_data,
                              out->handle,
                              out->pcm, &out->config);
+#else
+    if (out->realtime)
+       adev->adm_set_config(adev->adm_data,
+                             out->handle,
+                             out->pcm, &out->config);
+#endif
 }
 
 static void register_in_stream(struct stream_in *in)
@@ -3265,11 +3328,15 @@ int select_devices(struct audio_device *adev, audio_usecase_t uc_id)
                      !audio_is_true_native_stream_active(adev)) &&
                     usecase->stream.out->sample_rate == OUTPUT_SAMPLING_RATE_44100) ||
                     (usecase->stream.out->sample_rate < OUTPUT_SAMPLING_RATE_44100)) {
+#ifdef PLATFORM_AUTO
             if (!(compare_device_type(&usecase->device_list, AUDIO_DEVICE_OUT_BUS) && ((usecase->stream.out->flags &
                 (audio_output_flags_t)AUDIO_OUTPUT_FLAG_SYS_NOTIFICATION) || (usecase->stream.out->flags &
                 (audio_output_flags_t)AUDIO_OUTPUT_FLAG_PHONE)))) {
                 usecase->stream.out->app_type_cfg.sample_rate = DEFAULT_OUTPUT_SAMPLING_RATE;
             }
+#else
+                usecase->stream.out->app_type_cfg.sample_rate = DEFAULT_OUTPUT_SAMPLING_RATE;
+#endif
         }
     }
     enable_audio_route(adev, usecase);
@@ -4692,6 +4759,9 @@ static size_t get_stream_buffer_size(size_t duration_ms,
 
     size = (sample_rate * duration_ms) / 1000;
     if (is_low_latency){
+#ifndef PLATFORM_AUTO
+         size = configured_low_latency_capture_period_size;
+#else
         switch(sample_rate) {
             case 48000:
                 size = 240;
@@ -4711,6 +4781,7 @@ static size_t get_stream_buffer_size(size_t duration_ms,
             default:
                 size = 240;
         }
+#endif
     }
 
     bytes_per_period_sample = audio_bytes_per_sample(format) * channel_count;
@@ -8863,8 +8934,8 @@ int adev_open_output_stream(struct audio_hw_device *dev,
                                                 out->hal_op_format, out->sample_rate,
                                                 out->bit_width, out->channel_mask, out->profile,
                                                 &out->app_type_cfg);
-    if ((out->usecase == (audio_usecase_t)(GET_USECASE_AUDIO_PLAYBACK_PRIMARY(use_db_as_primary))) ||
-        (flags & AUDIO_OUTPUT_FLAG_PRIMARY)) {
+    if (((out->usecase == (audio_usecase_t)(GET_USECASE_AUDIO_PLAYBACK_PRIMARY(use_db_as_primary))) ||
+        (flags & AUDIO_OUTPUT_FLAG_PRIMARY)) && (!compare_device_type(&out->device_list, AUDIO_DEVICE_OUT_BUS))) {
         /* Ensure the default output is not selected twice */
         if(adev->primary_output == NULL)
             adev->primary_output = out;
@@ -9425,6 +9496,7 @@ static int adev_set_parameters(struct audio_hw_device *dev, const char *kvpairs)
         }
     }
 
+    audio_extn_auto_hal_set_parameters(adev, parms);
     audio_extn_set_parameters(adev, parms);
 done:
     str_parms_destroy(parms);
@@ -9915,7 +9987,7 @@ static int adev_open_input_stream(struct audio_hw_device *dev,
             goto err_open;
         }
     }
-
+#ifdef PLATFORM_AUTO
     if ((config->sample_rate == 48000 ||
         config->sample_rate == 32000 ||
         config->sample_rate == 24000 ||
@@ -9923,7 +9995,14 @@ static int adev_open_input_stream(struct audio_hw_device *dev,
         config->sample_rate == 8000)&&
             (flags & AUDIO_INPUT_FLAG_TIMESTAMP) == 0 &&
             (flags & AUDIO_INPUT_FLAG_COMPRESS) == 0 &&
-            (flags & AUDIO_INPUT_FLAG_FAST) != 0) {
+            (flags & AUDIO_INPUT_FLAG_FAST) != 0)
+#else
+    if (config->sample_rate == LOW_LATENCY_CAPTURE_SAMPLE_RATE &&
+            (flags & AUDIO_INPUT_FLAG_TIMESTAMP) == 0 &&
+            (flags & AUDIO_INPUT_FLAG_COMPRESS) == 0 &&
+            (flags & AUDIO_INPUT_FLAG_FAST) != 0)
+#endif
+{
         is_low_latency = true;
 #if LOW_LATENCY_CAPTURE_USE_CASE
         if ((flags & AUDIO_INPUT_FLAG_VOIP_TX) != 0)
@@ -9944,6 +10023,7 @@ static int adev_open_input_stream(struct audio_hw_device *dev,
             in->af_period_multiplier = 1;
         } else {
             // period size is left untouched for rt mode playback
+#ifdef PLATFORM_AUTO
             switch(config->sample_rate)
             {
                 case 48000:
@@ -9964,7 +10044,41 @@ static int adev_open_input_stream(struct audio_hw_device *dev,
                 default:
                     in->config = pcm_config_audio_capture_rt_48KHz;
             }
+#else
+            in->config = pcm_config_audio_capture_rt_48KHz;
+#endif
             in->af_period_multiplier = af_period_multiplier;
+        }
+ 
+        /* assign concurrent capture usecase if record has to caried out from
+         * actual hardware input source */
+        if (audio_extn_is_concurrent_capture_enabled() &&
+            !audio_is_virtual_input_source(in->source)) {
+            /* Acquire lock to avoid two concurrent use cases initialized to
+               same pcm record use case */
+            if (in->usecase == USECASE_AUDIO_RECORD_LOW_LATENCY) {
+                pthread_mutex_lock(&adev->lock);
+                if (!(adev->pcm_low_latency_record_uc_state)) {
+                    ALOGD("%s: using USECASE_AUDIO_RECORD_LOW_LATENCY",__func__);
+                    adev->pcm_low_latency_record_uc_state = 1;
+                    pthread_mutex_unlock(&adev->lock);
+                } else if (audio_extn_is_concurrent_low_latency_pcm_record_enabled()) {
+                    in->usecase = get_low_latency_record_usecase(adev);
+                    pthread_mutex_unlock(&adev->lock);
+                } else {
+                    pthread_mutex_unlock(&adev->lock);
+                    /* Assign compress record use case for second record */
+                    in->usecase = USECASE_AUDIO_RECORD_COMPRESS2;
+                    in->flags |= AUDIO_INPUT_FLAG_COMPRESS;
+                    ALOGV("%s: overriding usecase with USECASE_AUDIO_RECORD_COMPRESS2 and appending compress flag", __func__);
+                    if (audio_extn_cin_applicable_stream(in)) {
+                        in->sample_rate = config->sample_rate;
+                        ret = audio_extn_cin_configure_input_stream(in, config);
+                        if (ret)
+                            goto err_open;
+                    }
+                }
+            }
         }
     }
 
@@ -10057,6 +10171,7 @@ static int adev_open_input_stream(struct audio_hw_device *dev,
         in->config.rate = config->sample_rate;
         in->af_period_multiplier = 1;
     } else if (in->realtime) {
+#ifdef PLATFORM_AUTO
         switch(config->sample_rate)
         {
             case 48000:
@@ -10079,7 +10194,10 @@ static int adev_open_input_stream(struct audio_hw_device *dev,
         }
         in->config.format = pcm_format_from_audio_format(config->format);
         in->af_period_multiplier = af_period_multiplier;
-    } else {
+#else
+        in->config = pcm_config_audio_capture_rt_48KHz;
+#endif
+} else {
         int ret_val;
         pthread_mutex_lock(&adev->lock);
         ret_val = audio_extn_check_and_set_multichannel_usecase(adev,
@@ -10223,6 +10341,13 @@ err_open:
         adev->pcm_record_uc_state = 0;
         pthread_mutex_unlock(&adev->lock);
     }
+    if (audio_extn_is_concurrent_low_latency_pcm_record_enabled() && is_pcm_low_latency_record_usecase(in->usecase)) {
+        free_low_latency_record_usecase(adev, in->usecase);
+    } else if (in->usecase == USECASE_AUDIO_RECORD_LOW_LATENCY) {
+        pthread_mutex_lock(&adev->lock);
+        adev->pcm_low_latency_record_uc_state = 0;
+        pthread_mutex_unlock(&adev->lock);
+    }
     free(in);
     *stream_in = NULL;
     return ret;
@@ -10290,6 +10415,12 @@ static void adev_close_input_stream(struct audio_hw_device *dev,
         free_record_usecase(adev, in->usecase);
     } else if (in->usecase == USECASE_AUDIO_RECORD) {
         adev->pcm_record_uc_state = 0;
+    }
+
+    if (audio_extn_is_concurrent_low_latency_pcm_record_enabled() && is_pcm_low_latency_record_usecase(in->usecase)) {
+        free_low_latency_record_usecase(adev, in->usecase);
+    } else if (in->usecase == USECASE_AUDIO_RECORD_LOW_LATENCY) {
+        adev->pcm_low_latency_record_uc_state = 0;
     }
 
     if (in->source == AUDIO_SOURCE_VOICE_COMMUNICATION) {
@@ -11093,6 +11224,7 @@ static int adev_open(const hw_module_t *module, const char *name,
     adev->cur_wfd_channels = 2;
     adev->offload_usecases_state = 0;
     adev->pcm_record_uc_state = 0;
+    adev->pcm_low_latency_record_uc_state = 0;
     adev->is_channel_status_set = false;
     adev->perf_lock_opts[0] = 0x101;
     adev->perf_lock_opts[1] = 0x20E;

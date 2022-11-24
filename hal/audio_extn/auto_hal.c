@@ -34,6 +34,7 @@
 #include <log/log.h>
 #include <math.h>
 #include <audio_hw.h>
+#include <tinyalsa/asoundlib.h>
 #include "audio_extn.h"
 #include "platform_api.h"
 #include "platform.h"
@@ -45,6 +46,17 @@
 #define LOG_MASK HAL_MOD_FILE_AUTO_HAL
 #include <log_utils.h>
 #endif
+
+#define MAX_VOLUME 1.995262
+#define DSP_MAX_VOLUME 0x2000
+#define DUCKED_VOLUME 0.0035
+
+enum {
+    AUDIO_DEVICE_DUCKED = 0,
+    AUDIO_DEVICE_UNDUCKED,
+    AUDIO_DEVICE_MUTED,
+    AUDIO_DEVICE_UNMUTED
+};
 
 //external feature dependency
 static fp_audio_extn_ext_hw_plugin_usecase_start_t  fp_audio_extn_ext_hw_plugin_usecase_start;
@@ -59,6 +71,7 @@ static fp_adev_get_active_input_t                   fp_adev_get_active_input;
 static fp_platform_set_echo_reference_t             fp_platform_set_echo_reference;
 static fp_platform_get_eccarstate_t                 fp_platform_get_eccarstate;
 static fp_generate_patch_handle_t                   fp_generate_patch_handle;
+static fp_platform_get_pcm_device_id_t              fp_platform_get_pcm_device_id;
 
 /* Auto hal module struct */
 static struct auto_hal_module *auto_hal = NULL;
@@ -362,15 +375,28 @@ int auto_hal_open_output_stream(struct stream_out *out)
 
     switch(out->car_audio_stream) {
     case CAR_AUDIO_STREAM_MEDIA:
-        /* media bus stream shares pcm device with deep-buffer */
-        out->usecase = USECASE_AUDIO_PLAYBACK_MEDIA;
-        out->config = pcm_config_media;
-        out->config.period_size = fp_get_output_period_size(out->sample_rate, out->format,
+        if (out->flags == AUDIO_OUTPUT_FLAG_PRIMARY) {
+            /* media bus stream shares pcm device with deep-buffer */
+            out->usecase = USECASE_AUDIO_PLAYBACK_MEDIA;
+            out->config = pcm_config_media;
+            out->config.period_size = fp_get_output_period_size(out->sample_rate, out->format,
                                         channels, DEEP_BUFFER_OUTPUT_PERIOD_DURATION);
-        if (out->config.period_size <= 0) {
-            ALOGE("Invalid configuration period size is not valid");
-            ret = -EINVAL;
-            goto error;
+            if (out->config.period_size <= 0) {
+                ALOGE("Invalid configuration period size is not valid");
+                ret = -EINVAL;
+                goto error;
+            }
+        }
+        else {
+            out->usecase = USECASE_AUDIO_PLAYBACK_MEDIA_LL;
+            switch(out->sample_rate)
+            {
+            case 48000:
+                out->config=pcm_config_system_48KHz;
+                break;;
+            default:
+                out->config=pcm_config_system_48KHz;
+            }
         }
         if (out->flags == AUDIO_OUTPUT_FLAG_NONE ||
             out->flags == AUDIO_OUTPUT_FLAG_PRIMARY)
@@ -405,21 +431,60 @@ int auto_hal_open_output_stream(struct stream_out *out)
         out->volume_l = out->volume_r = MAX_VOLUME_GAIN;
         break;
     case CAR_AUDIO_STREAM_NAV_GUIDANCE:
-        out->usecase = USECASE_AUDIO_PLAYBACK_NAV_GUIDANCE;
-        out->config = pcm_config_media;
-        out->config.period_size = fp_get_output_period_size(out->sample_rate, out->format,
+        if (out->flags == AUDIO_OUTPUT_FLAG_PRIMARY) {
+            out->usecase = USECASE_AUDIO_PLAYBACK_NAV_GUIDANCE;
+            out->config = pcm_config_media;
+            out->config.period_size = fp_get_output_period_size(out->sample_rate, out->format,
                                         channels, DEEP_BUFFER_OUTPUT_PERIOD_DURATION);
-        if (out->config.period_size <= 0) {
-            ALOGE("Invalid configuration period size is not valid");
-            ret = -EINVAL;
-            goto error;
+                if (out->config.period_size <= 0) {
+                    ALOGE("Invalid configuration period size is not valid");
+                    ret = -EINVAL;
+                    goto error;
+                }
+            out->flags |= AUDIO_OUTPUT_FLAG_NAV_GUIDANCE;
+        }
+        else {
+            out->usecase = USECASE_AUDIO_PLAYBACK_NAV_GUIDANCE_LL;
+            switch(out->sample_rate)
+            {
+            case 48000:
+                out->config=pcm_config_system_48KHz;
+                break;
+            case 32000:
+                out->config=pcm_config_system_32KHz;
+                break;
+            case 24000:
+                out->config=pcm_config_system_24KHz;
+                break;
+            case 16000:
+                out->config=pcm_config_system_16KHz;
+                break;
+            case 8000:
+                out->config=pcm_config_system_8KHz;
+                break;
+            default:
+                 out->config = pcm_config_media;
+                 out->config.period_size = fp_get_output_period_size(out->sample_rate, out->format,
+                                        channels, DEEP_BUFFER_OUTPUT_PERIOD_DURATION);
+                if (out->config.period_size <= 0) {
+                    ALOGE("Invalid configuration period size is not valid");
+                    ret = -EINVAL;
+                    goto error;
+                }
+            }
         }
         if (out->flags == AUDIO_OUTPUT_FLAG_NONE)
             out->flags |= AUDIO_OUTPUT_FLAG_NAV_GUIDANCE;
         out->volume_l = out->volume_r = MAX_VOLUME_GAIN;
         break;
     case CAR_AUDIO_STREAM_PHONE:
-        out->usecase = USECASE_AUDIO_PLAYBACK_PHONE;
+        if (out->flags == AUDIO_OUTPUT_FLAG_PRIMARY) {
+            out->usecase = USECASE_AUDIO_PLAYBACK_PHONE;
+            out->flags = AUDIO_OUTPUT_FLAG_PHONE;
+        }
+        else if (out->flags == AUDIO_OUTPUT_FLAG_NONE) {
+            out->usecase = USECASE_AUDIO_PLAYBACK_PHONE_LL;
+        }
         switch(out->sample_rate)
         {
             case 48000:
@@ -445,8 +510,33 @@ int auto_hal_open_output_stream(struct stream_out *out)
         out->volume_l = out->volume_r = MAX_VOLUME_GAIN;
         break;
     case CAR_AUDIO_STREAM_ALERTS:
-        out->usecase = USECASE_AUDIO_PLAYBACK_ALERTS;
-        out->config = pcm_config_system;
+        if (out->flags == AUDIO_OUTPUT_FLAG_PRIMARY) {
+            out->usecase = USECASE_AUDIO_PLAYBACK_ALERTS;
+            out->flags = AUDIO_OUTPUT_FLAG_ALERTS;
+        }
+        else {
+            out->usecase = USECASE_AUDIO_PLAYBACK_ALERTS_LL;
+        }
+        switch(out->sample_rate)
+        {
+            case 48000:
+                out->config=pcm_config_system_48KHz;
+                break;
+            case 32000:
+                out->config=pcm_config_system_32KHz;
+                break;
+            case 24000:
+                out->config=pcm_config_system_24KHz;
+                break;
+            case 16000:
+                out->config=pcm_config_system_16KHz;
+                break;
+            case 8000:
+                out->config=pcm_config_system_8KHz;
+                break;
+            default:
+                out->config=pcm_config_system_48KHz;
+        }
         if (out->flags == AUDIO_OUTPUT_FLAG_NONE)
             out->flags |= AUDIO_OUTPUT_FLAG_ALERTS;
         out->volume_l = out->volume_r = MAX_VOLUME_GAIN;
@@ -669,11 +759,84 @@ int auto_hal_set_audio_port_config(struct audio_hw_device *dev,
     return ret;
 }
 
-void auto_hal_set_parameters(struct audio_device *adev __unused,
+
+static int auto_hal_out_set_pcm_volume(struct stream_out *out, float volume)
+{
+    /* Volume control for pcm playback */
+    char mixer_ctl_name[128];
+    struct audio_device *adev = out->dev;
+    struct mixer_ctl *ctl;
+    int pcm_device_id = fp_platform_get_pcm_device_id(out->usecase, PCM_PLAYBACK);
+    snprintf(mixer_ctl_name, sizeof(mixer_ctl_name), "Playback %d Volume", pcm_device_id);
+    ctl = mixer_get_ctl_by_name(adev->mixer, mixer_ctl_name);
+    if (!ctl) {
+        ALOGE("%s : Could not get ctl for mixer cmd - %s", __func__, mixer_ctl_name);
+        return -EINVAL;
+    }
+
+    int dsp_vol = (int) (volume * DSP_MAX_VOLUME);
+    int ret = mixer_ctl_set_value(ctl, 0, dsp_vol);
+    if (ret < 0) {
+        ALOGE("%s: Could not set ctl, error:%d ", __func__, ret);
+        return -EINVAL;
+    }
+
+    return 0;
+}
+
+static void auto_hal_set_mute_duck_state(struct audio_device *adev,
+                                         char* duck_mute_value,
+                                         int duck_mute_state)
+{
+    struct listnode *node = NULL;
+    char *ptr = NULL;
+    char *saveptr = NULL;
+    struct stream_out *out = NULL;
+    int car_audio_stream = -1;
+
+    for (ptr = strtok_r(duck_mute_value, ",", &saveptr);
+         ptr != NULL; ptr = strtok_r(NULL, ",", &saveptr)) {
+        list_for_each(node, &adev->active_outputs_list) {
+            streams_output_ctxt_t *out_ctxt = node_to_item(node,
+                                              streams_output_ctxt_t,
+                                              list);
+            out = out_ctxt->output;
+            car_audio_stream = auto_hal_get_car_audio_stream_from_address(ptr);
+            if (car_audio_stream == out->car_audio_stream) {
+                switch(duck_mute_state) {
+                    case AUDIO_DEVICE_DUCKED:
+                        ALOGD("%s: Ducking BUS device %s", __func__, ptr);
+                        auto_hal_out_set_pcm_volume(out, DUCKED_VOLUME);
+                        break;
+
+                    case AUDIO_DEVICE_UNDUCKED:
+                        ALOGD("%s: Unducking BUS device %s", __func__, ptr);
+                        auto_hal_out_set_pcm_volume(out, out->volume_l);
+                        break;
+
+                    case AUDIO_DEVICE_MUTED:
+                        ALOGD("%s: Muting BUS device %s", __func__, ptr);
+                        out->muted = true;
+                        break;
+
+                    case AUDIO_DEVICE_UNMUTED:
+                        ALOGD("%s: Unmuting BUS device %s", __func__, ptr);
+                        out->muted = false;
+                        break;
+                }
+            }
+        }
+    }
+
+}
+
+void auto_hal_set_parameters(struct audio_device *adev,
                                         struct str_parms *parms)
 {
     int ret = 0;
     char value[32]={0};
+    char duck_mute_value[128] = {0};
+    char *ptr = NULL;
 
     ALOGV("%s: enter", __func__);
 
@@ -688,6 +851,22 @@ void auto_hal_set_parameters(struct audio_device *adev __unused,
             auto_hal->card_status = CARD_STATUS_ONLINE;
         }
     }
+
+    ret = str_parms_get_str(parms, "DevicesToDuck", duck_mute_value, sizeof(duck_mute_value));
+    if (ret >= 0)
+        auto_hal_set_mute_duck_state(adev, duck_mute_value, AUDIO_DEVICE_DUCKED);
+
+    ret = str_parms_get_str(parms, "DevicesToUnduck", duck_mute_value, sizeof(duck_mute_value));
+    if (ret >= 0)
+        auto_hal_set_mute_duck_state(adev, duck_mute_value, AUDIO_DEVICE_UNDUCKED);
+
+    ret = str_parms_get_str(parms, "DevicesToMute", duck_mute_value, sizeof(duck_mute_value));
+    if (ret >= 0)
+        auto_hal_set_mute_duck_state(adev, duck_mute_value, AUDIO_DEVICE_MUTED);
+
+    ret = str_parms_get_str(parms, "DevicesToUnmute", duck_mute_value, sizeof(duck_mute_value));
+    if (ret >= 0)
+        auto_hal_set_mute_duck_state(adev, duck_mute_value, AUDIO_DEVICE_UNMUTED);
 
     ALOGV("%s: exit", __func__);
 }
@@ -917,6 +1096,7 @@ snd_device_t auto_hal_get_output_snd_device(struct audio_device *adev,
             snd_device = SND_DEVICE_OUT_VOICE_SPEAKER;
             break;
         case USECASE_AUDIO_PLAYBACK_MEDIA:
+        case USECASE_AUDIO_PLAYBACK_MEDIA_LL:
             snd_device = SND_DEVICE_OUT_BUS_MEDIA;
             break;
         case USECASE_AUDIO_PLAYBACK_OFFLOAD:
@@ -967,12 +1147,15 @@ snd_device_t auto_hal_get_output_snd_device(struct audio_device *adev,
             snd_device = SND_DEVICE_OUT_BUS_SYS;
             break;
         case USECASE_AUDIO_PLAYBACK_NAV_GUIDANCE:
+        case USECASE_AUDIO_PLAYBACK_NAV_GUIDANCE_LL:
             snd_device = SND_DEVICE_OUT_BUS_NAV;
             break;
         case USECASE_AUDIO_PLAYBACK_PHONE:
+        case USECASE_AUDIO_PLAYBACK_PHONE_LL:
             snd_device = SND_DEVICE_OUT_BUS_PHN;
             break;
         case USECASE_AUDIO_PLAYBACK_ALERTS:
+        case USECASE_AUDIO_PLAYBACK_ALERTS_LL:
             snd_device = SND_DEVICE_OUT_BUS_ALR;
             break;
         case USECASE_AUDIO_PLAYBACK_FRONT_PASSENGER:
@@ -1031,6 +1214,7 @@ int auto_hal_init(struct audio_device *adev, auto_hal_init_config_t init_config)
     fp_platform_set_echo_reference = init_config.fp_platform_set_echo_reference;
     fp_platform_get_eccarstate = init_config.fp_platform_get_eccarstate;
     fp_generate_patch_handle = init_config.fp_generate_patch_handle;
+    fp_platform_get_pcm_device_id = init_config.fp_platform_get_pcm_device_id;
 
     return ret;
 }

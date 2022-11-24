@@ -103,6 +103,9 @@ PRODUCT_PACKAGES += $(AUDIO_HAL_TEST_APPS)
 AUDIO_FEATURE_ENABLED_AUTO_HAL := true
 AUDIO_FEATURE_ENABLED_EXT_HW_PLUGIN := true
 AUDIO_FEATURE_ENABLED_AUDIO_CONTROL_HAL := true
+ifneq ( ,$(filter T Tiramisu 13, $(PLATFORM_VERSION)))
+AUDIO_FEATURE_ENABLED_AUDIO_CONTROL_HAL_AIDL := true
+endif
 ifneq ($(ENABLE_HYP),true)
 AUDIO_FEATURE_ENABLED_AUTO_AUDIOD := true
 AUDIO_FEATURE_ENABLED_DAEMON_SUPPORT := true
@@ -407,7 +410,8 @@ vendor.audio.feature.snd_mon.enable=false \
 vendor.audio.feature.auto_hal.enable=true \
 vendor.audio.feature.synth.enable=true \
 vendor.audio.feature.powerpolicy.enable=true \
-vendor.audio.feature.concurrent_pcm_record.enable=true
+vendor.audio.feature.concurrent_pcm_record.enable=true \
+vendor.audio.feature.concurrent_low_latency_pcm_record.enable=true
 else
 # Non-Generic ODM varient related
 PRODUCT_ODM_PROPERTIES += \
@@ -456,7 +460,8 @@ vendor.audio.feature.snd_mon.enable=false \
 vendor.audio.feature.auto_hal.enable=true \
 vendor.audio.feature.synth.enable=true \
 vendor.audio.feature.powerpolicy.enable=true \
-vendor.audio.feature.concurrent_pcm_record.enable=true
+vendor.audio.feature.concurrent_pcm_record.enable=true \
+vendor.audio.feature.concurrent_low_latency_pcm_record.enable=true
 endif
 
 # for HIDL related packages

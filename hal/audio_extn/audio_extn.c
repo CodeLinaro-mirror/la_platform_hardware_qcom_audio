@@ -239,6 +239,7 @@ static bool audio_extn_maxx_audio_enabled = false;
 static bool audio_extn_audiozoom_enabled = false;
 static bool audio_extn_hifi_filter_enabled = false;
 static bool audio_extn_concurrent_pcm_record_enabled = false;
+static bool audio_extn_concurrent_low_latency_pcm_record_enabled = false;
 
 #define AUDIO_PARAMETER_KEY_AANC_NOISE_LEVEL "aanc_noise_level"
 #define AUDIO_PARAMETER_KEY_ANC        "anc_enabled"
@@ -634,7 +635,7 @@ static int set_custom_mtmx_output_channel_map(struct audio_device *adev,
     struct mixer_ctl *ctl = NULL;
     char mixer_ctl_name[128] = {0};
     int ret = 0;
-    long channel_map[AUDIO_MAX_DSP_CHANNELS] = {0};
+    int channel_map[AUDIO_MAX_DSP_CHANNELS] = {0};
 
     ALOGV("%s channel_count %d", __func__, ch_count);
 
@@ -5711,6 +5712,19 @@ void concurrent_pcm_record_feature_init(bool is_feature_enabled)
 }
 // END: CONCURRENT_PCM_RECORD =================================================
 
+// START: CONCURRENT_LOW_LATENCY_PCM_RECORD ===============================================
+bool audio_extn_is_concurrent_low_latency_pcm_record_enabled()
+{
+    return audio_extn_concurrent_low_latency_pcm_record_enabled;
+}
+
+void concurrent_low_latency_pcm_record_feature_init(bool is_feature_enabled)
+{
+    audio_extn_concurrent_low_latency_pcm_record_enabled = is_feature_enabled;
+    ALOGD("%s: ---- Feature CONCURRENT_LOW_LATENCY_PCM_RECORD is %s----", __func__, is_feature_enabled? "ENABLED": "NOT ENABLED");
+}
+// END: CONCURRENT_LOW_LATENCY_PCM_RECORD =================================================
+
 // START: COMPRESS_IN ==================================================
 void compress_in_feature_init(bool is_feature_enabled)
 {
@@ -6370,6 +6384,7 @@ int audio_extn_auto_hal_init(struct audio_device *adev)
         auto_hal_init_config.fp_platform_set_echo_reference = platform_set_echo_reference;
         auto_hal_init_config.fp_platform_get_eccarstate = platform_get_eccarstate;
         auto_hal_init_config.fp_generate_patch_handle = generate_patch_handle;
+        auto_hal_init_config.fp_platform_get_pcm_device_id = platform_get_pcm_device_id;
         return auto_hal_init(adev, auto_hal_init_config);
     }
     else
@@ -6789,6 +6804,9 @@ void audio_extn_feature_init()
                        false));
     concurrent_pcm_record_feature_init(
         property_get_bool("vendor.audio.feature.concurrent_pcm_record.enable",
+                           false));
+    concurrent_low_latency_pcm_record_feature_init(
+        property_get_bool("vendor.audio.feature.concurrent_low_latency_pcm_record.enable",
                            false));
 }
 
