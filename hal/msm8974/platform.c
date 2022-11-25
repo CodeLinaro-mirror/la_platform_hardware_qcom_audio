@@ -7353,7 +7353,8 @@ snd_device_t platform_get_input_snd_device(void *platform,
     if (in == NULL)
         in = adev_get_active_input(adev);
 
-    in->hdmi_in_status = false;
+    if (in != NULL)
+        in->hdmi_in_status = false;
     int format = (in == NULL) ? AUDIO_FORMAT_DEFAULT : in->format;
     audio_source_t source = (in == NULL) ? AUDIO_SOURCE_DEFAULT : in->source;
     audio_devices_t in_device =
