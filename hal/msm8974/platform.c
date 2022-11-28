@@ -347,6 +347,7 @@ typedef struct codec_backend_cfg {
     char     *bitwidth_mixer_ctl;
     char     *samplerate_mixer_ctl;
     char     *channels_mixer_ctl;
+    bool     passthrough_enabled;
     int      controller;
     int      stream;
 } codec_backend_cfg_t;
@@ -8090,7 +8091,14 @@ int platform_set_hdmi_channels_v2(void *platform,  int channel_count,
 }
 
 int platform_edid_get_max_channels(void *platform) {
-    return platform_edid_get_max_channels_v2(platform, 0, 0);
+    int controller;
+    int stream;
+    struct platform_data *my_data = (struct platform_data *)platform;
+    struct audio_device *adev = my_data->adev;
+
+    controller = adev->ext_controller;
+    stream = adev->ext_stream;
+    return platform_edid_get_max_channels_v2(platform, controller, stream);
 }
 
 int platform_edid_get_max_channels_v2(void *platform, int controller, int stream)
@@ -8110,11 +8118,9 @@ int platform_edid_get_max_channels_v2(void *platform, int controller, int stream
             ALOGV("%s:format %d channel %d", __func__,
                    info->audio_blocks_array[i].format_id,
                    info->audio_blocks_array[i].channels);
-            if (info->audio_blocks_array[i].format_id == LPCM) {
-                channel_count = info->audio_blocks_array[i].channels;
-                if (channel_count > max_channels) {
-                   max_channels = channel_count;
-                }
+            channel_count = info->audio_blocks_array[i].channels;
+            if (channel_count > max_channels) {
+                max_channels = channel_count;
             }
         }
     }
@@ -9704,6 +9710,9 @@ static int platform_set_codec_backend_cfg(struct audio_device* adev,
           sample_rate, channels, format, backend_idx,
           platform_get_snd_device_name(snd_device));
 
+    if (passthrough_enabled != my_data->current_backend_cfg[backend_idx].passthrough_enabled)
+        my_data->current_backend_cfg[backend_idx].passthrough_enabled = passthrough_enabled;
+
     if ((my_data->current_backend_cfg[backend_idx].bitwidth_mixer_ctl) &&
         (bit_width != my_data->current_backend_cfg[backend_idx].bit_width)) {
 
@@ -9923,7 +9932,11 @@ static int platform_set_codec_backend_cfg(struct audio_device* adev,
     bool set_ext_disp_device_idx = false;
 
     if (backend_idx == HDMI_RX_BACKEND) {
-        ext_disp_format = "HDMI RX Format";
+        if (!strncmp(platform_get_snd_device_backend_interface(snd_device),
+            "PRI_MI2S_RX", sizeof("PRI_MI2S_RX")))
+            ext_disp_format = "PRI MI2S RX Format";
+        else
+            ext_disp_format = "HDMI RX Format";
         set_ext_disp_format = true;
     } else if (backend_idx == DISP_PORT_RX_BACKEND) {
         ext_disp_format = "Display Port RX Format";
@@ -10021,6 +10034,8 @@ static int platform_set_codec_backend_cfg(struct audio_device* adev,
             ALOGD("%s: Ext display PCM format", __func__);
             mixer_ctl_set_enum_by_string(ctl, "LPCM");
         }
+        my_data->current_backend_cfg[backend_idx].controller = controller;
+        my_data->current_backend_cfg[backend_idx].stream = stream;
         ret = 0;
     }
     return ret;
@@ -10557,7 +10572,11 @@ static bool platform_check_codec_backend_cfg(struct audio_device* adev,
     // is not same as current backend comfiguration
     if ((bit_width != my_data->current_backend_cfg[backend_idx].bit_width) ||
         (sample_rate != my_data->current_backend_cfg[backend_idx].sample_rate) ||
-         passthrough_enabled || channels_updated || service_interval_update ||
+         passthrough_enabled ||
+         // Check if transistion is from passthrough to pcm or vice versa and reconfigure backend
+         ((backend_idx == HDMI_RX_BACKEND) &&
+         (passthrough_enabled != my_data->current_backend_cfg[backend_idx].passthrough_enabled))
+         || channels_updated || service_interval_update ||
          display_port_updated) {
         backend_cfg->bit_width = bit_width;
         backend_cfg->sample_rate = sample_rate;
@@ -11735,7 +11754,14 @@ void platform_add_app_type(const char *uc_type,
 }
 
 bool platform_is_edid_supported_format(void *platform, int format) {
-    return platform_is_edid_supported_format_v2(platform, format, 0, 0);
+    int controller;
+    int stream;
+    struct platform_data *my_data = (struct platform_data *)platform;
+    struct audio_device *adev = my_data->adev;
+
+    controller = adev->ext_controller;
+    stream = adev->ext_stream;
+    return platform_is_edid_supported_format_v2(platform, format, controller, stream);
 }
 
 bool platform_is_edid_supported_format_v2(void *platform,
@@ -11778,7 +11804,14 @@ bool platform_is_edid_supported_format_v2(void *platform,
 
 bool platform_is_edid_supported_sample_rate(void *platform, int sample_rate)
 {
-    return platform_is_edid_supported_sample_rate_v2(platform, sample_rate, 0, 0);
+    int controller;
+    int stream;
+    struct platform_data *my_data = (struct platform_data *)platform;
+    struct audio_device *adev = my_data->adev;
+
+    controller = adev->ext_controller;
+    stream = adev->ext_stream;
+    return platform_is_edid_supported_sample_rate_v2(platform, sample_rate, controller, stream);
 }
 
 bool platform_is_edid_supported_sample_rate_v2(void *platform,

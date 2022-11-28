@@ -5661,6 +5661,12 @@ void hdmi_passthrough_feature_init(bool is_feature_enabled)
             !(passthru_is_convert_supported =
                  (passthru_is_convert_supported_t)dlsym(
                             hdmi_passthru_lib_handle, "passthru_is_convert_supported")) ||
+            !(passthru_is_passt_supported =
+                  (passthru_is_passt_supported_t)dlsym(
+                             hdmi_passthru_lib_handle, "passthru_is_passt_supported")) ||
+            !(passthru_update_stream_configuration =
+                  (passthru_update_stream_configuration_t)dlsym(
+                             hdmi_passthru_lib_handle, "passthru_update_stream_configuration")) ||
             !(passthru_is_passthrough_stream =
                  (passthru_is_passthrough_stream_t)dlsym(
                             hdmi_passthru_lib_handle, "passthru_is_passthrough_stream")) ||
@@ -5691,26 +5697,26 @@ void hdmi_passthrough_feature_init(bool is_feature_enabled)
             !(passthru_set_parameters =
                  (passthru_set_parameters_t)dlsym(
                             hdmi_passthru_lib_handle, "passthru_set_parameters")) ||
-            (passthru_is_enabled =
+            !(passthru_is_enabled =
                  (passthru_is_enabled_t)dlsym(
                             hdmi_passthru_lib_handle, "passthru_is_enabled")) ||
-            (passthru_is_active =
+            !(passthru_is_active =
                  (passthru_is_active_t)dlsym(
                             hdmi_passthru_lib_handle, "passthru_is_active")) ||
-            (passthru_should_standby =
+            !(passthru_should_standby =
                  (passthru_should_standby_t)dlsym(
                             hdmi_passthru_lib_handle, "passthru_should_standby")) ||
-            (passthru_get_channel_count =
+            !(passthru_get_channel_count =
                  (passthru_get_channel_count_t)dlsym(
                             hdmi_passthru_lib_handle, "passthru_get_channel_count")) ||
-            (passthru_update_dts_stream_configuration =
+            !(passthru_update_dts_stream_configuration =
                  (passthru_update_dts_stream_configuration_t)dlsym(
                             hdmi_passthru_lib_handle,
                             "passthru_update_dts_stream_configuration")) ||
-            (passthru_is_direct_passthrough =
+            !(passthru_is_direct_passthrough =
                  (passthru_is_direct_passthrough_t)dlsym(
                             hdmi_passthru_lib_handle, "passthru_is_direct_passthrough")) ||
-            (passthru_is_supported_backend_edid_cfg =
+            !(passthru_is_supported_backend_edid_cfg =
                  (passthru_is_supported_backend_edid_cfg_t)dlsym(
                             hdmi_passthru_lib_handle,
                             "passthru_is_supported_backend_edid_cfg"))) {
@@ -5745,6 +5751,8 @@ feature_disabled:
 
     passthru_init = NULL;
     passthru_is_convert_supported = NULL;
+    passthru_is_passt_supported = NULL;
+    passthru_update_stream_configuration = NULL;
     passthru_is_passthrough_stream = NULL;
     passthru_get_buffer_size = NULL;
     passthru_set_volume = NULL;

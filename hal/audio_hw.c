@@ -491,6 +491,7 @@ struct string_to_enum {
 };
 
 static const struct string_to_enum channels_name_to_enum_table[] = {
+    STRING_TO_ENUM(AUDIO_CHANNEL_OUT_MONO),
     STRING_TO_ENUM(AUDIO_CHANNEL_OUT_STEREO),
     STRING_TO_ENUM(AUDIO_CHANNEL_OUT_2POINT1),
     STRING_TO_ENUM(AUDIO_CHANNEL_OUT_QUAD),
@@ -3748,6 +3749,7 @@ static int stop_output_stream(struct stream_out *out)
         ALOGV("Disable passthrough , reset mixer to pcm");
         /* NO_PASSTHROUGH */
         out->compr_config.codec->compr_passthr = 0;
+        out->is_iec61937_info_available = false;
         audio_extn_passthru_on_stop(out);
         audio_extn_dolby_set_dap_bypass(adev, DAP_STATE_ON);
     }
@@ -4939,6 +4941,7 @@ static int out_set_parameters(struct audio_stream *stream, const char *kvpairs)
                                            out->extconn.cs.stream) != 0)) {
             out->extconn.cs.controller = out->extconn.cs.stream = -1;
             adev->ext_controller = out->extconn.cs.controller;
+            adev->ext_stream = out->extconn.cs.stream;
             val = AUDIO_DEVICE_OUT_SPEAKER;
         }
         /*
@@ -5880,6 +5883,7 @@ static ssize_t out_write(struct audio_stream_out *stream, const void *buffer,
     if ((out->devices & AUDIO_DEVICE_OUT_AUX_DIGITAL) &&
          !out->is_iec61937_info_available) {
 
+        channels = platform_edid_get_max_channels(out->dev->platform);
         if (!audio_extn_passthru_is_passthrough_stream(out)) {
             out->is_iec61937_info_available = true;
         } else if (audio_extn_passthru_is_enabled()) {
