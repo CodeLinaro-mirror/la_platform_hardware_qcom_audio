@@ -303,7 +303,7 @@ vendor.audio.offload.multiple.enabled=false
 
 #Disable Compress passthrough playback
 PRODUCT_PROPERTY_OVERRIDES += \
-vendor.audio.offload.passthrough=false
+vendor.audio.offload.passthrough=true
 
 #Disable surround sound recording
 PRODUCT_PROPERTY_OVERRIDES += \
