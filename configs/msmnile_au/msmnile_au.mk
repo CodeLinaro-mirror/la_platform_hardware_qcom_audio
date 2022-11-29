@@ -123,7 +123,7 @@ endif
 ifneq ($(ENABLE_HYP),true)
 AUDIO_FEATURE_ENABLED_AUTO_AUDIOD := true
 
-ifneq ( ,$(filter msmnile_au msmnile_tb, $(TARGET_PRODUCT)))
+ifneq ( ,$(filter msmnile_au msmnile_tb, $(TARGET_BOARD_PLATFORM)))
 AUDIO_FEATURE_ENABLED_DAEMON_SUPPORT := true
 AUDIO_FEATURE_ENABLED_SILENT_BOOT := true
 else

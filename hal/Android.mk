@@ -389,8 +389,8 @@ endif
 
 ifeq ($(strip $(AUDIO_FEATURE_ENABLED_DYNAMIC_LOG)), true)
     LOCAL_CFLAGS += -DDYNAMIC_LOG_ENABLED
-    LOCAL_C_INCLUDES += $(TARGET_OUT_HEADERS)/mm-audio/audio-log-utils
     LOCAL_SHARED_LIBRARIES += libaudio_log_utils
+    LOCAL_HEADER_LIBRARIES += libaudiologutils_headers
 endif
 
 # Hardware specific feature
@@ -423,9 +423,6 @@ endif
 
 LOCAL_CFLAGS += -D_GNU_SOURCE
 LOCAL_CFLAGS += -Wall -Werror
-
-LOCAL_COPY_HEADERS_TO   := mm-audio
-LOCAL_COPY_HEADERS      := audio_extn/audio_defs.h
 
 ifeq ($(strip $(AUDIO_FEATURE_ENABLED_GCOV)),true)
     LOCAL_CFLAGS += --coverage -fprofile-arcs -ftest-coverage

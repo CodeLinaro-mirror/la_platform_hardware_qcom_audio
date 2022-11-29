@@ -30,17 +30,6 @@ LOCAL_SHARED_LIBRARIES := \
 
 LOCAL_CFLAGS += -Wall -Werror
 
-LOCAL_COPY_HEADERS_TO   := mm-audio/qahw_api/inc
-LOCAL_COPY_HEADERS      := inc/qahw_defs.h
-LOCAL_COPY_HEADERS      += inc/qahw_api.h
-LOCAL_COPY_HEADERS      += inc/qahw_effect_audiosphere.h
-LOCAL_COPY_HEADERS      += inc/qahw_effect_bassboost.h
-LOCAL_COPY_HEADERS      += inc/qahw_effect_environmentalreverb.h
-LOCAL_COPY_HEADERS      += inc/qahw_effect_equalizer.h
-LOCAL_COPY_HEADERS      += inc/qahw_effect_presetreverb.h
-LOCAL_COPY_HEADERS      += inc/qahw_effect_virtualizer.h
-LOCAL_COPY_HEADERS      += inc/qahw_effect_visualizer.h
-
 LOCAL_VENDOR_MODULE     := true
 
 ifneq ($(filter kona lahaina holi,$(TARGET_BOARD_PLATFORM)),)
