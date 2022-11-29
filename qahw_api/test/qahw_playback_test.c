@@ -533,7 +533,7 @@ void *drift_read(void* data)
         rc = qahw_out_get_param_data(out_handle, QAHW_PARAM_AVT_DEVICE_DRIFT,
                 (qahw_param_payload *)&drift_param);
         if (!rc) {
-            printf("resync flag = %d, drift %d, av timer %lld\n",
+            printf("resync flag = %d, drift %d, av timer %" PRIu64 "\n",
                     drift_param.resync_flag,
                     drift_param.avt_device_drift_value,
                     drift_param.ref_timer_abs_ts);
@@ -678,7 +678,7 @@ int write_to_hal(qahw_stream_handle_t* out_handle, char *data, size_t bytes, voi
     if (ret < 0) {
         fprintf(log_file, "stream %d: writing data to hal failed (ret = %zd)\n", stream_params->stream_index, ret);
     } else if ((ret != bytes) && (!stop_playback)) {
-        fprintf(log_file, "stream %d: provided bytes %zd, written bytes %d\n",stream_params->stream_index, bytes, ret);
+        fprintf(log_file, "stream %d: provided bytes %zd, written bytes %zd\n",stream_params->stream_index, bytes, ret);
         fprintf(log_file, "stream %d: waiting for event write ready\n", stream_params->stream_index);
         pthread_cond_wait(&stream_params->write_cond, &stream_params->write_lock);
         fprintf(log_file, "stream %d: out of wait for event write ready\n", stream_params->stream_index);
@@ -1042,7 +1042,7 @@ void *start_stream_playback (void* stream_data)
         bytes_written = bytes_remaining;
         bytes_written = write_to_hal(params->out_handle, data_ptr+offset, bytes_remaining, params);
         if (bytes_written < 0) {
-            fprintf(stderr, "write failed %d", bytes_written);
+            fprintf(stderr, "write failed %zd", bytes_written);
             exit = true;
             continue;
         }
@@ -1966,7 +1966,7 @@ static ssize_t  get_bytes_to_read(FILE* file, int file_type)
                      chunk_size = convert_BE_to_LE(read_chunk_size);
                      pos = ftell(file);
                      fseek(file, chunk_size, SEEK_CUR);
-                     fprintf(stderr,"DTS header chunk offset:%lu and chunk_size:%llu \n",
+                     fprintf(stderr,"DTS header chunk offset:%lu and chunk_size:%" PRIu64 " \n",
                              pos, chunk_size);
                      break;
                  }
@@ -2000,7 +2000,7 @@ static ssize_t  get_bytes_to_read(FILE* file, int file_type)
                     break;
                 }
                 file_read_size =  chunk_size;
-                fprintf(stderr, "DTS read_chunk_size %llu and file_read_size: %zd\n",
+                fprintf(stderr, "DTS read_chunk_size %" PRIu64 " and file_read_size: %zd\n",
                         chunk_size,
                         file_read_size);
                 break;
