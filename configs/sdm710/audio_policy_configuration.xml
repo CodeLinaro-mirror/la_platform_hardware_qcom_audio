@@ -216,7 +216,7 @@
                 <route type="mix" sink="Speaker"
                        sources="primary output,voip_rx,Built-In Mic"/>
                 <route type="mix" sink="Wired Headset"
-                       sources="primary output,voip_rx"/>
+                       sources="primary output,voip_rx,Built-In Mic"/>
                 <route type="mix" sink="Wired Headphones"
                        sources="primary output,voip_rx"/>
                 <route type="mix" sink="Line"
