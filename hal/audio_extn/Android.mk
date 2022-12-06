@@ -8,13 +8,18 @@ else
 endif # BOARD_OPENSOURCE_DIR
 
 ifneq ($(TARGET_BOARD_AUTO),true)
-LIBRARY_TINYCOMPRESS := libtinycompress
-LIBRARY_TINYCOMPRESS_INC := external/tinycompress/include
+  LIBRARY_TINYCOMPRESS := libtinycompress
+  LIBRARY_TINYCOMPRESS_INC := external/tinycompress/include
 else
-LIBRARY_TINYCOMPRESS := libqti-tinycompress
-LIBRARY_TINYCOMPRESS_INC := $(TOP)/vendor/qcom/opensource/tinycompress/include
+  LIBRARY_TINYCOMPRESS := libqti-tinycompress
+  LIBRARY_TINYCOMPRESS_INC := $(TOP)/vendor/qcom/opensource/tinycompress/include
 endif
 
+ifeq ($(ENABLE_AUDIO_LEGACY_TECHPACK),true)
+  LIBRARY_TINYCOMPRESS := libtinycompress
+  LIBRARY_TINYCOMPRESS_INC := external/tinycompress/include
+  LOCAL_CFLAGS += -DENABLE_AUDIO_LEGACY_PURE
+endif
 #--------------------------------------------
 #          Build SND_MONITOR LIB
 #--------------------------------------------
@@ -1189,7 +1194,8 @@ LOCAL_SHARED_LIBRARIES := \
     libcutils \
     libdl \
     libexpat \
-    liblog
+    liblog \
+    libtinyalsa
 
 LOCAL_C_INCLUDES := \
     $(PRIMARY_HAL_PATH) \
@@ -1243,12 +1249,18 @@ LOCAL_C_INCLUDES:= \
         system/media/audio/include
 
 LOCAL_SHARED_LIBRARIES:= \
-        android.frameworks.automotive.powerpolicy-V1-ndk_platform \
         libbase \
         libbinder_ndk \
         libcutils \
         liblog \
         libpowerpolicyclient
+
+# *-ndk_platform migrated to *-ndk from Android T onwards
+ifeq ($(call math_gt_or_eq, $(PLATFORM_SDK_VERSION), 33), true)
+    LOCAL_SHARED_LIBRARIES += android.frameworks.automotive.powerpolicy-V1-ndk
+else
+    LOCAL_SHARED_LIBRARIES += android.frameworks.automotive.powerpolicy-V1-ndk_platform
+endif
 
 ifneq ($(filter kona lahaina holi,$(TARGET_BOARD_PLATFORM)),)
 LOCAL_SANITIZE := integer_overflow

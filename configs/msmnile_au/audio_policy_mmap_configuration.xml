@@ -16,6 +16,10 @@
      See the License for the specific language governing permissions and
      limitations under the License.
 -->
+<!-- Changes from Qualcomm Innovation Center are provided under the following license:
+     Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
+     SPDX-License-Identifier: BSD-3-Clause-Clear
+-->
 
 <audioPolicyConfiguration version="1.0" xmlns:xi="http://www.w3.org/2001/XInclude">
     <!-- version section contains a “version” tag in the form “major.minor” e.g version=”1.0” -->
@@ -108,7 +112,7 @@
                     <profile name="" format="AUDIO_FORMAT_PCM_16_BIT"
                              samplingRates="48000" channelMasks="AUDIO_CHANNEL_OUT_STEREO"/>
                 </mixPort>
-                <mixPort name="phone" role="source">
+                <mixPort name="phone" role="source" flags="AUDIO_OUTPUT_FLAG_PRIMARY|AUDIO_OUTPUT_FLAG_DIRECT">
                     <profile name="" format="AUDIO_FORMAT_PCM_16_BIT"
                              samplingRates="48000" channelMasks="AUDIO_CHANNEL_OUT_STEREO"/>
                 </mixPort>
@@ -345,7 +349,7 @@
                 <route type="mix" sink="Nav Guidance Bus"
                        sources="nav_guidance"/>
                 <route type="mix" sink="Phone Bus"
-                       sources="phone"/>
+                       sources="phone,mmap_no_irq_out"/>
                 <route type="mix" sink="Alerts Bus"
                        sources="alerts"/>
                 <route type="mix" sink="Front Passenger Bus"
