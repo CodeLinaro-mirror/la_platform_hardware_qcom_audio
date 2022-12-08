@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2017,2019, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2020, The Linux Foundation. All rights reserved.
  * Not a Contribution.
  *
  * Copyright (C) 2015 The Android Open Source Project *
@@ -62,7 +62,11 @@ enum {
     FILE_APTX,
     FILE_TRUEHD,
     FILE_IEC61937,
-    FILE_APE
+    FILE_APE,
+    FILE_MAT,
+    FILE_AMR = 20,
+    FILE_AMR_WB,
+    FILE_AMR_WB_PLUS
 };
 
 typedef enum {
@@ -94,6 +98,28 @@ struct audio_config_params {
     audio_source_t kInputSource;
     char *file_name;
     volatile bool thread_exit;
+};
+
+struct dolby_thd_params_local {
+    int32_t ch_cfg;
+    int32_t presentation_mode;
+    int32_t loud_mgmt;
+    int32_t drc_cut;
+    int32_t drc_mode;
+    int32_t drc_boost;
+    int32_t lfe_mode;
+    int32_t archive_mode;
+};
+
+struct dolby_mat_params_local {
+    int32_t content_type;
+    int32_t inplace_buf;
+    int32_t loud_mgmt;
+    int32_t drc_cut;
+    int32_t drc_mode;
+    int32_t drc_boost;
+    int32_t ch_cfg;
+    int32_t presentation_mode;
 };
 
 typedef struct {
@@ -146,7 +172,11 @@ typedef struct {
     pthread_mutex_t input_buffer_available_lock;
     uint32_t input_buffer_available_size;
     char *set_params;
+    unsigned int raw_data_len_in_bytes;
+    struct dolby_thd_params_local dlb_truehd_params;
+    struct dolby_mat_params_local dlb_mat_params;
     bool bt_wbs;
+    bool pll_dev_cfg;
 }stream_config;
 
 qahw_module_handle_t * load_hal(audio_devices_t dev);

@@ -71,6 +71,7 @@ ifneq ($(filter sdm710,$(TARGET_BOARD_PLATFORM)),)
 endif
 ifneq ($(filter qcs605,$(TARGET_BOARD_PLATFORM)),)
   LOCAL_CFLAGS := -DPLATFORM_QCS605
+  LOCAL_CFLAGS += -DMAX_TARGET_SPECIFIC_CHANNEL_CNT="8"
 endif
 ifneq ($(filter msmnile sdmshrike,$(TARGET_BOARD_PLATFORM)),)
   LOCAL_CFLAGS := -DPLATFORM_MSMNILE
@@ -221,12 +222,98 @@ ifneq ($(BOARD_OPENSOURCE_DIR), )
   endif # BOARD_OPENSOURCE_DIR
 endif
 
-ifeq ($(ENABLE_AUDIO_LEGACY_TECHPACK),true)
-  LOCAL_HEADER_LIBRARIES += qti_legacy_audio_kernel_uapi
-endif
-
 ifeq ($(strip $(AUDIO_FEATURE_ENABLED_EXTENDED_COMPRESS_FORMAT)),true)
   LOCAL_CFLAGS += -DENABLE_EXTENDED_COMPRESS_FORMAT
+LOCAL_CFLAGS += -DUSE_VENDOR_EXTN
+endif
+
+ifeq ($(strip $(AUDIO_FEATURE_ENABLED_HDMI_EDID)),true)
+    LOCAL_CFLAGS += -DHDMI_EDID_ENABLED
+#     LOCAL_SRC_FILES += edid.c
+endif
+
+ifeq ($(strip $(AUDIO_FEATURE_ENABLED_PCM_OFFLOAD)),true)
+    LOCAL_CFLAGS += -DPCM_OFFLOAD_ENABLED
+endif
+
+ifeq ($(strip $(AUDIO_FEATURE_ENABLED_ANC_HEADSET)),true)
+    LOCAL_CFLAGS += -DANC_HEADSET_ENABLED
+endif
+
+ifeq ($(strip $(AUDIO_FEATURE_ENABLED_HIFI_AUDIO)),true)
+    LOCAL_CFLAGS += -DHIFI_AUDIO_ENABLED
+endif
+
+# ifeq ($(strip $(AUDIO_FEATURE_ENABLED_RAS)),true)
+#     LOCAL_CFLAGS += -DRAS_ENABLED
+# endif
+
+ifeq ($(strip $(AUDIO_FEATURE_ENABLED_VBAT_MONITOR)),true)
+    LOCAL_CFLAGS += -DVBAT_MONITOR_ENABLED
+endif
+
+ifeq ($(strip $(AUDIO_FEATURE_ENABLED_FLUENCE)),true)
+    LOCAL_CFLAGS += -DFLUENCE_ENABLED
+endif
+
+ifeq ($(strip $(AUDIO_FEATURE_ENABLED_PROXY_DEVICE)),true)
+    LOCAL_CFLAGS += -DAFE_PROXY_ENABLED
+endif
+
+ifeq ($(strip $(AUDIO_FEATURE_ENABLED_KPI_OPTIMIZE)),true)
+    LOCAL_CFLAGS += -DKPI_OPTIMIZE_ENABLED
+endif
+
+ifeq ($(strip $(AUDIO_FEATURE_ENABLED_FM_POWER_OPT)),true)
+    LOCAL_CFLAGS += -DFM_POWER_OPT
+#     LOCAL_SRC_FILES += audio_extn/fm.c
+endif
+
+
+ifeq ($(strip $(AUDIO_FEATURE_ENABLED_USB_TUNNEL)),true)
+    LOCAL_CFLAGS += -DUSB_OFFLOAD_ENABLED
+#    LOCAL_SRC_FILES += audio_extn/usb.c
+endif
+
+ifeq ($(strip $(AUDIO_FEATURE_ENABLED_USB_SIDETONE_VOLUME)),true)
+    LOCAL_CFLAGS += -DUSB_OFFLOAD_SIDETONE_VOLM_ENABLED
+endif
+
+ifeq ($(strip $(AUDIO_FEATURE_ENABLED_USB_BURST_MODE)), true)
+    LOCAL_CFLAGS += -DUSB_OFFLOAD_BURST_MODE_ENABLED
+endif
+
+ifeq ($(strip $(AUDIO_FEATURE_ENABLED_HFP)),true)
+    LOCAL_CFLAGS += -DHFP_ENABLED
+    LOCAL_SRC_FILES += audio_extn/hfp.c
+endif
+
+ifeq ($(strip $(AUDIO_FEATURE_ENABLED_CUSTOMSTEREO)),true)
+    LOCAL_CFLAGS += -DCUSTOM_STEREO_ENABLED
+endif
+
+ifeq ($(strip $(AUDIO_FEATURE_ENABLED_INCALL_MUSIC)),true)
+    LOCAL_CFLAGS += -DINCALL_MUSIC_ENABLED
+endif
+
+ifeq ($(strip $(AUDIO_FEATURE_ENABLED_COMPRESS_VOIP)),true)
+     LOCAL_CFLAGS += -DCOMPRESS_VOIP_ENABLED
+#     LOCAL_SRC_FILES += voice_extn/compress_voip.c
+endif
+
+# endif
+
+ifeq ($(strip $(AUDIO_FEATURE_ENABLED_EXTN_FORMATS)),true)
+  LOCAL_CFLAGS += -DAUDIO_EXTN_FORMATS_ENABLED
+endif
+
+ifeq ($(strip $(AUDIO_FEATURE_ENABLED_SPKR_PROTECTION)),true)
+  LOCAL_CFLAGS += -DSPKR_PROT_ENABLED
+#  LOCAL_SRC_FILES += audio_extn/spkr_protection.c
+endif
+
+ifeq ($(strip $(AUDIO_FEATURE_ENABLED_BG_CAL)),true)
+  LOCAL_CFLAGS += -DBG_CODEC_CAL
 endif
 
 LOCAL_CFLAGS += -DUSE_VENDOR_EXTN
@@ -258,6 +345,54 @@ endif
 endif
 
 # Legacy feature
+ifeq ($(strip $(AUDIO_FEATURE_ENABLED_EXTN_FLAC_DECODER)),true)
+    LOCAL_CFLAGS += -DFLAC_OFFLOAD_ENABLED
+    LOCAL_CFLAGS += -DCOMPRESS_METADATA_ENABLED
+endif
+
+ifeq ($(strip $(AUDIO_FEATURE_ENABLED_VORBIS_OFFLOAD)),true)
+    LOCAL_CFLAGS += -DVORBIS_OFFLOAD_ENABLED
+    LOCAL_CFLAGS += -DCOMPRESS_METADATA_ENABLED
+endif
+
+ifeq ($(strip $(AUDIO_FEATURE_ENABLED_WMA_OFFLOAD)),true)
+    LOCAL_CFLAGS += -DWMA_OFFLOAD_ENABLED
+    LOCAL_CFLAGS += -DCOMPRESS_METADATA_ENABLED
+endif
+
+ifeq ($(strip $(AUDIO_FEATURE_ENABLED_ALAC_OFFLOAD)),true)
+    LOCAL_CFLAGS += -DALAC_OFFLOAD_ENABLED
+    LOCAL_CFLAGS += -DCOMPRESS_METADATA_ENABLED
+endif
+
+ifeq ($(strip $(AUDIO_FEATURE_ENABLED_APE_OFFLOAD)),true)
+    LOCAL_CFLAGS += -DAPE_OFFLOAD_ENABLED
+    LOCAL_CFLAGS += -DCOMPRESS_METADATA_ENABLED
+endif
+
+ifeq ($(strip $(AUDIO_FEATURE_ENABLED_PCM_OFFLOAD_24)),true)
+       LOCAL_CFLAGS += -DPCM_OFFLOAD_ENABLED_24
+endif
+
+ifeq ($(strip $(AUDIO_FEATURE_ENABLED_AAC_ADTS_OFFLOAD)),true)
+    LOCAL_CFLAGS += -DAAC_ADTS_OFFLOAD_ENABLED
+endif
+
+# # Removing flag as feature below is no longer needed
+# ifeq ($(strip $(AUDIO_FEATURE_ENABLED_DEV_ARBI)),true)
+#     LOCAL_CFLAGS += -DDEV_ARBI_ENABLED
+#     LOCAL_SRC_FILES += audio_extn/dev_arbi.c
+# endif
+
+ifeq ($(strip $(AUDIO_FEATURE_ENABLED_RECORD_PLAY_CONCURRENCY)),true)
+    LOCAL_CFLAGS += -DRECORD_PLAY_CONCURRENCY
+endif
+
+# Removing following flag as dolby is not being used on mobile targets
+# ifeq ($(strip $(AUDIO_FEATURE_ENABLED_ACDB_LICENSE)), true)
+#     LOCAL_CFLAGS += -DDOLBY_ACDB_LICENSE
+# endif
+
 ifeq ($(strip $(AUDIO_FEATURE_ENABLED_DS2_DOLBY_DAP)),true)
     LOCAL_CFLAGS += -DDS2_DOLBY_DAP_ENABLED
     LOCAL_CFLAGS += -DDS1_DOLBY_DDP_ENABLED
@@ -269,6 +404,24 @@ endif
 endif
 
 # NonLA feature
+ifeq ($(strip $(AUDIO_FEATURE_ENABLED_HDMI_PASSTHROUGH)),true)
+    LOCAL_CFLAGS += -DHDMI_PASSTHROUGH_ENABLED
+#    LOCAL_SRC_FILES += audio_extn/passthru.c
+endif
+
+LOCAL_CFLAGS += -DCOMPRESS_INPUT_ENABLED
+
+ifeq ($(strip $(AUDIO_FEATURE_ENABLED_KEEP_ALIVE)),true)
+    LOCAL_CFLAGS += -DKEEP_ALIVE_ENABLED
+#     LOCAL_SRC_FILES += audio_extn/keep_alive.c
+endif
+
+#This feature is depricated, file disabled
+#ifeq ($(strip $(AUDIO_FEATURE_IP_HDLR_ENABLED)),true)
+#    LOCAL_CFLAGS += -DAUDIO_EXTN_IP_HDLR_ENABLED
+#    LOCAL_SRC_FILES += audio_extn/ip_hdlr_intf.c
+#endif
+
 ifeq ($(strip $(AUDIO_FEATURE_ENABLED_QAF)),true)
     LOCAL_CFLAGS += -DQAF_EXTN_ENABLED
     LOCAL_C_INCLUDES += $(TARGET_OUT_HEADERS)/mm-audio/qaf/
@@ -294,9 +447,46 @@ LOCAL_HEADER_LIBRARIES += audio_qaf_headers
 LOCAL_SHARED_LIBRARIES += libqap_wrapper liblog
 endif
 
-ifeq ($(ENABLE_AUDIO_LEGACY_TECHPACK),true)
-  LOCAL_HEADER_LIBRARIES += qti_legacy_audio_kernel_uapi
+ifeq ($(strip $(USE_LIB_PROCESS_GROUP)),true)
+LOCAL_SHARED_LIBRARIES := \
+    liblog \
+    libcutils \
+    libtinyalsa \
+    libtinycompress \
+    libaudioroute \
+    libdl \
+    libaudioutils \
+    libexpat \
+    libqti_vndfwk_detect \
+    libhwbinder \
+    libhidlbase \
+    libhidltransport \
+    libprocessgroup
+else
+LOCAL_SHARED_LIBRARIES := \
+    liblog \
+    libcutils \
+    libtinyalsa \
+    libaudioroute \
+    libdl \
+    libaudioutils \
+    libhwbinder \
+    libhidlbase \
+    libhidltransport \
+    libexpat
 endif
+
+LOCAL_C_INCLUDES += \
+    external/tinyalsa/include \
+    external/tinycompress/include \
+    system/media/audio_utils/include \
+    external/expat/lib \
+    vendor/qcom/opensource/core-utils/fwk-detect \
+    $(call include-path-for, audio-route) \
+    $(call include-path-for, audio-effects) \
+    $(LOCAL_PATH)/$(AUDIO_PLATFORM) \
+    $(LOCAL_PATH)/audio_extn \
+    $(LOCAL_PATH)/voice_extn
 
 ifeq ($(strip $(AUDIO_FEATURE_ENABLED_LISTEN)),true)
     LOCAL_CFLAGS += -DAUDIO_LISTEN_ENABLED
@@ -373,6 +563,9 @@ ifeq ($(strip $(AUDIO_FEATURE_ENABLED_PM_SUPPORT)),true)
     LOCAL_SHARED_LIBRARIES += libperipheral_client
 endif
 
+ifeq ($(strip $(AUDIO_FEATURE_ENABLED_DISPLAY_PORT)),true)
+    LOCAL_CFLAGS += -DDISPLAY_PORT_ENABLED
+endif
 
 # Hardare specific featre
 ifeq ($(strip $(AUDIO_FEATURE_ENABLED_GEF_SUPPORT)),true)
@@ -422,7 +615,20 @@ ifeq ($(strip $(AUDIO_FEATURE_ENABLED_AHAL_EXT)),true)
 endif
 
 LOCAL_CFLAGS += -D_GNU_SOURCE
-LOCAL_CFLAGS += -Wall -Werror
+LOCAL_CFLAGS += -Wall -Werror -Wmissing-field-initializers
+LOCAL_CFLAGS += -Wno-non-literal-null-conversion -Wno-pointer-sign -Wno-missing-field-initializers
+LOCAL_CFLAGS += -Wno-unused-parameter -Wno-initializer-overrides -Wno-format -Wno-implicit-function-declaration
+LOCAL_CFLAGS += -Wno-sometimes-uninitialized
+
+ifeq ($(strip $(AUDIO_FEATURE_ENABLED_SND_MONITOR)), true)
+     LOCAL_CFLAGS += -DSND_MONITOR_ENABLED
+#     LOCAL_SRC_FILES += audio_extn/sndmonitor.c
+endif
+
+# ifeq ($(strip $(AUDIO_FEATURE_ENABLED_MAXX_AUDIO)), true)
+#     LOCAL_CFLAGS += -DMAXXAUDIO_QDSP_ENABLED
+#     LOCAL_SRC_FILES += audio_extn/maxxaudio.c
+# endif
 
 ifeq ($(strip $(AUDIO_FEATURE_ENABLED_GCOV)),true)
     LOCAL_CFLAGS += --coverage -fprofile-arcs -ftest-coverage
@@ -435,6 +641,48 @@ LOCAL_SRC_FILES += audio_perf.cpp
 
 ifeq ($(strip $(AUDIO_FEATURE_ENABLED_FM_TUNER_EXT)),true)
     LOCAL_CFLAGS += -DFM_TUNER_EXT_ENABLED
+endif
+
+ifeq ($(strip $(AUDIO_FEATURE_ENABLED_AUTO_HAL)),true)
+    LOCAL_CFLAGS += -DAUDIO_EXTN_AUTO_HAL_ENABLED
+    LOCAL_SRC_FILES += audio_extn/auto_hal.c
+endif
+
+ifeq ($(strip $(AUDIO_FEATURE_ENABLED_EXT_HW_PLUGIN)),true)
+    LOCAL_CFLAGS += -DEXT_HW_PLUGIN_ENABLED
+    LOCAL_SRC_FILES += audio_extn/ext_hw_plugin.c
+endif
+
+ifeq ($(strip $(AUDIO_FEATURE_ENABLED_FM_TUNER_EXT)),true)
+    LOCAL_CFLAGS += -DFM_TUNER_EXT_ENABLED
+endif
+
+ifeq ($(strip $(AUDIO_FEATURE_ENABLED_A2DP_DECODERS)), true)
+    LOCAL_CFLAGS += -DAPTX_DECODER_ENABLED
+endif
+
+ifeq ($(strip $(AUDIO_FEATURE_ENABLED_COMPRESS_CAPTURE)), true)
+    LOCAL_CFLAGS += -DCOMPRESS_CAPTURE_ENABLED
+endif
+
+ifeq ($(strip $(AUDIO_FEATURE_ENABLED_SOURCE_TRACKING)), true)
+    LOCAL_CFLAGS += -DSOURCE_TRACKING_ENABLED
+endif
+
+ifeq ($(strip $(AUDIO_FEATURE_ENABLED_SSR)), true)
+    LOCAL_CFLAGS += -DSSREC_ENABLED
+endif
+
+ifeq ($(strip $(AUDIO_FEATURE_ENABLED_AUDIOSPHERE)), true)
+    LOCAL_CFLAGS += -DAUDIOSPHERE_ENABLED
+endif
+
+ifeq ($(strip $(AUDIO_USE_DEEP_AS_PRIMARY_OUTPUT)), true)
+    LOCAL_CFLAGS += -DUSE_DEEP_AS_PRIMARY_OUTPUT_ENABLED
+endif
+
+ifeq ($(strip $(AUDIO_FEATURE_ENABLED_A2DP_OFFLOAD)), true)
+    LOCAL_CFLAGS += -DA2DP_OFFLOAD_ENABLED_ENABLED
 endif
 
 LOCAL_MODULE := audio.primary.$(TARGET_BOARD_PLATFORM)

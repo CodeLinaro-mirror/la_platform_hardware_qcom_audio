@@ -33,16 +33,20 @@
 #include "audio_hidl.h"
 #include <cutils/properties.h>
 #include <log/log.h>
+#ifndef LINUX_ENABLED
 #include <hidl/HidlTransportSupport.h>
 #include <hidl/LegacySupport.h>
+#endif
 
 #ifdef AHAL_EXT_ENABLED
 #include <vendor/qti/hardware/audiohalext/1.0/IAudioHalExt.h>
 using vendor::qti::hardware::audiohalext::V1_0::IAudioHalExt;
 #endif
 
+#ifndef LINUX_ENABLED
 using namespace android::hardware;
 using android::OK;
+#endif
 
 extern "C" {
 int audio_extn_hidl_init() {

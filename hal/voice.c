@@ -49,6 +49,10 @@ struct pcm_config pcm_config_voice_call = {
 };
 
 #ifdef PLATFORM_AUTO
+#define VOICE_RX_VOLUME "Playback 36 Volume"
+#define PLAYBACK_VOLUME_MAX 0x2000
+#define PLAYBACK_VOLUME_DEFAULT (15.0)
+#define CAPTURE_VOLUME_DEFAULT (15.0)
 struct pcm *voice_loopback_tx = NULL;
 struct pcm *voice_loopback_rx = NULL;
 #endif
@@ -276,8 +280,8 @@ int voice_start_usecase(struct audio_device *adev, audio_usecase_t usecase_id)
     select_devices(adev, usecase_id);
 
 #ifdef PLATFORM_AUTO
-    pcm_dev_loopback_rx_id = HOST_LESS_RX_ID;
-    pcm_dev_loopback_tx_id = HOST_LESS_TX_ID;
+    pcm_dev_loopback_rx_id = VOICE_ASM_RX_TX;
+    pcm_dev_loopback_tx_id = VOICE_ASM_RX_TX;
 #endif
     pcm_dev_rx_id = platform_get_pcm_device_id(uc_info->id, PCM_PLAYBACK);
     pcm_dev_tx_id = platform_get_pcm_device_id(uc_info->id, PCM_CAPTURE);
@@ -631,12 +635,96 @@ snd_device_t voice_get_incall_rec_snd_device(snd_device_t in_snd_device)
     return incall_record_device;
 }
 
+#ifdef PLATFORM_AUTO
+/*Set mic volume to value.
+*
+* This interface is used for mic volume control, set mic volume as value(range 0 ~ 15).
+*/
+static int voice_set_mic_volume(struct audio_device *adev, float value)
+{
+    int volume, ret = 0;
+    char mixer_ctl_name[128];
+    struct mixer_ctl *ctl;
+    int pcm_device_id = VOICE_ASM_RX_TX;
+
+    if (value < 0.0) {
+        ALOGW("%s: (%f) Under 0.0, assuming 0.0\n", __func__, value);
+        value = 0.0;
+    } else if (value > CAPTURE_VOLUME_DEFAULT) {
+        value = CAPTURE_VOLUME_DEFAULT;
+        ALOGW("%s: Volume brought within range (%f)\n", __func__, value);
+    }
+
+    value = value / CAPTURE_VOLUME_DEFAULT;
+    memset(mixer_ctl_name, 0, sizeof(mixer_ctl_name));
+    snprintf(mixer_ctl_name, sizeof(mixer_ctl_name),
+            "Playback %d Volume", pcm_device_id);
+    ctl = mixer_get_ctl_by_name(adev->mixer, mixer_ctl_name);
+    if (!ctl) {
+        ALOGE("%s: Could not get ctl for mixer cmd - %s",
+                __func__, mixer_ctl_name);
+        return -EINVAL;
+    }
+    volume = (int)(value * PLAYBACK_VOLUME_MAX);
+
+    ALOGD("%s: Setting volume to %d (%s)\n", __func__, volume, mixer_ctl_name);
+    if (mixer_ctl_set_value(ctl, 0, volume) < 0) {
+        ALOGE("%s: Couldn't set Voice Call Volume: [%d]", __func__, volume);
+        return -EINVAL;
+    }
+
+    return ret;
+}
+
+static float voice_get_mic_volume(struct audio_device *adev)
+{
+    int volume;
+    char mixer_ctl_name[128];
+    struct mixer_ctl *ctl;
+    int pcm_device_id = VOICE_ASM_RX_TX;
+    float value = 0.0;
+    memset(mixer_ctl_name, 0, sizeof(mixer_ctl_name));
+    snprintf(mixer_ctl_name, sizeof(mixer_ctl_name),
+            "Playback %d Volume", pcm_device_id);
+    ctl = mixer_get_ctl_by_name(adev->mixer, mixer_ctl_name);
+    if (!ctl) {
+        ALOGE("%s: Could not get ctl for mixer cmd - %s",
+                __func__, mixer_ctl_name);
+        return -EINVAL;
+    }
+
+    volume = mixer_ctl_get_value(ctl, 0);
+    if ( volume < 0) {
+        ALOGE("%s: Couldn't get Voice Call Volume: [%d]", __func__, volume);
+        return -EINVAL;
+    }
+    ALOGD("%s: getting mic volume %d \n", __func__, volume);
+
+    value = (volume / PLAYBACK_VOLUME_MAX) * CAPTURE_VOLUME_DEFAULT;
+    if (value < 0.0) {
+        ALOGW("%s: (%f) Under 0.0, assuming 0.0\n", __func__, value);
+        value = 0.0;
+    } else if (value > CAPTURE_VOLUME_DEFAULT) {
+        value = CAPTURE_VOLUME_DEFAULT;
+        ALOGW("%s: Volume brought within range (%f)\n", __func__, value);
+    }
+    return value;
+}
+#endif
+
 int voice_set_mic_mute(struct audio_device *adev, bool state)
 {
     int err = 0;
 
     adev->voice.mic_mute = state;
-
+#ifdef PLATFORM_AUTO
+    if (state == true) {
+        adev->voice.mic_volume = voice_get_mic_volume(adev);
+    }
+    err = voice_set_mic_volume(adev, (state == true) ? 0.0 : adev->voice.mic_volume);
+    adev->voice.mic_mute = state;
+    ALOGD("%s: Setting mute state %d, err %d\n", __func__, state, err);
+#else
     if (audio_extn_hfp_is_active(adev)) {
         err = audio_extn_hfp_set_mic_mute2(adev, state);
     } else if (adev->mode == AUDIO_MODE_IN_CALL) {
@@ -650,7 +738,7 @@ int voice_set_mic_mute(struct audio_device *adev, bool state)
     } else if (adev->mode == AUDIO_MODE_IN_COMMUNICATION) {
         err = voice_extn_compress_voip_set_mic_mute(adev, state);
     }
-
+#endif
     return err;
 }
 
@@ -687,9 +775,33 @@ void voice_set_device_mute_flag(struct audio_device *adev, bool state)
 
 int voice_set_volume(struct audio_device *adev, float volume)
 {
-    int vol, err = 0;
-
+    int32_t vol, err = 0;
     adev->voice.volume = volume;
+
+#ifdef PLATFORM_AUTO
+    struct mixer_ctl *ctl;
+    const char *mixer_ctl_name = VOICE_RX_VOLUME;
+    if (volume < 0.0) {
+        ALOGW("%s: (%f) Under 0.0, assuming 0.0\n", __func__, volume);
+        volume = 0.0;
+    } else {
+        volume = ((volume > PLAYBACK_VOLUME_DEFAULT) ? 1.0 : (volume / PLAYBACK_VOLUME_DEFAULT));
+        ALOGW("%s: Volume brought with in range (%f)\n", __func__, volume);
+    }
+    vol  = lrint((volume * PLAYBACK_VOLUME_MAX) + 0.5);
+    ALOGD("%s: Setting Voice Cal volume to %d \n", __func__, vol);
+
+    ctl = mixer_get_ctl_by_name(adev->mixer, mixer_ctl_name);
+    if (!ctl) {
+        ALOGE("%s: Could not get ctl for mixer cmd - %s",
+                __func__, mixer_ctl_name);
+        return -EINVAL;
+    }
+    if(mixer_ctl_set_value(ctl, 0, vol) < 0) {
+        ALOGE("%s: Couldn't set Voice Call Volume: [%d]", __func__, vol);
+        return -EINVAL;
+    }
+#else
     if (adev->mode == AUDIO_MODE_IN_CALL) {
         if (volume < 0.0) {
             volume = 0.0;
@@ -708,8 +820,7 @@ int voice_set_volume(struct audio_device *adev, float volume)
     }
     if (adev->mode == AUDIO_MODE_IN_COMMUNICATION)
         err = voice_extn_compress_voip_set_volume(adev, volume);
-
-
+#endif
     return err;
 }
 

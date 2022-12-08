@@ -436,6 +436,7 @@ static int usb_get_capability(int type,
     char *bit_width_str = NULL;
     struct usb_device_config * usb_device_info;
     bool check = false;
+    int flag_t = 0;
 
     memset(path, 0, sizeof(path));
     ALOGV("%s: for %s", __func__, (type == USB_PLAYBACK) ?
@@ -465,12 +466,14 @@ static int usb_get_capability(int type,
         goto done;
     }
 
-    if(read(fd, read_buf, USB_BUFF_SIZE) < 0) {
+    flag_t = read(fd, read_buf, USB_BUFF_SIZE);
+    if( flag_t < 0 || read_buf[flag_t] != '\0') {
         ALOGE("file read error\n");
         goto done;
     }
     str_start = strstr(read_buf, ((type == USB_PLAYBACK) ?
                        PLAYBACK_PROFILE_STR : CAPTURE_PROFILE_STR));
+
     if (str_start == NULL) {
         ALOGE("%s: error %s section not found in usb config file",
                __func__, ((type == USB_PLAYBACK) ?

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2019, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2021, The Linux Foundation. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -62,9 +62,9 @@
 #define ADSP_DEC_SERVICE_ID 1
 #define ADSP_EVENT_ID_RTIC            0x00013239
 #define ADSP_EVENT_ID_RTIC_FAIL       0x0001323A
-#define TRUMPET_TOPOLOGY              0x11000099
-#define TRUMPET_MODULE                0x0001099A
-
+#define TRUMPET_TOPOLOGY 0x11000099
+#define TRUMPET_MODULE 0x0001099A
+#define STEREO_SPEAKER_DEVICE 15
 struct lib_fd_info {
     int32_t fd;
     int32_t flag;
@@ -99,6 +99,7 @@ struct ip_hdlr_intf {
     bool adm_event;
     bool asm_event;
     void *ip_dev_handle;
+    int out_snd_device;
 };
 static struct ip_hdlr_intf *ip_hdlr = NULL;
 static bool adm_event_enable;
@@ -213,43 +214,99 @@ int audio_extn_ip_hdlr_copp_update_cal_info(void *cfg, void *data)
 
 }
 
-bool audio_extn_ip_hdlr_intf_supported_for_copp(void *platform)
+bool audio_extn_ip_hdlr_intf_supported_for_copp(void *platform, void *stream_handle, audio_usecase_t usecase)
 {
-    return adm_event_enable;
+    int acdb_id  = 0, trumpet_enabled = 0 ;
+    struct stream_out *out = NULL;
+    struct stream_inout *inout = NULL;
+    struct audio_device *dev = NULL;
+    struct audio_usecase *uc = NULL;
+    bool ret = false;
+
+    trumpet_enabled = property_get_bool("ro.vendor.audio.trumpet.enable", false);
+    if (!trumpet_enabled) {
+        ALOGV("%s: trumpet is disabled", __func__);
+        return ret;
+    }
+
+    uc = (struct audio_usecase *)calloc(1, sizeof(struct audio_usecase));
+    if (usecase == USECASE_AUDIO_TRANSCODE_LOOPBACK_RX) {
+        inout = (struct stream_inout *)stream_handle;
+        dev = inout->dev;
+        uc = get_usecase_from_list(dev, usecase);
+        if (uc == NULL) {
+            ALOGE("%s: Could not find the usecase (%d)", __func__, usecase);
+            return ret;
+        }
+        acdb_id = platform_get_snd_device_acdb_id(uc->out_snd_device);
+        ip_hdlr->out_snd_device = uc->out_snd_device;
+
+        if ((STEREO_SPEAKER_DEVICE == acdb_id) && trumpet_enabled)
+            inout->adm_event_enable = true;
+
+        return out->adm_event_enable;
+    } else {
+        out = (struct stream_out *)stream_handle;
+        dev = out->dev;
+        uc = get_usecase_from_list(dev, usecase);
+        if (uc == NULL) {
+            ALOGE("%s: could not find the usecase (%d)", __func__, usecase);
+            return ret;
+        }
+        acdb_id = platform_get_snd_device_acdb_id(uc->out_snd_device);
+        ip_hdlr->out_snd_device = uc->out_snd_device;
+
+        if ((STEREO_SPEAKER_DEVICE == acdb_id) && trumpet_enabled )
+            out->adm_event_enable = true;
+
+        return out->adm_event_enable;
+    }
+
 }
 
 bool audio_extn_ip_hdlr_intf_supported(audio_format_t format,
                     bool is_direct_passthrough,
-                    bool is_transcode_loopback)
+                    bool is_transcode_loopback,
+                    void *stream_handle,
+                    audio_usecase_t usecase)
 {
+    bool asm_event_flag = false;
+    struct stream_out *out = NULL;
+    struct stream_inout *inout = NULL;
+
 
     if ((format & AUDIO_FORMAT_MAIN_MASK) == AUDIO_FORMAT_DOLBY_TRUEHD) {
-        asm_event_enable = true;
-        return true;
+        asm_event_flag = true;
     } else if ((format & AUDIO_FORMAT_MAIN_MASK) == AUDIO_FORMAT_MAT) {
-        asm_event_enable = true;
-        return true;
+        asm_event_flag = true;
     } else if (!is_direct_passthrough && !audio_extn_qaf_is_enabled() &&
             (((format & AUDIO_FORMAT_MAIN_MASK) == AUDIO_FORMAT_E_AC3) ||
              ((format & AUDIO_FORMAT_MAIN_MASK) == AUDIO_FORMAT_AC3))) {
-        asm_event_enable = true;
-        return true;
-   } else if (is_transcode_loopback &&
+        asm_event_flag = true;
+    } else if (is_transcode_loopback &&
             (((format & AUDIO_FORMAT_MAIN_MASK) == AUDIO_FORMAT_E_AC3) ||
              ((format & AUDIO_FORMAT_MAIN_MASK) == AUDIO_FORMAT_AC3))) {
-       asm_event_enable = true;
-       return true;
-   } else {
-       asm_event_enable = false;
-       return false;
+        asm_event_flag = true;
+    } else {
+        asm_event_flag = false;
+    }
+    if (usecase == USECASE_AUDIO_TRANSCODE_LOOPBACK_RX) {
+        inout = (struct stream_inout *)stream_handle;
+        inout->asm_event_enable = asm_event_flag;
+    } else {
+        out = (struct stream_out *)stream_handle;
+        out->asm_event_enable = asm_event_flag;
+    }
+
+    return asm_event_flag;
 }
 
 int audio_extn_ip_hdlr_intf_event_adm(void *stream_handle __unused,
                                void *payload, void *ip_hdlr_handle )
 {
-        ALOGVV("%s:[%d] handle = %p\n",__func__, ip_hdlr->ref_cnt, ip_hdlr_handle);
+    ALOGVV("%s:[%d] handle = %p\n",__func__, ip_hdlr->ref_cnt, ip_hdlr_handle);
 
-        return ip_hdlr->event_adm(ip_hdlr_handle, payload);
+    return ip_hdlr->event_adm(ip_hdlr_handle, payload);
 }
 
 int audio_extn_ip_hdlr_intf_event(void *stream_handle __unused, void *payload, void *ip_hdlr_handle )
@@ -458,7 +515,6 @@ static int audio_extn_ip_hdlr_intf_open_adm_event(void *handle,
     void *adsp_hdlr_stream_handle = NULL;
     struct audio_device *dev = NULL;
     struct mixer_ctl *ctl = NULL;
-    struct audio_usecase *uc = NULL;
     char mixer_ctl_name[MIXER_PATH_MAX_LENGTH] = {0};
 
     param = (struct audio_adsp_event *)calloc(1,
@@ -483,13 +539,6 @@ static int audio_extn_ip_hdlr_intf_open_adm_event(void *handle,
         goto done;
     }
 
-    uc = (struct audio_usecase *)calloc(1, sizeof(struct audio_usecase));
-
-    if (uc == NULL) {
-        ret = -ENOMEM;
-        goto done;
-    }
-
     if (usecase == USECASE_AUDIO_TRANSCODE_LOOPBACK_RX) {
         inout = (struct stream_inout *)stream_handle;
         adsp_hdlr_stream_handle = inout->adsp_hdlr_stream_handle;
@@ -499,12 +548,11 @@ static int audio_extn_ip_hdlr_intf_open_adm_event(void *handle,
         adsp_hdlr_stream_handle = out->adsp_hdlr_stream_handle;
         dev = out->dev;
     }
-    uc = get_usecase_from_list(dev, usecase);
 
     reg_ev->adm_info.module_id = TRUMPET_MODULE;
     reg_ev->adm_info.instance_id = 0;
     reg_ev->adm_info.be_id = platform_get_snd_device_backend_index(
-                                                uc->out_snd_device);
+                                                ip_hdlr->out_snd_device);
     reg_ev->adm_info.fe_id = platform_get_pcm_device_id(usecase, PCM_PLAYBACK);
     reg_ev->num_reg_events = 2;
     reg_ev->rtic.event_id = ADSP_EVENT_ID_RTIC;
@@ -570,9 +618,6 @@ done:
 
     if (fd_param_data)
         free(fd_param_data);
-
-    if (uc)
-        free(uc);
 
     return ret;
 }
@@ -664,6 +709,40 @@ int audio_extn_ip_hdlr_intf_open(void *handle, bool is_dsp_decode,
 {
     int ret = 0;
     struct ip_hdlr_stream *stream_info;
+    struct stream_out *out;
+    struct stream_inout *inout;
+    struct audio_device *dev = NULL;
+
+    if (usecase == USECASE_AUDIO_TRANSCODE_LOOPBACK_RX) {
+        inout = (struct stream_inout *)aud_sess_handle;
+        dev = inout->dev;
+            if (inout->adm_event_enable) {
+                ip_hdlr->adm_event = inout->adm_event_enable;
+                inout->adm_event_enable = false;
+                dev->ip_hdlr_adm_cnt++;
+            }
+            if (inout->asm_event_enable) {
+                ip_hdlr->asm_event = inout->asm_event_enable;
+                inout->asm_event_enable = false;
+                dev->ip_hdlr_asm_cnt++;
+            }
+
+    } else {
+        out = (struct stream_out *)aud_sess_handle;
+        dev = out->dev;
+            if (out->adm_event_enable) {
+                ip_hdlr->adm_event = out->adm_event_enable;
+                out->adm_event_enable = false;
+                dev->ip_hdlr_adm_cnt++;
+            }
+            if (out->asm_event_enable) {
+                ip_hdlr->asm_event = out->asm_event_enable;
+                out->asm_event_enable = false;
+                dev->ip_hdlr_asm_cnt++;
+            }
+
+
+    }
 
     if (!handle || !aud_sess_handle) {
         ALOGE("%s:[%d] Invalid arguments, handle %p", __func__, ip_hdlr->ref_cnt, handle);
@@ -702,7 +781,7 @@ int audio_extn_ip_hdlr_intf_open(void *handle, bool is_dsp_decode,
     return ret;
 }
 
-int audio_extn_ip_hdlr_intf_close(void *handle, bool is_dsp_decode, void *aud_sess_handle __unused)
+int audio_extn_ip_hdlr_intf_close(void *handle, bool is_dsp_decode, void *aud_sess_handle )
 {
     struct audio_adsp_event param;
     void *adsp_hdlr_stream_handle;
@@ -710,6 +789,8 @@ int audio_extn_ip_hdlr_intf_close(void *handle, bool is_dsp_decode, void *aud_se
     struct ip_hdlr_stream *stream_info;
     audio_usecase_t usecase = 0;
     int ret = 0;
+    struct audio_device *dev = NULL;
+
 
     if (!handle) {
         ALOGE("%s:[%d] handle is NULL", __func__, ip_hdlr->ref_cnt);
@@ -737,10 +818,18 @@ int audio_extn_ip_hdlr_intf_close(void *handle, bool is_dsp_decode, void *aud_se
         if (usecase == USECASE_AUDIO_TRANSCODE_LOOPBACK_RX) {
             struct stream_inout *inout = (struct stream_inout *)aud_sess_handle;
             adsp_hdlr_stream_handle = inout->adsp_hdlr_stream_handle;
+            dev = inout->dev;
         } else {
             struct stream_out *out = (struct stream_out *)aud_sess_handle;
             adsp_hdlr_stream_handle = out->adsp_hdlr_stream_handle;
+            dev = out->dev;
         }
+
+        if (ip_hdlr->adm_event)
+            dev->ip_hdlr_adm_cnt--;
+        if (ip_hdlr->asm_event)
+            dev->ip_hdlr_asm_cnt--;
+
         param.event_type = AUDIO_STREAM_ENCDEC_EVENT;
         param.payload_length = 0;
         /* Deregister the event */
@@ -816,21 +905,12 @@ int audio_extn_ip_hdlr_intf_init(void **handle, char *lib_path, void **lib_handl
         goto dlclose;
     }
 
-    if (adm_event_enable) {
-        ret = ip_hdlr->shm_pp(*handle, adm_event_enable);
+    ret = ip_hdlr->shm_pp(*handle, true);
 
-        if (ret < 0) {
-            ALOGE("%s:[%d] init failed ret = %d", __func__, ip_hdlr->ref_cnt, ret);
-            ret = -EINVAL;
-            goto dlclose;
-        }
-        ip_hdlr->adm_event = adm_event_enable;
-        adm_event_enable = false;
-    }
-
-    if (asm_event_enable) {
-        ip_hdlr->asm_event = asm_event_enable;
-        asm_event_enable = false;
+    if (ret < 0) {
+        ALOGE("%s:[%d] init failed ret = %d", __func__, ip_hdlr->ref_cnt, ret);
+        ret = -EINVAL;
+        goto dlclose;
     }
 
     if (!lib_path && !(ip_hdlr->lib_fd_created)) {

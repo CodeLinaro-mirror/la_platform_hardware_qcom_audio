@@ -60,6 +60,9 @@ struct voice {
     bool mic_mute;
     bool use_device_mute;
     float volume;
+#ifdef PLATFORM_AUTO
+    float mic_volume;
+#endif
     bool in_call;
     bool lte_call;
     bool uc_active;

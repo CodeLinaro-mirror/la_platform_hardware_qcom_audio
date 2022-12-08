@@ -479,6 +479,8 @@
                        sources="alerts"/>
                 <route type="mix" sink="Front Passenger Bus"
                        sources="front_passenger,mmap_no_irq_out"/>
+                <route type="mix" sink="Front Passenger Bus"
+                       sources="front_passenger"/>
                 <route type="mix" sink="Rear Seat Bus"
                        sources="rear_seat,mmap_no_irq_out"/>
                 <route type="mix" sink="Earpiece"

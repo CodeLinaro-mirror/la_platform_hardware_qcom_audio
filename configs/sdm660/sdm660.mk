@@ -265,6 +265,18 @@ persist.vendor.audio.hifi.int_codec=true
 PRODUCT_PROPERTY_OVERRIDES += \
 ro.af.client_heap_size_kbyte=7168
 
+#Set HAL buffer size to samples equal to 3 ms
+PRODUCT_PROPERTY_OVERRIDES += \
+vendor.audio_hal.in_period_size=144
+
+#Set HAL buffer size to 3 ms
+PRODUCT_PROPERTY_OVERRIDES += \
+vendor.audio_hal.period_multiplier=3
+
+#ADM Buffering size in ms
+PRODUCT_PROPERTY_OVERRIDES += \
+vendor.audio.adm.buffering.ms=2
+
 PRODUCT_PROPERTY_OVERRIDES += \
 persist.vendor.audio.hw.binder.size_kbyte=1024
 

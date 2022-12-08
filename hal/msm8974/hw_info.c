@@ -567,6 +567,14 @@ static void update_hardware_info_kona(
                  sizeof("bengal-qrd-snd-card"))) {
         strlcpy(hw_info->name, "bengal", sizeof(hw_info->name));
         hw_info->is_stereo_spkr = false;
+    } else if (!strncmp(snd_card_name, "kona-iot-snd-card",
+                 sizeof("kona-iot-snd-card"))) {
+        strlcpy(hw_info->name, "kona", sizeof(hw_info->name));
+        hw_info->is_stereo_spkr = true;
+    } else if (!strncmp(snd_card_name, "kona-iot-vc-snd-card",
+                sizeof("kona-iot-vc-snd-card"))) {
+        strlcpy(hw_info->name, "kona", sizeof(hw_info->name));
+        hw_info->is_stereo_spkr = true;
     } else {
         ALOGW("%s: Not a kona device", __func__);
     }
@@ -790,6 +798,8 @@ static void update_hardware_info_bear(struct hardware_info *hw_info, const char 
         strlcpy(hw_info->name, "sm6150", sizeof(hw_info->name));
     } else if (!strncmp(snd_card_name, "sm6150-wcd9375-snd-card",
                  sizeof("sm6150-wcd9375-snd-card"))) {
+    } else if (!strncmp(snd_card_name, "sm6150-ipc-snd-card",
+                 sizeof("sm6150-ipc-snd-card"))) {
         strlcpy(hw_info->name, "sm6150", sizeof(hw_info->name));
     } else if (!strncmp(snd_card_name, "sm6150-qrd-snd-card",
                  sizeof("sm6150-qrd-snd-card"))) {
@@ -811,6 +821,10 @@ static void update_hardware_info_bear(struct hardware_info *hw_info, const char 
         hw_info->num_snd_devices = ARRAY_SIZE(tavil_qrd_variant_devices);
         hw_info->is_stereo_spkr = false;
         strlcpy(hw_info->dev_extn, "-hdk", sizeof(hw_info->dev_extn));
+    } else if (!strncmp(snd_card_name, "trinket-qrd-snd-card",
+                 sizeof("trinket-qrd-snd-card"))) {
+        hw_info->is_stereo_spkr = false;
+        strlcpy(hw_info->name, "trinket", sizeof(hw_info->name));
     } else if (!strncmp(snd_card_name, "trinket-idp-snd-card",
                  sizeof("trinket-idp-snd-card"))) {
         hw_info->is_stereo_spkr = false;
@@ -952,7 +966,8 @@ void *hw_info_init(const char *snd_card_name)
     } else if (strstr(snd_card_name, "sdm660") || strstr(snd_card_name, "sdm670")
                || strstr(snd_card_name, "sm6150") || strstr(snd_card_name, "qcs605-lc")
                || strstr(snd_card_name, "qcs405") || strstr(snd_card_name, "qcs605-ipc")
-               || strstr(snd_card_name, "trinket") || strstr(snd_card_name, "sa6155")) {
+               || strstr(snd_card_name, "trinket") || strstr(snd_card_name, "sa6155")
+               || strstr(snd_card_name, "qcs404")) {
         ALOGV("Bear - variant soundcard");
         update_hardware_info_bear(hw_info, snd_card_name);
     } else if (strstr(snd_card_name, "sdx")) {

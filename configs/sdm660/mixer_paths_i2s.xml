@@ -105,6 +105,9 @@
     <!-- RT Proxy Cal end -->
 
     <ctl name="Incall_Music Audio Mixer MultiMedia9" value="0" />
+    <!-- mixer control to disable lowlatency qos voting -->
+    <ctl name="MultiMedia5_RX QOS Vote" value="Disable" />
+    <!-- mixer control to disable lowlatency qos voting end -->
 
     <!-- These are audio route (FE to BE) specific mixer settings -->
     <path name="deep-buffer-playback">
@@ -113,6 +116,10 @@
 
     <path name="low-latency-playback">
         <ctl name="AUX_PCM_RX Audio Mixer MultiMedia5" value="1" />
+    </path>
+
+    <path name="low-latency-playback resume">
+        <ctl name="MultiMedia5_RX QOS Vote" value="Enable" />
     </path>
 
     <path name="compress-offload-playback">

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2019, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2021, The Linux Foundation. All rights reserved.
  * Not a Contribution.
  *
  * Copyright (C) 2011 The Android Open Source Project *
@@ -162,9 +162,20 @@ __BEGIN_DECLS
 #define QAHW_OFFLOAD_CODEC_APE_SEEK_TABLE_PRESENT "music_offload_seek_table_present"
 
 #define QAHW_OFFLOAD_CODEC_VORBIS_BITSTREAM_FMT "music_offload_vorbis_bitstream_fmt"
+#define QAHW_OFFLOAD_CODEC_AMRWBPLUS_BITSTREAM_FMT "music_offload_amrwbplus_bitstream_fmt"
 
 /* Set or Query stream profile type */
 #define QAHW_PARAMETER_STREAM_PROFILE "audio_stream_profile"
+
+/* Set DSD format (DSD64/DSD128/DSD256/DSD512) */
+#define QAHW_PARAMETER_STREAM_DSD_FMT "dsd_format" /* dsd_format_t */
+
+typedef enum {
+    DSD_FORMAT_64             = 0,
+    DSD_FORMAT_128            = 1,
+    DSD_FORMAT_256            = 2,
+    DSD_FORMAT_512            = 3,
+} dsd_format_t;
 
 /* audio input flags for compress and timestamp mode.
  * check other input flags defined in audio.h for conflicts
@@ -175,6 +186,17 @@ __BEGIN_DECLS
 #define QAHW_OUTPUT_FLAG_INCALL_MUSIC 0x80000000
 #define QAHW_AUDIO_FLAG_HPCM_TX 0x00020000
 #define QAHW_AUDIO_FLAG_HPCM_RX 0x00040000
+
+
+/* audio output flag for timestamp mode */
+#define QAHW_OUTPUT_FLAG_TIMESTAMP 0x20000000
+
+/* similar defination added into audio_defs.h and audio_extn.h
+ * AUDIO_OUTPUT_FLAG_VOICE_CAL
+ */
+#define QAHW_AUDIO_OUTPUT_FLAG_VOICE_CALL 0x2000000
+
+#define QAHW_AUDIO_OUTPUT_FLAG_ECALL 0x8000
 
 /* Query fm volume */
 #define QAHW_PARAMETER_KEY_FM_VOLUME "fm_volume"
@@ -201,6 +223,37 @@ __BEGIN_DECLS
 #define QAHW_PCM_CHANNEL_FRC  14  /* Front right of center.                        */
 #define QAHW_PCM_CHANNEL_RLC  15  /* Rear left of center.                          */
 #define QAHW_PCM_CHANNEL_RRC  16  /* Rear right of center.                         */
+#define QAHW_PCM_CHANNEL_LFE2 17  /* Secondary low frequency effect channel.       */
+#define QAHW_PCM_CHANNEL_SL   18  /*  Side left channel.                           */
+#define QAHW_PCM_CHANNEL_SR   19  /* Side right channel.                           */
+#define QAHW_PCM_CHANNEL_TFL  20  /* Top front left channel.                       */
+#define QAHW_PCM_CHANNEL_LVH  QAHW_PCM_CHANNEL_TFL /* Left vertical height channel.*/
+#define QAHW_PCM_CHANNEL_TFR 21   /* Top front right channel.                      */
+#define QAHW_PCM_CHANNEL_RVH QAHW_PCM_CHANNEL_TFR /* Right vertical height channel.*/
+#define QAHW_PCM_CHANNEL_TC   22  /* Top center channel.                           */
+#define QAHW_PCM_CHANNEL_TBL  23  /* Top back left channel.                        */
+#define QAHW_PCM_CHANNEL_TBR  24  /* Top back right channel.                       */
+#define QAHW_PCM_CHANNEL_TSL  25  /* Top side left channel.                        */
+#define QAHW_PCM_CHANNEL_TSR  26  /* Top side right channel.                       */
+#define QAHW_PCM_CHANNEL_TBC  27  /* Top back center channel.                      */
+#define QAHW_PCM_CHANNEL_BFC  28  /* Bottom front center channel.                  */
+#define QAHW_PCM_CHANNEL_BFL  29  /* Bottom front left channel.                    */
+#define QAHW_PCM_CHANNEL_BFR  30  /* Bottom front right channel.                   */
+#define QAHW_PCM_CHANNEL_LW   31  /* Left wide channel.                            */
+#define QAHW_PCM_CHANNEL_RW   32  /* Right wide channel.                           */
+#define QAHW_PCM_CHANNEL_LSD  33  /* Left side direct channel.                     */
+#define QAHW_PCM_CHANNEL_RSD  34  /* Right side direct channel.                    */
+#define QAHW_PCM_CHANNEL_UNUSED  47  /* Mark unused channel.                       */
+
+/* Parameter to be passed when clock switch is needed */
+#define QAHW_PARAMETER_CLOCK "clock"
+#define QAHW_PARAMETER_CLOCK_FREQUENCY "clock_frequency"
+
+typedef enum {
+    QAHW_CLOCK_INTERNAL,
+    QAHW_CLOCK_EXTERNAL,
+    QAHW_CLOCK_MAX
+} qahw_clock_type;
 
 /* Adapt update_device_list API */
 #define QAHW_UPDATE_DEVICE_LIST_ENABLED
@@ -221,6 +274,11 @@ typedef int qahw_stream_callback_t(qahw_stream_callback_event_t event,
                                    void *param,
                                    void *cookie);
 
+struct qahw_stream_callback_param {
+    qahw_stream_callback_t *cb;    /* callback function */
+    void *cookie;                  /* callback context */
+};
+
 /* type of drain requested to audio_stream_out->drain(). Mutually exclusive */
 typedef enum {
     QAHW_DRAIN_ALL,            /* drain() returns when all data has been played */
@@ -233,6 +291,8 @@ typedef enum {
 /*TBD: Extend this based on stb requirement*/
 typedef enum {
  QAHW_META_DATA_FLAGS_NONE = 0,
+ QAHW_META_DATA_FLAGS_TIMESTAMP_VALID,
+ QAHW_META_DATA_FLAGS_TIMESTAMP_CONTINUE,
 } qahw_meta_data_flags_t;
 
 typedef struct {
@@ -267,13 +327,13 @@ struct qahw_source_tracking_param {
     uint16_t  doa_speech;
     uint16_t  doa_noise[3];
     uint8_t   polar_activity[360];
-} __attribute__((packed));
+};
 
 struct qahw_sound_focus_param {
     uint16_t  start_angle[MAX_SECTORS];
     uint8_t   enable[MAX_SECTORS];
     uint16_t  gain_step;
-} __attribute__((packed));
+};
 
 struct aptx_dec_bt_addr {
     uint32_t nap;
@@ -283,6 +343,12 @@ struct aptx_dec_bt_addr {
 
 struct qahw_aptx_dec_param {
    struct aptx_dec_bt_addr bt_addr;
+};
+
+struct qahw_pll_dev_cfg {
+    int32_t clk_drift;
+    uint32_t audio_device;
+    bool    reset;
 };
 
 struct qahw_avt_device_drift_param {
@@ -339,6 +405,7 @@ struct qahw_out_presentation_position_param {
 typedef enum {
     QAHW_STREAM_PP_EVENT = 0,
     QAHW_STREAM_ENCDEC_EVENT = 1,
+    QAHW_STREAM_IEC_61937_FMT_UPDATE_EVENT = 2,
 } qahw_event_id;
 
 /* payload format for HAL parameter
@@ -348,6 +415,11 @@ struct qahw_adsp_event {
     qahw_event_id event_type;      /* type of the event */
     uint32_t payload_length;       /* length in bytes of the payload */
     void *payload;                 /* the actual payload */
+};
+
+struct qahw_in_channel_map_param {
+   uint8_t       channels;                               /* Input Channels */
+   uint8_t       channel_map[AUDIO_CHANNEL_COUNT_MAX];   /* Input Channel Map */
 };
 
 struct qahw_out_channel_map_param {
@@ -369,9 +441,9 @@ typedef struct qahw_mix_matrix_params {
     uint16_t num_output_channels;
     uint16_t num_input_channels;
     uint8_t has_output_channel_map;
-    uint16_t output_channel_map[AUDIO_CHANNEL_COUNT_MAX];
+    uint32_t output_channel_map[AUDIO_CHANNEL_COUNT_MAX];
     uint8_t has_input_channel_map;
-    uint16_t input_channel_map[AUDIO_CHANNEL_COUNT_MAX];
+    uint32_t input_channel_map[AUDIO_CHANNEL_COUNT_MAX];
     uint8_t has_mixer_coeffs;
     float mixer_coeffs[AUDIO_CHANNEL_COUNT_MAX][AUDIO_CHANNEL_COUNT_MAX];
 } qahw_mix_matrix_params_t;
@@ -385,12 +457,57 @@ typedef struct qahw_license_params {
     char license[QAHW_LICENCE_STR_MAX_LENGTH + 1];
 } qahw_license_params_t;
 
+struct dolby_thd_params {
+    int32_t ch_cfg;
+    int32_t presentation_mode;
+    int32_t loud_mgmt;
+    int32_t drc_cut;
+    int32_t drc_mode;
+    int32_t drc_boost;
+    int32_t lfe_mode;
+    int32_t archive_mode;
+};
+
+struct qahw_dolby_thd_dec_param {
+   struct dolby_thd_params dthd_params;
+};
+
+struct dolby_mat_params {
+    int32_t content_type;
+    int32_t inplace_buf;
+    int32_t loud_mgmt;
+    int32_t drc_cut;
+    int32_t drc_mode;
+    int32_t drc_boost;
+    int32_t ch_cfg;
+    int32_t presentation_mode;
+};
+
+struct qahw_dolby_mat_dec_param {
+   struct dolby_mat_params dmat_params;
+};
+
 typedef struct qahw_dtmf_gen_params {
    bool enable;
    uint16_t low_freq;
    uint16_t high_freq;
    uint16_t gain;
+   uint16_t duration_ms;
+   /* ToDo: Direction flag, framework does not support. Do we add later
+      Currently supported on Rx only */
 } qahw_dtmf_gen_params_t;
+
+#define MAX_TONE_FREQ 2
+
+typedef struct qahw_tone_gen_params {
+   bool enable;
+   uint16_t nr_tone_freq; /* "1" for single tone, "2" for dual tone */
+   uint16_t freq[MAX_TONE_FREQ];
+   uint16_t gain;
+   uint16_t duration_ms;
+   /* ToDo: Direction flag, framework does not support. Do we add later
+      Currently supported on Rx only */
+} qahw_tone_gen_params_t;
 
 enum {
     QAHW_TTY_MODE_OFF,
@@ -421,6 +538,32 @@ typedef struct qahw_hpcm_params {
    qahw_hpcm_direction direction;
 } qahw_hpcm_params_t;
 
+/* Session ID for detect implicit derived from voice session */
+typedef struct qahw_dtmf_detect_params {
+   bool enable;
+   /* ToDo: Direction flag, framework does not support. Do we add later
+      Currently supported on Rx only */
+} qahw_dtmf_detect_params_t;
+
+struct qahw_in_ttp_offset_param {
+   uint64_t        ttp_offset; /* TTP value is derived from ttp offset*/
+};
+
+struct qahw_out_external_sink_latency_param {
+   uint64_t        external_sink_latency; /* For reporting external sink latency*/
+};
+
+struct qahw_out_channel_status_info {
+    /* Channel status is 192 bits each for CH A and CH B*/
+    char channel_status[48];
+};
+
+struct qahw_device_channel_bit_mask {
+    audio_devices_t device;
+    /* Channel status bit mask is 192 bits each for CH A and CH B*/
+    char bit_mask[48];
+};
+
 typedef union {
     struct qahw_source_tracking_param st_params;
     struct qahw_sound_focus_param sf_params;
@@ -431,15 +574,24 @@ typedef union {
     struct qahw_out_enable_drift_correction drift_enable_param;
     struct qahw_out_correct_drift drift_correction_param;
     struct qahw_adsp_event adsp_event_params;
+    struct qahw_in_channel_map_param in_channel_map_params;
     struct qahw_out_channel_map_param channel_map_params;
     struct qahw_device_cfg_param device_cfg_params;
     struct qahw_mix_matrix_params mix_matrix_params;
     struct qahw_license_params license_params;
+    struct qahw_dolby_thd_dec_param dthd_params;
+    struct qahw_dolby_mat_dec_param dmat_params;
     struct qahw_out_presentation_position_param pos_param;
     struct qahw_dtmf_gen_params dtmf_gen_params;
     struct qahw_tty_params tty_mode_params;
     struct qahw_hpcm_params hpcm_params;
-} qahw_param_payload;
+    struct qahw_dtmf_detect_params dtmf_detect_params;
+    struct qahw_tone_gen_params tone_gen_params;
+    struct qahw_in_ttp_offset_param ttp_offset;
+    struct qahw_out_channel_status_info ch_status_info;
+    struct qahw_device_channel_bit_mask ch_bit_mask;
+    struct qahw_out_external_sink_latency_param external_sink_latency;
+}  qahw_param_payload;
 
 typedef enum {
     QAHW_PARAM_SOURCE_TRACK,
@@ -453,24 +605,35 @@ typedef enum {
     /* param to set drift value to be adjusted by dsp */
     QAHW_PARAM_OUT_CORRECT_DRIFT,
     QAHW_PARAM_ADSP_STREAM_CMD,
-    QAHW_PARAM_OUT_CHANNEL_MAP,    /* PARAM to set i/p channel map */
+    QAHW_PARAM_OUT_CHANNEL_MAP,    /* PARAM to set o/p channel map */
     QAHW_PARAM_DEVICE_CONFIG,      /* PARAM to set device config */
     QAHW_PARAM_OUT_MIX_MATRIX_PARAMS,
     QAHW_PARAM_CH_MIX_MATRIX_PARAMS,
     QAHW_PARAM_LICENSE_PARAMS,
+    QAHW_PARAM_DOLBY_THD_DEC,
+    QAHW_PARAM_DOLBY_MAT_DEC,
     QAHW_PARAM_OUT_PRESENTATION_POSITION,
     QAHW_PARAM_DTMF_GEN,
     QAHW_PARAM_TTY_MODE,
     QAHW_PARAM_HPCM,
+    QAHW_PARAM_DTMF_DETECT,
+    QAHW_PARAM_TONE_GEN,
+    QAHW_PARAM_IN_TTP_OFFSET,
+    QAHW_PARAM_PLL_DEVICE_CONFIG,
+    QAHW_PARAM_IN_CHANNEL_MAP,     /* PARAM to set i/p channel map */
+    QAHW_PARAM_CHANNEL_STATUS_INFO,
+    QAHW_PARAM_CHANNEL_BIT_MASK,
+    QAHW_PARAM_OUT_EXTERNAL_SINK_LATENCY,
 } qahw_param_id;
-
 
 typedef union {
     struct qahw_out_render_window_param render_window_params;
+    struct qahw_stream_callback_param stream_callback_params;
 } qahw_loopback_param_payload;
 
 typedef enum {
-    QAHW_PARAM_LOOPBACK_RENDER_WINDOW /* PARAM to set render window */
+    QAHW_PARAM_LOOPBACK_RENDER_WINDOW, /* PARAM to set render window */
+    QAHW_PARAM_LOOPBACK_SET_CALLBACK
 } qahw_loopback_param_id;
 
 typedef struct {
@@ -490,6 +653,7 @@ typedef enum {
     QAHW_STREAM_INPUT,
     QAHW_STREAM_OUTPUT,
     QAHW_STREAM_INPUT_OUTPUT,
+    QAHW_STREAM_NONE,
 } qahw_stream_direction;
 
 /** stream types */
@@ -497,7 +661,7 @@ typedef enum {
     QAHW_STREAM_TYPE_INVALID,
     QAHW_AUDIO_PLAYBACK_LOW_LATENCY,      /**< low latency, higher power*/
     QAHW_AUDIO_PLAYBACK_DEEP_BUFFER,          /**< low power, higher latency*/
-    QAHW_AUDIO_PLAYBACK_COMPRESSED,           /**< compresssed audio*/
+    QAHW_AUDIO_PLAYBACK_COMPRESSED,           /**< non-blocking, direct, compresssed audio*/
     QAHW_AUDIO_PLAYBACK_VOIP,                 /**< pcm voip audio*/
     QAHW_AUDIO_PLAYBACK_VOICE_CALL_MUSIC,     /**< pcm voip audio*/
 
@@ -517,6 +681,10 @@ typedef enum {
     QAHW_AUDIO_HOST_PCM_TX,
     QAHW_AUDIO_HOST_PCM_RX,
     QAHW_AUDIO_HOST_PCM_TX_RX,
+    QAHW_AUDIO_AFE_LOOPBACK,                 /* Assumption is device[0] is RX and device[1] is TX */
+    QAHW_AUDIO_TONE_RX,
+    QAHW_AUDIO_COMPRESSED_PLAYBACK_VOICE_CALL_MUSIC, /**< Offload incall music playback */
+    QAHW_ECALL,                                 /**< ecall */
     QAHW_AUDIO_STREAM_TYPE_MAX,
 } qahw_audio_stream_type;
 
@@ -524,7 +692,7 @@ typedef uint32_t qahw_device_t;
 
 /**< Key value pair to identify the topology of a usecase from default  */
 struct qahw_modifier_kv  {
-    uint32_t key;
+    char *key;
     uint32_t value;
 };
 

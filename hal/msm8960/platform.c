@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2019, 2021 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2021, The Linux Foundation. All rights reserved.
  * Not a contribution.
  *
  * Copyright (C) 2013 The Android Open Source Project
@@ -1454,4 +1454,22 @@ int platform_get_active_microphones(void *platform __unused, unsigned int channe
                                     struct audio_microphone_characteristic_t *mic_array __unused,
                                     size_t *mic_count __unused) {
     return -ENOSYS;
+}
+
+void platform_set_native_dsd_speaker_cfg(struct stream_out *out)
+{
+     ALOGE("%s: Not implemented", __func__);
+     return;
+}
+
+bool platform_get_eccarstate(void *platform)
+{
+    return false;
+}
+
+void platform_check_and_set_device_ch_map(void *platform __unused,
+                                          int snd_device __unused)
+{
+     ALOGE("%s: Not implemented", __func__);
+     return;
 }

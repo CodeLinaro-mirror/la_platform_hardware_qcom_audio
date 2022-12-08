@@ -218,6 +218,7 @@ int platform_set_native_support(int na_mode);
 int platform_get_native_support();
 int platform_send_audio_calibration(void *platform, struct audio_usecase *usecase,
                                     int app_type);
+int platform_send_non_tunnel_asm_calibration(void *platform, int app_type);
 int platform_send_audio_calibration_hfp(void *platform, snd_device_t snd_device);
 int platform_get_default_app_type(void *platform);
 int platform_get_default_app_type_v2(void *platform, usecase_type_t  type);
@@ -290,6 +291,7 @@ const char * platform_get_snd_device_backend_interface(snd_device_t device);
 void platform_add_app_type(const char *uc_type,
                            const char *mode,
                            int bw, int app_type, int max_sr);
+void platform_set_native_dsd_speaker_cfg(struct stream_out *out);
 
 /* From platform_info.c */
 int platform_info_init(const char *filename, void *, caller_t);
@@ -330,6 +332,7 @@ int platform_set_stream_downmix_params(void *platform,
                                        struct mix_matrix_params mm_params);
 int platform_set_edid_channels_configuration(void *platform, int channels,
                                              int backend_idx, snd_device_t snd_device);
+bool platform_spkr_use_default_bit_width(void *platform);
 bool platform_spkr_use_default_sample_rate(void *platform);
 unsigned char platform_map_to_edid_format(int format);
 bool platform_is_edid_supported_format(void *platform, int format);
@@ -480,4 +483,5 @@ const char *platform_get_mixer_FM_RX_control(struct audio_device *adev);
 int platform_set_soft_step_volume_params(int uc_id, int period, int step, int curve);
 int platform_get_soft_step_volume_params(struct soft_step_volume_params *volume_params, int uc_id);
 #endif
+void platform_check_and_set_device_ch_map(void *platform, int snd_device);
 #endif // AUDIO_PLATFORM_API_H

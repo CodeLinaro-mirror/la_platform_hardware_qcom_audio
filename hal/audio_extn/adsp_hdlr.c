@@ -1,5 +1,5 @@
 /*
-* Copyright (c) 2017-2019, The Linux Foundation. All rights reserved.
+* Copyright (c) 2017-2020, The Linux Foundation. All rights reserved.
 *
 * Redistribution and use in source and binary forms, with or without
 * modification, are permitted provided that the following conditions are
@@ -46,6 +46,7 @@
 #include <cutils/sched_policy.h>
 #include <system/thread_defs.h>
 #include <sound/asound.h>
+#include <sound/compress_params.h>
 #include <linux/msm_audio.h>
 
 #include "audio_hw.h"
@@ -371,6 +372,35 @@ static void *event_callback_thread_loop(void *context)
                     /* Call appropriate event type client callback */
                     if (param_avail && event_info->event_type == received_evt->event_type) {
                         struct adsp_hdlr_stream_data *stream_data = event_info->stream_handle;
+                        uint32_t *ptr = (uint32_t *)received_evt->payload;
+                        if (received_evt->event_type == AUDIO_STREAM_IEC_61937_FMT_UPDATE_EVENT) {
+                            switch (ptr[0]) {
+                            case SND_AUDIOCODEC_AC3:
+                                ptr[0] = AUDIO_FORMAT_AC3;
+                                ALOGD("%s: Event AUDIO_FORMAT_AC3\n", __func__);
+                                break;
+                            case SND_AUDIOCODEC_EAC3:
+                                ptr[0] = AUDIO_FORMAT_E_AC3;
+                                ALOGD("%s: Event AUDIO_FORMAT_E_AC3\n", __func__);
+                                break;
+                            case SND_AUDIOCODEC_DTS:
+                                ptr[0] = AUDIO_FORMAT_DTS;
+                                ALOGD("%s: Event AUDIO_FORMAT_DTS\n", __func__);
+                                break;
+                            case SND_AUDIOCODEC_TRUEHD:
+                                ptr[0] = AUDIO_FORMAT_DOLBY_TRUEHD;
+                                ALOGD("%s: Event AUDIO_FORMAT_DOLBY_TRUEHD\n", __func__);
+                                break;
+                            case SND_AUDIOCODEC_AAC:
+                                ptr[0] = AUDIO_FORMAT_AAC;
+                                ALOGD("%s: Event AUDIO_FORMAT_AAC\n", __func__);
+                                break;
+                            default:
+                                ALOGD("%s: Event with unknown SND_AUDIOCODEC type %u\n",
+                                    __func__, ptr[0]);
+                                ptr[0] = AUDIO_FORMAT_INVALID;
+                            }
+                        }
                         if (event_info->cb != NULL) {
                             ALOGVV("%s: calling event callback function", __func__);
                             event_info->cb(event_info->stream_handle,
@@ -528,12 +558,20 @@ int audio_extn_adsp_hdlr_stream_register_event(void *handle, void *data,
     ALOGD("%s: event = %d, payload_length %d", __func__, param->event_type, param->payload_length);
 
     /* copy event_type, payload size and payload */
+    if (sizeof(payload) < (sizeof(param->event_type) +
+                        sizeof(param->payload_length) + param->payload_length)) {
+        ALOGE("%s: error in size of payload",__func__);
+        ret = -EINVAL;
+        goto done;
+    }
+
     memcpy(payload, &param->event_type,
                     sizeof(param->event_type));
     memcpy(payload + sizeof(param->event_type), &param->payload_length,
                     sizeof(param->payload_length));
     memcpy(payload + sizeof(param->event_type) + sizeof(param->payload_length),
            param->payload, param->payload_length);
+
     ret = mixer_ctl_set_array(ctl, payload, (sizeof(param->event_type) +
                                sizeof(param->payload_length) + param->payload_length));
 
@@ -686,9 +724,9 @@ int audio_extn_adsp_hdlr_stream_open(void **handle,
 
     stream_data = (struct adsp_hdlr_stream_data *) calloc(1,
                                    sizeof(struct adsp_hdlr_stream_data));
-    if (stream_data == NULL) {
-        ret = -ENOMEM;
-    }
+    if (stream_data == NULL)
+        return -ENOMEM;
+
     stream_data->config = *config;
     *handle = (void **)stream_data;
 

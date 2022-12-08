@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017, 2020, The Linux Foundation. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -40,8 +40,8 @@ int audio_extn_ip_hdlr_intf_init(void **handle, char *lib_path, void **lib_handl
 int audio_extn_ip_hdlr_intf_deinit(void *handle);
 bool audio_extn_ip_hdlr_intf_supported(audio_format_t format,
                                        bool is_direct_passthru,
-                                       bool is_transcode_loopback);
-bool audio_extn_ip_hdlr_intf_supported_for_copp(void *platform);
+                                       bool is_transcode_loopback,void *ses, audio_usecase_t usecase);
+bool audio_extn_ip_hdlr_intf_supported_for_copp(void *platform, void *ses, audio_usecase_t usecase);
 int audio_extn_ip_hdlr_copp_update_cal_info(void *cfg, void *data);
 
 #else
@@ -50,8 +50,8 @@ int audio_extn_ip_hdlr_copp_update_cal_info(void *cfg, void *data);
 #define audio_extn_ip_hdlr_intf_close(handle, is_dsp_decode, aud_sess_handle)          (0)
 #define audio_extn_ip_hdlr_intf_init(handle, lib_path, lib_handlei, adev, usecase)     (0)
 #define audio_extn_ip_hdlr_intf_deinit(handle)                                (0)
-#define audio_extn_ip_hdlr_intf_supported(format, is_direct_passthru, is_loopback) (0)
-#define audio_extn_ip_hdlr_intf_supported_for_copp(platform) (0)
+#define audio_extn_ip_hdlr_intf_supported(format, is_direct_passthru, is_loopback, ses, usecase) (0)
+#define audio_extn_ip_hdlr_intf_supported_for_copp(platform, ses, usecase) (0)
 #define audio_extn_ip_hdlr_copp_update_cal_info(cfg, data) (0)
 
 #endif

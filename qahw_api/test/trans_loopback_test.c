@@ -131,13 +131,18 @@ typedef struct trnscode_loopback_config {
     struct audio_port_config sink_config;
     audio_patch_handle_t patch_handle;
     source_port_config_t source_port_config;
+    audio_input_flags_t input_flags;
+    audio_output_flags_t output_flags;
 } transcode_loopback_config_t;
 
 transcode_loopback_config_t g_trnscode_loopback_config;
+qahw_source_port_config_t source_port_config;
+qahw_sink_port_config_t sink_port_config;
 
 static int poll_data_event_exit()
 {
    close(sock_event_fd);
+   return 0 ;
 }
 
 void break_signal_handler(int signal __attribute__((unused)))
@@ -394,12 +399,27 @@ int create_run_transcode_loopback(
         fprintf(log_file,"\nPatch already existing, release the patch before opening a new patch\n");
         return rc;
     }
-    rc = qahw_create_audio_patch(module_handle,
-                        1,
-                        &transcode_loopback_config->source_config,
-                        1,
-                        &transcode_loopback_config->sink_config,
+
+    source_port_config.source_config = &transcode_loopback_config->source_config;
+    source_port_config.flags = transcode_loopback_config->input_flags;
+    source_port_config.num_sources = 1;
+    sink_port_config.sink_config = &transcode_loopback_config->sink_config;
+    sink_port_config.flags = transcode_loopback_config->output_flags;
+    sink_port_config.num_sinks = 1;
+
+    rc = qahw_create_audio_patch_v2(module_handle,
+                        &source_port_config,
+                        &sink_port_config,
                         &transcode_loopback_config->patch_handle);
+    if (rc == -ENOSYS) {
+        fprintf(log_file,"\n qahw_create_audio_patch_v2 not supported\n");
+        rc = qahw_create_audio_patch(module_handle,
+                            1,
+                            &transcode_loopback_config->source_config,
+                            1,
+                            &transcode_loopback_config->sink_config,
+                            &transcode_loopback_config->patch_handle);
+    }
     fprintf(log_file,"\nCreate patch returned %d\n",rc);
     if(!rc) {
         struct audio_port_config sink_gain_config;
@@ -584,6 +604,8 @@ int main(int argc, char *argv[]) {
     transcode_loopback_config_t    *transcode_loopback_config = NULL;
     transcode_loopback_config_t *temp = NULL;
     char param[100] = {0};
+    audio_input_flags_t input_flags = AUDIO_INPUT_FLAG_NONE;
+    audio_output_flags_t output_flags = AUDIO_OUTPUT_FLAG_NONE;
 
     struct option long_options[] = {
         /* These options set a flag. */
@@ -591,6 +613,8 @@ int main(int argc, char *argv[]) {
         {"source-device", required_argument,    0, 'i'},
         {"play-duration",  required_argument,    0, 'p'},
         {"play-volume",  required_argument,    0, 'v'},
+        {"input-flags",  required_argument,    0, 'I'},
+        {"output-flags",  required_argument,    0, 'O'},
         {"help",          no_argument,          0, 'h'},
         {0, 0, 0, 0}
     };
@@ -600,7 +624,7 @@ int main(int argc, char *argv[]) {
 
     while ((opt = getopt_long(argc,
                               argv,
-                              "-o:i:p:v:h",
+                              "-o:i:p:v:I:O:h",
                               long_options,
                               &option_index)) != -1) {
 
@@ -618,6 +642,12 @@ int main(int argc, char *argv[]) {
             break;
         case 'v':
             loopback_gain = atof(optarg);
+            break;
+        case 'I':
+            input_flags = atoll(optarg);
+            break;
+        case 'O':
+            output_flags = atoll(optarg);
             break;
         case 'h':
         default :
@@ -665,6 +695,8 @@ int main(int argc, char *argv[]) {
         qahw_set_parameters(primary_hal_handle, param);
     }
 
+    transcode_loopback_config->input_flags = input_flags;
+    transcode_loopback_config->output_flags = output_flags;
     transcode_loopback_config->hal_handle = primary_hal_handle;
     fprintf(log_file,"\nLoading HAL for loopback usecase done\n");
 

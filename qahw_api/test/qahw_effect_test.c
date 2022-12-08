@@ -1,5 +1,5 @@
 /*
-* Copyright (c) 2017, The Linux Foundation. All rights reserved.
+* Copyright (c) 2017,2019, The Linux Foundation. All rights reserved.
 *
 * Redistribution and use in source and binary forms, with or without
 * modification, are permitted provided that the following conditions are
@@ -620,7 +620,6 @@ void *command_thread_func(void* data) {
                 *(int32_t *)param->data = REVERB_PARAM_PRESET;
                 param->vsize = sizeof(int32_t);
                 memcpy((param->data + param->psize), &preset, param->vsize);
-
                 notify_effect_command(fx_ctxt, EFFECT_CMD, QAHW_EFFECT_CMD_SET_PARAM, size, param);
                 break;
             }

@@ -2,6 +2,8 @@
  * Copyright (c) 2013-2021, The Linux Foundation. All rights reserved.
  * Not a contribution.
  *
+ * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ *
  * Copyright (C) 2013 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -67,6 +69,34 @@
  * IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
  * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
  * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ *
+ * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted (subject to the limitations in the disclaimer
+ * below) provided that the following conditions are met:
+ *
+ *     * Redistributions of source code must retain the above copyright
+ *       notice, this list of conditions and the following disclaimer.
+ *     * Redistributions in binary form must reproduce the above copyright
+ *       notice, this list of conditions and the following disclaimer in the
+ *       documentation and/or other materials provided with the distribution.
+ *     * Neither the name of Qualcomm Innovation Center, Inc. nor the names
+ *       of its contributors may be used to endorse or promote products
+ *       derived from this software without specific prior written permission.
+ *
+ * NO EXPRESS OR IMPLIED LICENSES TO ANY PARTY'S PATENT RIGHTS ARE GRANTED
+ * BY THIS LICENSE. THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND
+ * CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING,
+ * BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
+ * FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+ * HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+ * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED
+ * TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
+ * PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+ * LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+ * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE,
+ * EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
 #ifndef QCOM_AUDIO_HW_H
@@ -109,6 +139,15 @@ typedef struct {
 #define NANOS_PER_SECOND    1000000000LL
 #endif
 
+#ifndef LINUX_ENABLED
+#include <audio_utils/ErrorLog.h>
+#else
+typedef int error_log_t;
+#define error_log_dump(error_log, fd, prefix, lines, limit_ns)                 (0)
+#define error_log_create(entries, aggregate_ns)                                (0)
+#define error_log_destroy(error_log)                                           (0)
+#endif
+
 #if LINUX_ENABLED
 #if defined(__LP64__)
 #define VISUALIZER_LIBRARY_PATH "/usr/lib64/libqcomvisualizer.so"
@@ -125,9 +164,14 @@ typedef struct {
 #define ADM_LIBRARY_PATH "/vendor/lib/libadm.so"
 #endif
 
+#ifdef LINUX_ENABLED
+#define ULONG_MAX (__LONG_MAX__ *2UL+1UL)
+#define PATH_MAX 4096
+#endif
+
 /* Flags used to initialize acdb_settings variable that goes to ACDB library */
 #define NONE_FLAG            0x00000000
-#define ANC_FLAG	     0x00000001
+#define ANC_FLAG             0x00000001
 #define DMIC_FLAG            0x00000002
 #define QMIC_FLAG            0x00000004
 /* Include TMIC Flag after existing QMIC flag to avoid backward compatibility
@@ -231,6 +275,14 @@ enum {
     USECASE_AUDIO_HFP_SCO_WB,
     USECASE_AUDIO_HFP_SCO_DOWNLINK,
     USECASE_AUDIO_HFP_SCO_WB_DOWNLINK,
+    USECASE_AUDIO_PRI_HFP_SCO,
+    USECASE_AUDIO_PRI_HFP_SCO_WB,
+    USECASE_AUDIO_PRI_HFP_SCO_DOWNLINK,
+    USECASE_AUDIO_PRI_HFP_SCO_WB_DOWNLINK,
+    USECASE_AUDIO_SEC_HFP_SCO,
+    USECASE_AUDIO_SEC_HFP_SCO_WB,
+    USECASE_AUDIO_SEC_HFP_SCO_DOWNLINK,
+    USECASE_AUDIO_SEC_HFP_SCO_WB_DOWNLINK,
 
     /* Capture usecases */
     USECASE_AUDIO_RECORD,
@@ -321,6 +373,9 @@ enum {
 
     /*In Car Communication Usecase*/
     USECASE_ICC_CALL,
+
+    USECASE_AUDIO_AFE_LOOPBACK,
+    USECASE_AUDIO_DTMF,
     AUDIO_USECASE_MAX
 };
 
@@ -387,6 +442,9 @@ typedef enum render_mode {
     RENDER_MODE_AUDIO_NO_TIMESTAMP = 0,
     RENDER_MODE_AUDIO_MASTER,
     RENDER_MODE_AUDIO_STC_MASTER,
+    RENDER_MODE_AUDIO_TTP,
+    RENDER_MODE_AUDIO_TTP_PASS_THROUGH,
+    RENDER_MODE_AUDIO_ABSOLUTETIME,
 } render_mode_t;
 
 /* This defines the physical car audio streams supported in
@@ -410,6 +468,41 @@ enum {
     CAR_AUDIO_STREAM_REAR_SEAT          = 0x10000,
     CAR_AUDIO_STREAM_IN_REAR_SEAT       = 0x20000,
 };
+/* Parameter to be passed when clock switch is needed */
+#define AUDIO_PARAMETER_CLOCK "clock"
+#define AUDIO_PARAMETER_CLOCK_FREQUENCY "clock_frequency"
+
+typedef enum {
+    AUDIO_CLOCK_INTERNAL,
+    AUDIO_CLOCK_EXTERNAL,
+    AUDIO_CLOCK_MAX
+} audio_clock_type;
+
+typedef struct audio_clock_data {
+    int be_id;
+    audio_clock_type clock_type;
+    long clock_frequency;
+    struct listnode list;
+    audio_devices_t device;
+    bool clock_switch;
+} audio_clock_data_t;
+
+#ifdef AUDIO_EXTN_AUTO_HAL_ENABLED
+/* This defines the physical car streams supported in audio HAL,
+ * limited by the available frontend PCM driver.
+ * Max number of physical streams supported is currently 8 and is
+ * represented by stream bit flag as indicated in vehicle HAL interface.
+ */
+#define MAX_CAR_AUDIO_STREAMS    8
+/*enum {
+    CAR_AUDIO_STREAM_MEDIA            = 0x1,
+    CAR_AUDIO_STREAM_SYS_NOTIFICATION = 0x2,
+    CAR_AUDIO_STREAM_NAV_GUIDANCE     = 0x4,
+    CAR_AUDIO_STREAM_PHONE            = 0x8,
+    CAR_AUDIO_STREAM_FRONT_PASSENGER  = 0x100,
+    CAR_AUDIO_STREAM_REAR_SEAT        = 0x10000,
+};*/
+#endif
 
 struct stream_app_type_cfg {
     int sample_rate;
@@ -422,6 +515,7 @@ struct stream_config {
     unsigned int sample_rate;
     audio_channel_mask_t channel_mask;
     audio_format_t format;
+    audio_devices_t devices;
     struct listnode device_list;
     unsigned int bit_width;
 };
@@ -443,12 +537,18 @@ struct stream_inout {
     struct stream_config in_config;
     struct stream_config out_config;
     struct stream_app_type_cfg out_app_type_cfg;
+    struct stream_app_type_cfg in_app_type_cfg;
     char profile[MAX_STREAM_PROFILE_STR_LEN];
     struct audio_device *dev;
     void *adsp_hdlr_stream_handle;
     void *ip_hdlr_handle;
+    bool adm_event_enable;
+    bool asm_event_enable;
+    bool ip_hdlr_enabled;
     stream_callback_t client_callback;
     void *client_cookie;
+    audio_input_flags_t input_flags;
+    audio_output_flags_t output_flags;
 };
 
 struct stream_out {
@@ -472,6 +572,7 @@ struct stream_out {
     unsigned int sample_rate;
     audio_channel_mask_t channel_mask;
     audio_format_t format;
+    audio_devices_t devices;
     struct listnode device_list;
     audio_output_flags_t flags;
     char profile[MAX_STREAM_PROFILE_STR_LEN];
@@ -499,6 +600,10 @@ struct stream_out {
 
     void *adsp_hdlr_stream_handle;
     void *ip_hdlr_handle;
+    bool adm_event_enable;
+    bool asm_event_enable;
+    bool ip_hdlr_enabled;
+    dsd_format_t dsd_format;
 
     stream_callback_t client_callback;
     void *client_cookie;
@@ -544,7 +649,12 @@ struct stream_out {
     mix_matrix_params_t pan_scale_params;
     mix_matrix_params_t downmix_params;
     bool set_dual_mono;
+    int rx_dtmf_tone_gain;
     bool prev_card_status_offline;
+
+    char address[AUDIO_DEVICE_MAX_ADDRESS_LEN];
+    bool dsd_config_updated;
+
 #ifndef LINUX_ENABLED
     error_log_t *error_log;
 #endif
@@ -580,8 +690,10 @@ struct stream_in {
     int standby;
     int source;
     int pcm_device_id;
+    audio_devices_t device;
     struct listnode device_list;
     audio_channel_mask_t channel_mask;
+    struct audio_in_channel_map_param *channel_map_param; /* input channel map */
     audio_usecase_t usecase;
     bool enable_aec;
     bool enable_ns;
@@ -605,12 +717,14 @@ struct stream_in {
     struct stream_app_type_cfg app_type_cfg;
     void *cin_extn;
     qahwi_stream_in_t qahwi_in;
+    dsd_format_t dsd_format;
 
     struct audio_device *dev;
     card_status_t card_status;
     int capture_started;
     float zoom;
     audio_microphone_direction_t direction;
+    render_mode_t render_mode;
 
     volatile int32_t capture_stopped;
 
@@ -622,6 +736,12 @@ struct stream_in {
     int64_t frames_read; /* total frames read, not cleared when entering standby */
     int64_t frames_muted; /* total frames muted, not cleared when entering standby */
 
+    bool dsd_config_updated;
+    uint64_t ttp_offset_cached;
+    bool hdmi_in_status;
+    long hdmi_in_wait_ns;
+    bool calc_timeout;
+    timer_t timer_handle;
 #ifndef LINUX_ENABLED
     error_log_t *error_log;
 #endif
@@ -641,6 +761,8 @@ typedef enum {
     PCM_PASSTHROUGH,
     ICC_CALL,
     SYNTH_LOOPBACK,
+    AFE_LOOPBACK,
+    DTMF_PLAYBACK,
     USECASE_TYPE_MAX
 } usecase_type_t;
 
@@ -671,12 +793,14 @@ struct audio_usecase {
     struct listnode list;
     audio_usecase_t id;
     usecase_type_t  type;
+    audio_devices_t devices;
     struct listnode device_list;
     snd_device_t out_snd_device;
     snd_device_t in_snd_device;
     struct stream_app_type_cfg out_app_type_cfg;
     struct stream_app_type_cfg in_app_type_cfg;
     union stream_ptr stream;
+    bool is_persistent_cal;
 };
 
 struct stream_format {
@@ -703,6 +827,14 @@ struct streams_io_cfg {
     struct stream_app_type_cfg app_type_cfg;
 };
 
+typedef struct spdif_channel_status {
+    uint32_t sample_rate_ch_a;
+    uint32_t sample_rate_ch_b;
+    uint32_t bit_width_ch_a;
+    uint32_t bit_width_ch_b;
+    bool channel_status_set;
+} spdif_channel_status_t;
+
 typedef void* (*adm_init_t)();
 typedef void (*adm_deinit_t)(void *);
 typedef void (*adm_register_output_stream_t)(void *, audio_io_handle_t, audio_output_flags_t);
@@ -727,6 +859,7 @@ struct audio_device {
     audio_mode_t mode;
     audio_mode_t prev_mode;
     audio_devices_t out_device;
+    struct stream_in *active_input;
     struct stream_out *primary_output;
     struct stream_out *voice_tx_output;
     struct stream_out *current_call_output;
@@ -754,6 +887,7 @@ struct audio_device {
     bool mic_muted;
     bool enable_voicerx;
     unsigned int num_va_sessions;
+    struct listnode clock_switch_list;
 
     int snd_card;
     card_status_t card_status;
@@ -774,6 +908,8 @@ struct audio_device {
     int (*offload_effects_stop_output)(audio_io_handle_t, int);
 
     int (*offload_effects_set_hpx_state)(bool);
+
+    struct audio_in_channel_map_param in_channel_map_param;
 
     void *adm_data;
     void *adm_lib;
@@ -836,12 +972,23 @@ struct audio_device {
     Hashmap *io_streams_map;
     bool a2dp_started;
     bool ha_proxy_enable;
+    unsigned int audio_patch_index;
+    void *ip_hdlr_handle;
+    int ip_hdlr_asm_cnt;
+    int ip_hdlr_adm_cnt;
+    bool ecall_flag;
+    spdif_channel_status_t spdif_coaxial_status;
+    spdif_channel_status_t spdif_optical_status;
+    int ext_controller;
+    int ext_stream;
 };
 
 struct audio_patch_record {
     struct listnode list;
     audio_patch_handle_t handle;
     audio_usecase_t usecase;
+    audio_io_handle_t input_io_handle;
+    audio_io_handle_t output_io_handle;
     struct audio_patch patch;
 };
 

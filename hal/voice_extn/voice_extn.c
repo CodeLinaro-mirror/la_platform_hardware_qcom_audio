@@ -36,6 +36,8 @@
 #include "platform.h"
 #include "platform_api.h"
 #include "voice_extn.h"
+#include "adsp_hdlr.h"
+#include "audio_feature_manager.h"
 
 #ifdef DYNAMIC_LOG_ENABLED
 #include <log_xml_parser.h>
@@ -50,6 +52,16 @@
 #define AUDIO_PARAMETER_KEY_DEVICE_MUTE         "device_mute"
 #define AUDIO_PARAMETER_KEY_DIRECTION           "direction"
 #define AUDIO_PARAMETER_KEY_CALL_TYPE           "call_type"
+
+/* DTMF Generation Keys */
+/* dtmf_low_freq and dtmf_high_freq must be paired */
+#define AUDIO_PARAMETER_KEY_DTMF_LOW_FREQ "dtmf_low_freq"
+#define AUDIO_PARAMETER_KEY_DTMF_HIGH_FREQ "dtmf_high_freq"
+#define AUDIO_PARAMETER_KEY_DTMF_TONE_GAIN "dtmf_tone_gain"
+#define AUDIO_PARAMETER_KEY_DTMF_TONE_OFF "dtmf_tone_off"
+
+/* DTMF Detection Key */
+#define AUDIO_PARAMETER_KEY_DTMF_DETECT "dtmf_detect"
 
 #define VOICE_EXTN_PARAMETER_VALUE_MAX_LEN 256
 
@@ -586,6 +598,76 @@ int voice_extn_stop_call(struct audio_device *adev)
         ret = update_calls(adev);
     }
 
+    return ret;
+}
+
+int voice_extn_out_set_parameters(struct stream_out *out,
+                                  struct str_parms *parms)
+{
+    int value = 0;
+    int ret = 0, err = 0;
+    char *kv_pairs = str_parms_to_str(parms);
+    char str_value[256] = {0};
+
+    ALOGV_IF(kv_pairs != NULL, "%s: enter: %s", __func__, kv_pairs);
+
+    err = str_parms_get_int(parms, AUDIO_PARAMETER_KEY_DTMF_LOW_FREQ, &value);
+    if (err >= 0) {
+        str_parms_del(parms, AUDIO_PARAMETER_KEY_DTMF_LOW_FREQ);
+        uint32_t dtmf_low_freq = value;
+        uint32_t dtmf_high_freq = 0;
+        err = str_parms_get_int(parms, AUDIO_PARAMETER_KEY_DTMF_HIGH_FREQ, &value);
+        if (err >= 0) {
+            dtmf_high_freq = value;
+            str_parms_del(parms, AUDIO_PARAMETER_KEY_DTMF_HIGH_FREQ);
+        } else {
+            ALOGE("%s: dtmf_high_freq key not found", __func__);
+            ret = -EINVAL;
+            goto done;
+        }
+
+        voice_extn_dtmf_generate_rx_tone(out,
+            dtmf_low_freq, dtmf_high_freq);
+    }
+
+    err = str_parms_get_int(parms, AUDIO_PARAMETER_KEY_DTMF_TONE_GAIN, &value);
+    if (err >= 0) {
+        str_parms_del(parms, AUDIO_PARAMETER_KEY_DTMF_TONE_GAIN);
+        int32_t dtmf_tone_gain = value;
+
+        voice_extn_dtmf_set_rx_tone_gain(out,
+            dtmf_tone_gain);
+    }
+
+    err = str_parms_has_key(parms, AUDIO_PARAMETER_KEY_DTMF_TONE_OFF);
+    if (err > 0) {
+        str_parms_del(parms, AUDIO_PARAMETER_KEY_DTMF_TONE_OFF);
+        voice_extn_dtmf_set_rx_tone_off(out);
+    }
+
+    err = str_parms_get_str(parms, AUDIO_PARAMETER_KEY_DTMF_DETECT, str_value,
+                            sizeof(str_value));
+    if (err >= 0) {
+        str_parms_del(parms, AUDIO_PARAMETER_KEY_DTMF_DETECT);
+        bool dtmf_detect = false;
+        uint32_t session_id = 0;
+
+        if (!strncmp("true", str_value, sizeof("true")))
+            dtmf_detect = true;
+
+        voice_extn_get_active_session_id(out->dev, &session_id);
+
+        ret = voice_extn_dtmf_set_rx_detection(out, session_id, dtmf_detect);
+        if (ret != 0) {
+            ALOGE("%s: Failed to set dtmf_detect err:%d", __func__, ret);
+            ret = -EINVAL;
+            goto done;
+        }
+    }
+
+done:
+    ALOGV("%s: exit with code(%d)", __func__, ret);
+    free(kv_pairs);
     return ret;
 }
 

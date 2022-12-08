@@ -88,6 +88,9 @@ AUDIO_FEATURE_ENABLED_SOURCE_TRACKING := false
 AUDIO_FEATURE_ENABLED_GEF_SUPPORT := true
 BOARD_SUPPORTS_QAHW := false
 AUDIO_FEATURE_ENABLED_RAS := false
+ifeq ($(ENABLE_HYP),true)
+AUDIO_FEATURE_ENABLED_SND_MONITOR := true
+endif
 AUDIO_FEATURE_ENABLED_DLKM := true
 AUDIO_FEATURE_ENABLED_USB_BURST_MODE := false
 AUDIO_FEATURE_ENABLED_SVA_MULTI_STAGE := true
@@ -142,6 +145,8 @@ endif
 ifneq ( ,$(filter msmnile_gvmq msmnile_au, $(TARGET_BOARD_PLATFORM)$(TARGET_BOARD_SUFFIX)))
 AUDIO_FEATURE_ENABLED_AUDIO_PARSERS := true
 endif
+AUDIO_FEATURE_ENABLED_DUAL_HFP := true
+
 ##AUTOMOTIVE_AUDIO_FEATURE_FLAGS
 
 ifneq ($(strip $(TARGET_USES_RRO)), true)
@@ -328,6 +333,8 @@ vendor.audio.hw.aac.encoder=false
 
 #force offload using hardware decoders for FLAC, WMA & APE
 PRODUCT_PROPERTY_OVERRIDES += \
+vendor.audio.use.hw.alac.decoder=true
+PRODUCT_PROPERTY_OVERRIDES += \
 vendor.audio.use.hw.flac.decoder=true
 PRODUCT_PROPERTY_OVERRIDES += \
 vendor.audio.use.hw.wma.decoder=true
@@ -447,6 +454,7 @@ else
 PRODUCT_ODM_PROPERTIES += \
 vendor.audio.feature.snd_mon.enable=false
 endif
+vendor.audio.feature.synth.enable=true
 else
 # Non-Generic ODM varient related
 PRODUCT_ODM_PROPERTIES += \
@@ -502,6 +510,12 @@ else
 PRODUCT_ODM_PROPERTIES += \
 vendor.audio.feature.snd_mon.enable=false
 endif
+vendor.audio.feature.synth.enable=true
+endif
+
+ifeq ($(ENABLE_HYP),true)
+PRODUCT_ODM_PROPERTIES += \
+vendor.audio.feature.snd_mon.enable=true
 endif
 
 # for HIDL related packages

@@ -38,7 +38,11 @@
         <device name="SND_DEVICE_OUT_BUS_PAX" acdb_id="60"/>
         <device name="SND_DEVICE_OUT_BUS_RSE" acdb_id="60"/>
         <device name="SND_DEVICE_OUT_BT_SCO" acdb_id="21"/>
+        <device name="SND_DEVICE_OUT_BT_PRI_SCO" acdb_id="136"/>
+        <device name="SND_DEVICE_OUT_BT_SEC_SCO" acdb_id="136"/>
         <device name="SND_DEVICE_OUT_BT_SCO_WB" acdb_id="39"/>
+        <device name="SND_DEVICE_OUT_BT_PRI_SCO_WB" acdb_id="39"/>
+        <device name="SND_DEVICE_OUT_BT_SEC_SCO_WB" acdb_id="39"/>
         <device name="SND_DEVICE_OUT_BT_A2DP" acdb_id="60"/>
         <device name="SND_DEVICE_OUT_VOICE_HANDSET" acdb_id="94"/>
         <device name="SND_DEVICE_OUT_VOICE_SPEAKER" acdb_id="94"/>
@@ -57,9 +61,15 @@
         <device name="SND_DEVICE_IN_VOICE_SPEAKER_MIC_HFP" acdb_id="95"/>
         <device name="SND_DEVICE_IN_VOICE_SPEAKER_MIC_HFP_MMSECNS" acdb_id="131"/>
         <device name="SND_DEVICE_IN_BT_SCO_MIC" acdb_id="20"/>
+        <device name="SND_DEVICE_IN_BT_PRI_SCO_MIC" acdb_id="135"/>
+        <device name="SND_DEVICE_IN_BT_SEC_SCO_MIC" acdb_id="135"/>
         <device name="SND_DEVICE_IN_BT_SCO_MIC_WB" acdb_id="38"/>
+        <device name="SND_DEVICE_IN_BT_PRI_SCO_MIC_WB" acdb_id="38"/>
+        <device name="SND_DEVICE_IN_BT_SEC_SCO_MIC_WB" acdb_id="38"/>
         <device name="SND_DEVICE_IN_HANDSET_DMIC" acdb_id="80"/>
         <device name="SND_DEVICE_IN_SPEAKER_DMIC" acdb_id="80"/>
+        <device name="SND_DEVICE_IN_SPEAKER_DMIC_STEREO" acdb_id="80"/>
+        <device name="SND_DEVICE_IN_VOICE_REC_DMIC_STEREO" acdb_id="80"/>
         <device name="SND_DEVICE_IN_QUAD_MIC" acdb_id="47"/>
         <device name="SND_DEVICE_IN_HANDSET_QMIC" acdb_id="47"/>
         <device name="SND_DEVICE_IN_ICC" acdb_id="46"/>
@@ -144,6 +154,22 @@
         <usecase name="USECASE_AUDIO_RECORD_COMPRESS2" type="in" id="31" />
         <usecase name="USECASE_AUDIO_RECORD2" type="in" id="61" />
         <usecase name="USECASE_AUDIO_RECORD3" type="in" id="62" />
+        <usecase name="USECASE_AUDIO_PRI_HFP_SCO" type="in" id="29" />
+        <usecase name="USECASE_AUDIO_PRI_HFP_SCO" type="out" id="29" />
+        <usecase name="USECASE_AUDIO_PRI_HFP_SCO_WB" type="in" id="29" />
+        <usecase name="USECASE_AUDIO_PRI_HFP_SCO_WB" type="out" id="29" />
+        <usecase name="USECASE_AUDIO_PRI_HFP_SCO_DOWNLINK" type="in" id="36" />
+        <usecase name="USECASE_AUDIO_PRI_HFP_SCO_DOWNLINK" type="out" id="36" />
+        <usecase name="USECASE_AUDIO_PRI_HFP_SCO_WB_DOWNLINK" type="in" id="36" />
+        <usecase name="USECASE_AUDIO_PRI_HFP_SCO_WB_DOWNLINK" type="out" id="36" />
+        <usecase name="USECASE_AUDIO_SEC_HFP_SCO" type="in" id="56" />
+        <usecase name="USECASE_AUDIO_SEC_HFP_SCO" type="out" id="56" />
+        <usecase name="USECASE_AUDIO_SEC_HFP_SCO_WB" type="in" id="56" />
+        <usecase name="USECASE_AUDIO_SEC_HFP_SCO_WB" type="out" id="56" />
+        <usecase name="USECASE_AUDIO_SEC_HFP_SCO_DOWNLINK" type="in" id="57" />
+        <usecase name="USECASE_AUDIO_SEC_HFP_SCO_DOWNLINK" type="out" id="57" />
+        <usecase name="USECASE_AUDIO_SEC_HFP_SCO_WB_DOWNLINK" type="in" id="57" />
+        <usecase name="USECASE_AUDIO_SEC_HFP_SCO_WB_DOWNLINK" type="out" id="57" />
     </pcm_ids>
 
     <soft_volume_params>
@@ -182,7 +208,11 @@
         <device name="SND_DEVICE_OUT_SPEAKER" interface="TERT_TDM_RX_0"/>
         <device name="SND_DEVICE_OUT_HEADPHONES" interface="TERT_TDM_RX_0"/>
         <device name="SND_DEVICE_OUT_BT_SCO" interface="AUX_PCM_RX"/>
+        <device name="SND_DEVICE_OUT_BT_PRI_SCO" interface="PRI_TDM_RX_0"/>
+        <device name="SND_DEVICE_OUT_BT_SEC_SCO" interface="PRI_TDM_RX_1"/>
         <device name="SND_DEVICE_OUT_BT_SCO_WB" interface="AUX_PCM_RX"/>
+        <device name="SND_DEVICE_OUT_BT_PRI_SCO_WB" interface="PRI_TDM_RX_0"/>
+        <device name="SND_DEVICE_OUT_BT_SEC_SCO_WB" interface="PRI_TDM_RX_1"/>
         <device name="SND_DEVICE_OUT_BT_A2DP" interface="TERT_TDM_RX_0"/>
         <device name="SND_DEVICE_OUT_VOICE_HANDSET" interface="TERT_TDM_RX_2"/>
         <device name="SND_DEVICE_OUT_VOICE_SPEAKER" interface="TERT_TDM_RX_2"/>
@@ -202,13 +232,21 @@
         <device name="SND_DEVICE_IN_BUS" interface="TERT_TDM_TX_0"/>
         <device name="SND_DEVICE_IN_BUS_PAX" interface="QUAT_TDM_TX_0"/>
         <device name="SND_DEVICE_IN_BUS_RSE" interface="QUIN_TDM_TX_0"/>
+        <device name="SND_DEVICE_IN_VOICE_REC_MIC" interface="TERT_TDM_TX_0"/>
+        <device name="SND_DEVICE_IN_VOICE_REC_HEADSET_MIC" interface="TERT_TDM_TX_0"/>
         <device name="SND_DEVICE_IN_VOICE_HEADSET_MIC" interface="TERT_TDM_TX_0"/>
         <device name="SND_DEVICE_IN_VOICE_SPEAKER_MIC" interface="TERT_TDM_TX_0"/>
         <device name="SND_DEVICE_IN_VOICE_SPEAKER_MIC_HFP" interface="TERT_TDM_TX_0"/>
         <device name="SND_DEVICE_IN_BT_SCO_MIC" interface="AUX_PCM_TX"/>
+        <device name="SND_DEVICE_IN_BT_PRI_SCO_MIC" interface="PRI_TDM_TX_0"/>
+        <device name="SND_DEVICE_IN_BT_SEC_SCO_MIC" interface="PRI_TDM_TX_1"/>
         <device name="SND_DEVICE_IN_BT_SCO_MIC_WB" interface="AUX_PCM_TX"/>
+        <device name="SND_DEVICE_IN_BT_PRI_SCO_MIC_WB" interface="PRI_TDM_TX_0"/>
+        <device name="SND_DEVICE_IN_BT_SEC_SCO_MIC_WB" interface="PRI_TDM_TX_1"/>
         <device name="SND_DEVICE_IN_HANDSET_DMIC" interface="TERT_TDM_TX_0"/>
         <device name="SND_DEVICE_IN_SPEAKER_DMIC" interface="TERT_TDM_TX_0"/>
+        <device name="SND_DEVICE_IN_SPEAKER_DMIC_STEREO" interface="TERT_TDM_TX_0"/>
+        <device name="SND_DEVICE_IN_VOICE_REC_DMIC_STEREO" interface="TERT_TDM_TX_0"/>
         <device name="SND_DEVICE_IN_QUAD_MIC" interface="TERT_TDM_TX_0"/>
         <device name="SND_DEVICE_IN_HANDSET_QMIC" interface="TERT_TDM_TX_0"/>
         <device name="SND_DEVICE_IN_ICC" interface="TERT_TDM_TX_0"/>

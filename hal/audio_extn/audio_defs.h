@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2015, 2017-2019, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2014-2015, 2017-2021, The Linux Foundation. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -73,6 +73,7 @@
 #define AUDIO_OFFLOAD_CODEC_APE_SEEK_TABLE_PRESENT "music_offload_seek_table_present"
 
 #define AUDIO_OFFLOAD_CODEC_VORBIS_BITSTREAM_FMT "music_offload_vorbis_bitstream_fmt"
+#define AUDIO_OFFLOAD_CODEC_AMR_WB_PLUS_BITSTREAM_FMT "music_offload_amrwbplus_bitstream_fmt"
 
 /* Query handle fm parameter*/
 #define AUDIO_PARAMETER_KEY_HANDLE_FM "handle_fm"
@@ -106,6 +107,16 @@
 /* Set or Query stream profile type */
 #define AUDIO_PARAMETER_STREAM_PROFILE "audio_stream_profile"
 
+/* Set DSD format (DSD64/DSD128/DSD256/DSD512) */
+#define AUDIO_PARAMETER_STREAM_DSD_FMT "dsd_format" /* dsd_format_t */
+
+typedef enum {
+    DSD_FORMAT_64             = 0,
+    DSD_FORMAT_128            = 1,
+    DSD_FORMAT_256            = 2,
+    DSD_FORMAT_512            = 3,
+} dsd_format_t;
+
 #define AUDIO_PARAMETER_KEY_VR_AUDIO_MODE "vr_audio_mode_on"
 
 /* audio input flags for compress and timestamp mode.
@@ -114,6 +125,12 @@
 #define AUDIO_INPUT_FLAG_TIMESTAMP 0x80000000
 #define AUDIO_INPUT_FLAG_COMPRESS  0x40000000
 #define AUDIO_INPUT_FLAG_PASSTHROUGH 0x20000000
+
+
+/* audio output flag for voice call */
+#define AUDIO_OUTPUT_FLAG_VOICE_CALL 0x2000000
+#define AUDIO_OUTPUT_FLAG_ECALL  0x8000
+
 
 /* MAX SECTORS for sourcetracking feature */
 #define MAX_SECTORS 8
@@ -195,6 +212,15 @@ struct audio_out_correct_drift {
     int64_t        adjust_time;
 };
 
+struct audio_in_ttp_offset_param {
+   uint64_t        ttp_offset; /* TTP value is derived from ttp offset*/
+};
+
+struct audio_out_external_sink_latency_param {
+    /*external sink latency for a2dp path*/
+    int64_t        external_sink_latency;
+};
+
 /* Device playback mode passed to keep_alive_start & keep_alive_stop*/
 typedef enum {
     KEEP_ALIVE_OUT_NONE = 0,
@@ -226,6 +252,7 @@ struct audio_stream_callback_param {
 typedef enum {
     AUDIO_STREAM_PP_EVENT = 0,
     AUDIO_STREAM_ENCDEC_EVENT = 1,
+    AUDIO_STREAM_IEC_61937_FMT_UPDATE_EVENT = 2,
     AUDIO_COPP_EVENT = 3,
 } audio_event_id;
 
@@ -236,6 +263,11 @@ struct audio_adsp_event {
  audio_event_id event_type;                  /* type of the event */
  uint32_t payload_length;                    /* length in bytes of the payload */
  void    *payload;                           /* the actual payload */
+};
+
+struct audio_in_channel_map_param {
+   uint8_t       channels;                              /* Input Channels */
+   uint8_t       channel_map[AUDIO_CHANNEL_COUNT_MAX];  /* Input Channel Map */
 };
 
 struct audio_out_channel_map_param {
@@ -251,6 +283,12 @@ struct audio_device_cfg_param {
    audio_devices_t device;
    uint8_t    channel_map[AUDIO_CHANNEL_COUNT_MAX];
    uint16_t   channel_allocation;
+};
+
+struct audio_pll_device_cfg_param {
+   int32_t    drift;
+   audio_devices_t device;
+   bool       reset;
 };
 
 struct audio_device_config_param {
@@ -283,6 +321,47 @@ typedef struct audio_license_params {
     char license[AUDIO_LICENSE_STR_MAX_LENGTH + 1];
 } audio_license_params_t;
 
+struct dolby_thd_params {
+    int32_t ch_cfg;
+    int32_t presentation_mode;
+    int32_t loud_mgmt;
+    int32_t drc_cut;
+    int32_t drc_mode;
+    int32_t drc_boost;
+    int32_t lfe_mode;
+    int32_t archive_mode;
+};
+
+struct dolby_thd_dec_param {
+   struct dolby_thd_params dthd_params;
+};
+
+struct dolby_mat_params {
+    int32_t content_type;
+    int32_t inplace_buf;
+    int32_t loud_mgmt;
+    int32_t drc_cut;
+    int32_t drc_mode;
+    int32_t drc_boost;
+    int32_t ch_cfg;
+    int32_t presentation_mode;
+};
+
+struct dolby_mat_dec_param {
+   struct dolby_mat_params dmat_params;
+};
+
+struct audio_out_channel_status_info {
+    /* Channel status is 192 bits each for CH A and CH B*/
+    char channel_status[48];
+};
+
+struct audio_device_channel_bit_mask {
+    audio_devices_t device;
+    /* Channel status bit mask is 192 bits each for CH A and CH B*/
+    char bit_mask[48];
+};
+
 typedef union {
     struct source_tracking_param st_params;
     struct sound_focus_param sf_params;
@@ -293,11 +372,18 @@ typedef union {
     struct audio_out_enable_drift_correction drift_enable_param;
     struct audio_out_correct_drift drift_correction_param;
     struct audio_adsp_event adsp_event_params;
+    struct audio_in_channel_map_param in_channel_map_param;
     struct audio_out_channel_map_param channel_map_param;
     struct audio_device_cfg_param device_cfg;
     struct mix_matrix_params mm_params;
     struct audio_license_params license_params;
+    struct dolby_thd_dec_param dthd_params;
+    struct dolby_mat_dec_param dmat_params;
     struct audio_out_presentation_position_param pos_param;
+    struct audio_in_ttp_offset_param ttp_offset;
+    struct audio_out_channel_status_info channel_status_info;
+    struct audio_device_channel_bit_mask ch_bit_mask;
+    struct audio_out_external_sink_latency_param external_sink_latency;
 } audio_extn_param_payload;
 
 typedef enum {
@@ -321,7 +407,23 @@ typedef enum {
     AUDIO_EXTN_PARAM_CH_MIX_MATRIX_PARAMS,
     /* License information */
     AUDIO_EXTN_PARAM_LICENSE_PARAMS,
+    AUDIO_EXTN_PARAM_DOLBY_THD_DEC,
+    AUDIO_EXTN_PARAM_DOLBY_MAT_DEC,
     AUDIO_EXTN_PARAM_OUT_PRESENTATION_POSITION,
+    AUDIO_EXTN_PARAM_DTMF_GEN,
+    AUDIO_EXTN_PARAM_TTY_MODE,
+    AUDIO_EXTN_PARAM_HPCM,
+    AUDIO_EXTN_PARAM_DTMF_DETECT,
+    AUDIO_EXTN_PARAM_TONE_GEN,
+    AUDIO_EXTN_PARAM_IN_TTP_OFFSET,
+    AUDIO_EXTN_PARAM_PLL_DEVICE_CONFIG,
+    /* param to set input channel map for capture */
+    AUDIO_EXTN_PARAM_IN_CHANNEL_MAP,
+    /* Channel status information for SPDIF/HDMI */
+    AUDIO_EXTN_PARAM_CHANNEL_STATUS_INFO,
+    /* Channel bit mask to monitor channel status bits */
+    AUDIO_EXTN_PARAM_CHANNEL_BIT_MASK,
+    AUDIO_EXTN_PARAM_EXTERNAL_SINK_LATENCY,
 } audio_extn_param_id;
 
 typedef union {
@@ -330,7 +432,26 @@ typedef union {
 } audio_extn_loopback_param_payload;
 
 typedef enum {
-    AUDIO_EXTN_PARAM_LOOPBACK_RENDER_WINDOW /* PARAM to set render window */
+    AUDIO_EXTN_PARAM_LOOPBACK_RENDER_WINDOW, /* PARAM to set render window */
+    AUDIO_EXTN_PARAM_LOOPBACK_SET_CALLBACK
 } audio_extn_loopback_param_id;
+
+typedef struct {
+    uint32_t num_sources;
+    audio_input_flags_t flags;
+    struct audio_port_config *source_config;
+} audio_extn_source_port_config_t;
+
+typedef struct {
+    uint32_t num_sinks;
+    audio_output_flags_t flags;
+    struct audio_port_config *sink_config;
+} audio_extn_sink_port_config_t;
+
+typedef enum {
+    AUDIO_EXTN_META_DATA_FLAGS_NONE,
+    AUDIO_EXTN_META_DATA_FLAGS_TIMESTAMP_VALID,
+    AUDIO_EXTN_META_DATA_FLAGS_TIMESTAMP_CONTINUE,
+} audio_extn_meta_data_flags;
 
 #endif /* AUDIO_DEFS_H */

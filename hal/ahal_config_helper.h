@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2019-2020, The Linux Foundation. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -77,6 +77,7 @@ typedef struct {
     bool compress_voip_enabled;
     bool dynamic_ecns_enabled;
     bool audio_zoom_enabled;
+    bool auto_hal_enabled;
 } AHalValues;
 
 #ifdef __cplusplus

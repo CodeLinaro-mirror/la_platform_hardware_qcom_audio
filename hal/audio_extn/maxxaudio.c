@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018 The Android Open Source Project
+ * Copyright (C) 2018, 2020 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -374,17 +374,18 @@ static bool check_and_send_all_audio_cal(struct audio_device *adev, ma_cmd_t cmd
 
 static bool find_sup_dev(char *name)
 {
-    char *token, *saveptr = NULL;
+    char *token;
     const char s[2] = ",";
     bool ret = false;
     char sup_devs[128];
+    char *str_endptr = NULL;
 
     // the rule of comforming suppored dev's name
     // 1. Both string len are equal
     // 2. Both string content are equal
 
-    strncpy(sup_devs, SUPPORT_DEV, sizeof(sup_devs));
-    token = strtok_r(sup_devs, s, &saveptr);
+    strlcpy(sup_devs, SUPPORT_DEV, sizeof(sup_devs));
+    token = strtok_r(sup_devs, s, &str_endptr);
     while (token != NULL) {
         if (strncmp(token, name, strlen(token)) == 0 &&
             strlen(token) == strlen(name)) {
@@ -392,7 +393,7 @@ static bool find_sup_dev(char *name)
             ret = true;
             break;
         }
-        token = strtok_r(NULL, s, &saveptr);
+        token = strtok_r(NULL, s, &str_endptr);
     }
 
     return ret;
@@ -421,7 +422,7 @@ static void ma_support_usb(bool enable, int card)
     int ret = 0;
     int32_t fd = -1;
     char *idd;
-    char *saveptr = NULL;
+    char *str_endptr = NULL;
 
     if (enable) {
         ret = snprintf(path, sizeof(path), "/proc/asound/card%u/usbid", card);
@@ -441,7 +442,7 @@ static void ma_support_usb(bool enable, int card)
             goto done;
         }
         //replace '\n' to '\0'
-        idd = strtok_r(id, "\n", &saveptr);
+        idd = strtok_r(id, "\n", &str_endptr);
 
         if (find_sup_dev(idd)) {
             ALOGV("%s: support usbid is %s", __func__, id);

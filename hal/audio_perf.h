@@ -21,11 +21,34 @@
 extern "C" {
 #endif
 
+#ifndef LINUX_ENABLED
 int audio_streaming_hint_start();
 int audio_streaming_hint_end();
 
 int audio_low_latency_hint_start();
 int audio_low_latency_hint_end();
+#else
+int audio_streaming_hint_start()
+{
+    return 0;
+}
+
+int audio_streaming_hint_end()
+{
+    return 0;
+}
+
+int audio_low_latency_hint_start()
+{
+    return 0;
+}
+
+int audio_low_latency_hint_end()
+{
+    return 0;
+}
+#endif
+
 
 #ifdef __cplusplus
 }

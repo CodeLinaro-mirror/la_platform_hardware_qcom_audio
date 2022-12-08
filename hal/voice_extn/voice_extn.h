@@ -20,6 +20,8 @@
 #ifndef VOICE_EXTN_H
 #define VOICE_EXTN_H
 
+#include "adsp_hdlr.h"
+
 void voice_extn_init(struct audio_device *adev);
 int voice_extn_start_call(struct audio_device *adev);
 int voice_extn_stop_call(struct audio_device *adev);
@@ -28,6 +30,8 @@ int voice_extn_get_session_from_use_case(struct audio_device *adev,
                                          struct voice_session **session);
 int voice_extn_set_parameters(struct audio_device *adev,
                               struct str_parms *parms);
+int voice_extn_out_set_parameters(struct stream_out *out,
+                                  struct str_parms *parms);
 void voice_extn_get_parameters(const struct audio_device *adev,
                                struct str_parms *query,
                                struct str_parms *reply);
@@ -89,5 +93,54 @@ bool voice_extn_is_multi_session_supported();
 void voice_power_mode_feature_init(bool is_feature_enabled);
 bool voice_extn_is_voice_power_mode_supported();
 
+
+#ifdef DTMF_ENABLED
+int voice_extn_dtmf_generate_rx_tone(struct stream_out *out,
+                                     uint32_t dtmf_low_freq,
+                                     uint32_t dtmf_high_freq);
+
+int voice_extn_dtmf_set_rx_tone_gain(struct stream_out *out,
+                                     int32_t gain);
+
+int voice_extn_dtmf_set_rx_tone_off(struct stream_out *out);
+
+int voice_extn_dtmf_set_rx_detection(struct stream_out *out,
+                                     uint32_t session_id,
+                                     bool enable);
+#else
+static int __unused voice_extn_dtmf_generate_rx_tone(
+                            struct stream_out *out __unused,
+                            uint32_t dtmf_low_freq __unused,
+                            uint32_t dtmf_high_freq __unused)
+{
+    ALOGV("%s: DTMF_ENABLED is not defined", __func__);
+    return -ENOSYS;
+}
+
+static int __unused voice_extn_dtmf_set_rx_tone_gain(
+                            struct stream_out *out __unused,
+                            int32_t gain __unused)
+{
+    ALOGV("%s: DTMF_ENABLED is not defined", __func__);
+    return -ENOSYS;
+}
+
+static int __unused voice_extn_dtmf_set_rx_tone_off(
+                            struct stream_out *out __unused)
+{
+    ALOGV("%s: DTMF_ENABLED is not defined", __func__);
+    return -ENOSYS;
+}
+
+static int __unused voice_extn_dtmf_set_rx_detection(
+                            struct stream_out *out __unused,
+                            uint32_t session_id __unused,
+                            bool enable __unused)
+{
+    ALOGV("%s: DTMF_ENABLED is not defined", __func__);
+    return -ENOSYS;
+}
+
+#endif
 
 #endif //VOICE_EXTN_H

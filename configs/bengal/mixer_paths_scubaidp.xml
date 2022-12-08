@@ -2646,6 +2646,13 @@
     </path>
 
     <path name="hph-lowpower-mode">
+        <ctl name="RX_HPH_PWR_MODE" value="LOHIFI" />
+        <ctl name="RX HPH Mode" value="CLS_H_LOHIFI" />
+    </path>
+
+    <path name="hph-lowpower-mode">
+        <ctl name="RX_HPH_PWR_MODE" value="ULP" />
+        <ctl name="RX HPH Mode" value="CLS_H_ULP" />
     </path>
 
     <path name="hph-class-ab-mode">
@@ -2746,6 +2753,13 @@
 
     <path name="speaker-and-headphones-hifi-filter">
         <path name="speaker-and-headphones" />
+        <path name="headphones" />
+        <path name="speaker" />
+    </path>
+
+    <path name="speaker-and-headphones-hifi-filter">
+        <path name="headphones" />
+        <path name="speaker" />
     </path>
 
     <path name="speaker-safe-and-headphones">
@@ -2763,6 +2777,8 @@
 
     <path name="speaker-and-headphones-liquid">
         <path name="speaker-and-headphones" />
+        <path name="headphones" />
+        <path name="speaker" />
     </path>
 
     <path name="speaker-safe-and-headphones-liquid">
@@ -3650,5 +3666,8 @@
     </path>
 
     <path name="call-proxy-in">
+    </path>
+    <path name="incall_music_uplink afe-proxy">
+        <path name="incall_music_uplink" />
     </path>
 </mixer>

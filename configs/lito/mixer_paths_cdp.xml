@@ -2084,6 +2084,7 @@
     </path>
 
     <path name="audio-record-compress2 bt-sco-wb">
+        <ctl name="BT SampleRate" value="KHZ_16" />
         <path name="audio-record-compress2 bt-sco" />
     </path>
 

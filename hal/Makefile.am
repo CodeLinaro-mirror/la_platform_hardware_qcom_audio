@@ -14,35 +14,69 @@ c_sources = audio_hw.c \
             audio_extn/audio_extn.c \
             audio_extn/device_utils.c \
             audio_extn/audio_stub.c
+            acdb.c \
+            audio_extn/audio_hidl.cpp
 
+if HDMI_EDID
+AM_CFLAGS += -DHDMI_EDID_ENABLED
+#c_sources += edid.c
+endif
 
-if FM_POWER_OPT
-AM_CFLAGS += -DFM_POWER_OPT
+#if FM_POWER_OPT
+#AM_CFLAGS += -DFM_POWER_OPT
 c_sources += audio_extn/fm.c
+#endif
+
+#if USBAUDIO
+#AM_CFLAGS += -DUSB_TUNNEL_ENABLED
+c_sources += audio_extn/usb.c
+#endif
+
+if HFP
+AM_CFLAGS += -DENABLE_HFP_CALIBRATION
+#AM_CFLAGS += -DHFP_ENABLED
+#c_sources += audio_extn/hfp.c
 endif
 
-if USBAUDIO
-AM_CFLAGS += -DUSB_TUNNEL_ENABLED
-c_sources += audio_extn/usb.c
-endif
+#if SSR
+#AM_CFLAGS += -DSSR_ENABLED
+#c_sources += audio_extn/ssr.c
+#endif
 
 if MULTI_VOICE_SESSIONS
 AM_CFLAGS += -DMULTI_VOICE_SESSION_ENABLED
 c_sources += voice_extn/voice_extn.c
 endif
 
-if COMPRESS_VOIP
-AM_CFLAGS += -DCOMPRESS_VOIP_ENABLED
+#if COMPRESS_VOIP
+#AM_CFLAGS += -DCOMPRESS_VOIP_ENABLED
 c_sources += voice_extn/compress_voip.c
-endif
+#endif
 
 
 AM_CFLAGS += -DAUDIO_GKI_ENABLED
 
+#if SPKR_PROTECTION
+#AM_CFLAGS += -DSPKR_PROT_ENABLED
+#c_sources += audio_extn/spkr_protection.c
+#endif
+
+if SPKR_PROT
+AM_CFLAGS += -DSPKR_PROT_ENABLED
+endif
 
 if HW_VARIANTS
 AM_CFLAGS += -DHW_VARIANTS_ENABLED
 c_sources +=  ${TARGET_PLATFORM}/hw_info.c
+endif
+
+#if COMPRESS_CAPTURE
+#AM_CFLAGS += -DCOMPRESS_CAPTURE_ENABLED
+#c_sources += audio_extn/compress_capture.c
+#endif
+
+if FLUENCE_ENABLED
+AM_CFLAGS += -DFLUENCE_ENABLED
 endif
 
 if DTS_EAGLE
@@ -102,6 +136,11 @@ AM_CFLAGS += -DWMA_OFFLOAD_ENABLED
 AM_CFLAGS += -DCOMPRESS_METADATA_ENABLED
 endif
 
+if AMR_SUPPORT
+AM_CFLAGS += -DAMR_OFFLOAD_ENABLED
+AM_CFLAGS += -DCOMPRESS_METADATA_ENABLED
+endif
+
 if COMPRESS_INPUT
 AM_CFLAGS += -DCOMPRESS_INPUT_ENABLED
 c_sources += audio_extn/compress_in.c
@@ -133,6 +172,11 @@ AM_CFLAGS += -DAUDIO_GENERIC_EFFECT_FRAMEWORK_ENABLED
 c_sources += audio_extn/gef.c
 endif
 
+if ADSP_PP
+AM_CFLAGS += -DAUDIO_ADSP_PP_ENABLED
+c_sources += audio_extn/adsp_post_proc_extn.c
+endif
+
 if APTX_DECODER
 AM_CFLAGS += -DAPTX_DECODER_ENABLED
 endif
@@ -144,6 +188,20 @@ endif
 if ADSP_HDLR
 AM_CFLAGS += -DAUDIO_EXTN_ADSP_HDLR_ENABLED
 c_sources += audio_extn/adsp_hdlr.c
+endif
+
+#if A2DP_OFFLOAD
+#AM_CFLAGS += -DA2DP_OFFLOAD_ENABLED
+#c_sources += audio_extn/a2dp.c
+#endif
+
+if A2DP_OFFLOAD
+AM_CFLAGS += -DA2DP_OFFLOAD_ENABLED
+endif
+
+if SPLIT_A2DP_SINK
+AM_CFLAGS += -DSPLIT_A2DP_SINK_ENABLED
+c_sources += audio_extn/a2dp_sink.c
 endif
 
 if AUDIO_IP_HDLR
@@ -158,12 +216,17 @@ endif
 
 if AUDIO_HW_LOOPBACK
 AM_CFLAGS += -DAUDIO_HW_LOOPBACK_ENABLED
-AM_CFLAGS += -DCOMPRESS_METADATA_NEEDED
+AM_CFLAGS += -DCOMPRESS_METADATA_ENABLED
 c_sources += audio_extn/hw_loopback.c
 endif
 
 if RUN_KEEP_ALIVE_IN_ARM_FFV
 AM_CFLAGS += -DRUN_KEEP_ALIVE_IN_ARM_FFV
+endif
+
+if AUDIO_AFE_LOOPBACK
+AM_CFLAGS += -DAUDIO_AFE_LOOPBACK_ENABLED
+c_sources += audio_extn/afe_loopback.c
 endif
 
 if AUDIO_HW_FFV
@@ -195,6 +258,21 @@ endif
 if HAL_PATH_SPECIFIED
 AM_CFLAGS += -DHAL_LIBRARY_PATH=\"@HAL_PATH@\"
 endif
+if DOLBY_MAT_THD
+AM_CFLAGS += -DDOLBY_MAT_THD_ENABLED
+c_sources += audio_extn/dolby.c
+endif
+
+if SPDIF_PLAYBACK
+AM_CFLAGS += -DSPDIF_PLAYBACK_ENABLED
+endif
+
+if EXTENDED_COMPRESS_FORMAT
+AM_CFLAGS += -DENABLE_EXTENDED_COMPRESS_FORMAT
+endif
+
+AM_CFLAGS += -DMAX_TARGET_SPECIFIC_CHANNEL_CNT="16"
+
 h_sources = audio_extn/audio_defs.h \
             audio_extn/audio_extn.h \
             audio_hw.h \
@@ -208,8 +286,12 @@ audio_primary_default_la_SOURCES = $(c_sources)
 audio_primary_default_la_LIBADD = $(GLIB_LIBS) -llog -lcutils -ltinyalsa
 audio_primary_default_la_LIBADD += -ltinycompress -laudioroute -ldl -lexpat -laudioutils -lutils
 audio_primary_default_la_LIBADD += -lm -lc -lresolv
+
 if AUDIO_PARSER
 audio_primary_default_la_LIBADD += -laudioparsers
+endif
+if COMPRESS_INPUT
+audio_primary_default_la_LIBADD += -lrt
 endif
 audio_primary_default_la_CFLAGS = $(AM_CFLAGS) $(GLIB_CFLAGS)
 if HAL_PATH_SPECIFIED
@@ -217,9 +299,12 @@ audio_primary_default_la_CFLAGS += -DHAL_LIBRARY_PATH=\"@HAL_PATH@\"
 endif
 audio_primary_default_la_CFLAGS += -Dstrlcat=g_strlcat
 audio_primary_default_la_CFLAGS += -DINT_MAX=0x7fffffff -Wno-error=deprecated-declarations -DPATH_MAX=1024 -DULONG_MAX=0xFFFFFFFFFFFFFFFFUL
+audio_primary_default_la_CFLAGS += -DINT_MAX=0x7fffffff
+audio_primary_default_la_CFLAGS += -DULONG_MAX=\(__LONG_MAX__*2UL+1UL\)
+audio_primary_default_la_CFLAGS += -DPATH_MAX=4096
 audio_primary_default_la_CFLAGS += -D__unused=__attribute__\(\(__unused__\)\)
 audio_primary_default_la_CFLAGS += -DLINUX_ENABLED $(TARGET_CFLAGS) -DAUDIO_EXTN_FORMATS_ENABLED
-audio_primary_default_la_CFLAGS += -DNDEBUG
+audio_primary_default_la_CFLAGS += -DNDEBUG -D_GNU_SOURCE
 audio_primary_default_la_LDFLAGS = -module -shared -avoid-version
 audio_primary_default_la_CPPFLAGS = $(AM_CFLAGS) $(GLIB_CFLAGS)
 audio_primary_default_la_CPPFLAGS += -DLINUX_ENABLED

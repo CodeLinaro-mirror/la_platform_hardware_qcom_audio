@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2019-2020, The Linux Foundation. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -160,48 +160,136 @@ void AHalConfigHelper::initConfigHelper(bool isVendorEnhancedFwk)
         };
     } else {
         defaultConfigs = {
+#if SND_MONITOR_ENABLED
             true,        /* SND_MONITOR */
+#else
+            false,        /* SND_MONITOR */
+#endif
+#if COMPRESS_CAPTURE_ENABLED
+            true,       /* COMPRESS_CAPTURE */
+#else
             false,       /* COMPRESS_CAPTURE */
+#endif
+#if SOURCE_TRACKING_ENABLED
+            true,       /* SOURCE_TRACK */
+#else
             false,       /* SOURCE_TRACK */
+#endif
+#if SSREC_ENABLED
+            true,       /* SSREC */
+#else
             false,       /* SSREC */
+#endif
+#if AUDIOSPHERE_ENABLED
+            true,       /* AUDIOSPHERE */
+#else
             false,       /* AUDIOSPHERE */
+#endif
+#if AFE_PROXY_ENABLED
+            true,       /* AFE_PROXY */
+#else
             false,       /* AFE_PROXY */
+#endif
+#if USE_DEEP_AS_PRIMARY_OUTPUT_ENABLED
+            true,       /* USE_DEEP_AS_PRIMARY_OUTPUT */
+#else
             false,       /* USE_DEEP_AS_PRIMARY_OUTPUT */
+#endif
+#if HDMI_EDID_ENABLED
+            true,       /* HDMI_EDID */
+#else
             false,       /* HDMI_EDID */
+#endif
+#if KEEP_ALIVE_ENABLED
+            true,       /* KEEP_ALIVE */
+#else
             false,       /* KEEP_ALIVE */
+#endif
+#if HIFI_AUDIO_ENABLED
+            true,       /* HIFI_AUDIO */
+#else
             false,       /* HIFI_AUDIO */
+#endif
+#if RECEIVER_AIDED_STEREO_ENABLED
+            true,       /* RECEIVER_AIDED_STEREO */
+#else
             false,       /* RECEIVER_AIDED_STEREO */
+#endif
+#if KPI_OPTIMIZE_ENABLED
+            true,       /* KPI_OPTIMIZE */
+#else
             false,       /* KPI_OPTIMIZE */
+#endif
+#if DISPLAY_PORT_ENABLED
+            true,       /* DISPLAY_PORT */
+#else
             false,       /* DISPLAY_PORT */
+#endif
+#if FLUENCE_ENABLED
+            true,       /* FLUENCE */
+#else
             false,       /* FLUENCE */
+#endif
+#if CUSTOM_STEREO_ENABLED
+            true,       /* CUSTOM_STEREO */
+#else
             false,       /* CUSTOM_STEREO */
+#endif
+#if ANC_HEADSET_ENABLED
+            true,       /* ANC_HEADSET */
+#else
             false,       /* ANC_HEADSET */
-            true,        /* SPKR_PROT */
-            false,       /* FM_POWER_OPT */
-            true,        /* EXTERNAL_QDSP */
-            true,        /* EXTERNAL_SPEAKER */
-            false,       /* EXTERNAL_SPEAKER_TFA */
-            true,        /* HWDEP_CAL */
+#endif
+#if DSM_FEEDBACK_ENABLED
+            true,       /* DSM_FEEDBACK */
+#else
             false,       /* DSM_FEEDBACK */
+#endif
+#if USB_OFFLOAD_ENABLED
             true,        /* USB_OFFLOAD */
+#else
+            false,        /* USB_OFFLOAD */
+#endif
+#if USB_OFFLOAD_BURST_MODE_ENABLED
+            true,       /* USB_OFFLOAD_BURST_MODE */
+#else
             false,       /* USB_OFFLOAD_BURST_MODE */
+#endif
+#if USB_OFFLOAD_SIDETONE_VOLM_ENABLED
+            true,       /* USB_OFFLOAD_SIDETONE_VOLM */
+#else
             false,       /* USB_OFFLOAD_SIDETONE_VOLM */
+#endif
+#if A2DP_OFFLOAD_ENABLED
             true,        /* A2DP_OFFLOAD */
-            true,        /* HFP */
+#else
+            false,        /* A2DP_OFFLOAD */
+#endif
+#if VBAT_MONITOR_ENABLED
+            true,       /* VBAT */
+#else
             false,       /* VBAT */
-            false,       /* WSA*/
-            false,       /* EXT_HW_PLUGIN */
-            false,       /* RECORD_PLAY_CONCURRENCY */
-            false,       /* HDMI_PASSTHROUGH */
-            true,        /* CONCURRENT_CAPTURE */
-            false,       /* COMPRESS_IN */
-            false,       /* BATTERY_LISTENER */
-            true,        /* MAXX_AUDIO */
+#endif
+#if COMPRESS_METADATA_ENABLED
+            true,       /* COMPRESS_METADATA_NEEDED */
+#else
             false,       /* COMPRESS_METADATA_NEEDED */
-            true,        /* INCALL_MUSIC */
+#endif
+#ifdef COMPRESS_VOIP_ENABLED
+            true,       /* COMPRESS_VOIP */
+#else
             false,       /* COMPRESS_VOIP */
+#endif
+#ifdef DYNAMIC_ECNS_ENABLED
+            true,       /* DYNAMIC_ECNS */
+#else
             false,       /* DYNAMIC_ECNS */
-            true,        /* AUDIO_ZOOM */
+#endif
+#ifdef SPKR_PROT_ENABLED
+            true,        /* SPKR_PROT */
+#else
+            false,        /* SPKR_PROT */
+#endif
         };
     }
 #endif

@@ -60,11 +60,19 @@
 #include "audio_hw.h"
 #include "platform_api.h"
 #include <platform.h>
-#include <system/thread_defs.h>
 #include "audio_extn.h"
+#include <cutils/log.h>
+#include <cutils/sched_policy.h>
+#include <system/thread_defs.h>
+#include <system/audio.h>
 #include <sound/compress_params.h>
 #include <sound/compress_offload.h>
-#include <system/audio.h>
+#include <linux/msm_audio.h>
+#include "audio_utils/primitives.h"
+#include "audio_hw.h"
+#include "audio_extn.h"
+#include "platform_api.h"
+#include "platform.h"
 
 typedef enum patch_state {
     PATCH_INACTIVE,// Patch is not created yet
@@ -82,6 +90,7 @@ typedef struct loopback_patch {
     struct compress *sink_stream;                    /* Sink stream */
     struct stream_inout patch_stream;                /* InOut type stream */
     patch_state_t patch_state;                       /* Patch operation state */
+    render_mode_t render_mode;
 } loopback_patch_t;
 
 typedef struct patch_db_struct {
@@ -210,6 +219,7 @@ audio_patch_handle_t get_loopback_patch_type(loopback_patch_t*  loopback_patch)
                            case AUDIO_FORMAT_IEC61937:
                            case AUDIO_FORMAT_AC3:
                            case AUDIO_FORMAT_E_AC3:
+                           case AUDIO_FORMAT_DOLBY_TRUEHD:
                            case AUDIO_FORMAT_AAC_LATM_LC:
                            case AUDIO_FORMAT_AAC_LATM_HE_V1:
                            case AUDIO_FORMAT_AAC_LATM_HE_V2:
@@ -319,6 +329,7 @@ int32_t release_loopback_session(loopback_patch_t *active_loopback_patch)
             adev->offload_effects_stop_output(active_loopback_patch->patch_handle_id, pcm_dev_asm_rx_id);
 
     active_loopback_patch->patch_state = PATCH_INACTIVE;
+    active_loopback_patch->render_mode = RENDER_MODE_AUDIO_NO_TIMESTAMP;
 
     /* Get and set stream specific mixer controls */
     disable_audio_route(adev, uc_info_rx);
@@ -329,10 +340,14 @@ int32_t release_loopback_session(loopback_patch_t *active_loopback_patch)
     list_remove(&uc_info_rx->list);
     free(uc_info_rx);
 
-    if (inout->ip_hdlr_handle) {
-        ret = audio_extn_ip_hdlr_intf_close(inout->ip_hdlr_handle, true, inout);
+    adev->active_input = get_next_active_input(adev);
+
+    if (adev->ip_hdlr_handle) {
+        ret = audio_extn_ip_hdlr_intf_close(adev->ip_hdlr_handle, true, inout);
         if (ret < 0)
             ALOGE("%s: audio_extn_ip_hdlr_intf_close failed %d",__func__, ret);
+
+        inout->ip_hdlr_enabled = false;
     }
 
     /* close adsp hdrl session before standby */
@@ -343,9 +358,9 @@ int32_t release_loopback_session(loopback_patch_t *active_loopback_patch)
         inout->adsp_hdlr_stream_handle = NULL;
     }
 
-    if (inout->ip_hdlr_handle) {
-        audio_extn_ip_hdlr_intf_deinit(inout->ip_hdlr_handle);
-        inout->ip_hdlr_handle = NULL;
+    if (adev->ip_hdlr_handle) {
+        audio_extn_ip_hdlr_intf_deinit(adev->ip_hdlr_handle);
+        adev->ip_hdlr_handle = NULL;
     }
 
     ALOGD("%s: Release loopback session exit: status(%d)", __func__, ret);
@@ -363,6 +378,43 @@ int loopback_stream_cb(stream_callback_event_t event, void *param, void *cookie)
     }
     return 0;
 }
+
+#ifdef SNDRV_COMPRESS_RENDER_MODE
+static void audio_loopback_set_render_mode(loopback_patch_t *active_loopback_patch)
+{
+    audio_output_flags_t output_flags;
+    uint32_t render_mode = 0;
+    int ret = -EINVAL;
+
+    ALOGD("%s: output flags 0x%x", __func__, output_flags);
+
+    output_flags = active_loopback_patch->patch_stream.output_flags;
+    if ((output_flags & AUDIO_OUTPUT_FLAG_TIMESTAMP) &&
+                    (output_flags & AUDIO_OUTPUT_FLAG_HW_AV_SYNC)){
+        render_mode = RENDER_MODE_AUDIO_STC_MASTER;
+    } else if (output_flags & AUDIO_OUTPUT_FLAG_TIMESTAMP) {
+        if (property_get_bool("persist.vendor.audio.ttp.render.mode", false))
+            render_mode = RENDER_MODE_AUDIO_TTP;
+        else
+            render_mode = RENDER_MODE_AUDIO_MASTER;
+    } else {
+        render_mode = RENDER_MODE_AUDIO_NO_TIMESTAMP;
+    }
+
+    active_loopback_patch->render_mode = render_mode;
+    ret = audio_extn_utils_compress_set_render_mode_v2(active_loopback_patch->source_stream,
+                                                       render_mode);
+    if (ret) {
+        ALOGE("%s: set render mode failed %d", __func__, ret);
+        active_loopback_patch->render_mode = RENDER_MODE_AUDIO_NO_TIMESTAMP;
+    }
+}
+#else
+static void audio_loopback_set_render_mode(loopback_patch_t *active_loopback_patch __unused)
+{
+    ALOGD("%s: configuring render mode not supported", __func__);
+}
+#endif
 
 #ifdef SNDRV_COMPRESS_RENDER_WINDOW
 static loopback_patch_t *get_active_loopback_patch(audio_patch_handle_t handle)
@@ -436,6 +488,27 @@ int audio_extn_hw_loopback_set_render_window(struct audio_hw_device *dev,
 }
 #endif
 
+int audio_extn_hw_loopback_set_callback(audio_patch_handle_t handle,
+        audio_extn_loopback_param_payload *payload)
+{
+    int ret = 0;
+    loopback_patch_t *active_loopback_patch = get_active_loopback_patch(handle);
+
+    if (active_loopback_patch == NULL) {
+        ALOGE("%s: Invalid patch handle", __func__);
+        return -EINVAL;
+    }
+
+    if (active_loopback_patch->patch_stream.adsp_hdlr_stream_handle) {
+        ret = audio_extn_adsp_hdlr_stream_set_callback(
+            active_loopback_patch->patch_stream.adsp_hdlr_stream_handle,
+            payload->stream_callback_params.cb,
+            payload->stream_callback_params.cookie);
+    }
+
+    return ret;
+}
+
 #if defined SNDRV_COMPRESS_LATENCY_MODE
 static void transcode_loopback_util_set_latency_mode(
                              loopback_patch_t *active_loopback_patch,
@@ -474,6 +547,7 @@ int create_loopback_session(loopback_patch_t *active_loopback_patch)
     struct stream_inout *inout =  &active_loopback_patch->patch_stream;
     struct adsp_hdlr_stream_cfg hdlr_stream_cfg;
     struct stream_in loopback_source_stream;
+    struct stream_out loopback_sink_stream;
     char prop_value[PROPERTY_VALUE_MAX] = {0};
 
     ALOGD("%s: Create loopback session begin", __func__);
@@ -499,9 +573,20 @@ int create_loopback_session(loopback_patch_t *active_loopback_patch)
     list_init(&uc_info_rx->device_list);
     assign_devices(&uc_info_rx->device_list,
                    &active_loopback_patch->patch_stream.out_config.device_list);
+    uc_info_rx->stream.out = &loopback_sink_stream;
+    uc_info_rx->devices = active_loopback_patch->patch_stream.out_config.devices;
     uc_info_rx->in_snd_device = SND_DEVICE_NONE;
     uc_info_rx->out_snd_device = SND_DEVICE_NONE;
 
+    loopback_sink_stream.devices = inout->out_config.devices;
+    loopback_sink_stream.channel_mask = inout->out_config.channel_mask;
+    loopback_sink_stream.bit_width = inout->out_config.bit_width;
+    loopback_sink_stream.sample_rate = inout->out_config.sample_rate;
+    loopback_sink_stream.format = inout->out_config.format;
+    loopback_sink_stream.hal_op_format = inout->out_config.format;
+
+    memcpy(&loopback_sink_stream.usecase, uc_info_rx,
+           sizeof(struct audio_usecase));
 
     uc_info_tx->id = USECASE_AUDIO_TRANSCODE_LOOPBACK_TX;
     uc_info_tx->type = audio_loopback_mod->uc_type_tx;
@@ -509,11 +594,10 @@ int create_loopback_session(loopback_patch_t *active_loopback_patch)
     list_init(&uc_info_tx->device_list);
     assign_devices(&uc_info_tx->device_list,
                    &active_loopback_patch->patch_stream.in_config.device_list);
+    uc_info_tx->stream.in = &loopback_source_stream;
+    uc_info_tx->devices = active_loopback_patch->patch_stream.in_config.devices;
     uc_info_tx->in_snd_device = SND_DEVICE_NONE;
     uc_info_tx->out_snd_device = SND_DEVICE_NONE;
-
-    list_add_tail(&adev->usecase_list, &uc_info_rx->list);
-    list_add_tail(&adev->usecase_list, &uc_info_tx->list);
 
     loopback_source_stream.source = AUDIO_SOURCE_UNPROCESSED;
     loopback_source_stream.device = inout->in_config.devices;
@@ -522,8 +606,13 @@ int create_loopback_session(loopback_patch_t *active_loopback_patch)
     loopback_source_stream.sample_rate = inout->in_config.sample_rate;
     loopback_source_stream.format = inout->in_config.format;
 
-    memcpy(&loopback_source_stream.usecase, uc_info_rx,
+    memcpy(&loopback_source_stream.usecase, uc_info_tx,
            sizeof(struct audio_usecase));
+    adev->active_input = &loopback_source_stream;
+
+    list_add_tail(&adev->usecase_list, &uc_info_rx->list);
+    list_add_tail(&adev->usecase_list, &uc_info_tx->list);
+
     select_devices(adev, uc_info_rx->id);
     select_devices(adev, uc_info_tx->id);
 
@@ -554,8 +643,10 @@ int create_loopback_session(loopback_patch_t *active_loopback_patch)
         inout->adsp_hdlr_stream_handle = NULL;
         goto exit;
     }
-    if (audio_extn_ip_hdlr_intf_supported(source_patch_config->format,false, true) ||
-        audio_extn_ip_hdlr_intf_supported_for_copp(adev->platform)) {
+    if (audio_extn_ip_hdlr_intf_supported(source_patch_config->format,false, true,
+                            inout, USECASE_AUDIO_TRANSCODE_LOOPBACK_RX) ||
+        audio_extn_ip_hdlr_intf_supported_for_copp(adev->platform, inout,
+                            USECASE_AUDIO_TRANSCODE_LOOPBACK_RX)) {
         ret = audio_extn_ip_hdlr_intf_init(&inout->ip_hdlr_handle, NULL, NULL, adev,
                                            USECASE_AUDIO_TRANSCODE_LOOPBACK_RX);
         if (ret < 0) {
@@ -568,13 +659,14 @@ int create_loopback_session(loopback_patch_t *active_loopback_patch)
     if (source_patch_config->format == AUDIO_FORMAT_IEC61937) {
         // This is needed to set a known format to DSP and handle
         // any format change via ADSP event
-        codec.id = AUDIO_FORMAT_AC3;
+        codec.id = SND_AUDIOCODEC_AC3;
     }
 
     /* Set config for compress stream open in capture path */
-    codec.id = get_snd_codec_id(source_patch_config->format);
-    codec.ch_in = audio_channel_count_from_out_mask(source_patch_config->
-                                                    channel_mask);
+     codec.id = get_snd_codec_id(source_patch_config->format);
+     codec.ch_in = audio_channel_count_from_out_mask(source_patch_config->
+                                                     channel_mask);
+
     codec.ch_out = 2; // Irrelevant for loopback case in this direction
     codec.sample_rate = source_patch_config->sample_rate;
     codec.format = hal_format_to_alsa(source_patch_config->format);
@@ -582,13 +674,16 @@ int create_loopback_session(loopback_patch_t *active_loopback_patch)
     source_config.fragments = 1;
     source_config.codec = &codec;
 
+    ALOGD("%s: capture params rate %d, ch_in %d, format %d, codec id %d",
+        __func__, codec.sample_rate, codec.ch_in, source_patch_config->format, codec.id);
+
     /* Open compress stream in capture path */
     active_loopback_patch->source_stream = compress_open(adev->snd_card,
                         pcm_dev_asm_tx_id, COMPRESS_OUT, &source_config);
     if (active_loopback_patch->source_stream && !is_compress_ready(
         active_loopback_patch->source_stream)) {
-        ALOGE("%s: %s", __func__, compress_get_error(active_loopback_patch->
-        source_stream));
+        ALOGE("%s: capture %s", __func__,
+            compress_get_error(active_loopback_patch->source_stream));
         active_loopback_patch->source_stream = NULL;
         ret = -EIO;
         goto exit;
@@ -617,13 +712,16 @@ int create_loopback_session(loopback_patch_t *active_loopback_patch)
                                                  latency_mode);
     }
 
+    ALOGD("%s: playback params rate %d, ch_out %d, format %d, codec id %d",
+        __func__, codec.sample_rate, codec.ch_out, sink_patch_config->format, codec.id);
+
     /* Open compress stream in playback path */
     active_loopback_patch->sink_stream = compress_open(adev->snd_card,
                          pcm_dev_asm_rx_id, COMPRESS_IN, &sink_config);
     if (active_loopback_patch->sink_stream && !is_compress_ready(
         active_loopback_patch->sink_stream)) {
-        ALOGE("%s: %s", __func__, compress_get_error(active_loopback_patch->
-                sink_stream));
+        ALOGE("%s: playback %s", __func__,
+            compress_get_error(active_loopback_patch->sink_stream));
         active_loopback_patch->sink_stream = NULL;
         ret = -EIO;
         goto exit;
@@ -634,6 +732,7 @@ int create_loopback_session(loopback_patch_t *active_loopback_patch)
     }
 
     active_loopback_patch->patch_state = PATCH_CREATED;
+    audio_loopback_set_render_mode(active_loopback_patch);
 
     if (compress_start(active_loopback_patch->source_stream) < 0) {
         ALOGE("%s: Failure to start loopback stream in capture path",
@@ -650,13 +749,14 @@ int create_loopback_session(loopback_patch_t *active_loopback_patch)
         ret = -EINVAL;
         goto exit;
     }
-    if (inout->ip_hdlr_handle) {
-        ret = audio_extn_ip_hdlr_intf_open(inout->ip_hdlr_handle, true, inout,
+    if (adev->ip_hdlr_handle) {
+        ret = audio_extn_ip_hdlr_intf_open(adev->ip_hdlr_handle, true, inout,
                                            USECASE_AUDIO_TRANSCODE_LOOPBACK_RX);
         if (ret < 0) {
             ALOGE("%s: audio_extn_ip_hdlr_intf_open failed %d",__func__, ret);
             goto exit;
         }
+        inout->ip_hdlr_enabled = true;
     }
 
     /* Move patch state to running, now that session is set up */
@@ -685,30 +785,35 @@ void update_patch_stream_config(struct stream_config *stream_cfg ,
     reassign_device_list(&stream_cfg->device_list, port_cfg->ext.device.type, "");
     stream_cfg->bit_width = format_to_bitwidth(port_cfg->format);
 }
-/* API to create audio patch */
-int audio_extn_hw_loopback_create_audio_patch(struct audio_hw_device *dev,
+
+bool is_fmt_update_event_supported(int format)
+{
+    if ((format == AUDIO_FORMAT_AC3) ||
+        (format == AUDIO_FORMAT_E_AC3) ||
+        (format == AUDIO_FORMAT_DOLBY_TRUEHD))
+        return true;
+
+    return false;
+}
+
+static loopback_patch_t *create_active_loopback_patch(struct audio_hw_device *dev,
                                      unsigned int num_sources,
                                      const struct audio_port_config *sources,
                                      unsigned int num_sinks,
-                                     const struct audio_port_config *sinks,
-                                     audio_patch_handle_t *handle)
+                                     const struct audio_port_config *sinks)
 {
-    int status = 0;
     audio_patch_handle_t loopback_patch_id = 0x0;
     loopback_patch_t loopback_patch, *active_loopback_patch = NULL;
 
-    ALOGV("%s : Create audio patch begin", __func__);
 
     if ((audio_loopback_mod == NULL) || (dev == NULL)) {
         ALOGE("%s, Loopback module not initialized orInvalid device", __func__);
-        status = -EINVAL;
-        return status;
+        goto exit_create_patch;
     }
 
     pthread_mutex_lock(&audio_loopback_mod->lock);
     if (audio_loopback_mod->patch_db.num_patches >= MAX_NUM_PATCHES ) {
         ALOGE("%s, Exhausted maximum possible patches per device", __func__);
-        status = -EINVAL;
         goto exit_create_patch;
     }
 
@@ -717,7 +822,6 @@ int audio_extn_hw_loopback_create_audio_patch(struct audio_hw_device *dev,
         num_sinks > MAX_SINK_PORTS_PER_PATCH) {
         ALOGE("%s, Unsupported patch configuration, sources %d sinks %d ",
                 __func__, num_sources, num_sources);
-        status = -EINVAL;
         goto exit_create_patch;
     }
 
@@ -729,19 +833,21 @@ int audio_extn_hw_loopback_create_audio_patch(struct audio_hw_device *dev,
 
     active_loopback_patch->patch_handle_id = PATCH_HANDLE_INVALID;
     active_loopback_patch->patch_state = PATCH_INACTIVE;
-    active_loopback_patch->patch_stream.ip_hdlr_handle = NULL;
+    active_loopback_patch->render_mode = RENDER_MODE_AUDIO_NO_TIMESTAMP;
     active_loopback_patch->patch_stream.adsp_hdlr_stream_handle = NULL;
-    memcpy(&active_loopback_patch->loopback_source, &sources[0], sizeof(struct
-    audio_port_config));
-    memcpy(&active_loopback_patch->loopback_sink, &sinks[0], sizeof(struct
-    audio_port_config));
+    memcpy(&active_loopback_patch->loopback_source, &sources[0],
+        sizeof(struct audio_port_config));
+    memcpy(&active_loopback_patch->loopback_sink, &sinks[0],
+        sizeof(struct audio_port_config));
+    /* For loopback, the profile is always record_unprocessed */
+    memcpy(active_loopback_patch->patch_stream.profile,
+        "record_unprocessed", sizeof("record_unprocessed"));
 
     /* Get loopback patch type based on source and sink ports configuration */
     loopback_patch_id = get_loopback_patch_type(active_loopback_patch);
 
     if (loopback_patch_id == PATCH_HANDLE_INVALID) {
         ALOGE("%s, Unsupported patch type", __func__);
-        status = -EINVAL;
         goto exit_create_patch;
     }
 
@@ -752,27 +858,130 @@ int audio_extn_hw_loopback_create_audio_patch(struct audio_hw_device *dev,
     // Lock patch database, create patch handle and add patch handle to the list
 
     active_loopback_patch->patch_handle_id = loopback_patch_id;
+    ALOGV("%s : Create active audio patch end", __func__);
+    pthread_mutex_unlock(&audio_loopback_mod->lock);
 
+    return active_loopback_patch;
+
+exit_create_patch :
+    active_loopback_patch = NULL;
+    pthread_mutex_unlock(&audio_loopback_mod->lock);
+    return active_loopback_patch;
+}
+
+/* API to create audio patch */
+static int create_active_loopback_session(loopback_patch_t*  active_loopback_patch,
+                                   audio_patch_handle_t *handle)
+{
+    int status = 0;
+    struct audio_adsp_event reg_evt_msg = { 0 };
+    int event_payload = 1;
+
+    pthread_mutex_lock(&audio_loopback_mod->lock);
     /* Is usecase transcode loopback? If yes, invoke loopback driver */
     if ((active_loopback_patch->loopback_source.type == AUDIO_PORT_TYPE_DEVICE)
        &&
        (active_loopback_patch->loopback_sink.type == AUDIO_PORT_TYPE_DEVICE)) {
         status = create_loopback_session(active_loopback_patch);
         if (status != 0)
-            goto exit_create_patch;
+            return status;
     }
 
-    // Create callback thread to listen to events from HW data path
+    if (is_fmt_update_event_supported(active_loopback_patch->loopback_source.format)) {
+        ALOGD("%s : Compressed format 0x%x, registering for update events",
+            __func__, active_loopback_patch->loopback_source.format);
+
+        /* Register for fmt update events from HW data path */
+        reg_evt_msg.event_type = AUDIO_STREAM_IEC_61937_FMT_UPDATE_EVENT;
+        reg_evt_msg.payload_length = sizeof(event_payload);
+        reg_evt_msg.payload = &event_payload;
+
+        if (active_loopback_patch->patch_stream.adsp_hdlr_stream_handle) {
+            audio_extn_adsp_hdlr_stream_set_param(
+                active_loopback_patch->patch_stream.adsp_hdlr_stream_handle,
+                ADSP_HDLR_STREAM_CMD_REGISTER_EVENT,
+                (void *)&reg_evt_msg);
+        }
+    }
 
     /* Fill unique handle ID generated based on active loopback patch */
-    *handle = audio_loopback_mod->patch_db.loopback_patch[audio_loopback_mod->
-                                        patch_db.num_patches].patch_handle_id;
+    *handle = active_loopback_patch->patch_handle_id;
     audio_loopback_mod->patch_db.num_patches++;
 
-exit_create_patch :
-    ALOGV("%s : Create audio patch end, status(%d)", __func__, status);
+    ALOGV("%s : exit", __func__);
     pthread_mutex_unlock(&audio_loopback_mod->lock);
     return status;
+}
+
+static void update_active_loopback_patch(loopback_patch_t*  active_loopback_patch,
+                                 audio_extn_source_port_config_t *source_port_config,
+                                 audio_extn_sink_port_config_t *sink_port_config)
+{
+
+    pthread_mutex_lock(&audio_loopback_mod->lock);
+
+    ALOGV("%s : input flags 0x%x, output flags 0x%x", __func__,
+          source_port_config->flags, sink_port_config->flags);
+    active_loopback_patch->patch_stream.input_flags = source_port_config->flags;
+    active_loopback_patch->patch_stream.output_flags = sink_port_config->flags;
+
+    pthread_mutex_unlock(&audio_loopback_mod->lock);
+}
+
+/* API to create audio patch */
+int audio_extn_hw_loopback_create_audio_patch(struct audio_hw_device *dev,
+                                     unsigned int num_sources,
+                                     const struct audio_port_config *sources,
+                                     unsigned int num_sinks,
+                                     const struct audio_port_config *sinks,
+                                     audio_patch_handle_t *handle)
+{
+    loopback_patch_t *active_loopback_patch = NULL;
+    int ret = 0;
+
+    active_loopback_patch = create_active_loopback_patch(dev, num_sources, sources, num_sinks, sinks);
+    if (active_loopback_patch == NULL) {
+        ALOGE("%s: Invalid patch", __func__);
+        ret = -EINVAL;
+        goto exit;
+    }
+    ret = create_active_loopback_session(active_loopback_patch, handle);
+    if (ret)
+        ALOGE("%s: unable to create loopback session", __func__);
+
+exit:
+    return ret;
+}
+
+/* API to create audio patch */
+int audio_extn_hw_loopback_create_audio_patch_v2(struct audio_hw_device *dev,
+                                     audio_extn_source_port_config_t *source_port_config,
+                                     audio_extn_sink_port_config_t *sink_port_config,
+                                     audio_patch_handle_t *handle)
+{
+    loopback_patch_t *active_loopback_patch = NULL;
+    int ret = 0;
+
+    if (source_port_config == NULL || sink_port_config == NULL)
+        return -EINVAL;
+
+    active_loopback_patch = create_active_loopback_patch(dev,
+                                         (unsigned int)source_port_config->num_sources,
+                                         source_port_config-> source_config,
+                                         (unsigned int)sink_port_config->num_sinks,
+                                         sink_port_config->sink_config);
+    if (active_loopback_patch == NULL) {
+        ALOGE("%s: Invalid patch", __func__);
+        ret = -EINVAL;
+        goto exit;
+    }
+    update_active_loopback_patch(active_loopback_patch, source_port_config, sink_port_config);
+    ret = create_active_loopback_session(active_loopback_patch, handle);
+    if (ret)
+        ALOGE("%s: unable to create loopback session", __func__);
+
+exit:
+    return ret;
 }
 
 /* API to release audio patch */
@@ -937,8 +1146,7 @@ int audio_extn_hw_loopback_set_audio_port_config(struct audio_hw_device *dev,
         port_out->sample_rate = config->sample_rate;
 
     /* Convert gain in millibels to ratio and convert to Q13 */
-    loopback_gain = pow(10, (float)((float)port_out->gain.values[0]/2000)) *
-                       (1 << 13);
+    loopback_gain = ((float)port_out->gain.values[0]/2000) * (1 << 13);
     ALOGV("%s, Port config gain_in_mbells: %d, gain_in_q13 : %d", __func__,
           port_out->gain.values[0], loopback_gain);
     if((port_out->config_mask & AUDIO_PORT_CONFIG_GAIN) &&

@@ -48,6 +48,8 @@ __BEGIN_DECLS
 /* Minimal QTI audio HAL version supported by the audio framework */
 #define QAHW_MODULE_API_VERSION_MIN QAHW_MODULE_API_VERSION_0_0
 
+#define QAHW_AUDIO_ADSP_PP_ENABLED
+
 /**
  * List of known audio HAL modules. This is the base name of the audio HAL
  * library composed of the "audio." prefix, one of the base names below and

@@ -55,7 +55,8 @@
 
 
 typedef uint64_t (*qahwi_out_write_v2_t)(audio_stream_out_t *out, const void* buffer,
-                                       size_t bytes, int64_t* timestamp);
+                                       size_t bytes, int64_t* timestamp,
+                                       qahw_meta_data_flags_t flags);
 
 typedef int (*qahwi_get_param_data_t) (const audio_hw_device_t *,
                               qahw_param_id, qahw_param_payload *);
@@ -89,6 +90,8 @@ typedef int (*qahwi_in_set_param_data_t)(struct audio_stream_in *in,
                                       qahw_param_id param_id,
                                       qahw_param_payload *payload);
 
+typedef uint64_t (*qahwi_out_get_latency_t)(audio_stream_out_t *out);
+
 typedef struct {
     audio_hw_device_t *audio_device;
     char module_name[MAX_MODULE_NAME_LENGTH];
@@ -118,6 +121,7 @@ typedef struct {
     qahwi_out_set_param_data_t qahwi_out_get_param_data;
     qahwi_out_get_param_data_t qahwi_out_set_param_data;
     qahwi_out_write_v2_t qahwi_out_write_v2;
+    qahwi_out_get_latency_t qahwi_out_get_latency;
 } qahw_stream_out_t;
 
 typedef struct {
@@ -512,7 +516,9 @@ uint32_t qahw_out_get_latency_l(const qahw_stream_handle_t *out_handle)
 
     pthread_mutex_lock(&qahw_stream_out->lock);
     out = qahw_stream_out->stream;
-    if (out->get_latency) {
+    if (qahw_stream_out->qahwi_out_get_latency) {
+        latency = qahw_stream_out->qahwi_out_get_latency(out);
+    } else if (out->get_latency) {
         latency = out->get_latency(out);
     } else {
         ALOGW("%s not supported", __func__);
@@ -570,7 +576,8 @@ ssize_t qahw_out_write_l(qahw_stream_handle_t *out_handle,
     out = qahw_stream_out->stream;
     if (qahw_stream_out->qahwi_out_write_v2) {
         rc = qahw_stream_out->qahwi_out_write_v2(out, out_buf->buffer,
-                                         out_buf->bytes, out_buf->timestamp);
+                                         out_buf->bytes, out_buf->timestamp,
+                                         out_buf->flags);
         out_buf->offset = 0;
     } else if (out->write) {
         rc = out->write(out, out_buf->buffer, out_buf->bytes);
@@ -1770,6 +1777,13 @@ int qahw_open_output_stream_l(qahw_module_handle_t *hw_module,
         if ((error = dlerror()) != NULL) {
             ALOGI("%s: dlsym error %s for qahwi_out_write_v2", __func__, error);
             qahw_stream_out->qahwi_out_write_v2 = NULL;
+        }
+
+        dlerror();
+        qahw_stream_out->qahwi_out_get_latency = (qahwi_out_get_latency_t)dlsym(qahw_module->module->dso, "qahwi_out_get_latency");
+        if ((error = dlerror()) != NULL) {
+            ALOGI("%s: dlsym error %s for qahwi_out_get_latency", __func__, error);
+            qahw_stream_out->qahwi_out_get_latency = NULL;
         }
     }
 

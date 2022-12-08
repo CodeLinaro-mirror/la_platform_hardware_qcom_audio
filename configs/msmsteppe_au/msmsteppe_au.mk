@@ -44,7 +44,6 @@ SOONG_CONFIG_tinycompressnamespace_ext_compress_format_enabled := true
 endif
 
 USE_XML_AUDIO_POLICY_CONF := 1
-AUDIO_FEATURE_ENABLED_DLKM := true
 BOARD_SUPPORTS_SOUND_TRIGGER := true
 BOARD_SUPPORTS_OPENSOURCE_STHAL := true
 AUDIO_FEATURE_ENABLED_SVA_CHANNEL_IDX := true
@@ -77,7 +76,10 @@ AUDIO_FEATURE_ENABLED_SOURCE_TRACKING := true
 AUDIO_FEATURE_ENABLED_GEF_SUPPORT := true
 BOARD_SUPPORTS_QAHW := false
 AUDIO_FEATURE_ENABLED_RAS := true
-AUDIO_FEATURE_ENABLED_SND_MONITOR := false
+ifeq ($(ENABLE_HYP),true)
+AUDIO_FEATURE_ENABLED_SND_MONITOR := true
+endif
+AUDIO_FEATURE_ENABLED_DLKM := true
 AUDIO_FEATURE_ENABLED_USB_BURST_MODE := false
 AUDIO_FEATURE_ENABLED_SVA_MULTI_STAGE := true
 AUDIO_FEATURE_ENABLED_BATTERY_LISTENER := false
@@ -119,6 +121,7 @@ endif
 ifeq ($(TARGET_BOARD_PLATFORM)$(TARGET_BOARD_SUFFIX), sm6150_au)
 AUDIO_FEATURE_ENABLED_AUDIO_PARSERS := true
 endif
+AUDIO_FEATURE_ENABLED_DUAL_HFP := true
 ##AUTOMOTIVE_AUDIO_FEATURE_FLAGS
 
 ifneq ($(strip $(TARGET_USES_RRO)), true)
@@ -300,6 +303,8 @@ vendor.audio.hw.aac.encoder=false
 
 #force offload using hardware decoders for FLAC, WMA & APE
 PRODUCT_PROPERTY_OVERRIDES += \
+vendor.audio.use.hw.alac.decoder=true
+PRODUCT_PROPERTY_OVERRIDES += \
 vendor.audio.use.hw.flac.decoder=true
 PRODUCT_PROPERTY_OVERRIDES += \
 vendor.audio.use.hw.wma.decoder=true
@@ -460,6 +465,8 @@ vendor.audio.feature.auto_hal.enable=true \
 vendor.audio.feature.synth.enable=true \
 vendor.audio.feature.powerpolicy.enable=true \
 vendor.audio.feature.concurrent_pcm_record.enable=true
+endif
+
 endif
 
 # for HIDL related packages

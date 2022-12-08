@@ -37,6 +37,10 @@ LOCAL_CPPFLAGS += --coverage -fprofile-arcs -ftest-coverage
 LOCAL_STATIC_LIBRARIES += libprofile_rt
 endif
 
+ifneq ($(filter sdm660 sdm845 msm8998 apq8098_latv sdm710 qcs605 sdmshrike msmnile kona $(MSMSTEPPE) $(TRINKET),$(TARGET_BOARD_PLATFORM)),)
+    LOCAL_CFLAGS += -DCAPTURE_DEVICE=7
+endif
+
 LOCAL_HEADER_LIBRARIES := libsystem_headers \
                           libhardware_headers
 LOCAL_SHARED_LIBRARIES := \

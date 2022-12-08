@@ -84,13 +84,13 @@ IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
         <!-- Primary Audio HAL -->
         <module name="primary" halVersion="2.0">
             <attachedDevices>
-                <item>Earpiece</item>
                 <item>Speaker</item>
-                <item>Telephony Tx</item>
+                <!--item>Telephony Tx</item-->
                 <item>Built-In Mic</item>
-                <item>Built-In Back Mic</item>
-                <item>FM Tuner</item>
-                <item>Telephony Rx</item>
+                <item>HDMI-in</item>
+                <!--item>Built-In Back Mic</item-->
+                <!--item>FM Tuner</item-->
+                <!--item>Telephony Rx</item-->
             </attachedDevices>
             <defaultOutputDevice>Speaker</defaultOutputDevice>
             <mixPorts>
@@ -248,6 +248,10 @@ IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
                         samplingRates="48000"
                         channelMasks="AUDIO_CHANNEL_INDEX_MASK_4"/>
                 </mixPort>
+                <mixPort name="HDMI input" role="sink">
+                    <profile name="" format="AUDIO_FORMAT_PCM_16_BIT" samplingRates="32000,44100,48000" channelMasks="AUDIO_CHANNEL_IN_STEREO"/>
+                </mixPort>
+
             </mixPorts>
 
             <devicePorts>
@@ -357,6 +361,9 @@ IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
                 </devicePort>
                 <devicePort tagName="USB Headset In" type="AUDIO_DEVICE_IN_USB_HEADSET" role="source">
                 </devicePort>
+                <devicePort tagName="HDMI-in" type="AUDIO_DEVICE_IN_HDMI" role="source">
+                   <profile name="" format="AUDIO_FORMAT_PCM_16_BIT" samplingRates="48000" channelMasks="AUDIO_CHANNEL_IN_STEREO"/>
+                </devicePort>
 
             </devicePorts>
             <!-- route declaration, i.e. list all available sources for a given sink -->
@@ -412,6 +419,7 @@ IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
                        sources="Built-In Mic,Built-In Back Mic,BT SCO Headset Mic,USB Device In,USB Headset In,Wired Headset Mic"/>
                 <route type="mix" sink="quad mic"
                        sources="Built-In Mic,Built-In Back Mic,BT SCO Headset Mic,USB Device In,USB Headset In,Wired Headset Mic"/>
+                <route type="mix" sink="HDMI input" sources="HDMI-in"/>
             </routes>
 
         </module>

@@ -1,5 +1,5 @@
 /*
-* Copyright (c) 2019, The Linux Foundation. All rights reserved.
+* Copyright (c) 2019-2020 The Linux Foundation. All rights reserved.
 *
 * Redistribution and use in source and binary forms, with or without
 * modification, are permitted provided that the following conditions are
@@ -45,6 +45,7 @@
 #include <tinyalsa/asoundlib.h>
 #include "qahw_api.h"
 #include "qahw_defs.h"
+#include "qahw_playback_test.h"
 
 #define MAX_VOICE_TEST_DEVICES 2
 
@@ -58,11 +59,13 @@ typedef struct {
     qahw_module_handle_t *out_handle;
     bool in_call_rec;
     bool in_call_playback;
+    bool in_dl_call_playback;
     bool hpcm;
     int hpcm_tp;
     int tp_dir;
     char* rec_file;
     char* playback_file;
+    char* playback_dl_file;
     float vol;
     bool mute;
     int mute_dir;
@@ -71,6 +74,18 @@ typedef struct {
     int dtmf_freq_low;
     int dtmf_freq_high;
     int dtmf_gain;
+    uint32_t file_type;
+    pthread_cond_t write_cond;
+    pthread_mutex_t write_lock;
+    pthread_cond_t drain_cond;
+    pthread_mutex_t drain_lock;
+    pthread_cond_t write_cond_dl;
+    pthread_mutex_t write_lock_dl;
+    pthread_cond_t drain_cond_dl;
+    pthread_mutex_t drain_lock_dl;
+    bool drain_received;
+    bool drain_received_dl;
+    qahw_audio_stream_type stream_type;
 }voice_stream_config;
 
 #endif /* QAHW_VOICE_TEST_H */

@@ -863,6 +863,8 @@ static void set_boost_and_limiter(struct audio_device *adev,
     if (sp_prop_version < SP_V3 || afe_api_version < AFE_API_VERSION_SUPPORT_SPV3)
         handle.sp_version = SP_V2;
 
+    if(sp_prop_version == SP_V4)
+        handle.sp_version = SP_V4;
 }
 
 static int spkr_calibrate(int t0_spk_1, int t0_spk_2)
@@ -1959,6 +1961,7 @@ static void* spkr_v_vali_thread()
     if (!handle.v_vali_vali_time)
         handle.v_vali_vali_time = SPKR_V_VALI_DEFAULT_VALI_TIME;/*set default if not setparam */
     set_spkr_prot_v_vali_cfg(handle.v_vali_wait_time, handle.v_vali_vali_time);
+
     pthread_mutex_lock(&adev->lock);
     ret = spkr_calibrate(SPKR_V_VALI_TEMP_MASK,
                          SPKR_V_VALI_TEMP_MASK);/*use 0xfffe as temp to initiate v_vali*/
@@ -2249,6 +2252,9 @@ void spkr_prot_init(void *adev, spkr_prot_init_config_t spkr_prot_init_config_va
         ALOGE("%s: Invalid params", __func__);
         return;
     }
+
+    property_get("persist.vendor.audio.speaker.prot.enable", value, "");
+    handle.spkr_cal_dynamic = property_get_bool("persist.vendor.audio.spkr.cal.dynamic", false);
     handle.spkr_prot_enable = false;
     handle.thread_exit = false;
     handle.cal_thrd_created = false;

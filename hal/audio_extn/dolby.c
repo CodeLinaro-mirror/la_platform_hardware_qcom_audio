@@ -639,3 +639,354 @@ void audio_extn_ds2_set_parameters(struct audio_device *adev,
     }
 }
 #endif
+#ifdef DOLBY_MAT_THD_ENABLED
+#define INVALID_VALUE -1
+
+enum {
+    THD_PARAM_INDEX_CH_CONFIG = 0,
+    THD_PARAM_INDEX_PRESENTATION,
+    THD_PARAM_INDEX_LOUDNESS,
+    THD_PARAM_INDEX_DRC_MODE,
+    THD_PARAM_INDEX_DRC_CUT,
+    THD_PARAM_INDEX_DRC_BOOST,
+    THD_PARAM_INDEX_LFE,
+    THD_PARAM_INDEX_ARCHIVE,
+    THD_ENDP_NUM_PARAMS
+};
+
+#define AUDDEC_DTHD_PARAM_DRC_MODE_ENABLE      0x000109E8
+#define AUDDEC_DTHD_PARAM_DRC_CUT_VALUE        0x000109E9
+#define AUDDEC_DTHD_PARAM_DRC_BOOST_VALUE      0x000109EA
+#define AUDDEC_DTHD_PARAM_PRESENTATION_MODE    0x000109EB
+#define AUDDEC_DTHD_PARAM_LOUDNESS_MGMT_ENABLE 0x000109EC
+#define AUDDEC_DTHD_PARAM_CH_CONFIG            0x000109ED
+#define AUDDEC_DTHD_PARAM_LFE_MODE             0x000109EE
+#define AUDDEC_DTHD_PARAM_ARCHIVE_MODE         0x000109EF
+
+enum {
+    MAT_PARAM_INDEX_OP_MODE = 0,
+    MAT_PARAM_INDEX_IS_INPLACE,
+    MAT_PARAM_INDEX_LOUDNESS,
+    MAT_PARAM_INDEX_DRC_MODE,
+    MAT_PARAM_INDEX_DRC_CUT,
+    MAT_PARAM_INDEX_DRC_BOOST,
+    MAT_PARAM_INDEX_CH_CONFIG,
+    MAT_PARAM_INDEX_PRESENTATION,
+    MAT_ENDP_NUM_PARAMS
+};
+
+#define AUDDEC_MAT_PARAM_OPERATING_MODE         0x000109E1
+#define AUDDEC_MAT_PARAM_INPLACE_PCM_BUF_ENABLE 0x000109E2
+#define AUDDEC_MAT_PARAM_DRC_MODE_ENABLE        0x000109E3
+#define AUDDEC_MAT_PARAM_DRC_CUT_VALUE          0x000109E4
+#define AUDDEC_MAT_PARAM_DRC_BOOST_VALUE        0x000109E5
+#define AUDDEC_MAT_PARAM_LOUDNESS_MGMT_ENABLE   0x000109E6
+#define AUDDEC_DTHD_PARAM_PRESENTATION_MODE     0x000109EB
+#define AUDDEC_DTHD_PARAM_CH_CONFIG             0x000109ED
+
+static struct thd_endp_params {
+    int  param_id;
+    int  param_val;
+    bool is_param_valid;
+} thd_endp_params[THD_ENDP_NUM_PARAMS];
+
+static struct mat_endp_params {
+    int  param_id;
+    int  param_val;
+    bool is_param_valid;
+} mat_endp_params[MAT_ENDP_NUM_PARAMS];
+
+/* Initialize default values for mat_thd_endp_params and thd_endp_params*/
+void audio_extn_mat_thd_init()
+{
+    int i;
+
+    /* set the constant parameter ID's to the endp_param structure handle*/
+    thd_endp_params[THD_PARAM_INDEX_CH_CONFIG].param_id =
+                                        AUDDEC_DTHD_PARAM_CH_CONFIG;
+    thd_endp_params[THD_PARAM_INDEX_PRESENTATION].param_id =
+                                        AUDDEC_DTHD_PARAM_PRESENTATION_MODE;
+    thd_endp_params[THD_PARAM_INDEX_LOUDNESS].param_id =
+                                        AUDDEC_DTHD_PARAM_LOUDNESS_MGMT_ENABLE;
+    thd_endp_params[THD_PARAM_INDEX_DRC_MODE].param_id =
+                                        AUDDEC_DTHD_PARAM_DRC_MODE_ENABLE;
+    thd_endp_params[THD_PARAM_INDEX_DRC_CUT].param_id =
+                                        AUDDEC_DTHD_PARAM_DRC_CUT_VALUE;
+    thd_endp_params[THD_PARAM_INDEX_DRC_BOOST].param_id =
+                                        AUDDEC_DTHD_PARAM_DRC_BOOST_VALUE;
+    thd_endp_params[THD_PARAM_INDEX_LFE].param_id =
+                                        AUDDEC_DTHD_PARAM_LFE_MODE;
+    thd_endp_params[THD_PARAM_INDEX_ARCHIVE].param_id =
+                                        AUDDEC_DTHD_PARAM_ARCHIVE_MODE;
+
+    for(i = 0; i < THD_ENDP_NUM_PARAMS; i++) {
+        thd_endp_params[i].is_param_valid = false;
+        thd_endp_params[i].param_val = INVALID_VALUE;
+    }
+
+    /* set the constant parameter ID's to the endp_param structure handle*/
+    mat_endp_params[MAT_PARAM_INDEX_OP_MODE].param_id =
+                                        AUDDEC_MAT_PARAM_OPERATING_MODE;
+    mat_endp_params[MAT_PARAM_INDEX_IS_INPLACE].param_id =
+                                        AUDDEC_MAT_PARAM_INPLACE_PCM_BUF_ENABLE;
+    mat_endp_params[MAT_PARAM_INDEX_LOUDNESS].param_id =
+                                        AUDDEC_MAT_PARAM_LOUDNESS_MGMT_ENABLE;
+    mat_endp_params[MAT_PARAM_INDEX_DRC_MODE].param_id =
+                                        AUDDEC_MAT_PARAM_DRC_MODE_ENABLE;
+    mat_endp_params[MAT_PARAM_INDEX_DRC_CUT].param_id =
+                                        AUDDEC_MAT_PARAM_DRC_CUT_VALUE;
+    mat_endp_params[MAT_PARAM_INDEX_DRC_BOOST].param_id =
+                                        AUDDEC_MAT_PARAM_DRC_BOOST_VALUE;
+    mat_endp_params[MAT_PARAM_INDEX_CH_CONFIG].param_id =
+                                        AUDDEC_DTHD_PARAM_CH_CONFIG;
+    mat_endp_params[MAT_PARAM_INDEX_PRESENTATION].param_id =
+                                        AUDDEC_DTHD_PARAM_PRESENTATION_MODE;
+
+    /* Initialize values of end points */
+    for(i = 0; i < MAT_ENDP_NUM_PARAMS; i++) {
+        mat_endp_params[i].is_param_valid = false;
+        mat_endp_params[i].param_val = INVALID_VALUE;
+    }
+}
+
+static void send_mat_thd_endp_params_stream(struct stream_out *out,
+                                 int device __unused) {
+    int i;
+    /* Allocate for max parameter buffers, in this case it is THD*/
+    int thd_endp_params_data[2*THD_ENDP_NUM_PARAMS + 1];
+    int length = 0;
+
+    length += 1; /* offset 0 is for num of parameter. increase offset by 1 */
+
+    if (out->format == AUDIO_FORMAT_DOLBY_TRUEHD) {
+        for (i=0; i < THD_ENDP_NUM_PARAMS; i++) {
+
+            if (thd_endp_params[i].is_param_valid) {
+              thd_endp_params_data[length++] = thd_endp_params[i].param_id;
+              thd_endp_params_data[length++] = thd_endp_params[i].param_val;
+            }
+        }
+    } else if (out->format == AUDIO_FORMAT_MAT) {
+        for (i=0; i < MAT_ENDP_NUM_PARAMS; i++) {
+
+            if (mat_endp_params[i].is_param_valid) {
+                thd_endp_params_data[length++] = mat_endp_params[i].param_id;
+                thd_endp_params_data[length++] = mat_endp_params[i].param_val;
+            }
+        }
+    } else {
+        return;
+    }
+    thd_endp_params_data[0] = (length-1)/2;
+
+    if (length) {
+        char mixer_ctl_name[128];/* As per dolby.c file*/
+        struct audio_device *adev = out->dev;
+        struct mixer_ctl *ctl;
+        int pcm_device_id = platform_get_pcm_device_id(out->usecase,
+                                                       PCM_PLAYBACK);
+        snprintf(mixer_ctl_name, sizeof(mixer_ctl_name),
+                 "Audio Stream %d Dec Params", pcm_device_id);
+        ctl = mixer_get_ctl_by_name(adev->mixer, mixer_ctl_name);
+
+        if (!ctl) {
+            ALOGE("%s: Could not get ctl for mixer cmd - %s",
+                  __func__, mixer_ctl_name);
+            return;
+        }
+        mixer_ctl_set_array(ctl, thd_endp_params_data, length);
+    }
+
+    /* Make the parameters to invalid*/
+    if (out->format == AUDIO_FORMAT_DOLBY_TRUEHD) {
+        for (i=0; i < THD_ENDP_NUM_PARAMS; i++) {
+            thd_endp_params[i].param_val = INVALID_VALUE;
+            thd_endp_params[i].is_param_valid = false;
+        }
+    } else if (out->format == AUDIO_FORMAT_MAT) {
+        for (i=0; i < MAT_ENDP_NUM_PARAMS; i++) {
+            mat_endp_params[i].param_val = INVALID_VALUE;
+            mat_endp_params[i].is_param_valid = false;
+        }
+    }
+
+    return;
+}
+
+void audio_extn_dolby_send_mat_thd_endp_params(struct audio_device *adev) {
+
+    struct listnode *node;
+    struct audio_usecase *usecase;
+    list_for_each(node, &adev->usecase_list) {
+        usecase = node_to_item(node, struct audio_usecase, list);
+
+        if ((usecase->type == PCM_PLAYBACK) &&
+            (usecase->devices & AUDIO_DEVICE_OUT_ALL) &&
+            (usecase->stream.out->flags & AUDIO_OUTPUT_FLAG_COMPRESS_OFFLOAD)) {
+            /*
+             * Use wfd /hdmi sink channel cap for dolby params if device is wfd
+             * or hdmi. Otherwise use stereo configuration
+             */
+            send_mat_thd_endp_params_stream(usecase->stream.out, usecase->devices);
+        }
+    }
+}
+
+int audio_extn_set_dolby_thd_dec_params(struct dolby_thd_dec_param *payload) {
+
+    /*Update the values to the static structure here */
+    /*CH_CFG -m parameter*/
+    if (payload->dthd_params.ch_cfg != INVALID_VALUE) {
+        thd_endp_params[THD_PARAM_INDEX_CH_CONFIG].param_val =
+                                        payload->dthd_params.ch_cfg;
+        thd_endp_params[THD_PARAM_INDEX_CH_CONFIG].is_param_valid = true;
+    } else {
+        thd_endp_params[THD_PARAM_INDEX_CH_CONFIG].is_param_valid = false;
+    }
+
+    /*PRESENTATION_MODE -p parameter*/
+    if (payload->dthd_params.presentation_mode != INVALID_VALUE) {
+        thd_endp_params[THD_PARAM_INDEX_PRESENTATION].param_val =
+                                        payload->dthd_params.presentation_mode;
+        thd_endp_params[THD_PARAM_INDEX_PRESENTATION].is_param_valid = true;
+    } else {
+        thd_endp_params[THD_PARAM_INDEX_PRESENTATION].is_param_valid = false;
+    }
+
+    /*LOUDNESS_MGMT -t parameter*/
+    if (payload->dthd_params.loud_mgmt != INVALID_VALUE) {
+        thd_endp_params[THD_PARAM_INDEX_LOUDNESS].param_val =
+                                        payload->dthd_params.loud_mgmt;
+        thd_endp_params[THD_PARAM_INDEX_LOUDNESS].is_param_valid = true;
+    } else {
+        thd_endp_params[THD_PARAM_INDEX_LOUDNESS].is_param_valid = false;
+    }
+
+    /*DRC_MODE -k parameter*/
+    if (payload->dthd_params.drc_mode != INVALID_VALUE) {
+        thd_endp_params[THD_PARAM_INDEX_DRC_MODE].param_val =
+                                        payload->dthd_params.drc_mode;
+        thd_endp_params[THD_PARAM_INDEX_DRC_MODE].is_param_valid = true;
+    } else {
+        thd_endp_params[THD_PARAM_INDEX_DRC_MODE].is_param_valid = false;
+    }
+
+    /*DRC_CUT -x parameter*/
+    if (payload->dthd_params.drc_cut != INVALID_VALUE) {
+        thd_endp_params[THD_PARAM_INDEX_DRC_CUT].param_val =
+                                        payload->dthd_params.drc_cut;
+        thd_endp_params[THD_PARAM_INDEX_DRC_CUT].is_param_valid = true;
+    } else {
+        thd_endp_params[THD_PARAM_INDEX_DRC_CUT].is_param_valid = false;
+    }
+
+    /*DRC_BOOST -y parameter*/
+    if (payload->dthd_params.drc_boost != INVALID_VALUE) {
+        thd_endp_params[THD_PARAM_INDEX_DRC_BOOST].param_val =
+                                        payload->dthd_params.drc_boost;
+        thd_endp_params[THD_PARAM_INDEX_DRC_BOOST].is_param_valid = true;
+    } else {
+        thd_endp_params[THD_PARAM_INDEX_DRC_BOOST].is_param_valid = false;
+    }
+
+    /*LFE -l parameter*/
+    if (payload->dthd_params.lfe_mode != INVALID_VALUE) {
+        thd_endp_params[THD_PARAM_INDEX_LFE].param_val =
+                                        payload->dthd_params.lfe_mode;
+        thd_endp_params[THD_PARAM_INDEX_LFE].is_param_valid = true;
+    } else {
+        thd_endp_params[THD_PARAM_INDEX_LFE].is_param_valid = false;
+    }
+
+    /*ARCHIVE -a parameter*/
+    if (payload->dthd_params.archive_mode != INVALID_VALUE) {
+        thd_endp_params[THD_PARAM_INDEX_ARCHIVE].param_val =
+                                        payload->dthd_params.archive_mode;
+        thd_endp_params[THD_PARAM_INDEX_ARCHIVE].is_param_valid = true;
+    } else {
+        thd_endp_params[THD_PARAM_INDEX_ARCHIVE].is_param_valid = false;
+    }
+
+    return 0;
+}
+
+int audio_extn_set_dolby_mat_dec_params(struct dolby_mat_dec_param *payload) {
+
+    /*Update the values to the static structure here */
+    /*content_type -c parameter
+    0 --> THD
+    1 --> PCM*/
+    if (payload->dmat_params.content_type != INVALID_VALUE) {
+        mat_endp_params[MAT_PARAM_INDEX_OP_MODE].param_val =
+                                            payload->dmat_params.content_type;
+        mat_endp_params[MAT_PARAM_INDEX_OP_MODE].is_param_valid = true;
+    } else {
+        mat_endp_params[MAT_PARAM_INDEX_OP_MODE].is_param_valid = false;
+    }
+
+    /*Inplace buffer -ib parameter*/
+    if (payload->dmat_params.inplace_buf != INVALID_VALUE) {
+        mat_endp_params[MAT_PARAM_INDEX_IS_INPLACE].param_val =
+                                            payload->dmat_params.inplace_buf;
+        mat_endp_params[MAT_PARAM_INDEX_IS_INPLACE].is_param_valid = true;
+    } else {
+        mat_endp_params[MAT_PARAM_INDEX_IS_INPLACE].is_param_valid = false;
+    }
+
+    /*LOUDNESS_MGMT -t parameter*/
+    if (payload->dmat_params.loud_mgmt != INVALID_VALUE) {
+        mat_endp_params[MAT_PARAM_INDEX_LOUDNESS].param_val =
+                                            payload->dmat_params.loud_mgmt;
+        mat_endp_params[MAT_PARAM_INDEX_LOUDNESS].is_param_valid = true;
+    } else {
+        mat_endp_params[MAT_PARAM_INDEX_LOUDNESS].is_param_valid = false;
+    }
+
+    /*DRC_MODE -k parameter*/
+    if (payload->dmat_params.drc_mode != INVALID_VALUE) {
+        mat_endp_params[MAT_PARAM_INDEX_DRC_MODE].param_val =
+                                            payload->dmat_params.drc_mode;
+        mat_endp_params[MAT_PARAM_INDEX_DRC_MODE].is_param_valid = true;
+    } else {
+        mat_endp_params[MAT_PARAM_INDEX_DRC_MODE].is_param_valid = false;
+    }
+
+    /*DRC_CUT -x parameter*/
+    if (payload->dmat_params.drc_cut != INVALID_VALUE) {
+        mat_endp_params[MAT_PARAM_INDEX_DRC_CUT].param_val =
+                                            payload->dmat_params.drc_cut;
+        mat_endp_params[MAT_PARAM_INDEX_DRC_CUT].is_param_valid = true;
+    } else {
+        mat_endp_params[MAT_PARAM_INDEX_DRC_CUT].is_param_valid = false;
+    }
+
+    /*DRC_BOOST -y parameter*/
+    if (payload->dmat_params.drc_boost != INVALID_VALUE) {
+        mat_endp_params[MAT_PARAM_INDEX_DRC_BOOST].param_val =
+                                            payload->dmat_params.drc_boost;
+        mat_endp_params[MAT_PARAM_INDEX_DRC_BOOST].is_param_valid = true;
+    } else {
+        mat_endp_params[MAT_PARAM_INDEX_DRC_BOOST].is_param_valid = false;
+    }
+
+    /*CH_CFG -m parameter for MAT+MLP streams*/
+    if (payload->dmat_params.ch_cfg != INVALID_VALUE) {
+        mat_endp_params[MAT_PARAM_INDEX_CH_CONFIG].param_val =
+                                            payload->dmat_params.ch_cfg;
+        mat_endp_params[MAT_PARAM_INDEX_CH_CONFIG].is_param_valid = true;
+    } else {
+        mat_endp_params[MAT_PARAM_INDEX_CH_CONFIG].is_param_valid = false;
+    }
+
+    /*PRESENTATION_MODE -p parameter for MAT+MLP streams*/
+    if (payload->dmat_params.presentation_mode != INVALID_VALUE) {
+        mat_endp_params[MAT_PARAM_INDEX_PRESENTATION].param_val =
+                                        payload->dmat_params.presentation_mode;
+        mat_endp_params[MAT_PARAM_INDEX_PRESENTATION].is_param_valid = true;
+    } else {
+        mat_endp_params[MAT_PARAM_INDEX_PRESENTATION].is_param_valid = false;
+    }
+
+    return 0;
+}
+#endif

@@ -121,8 +121,9 @@ PRODUCT_PROPERTY_OVERRIDES += \
 af.fast_track_multiplier=1
 
 #Low latency audio buffer size in frames
+#Set HAL buffer size to samples equal to 5 ms
 PRODUCT_PROPERTY_OVERRIDES += \
-vendor.audio_hal.period_size=192
+vendor.audio_hal.period_size=240
 
 ##fluencetype can be "fluence" or "fluencepro" or "none"
 PRODUCT_PROPERTY_OVERRIDES += \

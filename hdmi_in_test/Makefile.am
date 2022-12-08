@@ -13,5 +13,5 @@ hdmi_in_test_LDADD = -llog -lpthread
 
 fmt_change_test_SOURCES = src/fmt_change_test.c
 fmt_change_test_CFLAGS  = $(CFLAGS) -Wno-sign-compare -Werror $(REC_INCLUDES)
-fmt_change_test_LDADD = -llog -lpthread ../qahw_api/libqahw.la
+fmt_change_test_LDADD = -llog -lpthread -lm ../qahw_api/libqahw.la
 

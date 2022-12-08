@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015-2017, 2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2015-2017, 2019-2020, The Linux Foundation. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -808,6 +808,13 @@ static int vol_prc_lib_release(effect_handle_t handle)
         return status;
     }
     pthread_mutex_lock(&vol_listner_init_lock);
+
+    if (recv_contex->desc == NULL) {
+        ALOGE("%s: Got NULL descriptor", __func__);
+        dump_list_l();
+        pthread_mutex_unlock(&vol_listner_init_lock);
+        return status;
+    }
 
     // check if the handle/context provided is valid
     list_for_each_safe(node, temp_node_next, &vol_effect_list) {
