@@ -1121,6 +1121,8 @@ int audio_extn_utils_get_app_sample_rate_for_device(
         }
     } else if (usecase->type == TRANSCODE_LOOPBACK_RX) {
         sample_rate = usecase->stream.inout->out_config.sample_rate;
+    } else if (usecase->type == TRANSCODE_LOOPBACK_TX) {
+        sample_rate = usecase->stream.inout->in_config.sample_rate;
     }
     return sample_rate;
 }
