@@ -16,6 +16,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+/*
+ * Changes from Qualcomm Innovation Center are provided under the following license:
+ * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
+*/
 
 #define LOG_TAG "msm8974_platform"
 //#define LOG_NDEBUG 0
@@ -3962,9 +3967,9 @@ acdb_init_fail:
             my_data->current_backend_cfg[DEFAULT_CODEC_TX_BACKEND].samplerate_mixer_ctl =
                 strdup("TX_CDC_DMA_TX_3 SampleRate");
             my_data->current_backend_cfg[HEADPHONE_BACKEND].bitwidth_mixer_ctl =
-                strdup("RX_CDC_DMA_RX_0 Format");
+                strdup("SEC_MI2S_RX Format");
             my_data->current_backend_cfg[HEADPHONE_BACKEND].samplerate_mixer_ctl =
-                strdup("RX_CDC_DMA_RX_0 SampleRate");
+                strdup("SEC_MI2S_RX SampleRate");
             /*
              * TODO: enable CONCURRENT_CAPTURE_ENABLED flag only if separate backend
              * is defined for headset-mic. This is to capture separate data from
@@ -3991,10 +3996,10 @@ acdb_init_fail:
                 my_data->is_multiple_sample_rate_combo_supported = false;
             } else if (!strncmp(snd_card_name, "bengal-scuba", strlen("bengal-scuba"))) {
                 my_data->current_backend_cfg[DEFAULT_CODEC_BACKEND].bitwidth_mixer_ctl =
-                        strdup("RX_CDC_DMA_RX_0 Format");
+                        strdup("SEC_MI2S_RX Format");
                 my_data->current_backend_cfg[DEFAULT_CODEC_BACKEND].samplerate_mixer_ctl =
-                        strdup("RX_CDC_DMA_RX_0 SampleRate");
-                default_rx_backend = strdup("RX_CDC_DMA_RX_0");
+                        strdup("SEC_MI2S_RX SampleRate");
+                default_rx_backend = strdup("SEC_MI2S_RX");
                 my_data->is_multiple_sample_rate_combo_supported = false;
             }
         } else if (!strncmp(snd_card_name, "sdm660", strlen("sdm660")) ||
