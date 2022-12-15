@@ -37,7 +37,7 @@ libqahw_la_LIBADD    = -lqahwwrapper
 libqahw_la_CPPFLAGS := $(AM_CPPFLAGS)
 libqahw_la_CPPFLAGS += -std=c++11 -DHAVE_PTHREADS -DHAVE_ANDROID_OS
 libqahw_la_CPPFLAGS += -DDEBUG_REFS_CALLSTACK_ENABLED=0
-libqahw_la_CPPFLAGS += -DNDEBUG
+libqahw_la_CPPFLAGS += -DNDEBUG -DQAHW_V1
 libqahw_la_CPPFLAGS += $(GLIB_CFLAGS) -include glib.h
 libqahw_la_LDFLAGS   = -ltinyalsa -lhardware -lexpat -lcutils -llog -ldl -shared -avoid-version -lpthread -lutils $(GLIB_LIBS)
 
@@ -136,8 +136,8 @@ trans_loopback_test_LDADD = -llog  -lutils -lcutils -lm
 trans_loopback_test_LDADD += libqahw.la
 
 bin_PROGRAMS += hal_voice_test
-
-VOICE_CFLAGS = -Wno-sign-compare -Werror
+VOICE_CFLAGS = -DQAHW_V1
+VOICE_CFLAGS += -Wno-sign-compare -Werror
 VOICE_CFLAGS += -D__unused=__attribute__\(\(__unused__\)\)
 
 if BUILDSYSTEM_OPENWRT
