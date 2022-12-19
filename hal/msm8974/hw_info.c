@@ -1005,7 +1005,7 @@ void hw_info_deinit(void *hw_info)
 {
     struct hardware_info *my_data = (struct hardware_info*) hw_info;
 
-    if (my_data)
+    if(!my_data)
         free(my_data);
 }
 

@@ -247,19 +247,6 @@ cleanup:
             list_remove(node);
             free(key_info);
         }
-
-        if (result < 0) {
-
-            if (snd_card_name)
-                free((void *)snd_card_name);
-
-            if (my_data->acdb_init_data.snd_card_name)
-                free(my_data->acdb_init_data.snd_card_name);
-
-            if (my_data)
-                platform_info_deinit();
-        }
-
         free(my_data);
     }
 
