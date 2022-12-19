@@ -2,6 +2,8 @@
  * Copyright (c) 2013-2021, The Linux Foundation. All rights reserved.
  * Not a Contribution.
  *
+ * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ *
  * Copyright (C) 2013 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -33,6 +35,34 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
+ * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted (subject to the limitations in the disclaimer
+ * below) provided that the following conditions are met:
+ *
+ *     * Redistributions of source code must retain the above copyright
+ *       notice, this list of conditions and the following disclaimer.
+ *     * Redistributions in binary form must reproduce the above copyright
+ *       notice, this list of conditions and the following disclaimer in the
+ *       documentation and/or other materials provided with the distribution.
+ *     * Neither the name of Qualcomm Innovation Center, Inc. nor the names
+ *       of its contributors may be used to endorse or promote products
+ *       derived from this software without specific prior written permission.
+ *
+ * NO EXPRESS OR IMPLIED LICENSES TO ANY PARTY'S PATENT RIGHTS ARE GRANTED
+ * BY THIS LICENSE. THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND
+ * CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING,
+ * BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
+ * FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+ * HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+ * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED
+ * TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
+ * PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+ * LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+ * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE,
+ * EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
 #define LOG_TAG "audio_hw_primary"
@@ -461,6 +491,7 @@ struct string_to_enum {
 };
 
 static const struct string_to_enum channels_name_to_enum_table[] = {
+    STRING_TO_ENUM(AUDIO_CHANNEL_OUT_MONO),
     STRING_TO_ENUM(AUDIO_CHANNEL_OUT_STEREO),
     STRING_TO_ENUM(AUDIO_CHANNEL_OUT_2POINT1),
     STRING_TO_ENUM(AUDIO_CHANNEL_OUT_QUAD),
@@ -1160,6 +1191,13 @@ int enable_audio_route(struct audio_device *adev,
         snd_device = usecase->out_snd_device;
     }
 
+    if (usecase->type == PCM_CAPTURE) {
+       if (platform_get_fluence_nn_state(adev->platform) == 0) {
+           platform_set_fluence_nn_state(adev->platform, true);
+           ALOGD("%s: set fluence nn capture state", __func__);
+       }
+    }
+
 #ifdef DS1_DOLBY_DAP_ENABLED
     audio_extn_dolby_set_dmid(adev);
     audio_extn_dolby_set_endpoint(adev);
@@ -1175,6 +1213,14 @@ int enable_audio_route(struct audio_device *adev,
         out = usecase->stream.out;
         if (out && out->compr)
             audio_extn_utils_compress_set_clk_rec_mode(usecase);
+    }
+
+    if (usecase->type == PCM_CAPTURE) {
+        if (platform_get_fluence_nn_state(adev->platform) &&
+            adev->fluence_nn_usecase_id == USECASE_INVALID ) {
+            adev->fluence_nn_usecase_id = usecase->id;
+            ALOGD("%s: assign fluence nn usecase %d", __func__, usecase->id);
+        }
     }
 
     // we shouldn't truncate mixer_path
@@ -1239,6 +1285,13 @@ int disable_audio_route(struct audio_device *adev,
             in->ec_opened = false;
         }
     }
+
+    if (usecase->id == adev->fluence_nn_usecase_id) {
+        platform_set_fluence_nn_state(adev->platform, false);
+        adev->fluence_nn_usecase_id = USECASE_INVALID;
+        ALOGD("%s: reset fluence nn capture state", __func__);
+    }
+
     audio_extn_sound_trigger_update_stream_status(usecase, ST_EVENT_STREAM_FREE);
     audio_extn_listen_update_stream_status(usecase, LISTEN_EVENT_STREAM_FREE);
 
@@ -1939,7 +1992,7 @@ static void reset_hdmi_sink_caps(struct stream_out *out) {
 /* must be called with hw device mutex locked */
 static int read_hdmi_sink_caps(struct stream_out *out)
 {
-    int ret = 0, i = 0, j = 0;
+    int ret = 0, i = 0, j = 0, rc = 0;
     int channels = platform_edid_get_max_channels_v2(out->dev->platform,
                                                      out->extconn.cs.controller,
                                                      out->extconn.cs.stream);
@@ -1947,11 +2000,11 @@ static int read_hdmi_sink_caps(struct stream_out *out)
     reset_hdmi_sink_caps(out);
 
     /* Cache ext disp type */
-    ret = platform_get_ext_disp_type_v2(adev->platform,
+    rc = platform_get_ext_disp_type_v2(adev->platform,
                                       out->extconn.cs.controller,
                                       out->extconn.cs.stream);
-    if(ret < 0) {
-        ALOGE("%s: Failed to query disp type, ret:%d", __func__, ret);
+    if(rc < 0) {
+        ALOGE("%s: Failed to query disp type, rc:%d", __func__, rc);
         return -EINVAL;
     }
 
@@ -1967,6 +2020,10 @@ static int read_hdmi_sink_caps(struct stream_out *out)
         out->supported_channel_masks[i++] = AUDIO_CHANNEL_OUT_QUAD;
         out->supported_channel_masks[i++] = AUDIO_CHANNEL_OUT_SURROUND;
         out->supported_channel_masks[i++] = AUDIO_CHANNEL_OUT_2POINT1;
+    case 2:
+        ALOGV("%s: HDMI supports 2 channels", __func__);
+        out->supported_channel_masks[i++] = AUDIO_CHANNEL_OUT_STEREO;
+        out->supported_channel_masks[i++] = AUDIO_CHANNEL_OUT_MONO;
         break;
     default:
         ALOGE("invalid/nonstandard channal count[%d]",channels);
@@ -2014,7 +2071,6 @@ static int read_hdmi_sink_caps(struct stream_out *out)
         ALOGV(":%s HDMI supports IEC61937 format", __func__);
         out->supported_formats[i++] = AUDIO_FORMAT_IEC61937;
     }
-
 
     // check sample rate caps
     i = 0;
@@ -3693,6 +3749,7 @@ static int stop_output_stream(struct stream_out *out)
         ALOGV("Disable passthrough , reset mixer to pcm");
         /* NO_PASSTHROUGH */
         out->compr_config.codec->compr_passthr = 0;
+        out->is_iec61937_info_available = false;
         audio_extn_passthru_on_stop(out);
         audio_extn_dolby_set_dap_bypass(adev, DAP_STATE_ON);
     }
@@ -4856,6 +4913,8 @@ static int out_set_parameters(struct audio_stream *stream, const char *kvpairs)
     if (err == 0) {
         out->extconn.cs.controller = ext_controller;
         out->extconn.cs.stream = ext_stream;
+        adev->ext_controller = out->extconn.cs.controller;
+        adev->ext_stream = out->extconn.cs.stream;
         ALOGD("%s: usecase(%s) new controller/stream (%d/%d)", __func__,
               use_case_table[out->usecase], out->extconn.cs.controller,
               out->extconn.cs.stream);
@@ -4881,6 +4940,8 @@ static int out_set_parameters(struct audio_stream *stream, const char *kvpairs)
                                            out->extconn.cs.controller,
                                            out->extconn.cs.stream) != 0)) {
             out->extconn.cs.controller = out->extconn.cs.stream = -1;
+            adev->ext_controller = out->extconn.cs.controller;
+            adev->ext_stream = out->extconn.cs.stream;
             val = AUDIO_DEVICE_OUT_SPEAKER;
         }
         /*
@@ -5822,6 +5883,7 @@ static ssize_t out_write(struct audio_stream_out *stream, const void *buffer,
     if ((out->devices & AUDIO_DEVICE_OUT_AUX_DIGITAL) &&
          !out->is_iec61937_info_available) {
 
+        channels = platform_edid_get_max_channels(out->dev->platform);
         if (!audio_extn_passthru_is_passthrough_stream(out)) {
             out->is_iec61937_info_available = true;
         } else if (audio_extn_passthru_is_enabled()) {
@@ -7124,7 +7186,11 @@ exit:
             pthread_mutex_unlock(&adev->lock);
             in->standby = true;
         }
-        if (!audio_extn_cin_attached_usecase(in)) {
+        /* In hdmi-in compress usecase to during playback if hdmi cable is
+         * disconnected then read function is in block state.
+         * to unblock read call, needs to send silent buffer in case of hdmi-in
+         */
+        if (!audio_extn_cin_attached_usecase(in) || (true == in->hdmi_in_status)) {
             bytes_read = bytes;
             memset(buffer, 0, bytes);
         }
@@ -7712,6 +7778,8 @@ int adev_open_output_stream(struct audio_hw_device *dev,
     out->pspd_coeff_sent = false;
 
     out->dsd_config_updated = false;
+    out->extconn.cs.controller = adev->ext_controller;
+    out->extconn.cs.stream = adev->ext_stream;
 
     if ((flags & AUDIO_OUTPUT_FLAG_BD) &&
         (property_get_bool("vendor.audio.matrix.limiter.enable", false)))
@@ -8080,7 +8148,7 @@ int adev_open_output_stream(struct audio_hw_device *dev,
         } else if(flags & AUDIO_OUTPUT_FLAG_TIMESTAMP) {
             if (property_get_bool("persist.vendor.audio.ttp.render.mode", false)) {
                 if (out->devices & AUDIO_DEVICE_OUT_ALL_A2DP)
-                    out->render_mode = RENDER_MODE_AUDIO_TTP_PASS_THROUGH;
+                    out->render_mode = RENDER_MODE_AUDIO_ABSOLUTETIME;
                 else
                     out->render_mode = RENDER_MODE_AUDIO_TTP;
             } else {
@@ -8755,6 +8823,8 @@ static int adev_set_parameters(struct audio_hw_device *dev, const char *kvpairs)
             (val & AUDIO_DEVICE_OUT_AUX_DIGITAL)) {
             ALOGV("cache new ext disp type and edid");
             platform_get_controller_stream_from_params(parms, &controller, &stream);
+            adev->ext_controller = controller;
+            adev->ext_stream = stream;
             platform_set_ext_display_device_v2(adev->platform, controller, stream);
             ret = platform_get_ext_disp_type_v2(adev->platform, controller, stream);
             if (ret < 0) {
@@ -10350,6 +10420,7 @@ static int adev_open(const hw_module_t *module, const char *name,
     adev->enable_voicerx = false;
     adev->bt_wb_speech_enabled = false;
     adev->swb_speech_mode = SPEECH_MODE_INVALID;
+    adev->fluence_nn_usecase_id = USECASE_INVALID;
     //initialize this to false for now,
     //this will be set to true through set param
     adev->vr_audio_mode_enabled = false;

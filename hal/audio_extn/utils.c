@@ -1008,7 +1008,7 @@ static int set_stream_app_type_mixer_ctrl(struct audio_device *adev,
 
     char mixer_ctl_name[MAX_LENGTH_MIXER_CONTROL_IN_INT];
     struct mixer_ctl *ctl;
-    int app_type_cfg[MAX_LENGTH_MIXER_CONTROL_IN_INT], len = 0, rc = 0;
+    ssize_t app_type_cfg[MAX_LENGTH_MIXER_CONTROL_IN_INT], len = 0, rc = 0;
     int snd_device_be_idx = -1;
 
     if (stream_type == PCM_PLAYBACK) {
@@ -1089,50 +1089,58 @@ static int audio_extn_utils_send_app_type_cfg_hfp(struct audio_device *adev,
         goto exit_send_app_type_cfg;
     }
 
+    /*
+     * Value of afe_loopback gets read  based on the property defined in
+     * audio_platform_info.xml. If afe loopback is set then do not execute
+     * session 1 path as app type mixer control will not be created for
+     * afe loopback
+     */
+
     if (usecase->type == PCM_HFP_CALL) {
+        if (!(platform_get_is_afe_loopback_enabled(adev->platform))) {
+            /* config HFP session:1 playback path */
+            if (is_bus_dev_usecase) {
+                app_type = usecase->out_app_type_cfg.app_type;
+                sample_rate= usecase->out_app_type_cfg.sample_rate;
+            } else {
+                snd_device = SND_DEVICE_NONE; // use legacy behavior
+                app_type = platform_get_default_app_type_v2(adev->platform, PCM_PLAYBACK);
+                sample_rate= CODEC_BACKEND_DEFAULT_SAMPLE_RATE;
+            }
+            rc = set_stream_app_type_mixer_ctrl(adev, pcm_device_id, app_type,
+                                                acdb_dev_id, sample_rate,
+                                                PCM_PLAYBACK,
+                                                snd_device);
+            if (rc < 0)
+                ALOGE("%s: config HFP session:1 playback path Failed", __func__);
 
-        /* config HFP session:1 playback path */
-        if (is_bus_dev_usecase) {
-            app_type = usecase->out_app_type_cfg.app_type;
-            sample_rate= usecase->out_app_type_cfg.sample_rate;
-        } else {
-            snd_device = SND_DEVICE_NONE; // use legacy behavior
-            app_type = platform_get_default_app_type_v2(adev->platform, PCM_PLAYBACK);
-            sample_rate= CODEC_BACKEND_DEFAULT_SAMPLE_RATE;
-        }
-        rc = set_stream_app_type_mixer_ctrl(adev, pcm_device_id, app_type,
-                                            acdb_dev_id, sample_rate,
-                                            PCM_PLAYBACK,
-                                            snd_device);
-        if (rc < 0)
-            ALOGE("%s: config HFP session:1 playback path Failed", __func__);
+            /* config HFP session:1 capture path */
+            if (is_bus_dev_usecase) {
+                snd_device = usecase->in_snd_device;
+                pcm_device_id = platform_get_pcm_device_id(usecase->id, PCM_CAPTURE);
+                acdb_dev_id = platform_get_snd_device_acdb_id(snd_device);
+                if (acdb_dev_id < 0) {
+                    ALOGE("%s: Couldn't get the acdb dev id", __func__);
+                    rc = -EINVAL;
+                    goto exit_send_app_type_cfg;
+                }
+                app_type = usecase->in_app_type_cfg.app_type;
+                sample_rate= usecase->in_app_type_cfg.sample_rate;
+            } else {
+                snd_device = SND_DEVICE_NONE; // use legacy behavior
+                app_type = platform_get_default_app_type_v2(adev->platform, PCM_CAPTURE);
+            }
+            rc = set_stream_app_type_mixer_ctrl(adev, pcm_device_id, app_type,
+                                                acdb_dev_id, sample_rate,
+                                                PCM_CAPTURE,
+                                                snd_device);
+            if (rc < 0)
+                ALOGE("%s: config HFP session:1 capture path Failed", __func__);
 
-        /* config HFP session:1 capture path */
-        if (is_bus_dev_usecase) {
-            snd_device = usecase->in_snd_device;
-            pcm_device_id = platform_get_pcm_device_id(usecase->id, PCM_CAPTURE);
-            acdb_dev_id = platform_get_snd_device_acdb_id(snd_device);
-            if (acdb_dev_id < 0) {
-                ALOGE("%s: Couldn't get the acdb dev id", __func__);
-                rc = -EINVAL;
+            if (is_bus_dev_usecase) {
+                ALOGD("%s: config HFP session:1 Bus Dev Usecase", __func__);
                 goto exit_send_app_type_cfg;
             }
-            app_type = usecase->in_app_type_cfg.app_type;
-            sample_rate= usecase->in_app_type_cfg.sample_rate;
-        } else {
-            snd_device = SND_DEVICE_NONE; // use legacy behavior
-            app_type = platform_get_default_app_type_v2(adev->platform, PCM_CAPTURE);
-        }
-        rc = set_stream_app_type_mixer_ctrl(adev, pcm_device_id, app_type,
-                                            acdb_dev_id, sample_rate,
-                                            PCM_CAPTURE,
-                                            snd_device);
-        if (rc < 0)
-            ALOGE("%s: config HFP session:1 capture path Failed", __func__);
-
-        if (is_bus_dev_usecase) {
-            ALOGD("%s: config HFP session:1 Bus Dev Usecase", __func__);
-            goto exit_send_app_type_cfg;
         }
 
         /* config HFP session:2 capture path */
@@ -1147,7 +1155,7 @@ static int audio_extn_utils_send_app_type_cfg_hfp(struct audio_device *adev,
         app_type = platform_get_default_app_type_v2(adev->platform, PCM_CAPTURE);
         rc = set_stream_app_type_mixer_ctrl(adev, pcm_device_id, app_type,
                                             acdb_dev_id, sample_rate, PCM_CAPTURE,
-                                            snd_device);
+                                            usecase->in_snd_device);
         if (rc < 0)
             ALOGE("%s: config HFP session:2 capture path Failed", __func__);
 
@@ -1155,7 +1163,7 @@ static int audio_extn_utils_send_app_type_cfg_hfp(struct audio_device *adev,
         app_type = platform_get_default_app_type_v2(adev->platform, PCM_PLAYBACK);
         rc = set_stream_app_type_mixer_ctrl(adev, pcm_device_id, app_type,
                                             acdb_dev_id, sample_rate,
-                                            PCM_PLAYBACK, SND_DEVICE_NONE);
+                                            PCM_PLAYBACK, usecase->out_snd_device);
         if (rc < 0)
             ALOGE("%s: config HFP session:2 playback path Failed", __func__);
     }
@@ -2011,8 +2019,15 @@ void audio_extn_utils_send_audio_calibration(struct audio_device *adev,
                          usecase->stream.in->app_type_cfg.app_type,
                          usecase->stream.in->app_type_cfg.sample_rate);
     } else if ((type == PCM_HFP_CALL) || (type == PCM_CAPTURE) ||
-               (type == TRANSCODE_LOOPBACK_RX && usecase->stream.inout != NULL) ||
-               (type == ICC_CALL) || (type == SYNTH_LOOPBACK)) {
+              (type == TRANSCODE_LOOPBACK_RX && usecase->stream.inout != NULL)) {
+#ifdef ENABLE_HFP_CALIBRATION
+        platform_send_audio_calibration_hfp(adev->platform, usecase->in_snd_device);
+#else
+        platform_send_audio_calibration(adev->platform, usecase,
+                         platform_get_default_app_type_v2(adev->platform, usecase->type),
+                         48000);
+#endif
+    } else if (type == TRANSCODE_LOOPBACK_RX && usecase->stream.inout != NULL) {
         platform_send_audio_calibration(adev->platform, usecase,
                          platform_get_default_app_type_v2(adev->platform, usecase->type),
                          48000);
@@ -2184,17 +2199,15 @@ int audio_extn_utils_get_codec_version(const char *snd_card_name,
     char procfs_path[50];
     FILE *fp;
 
-    if (strstr(snd_card_name, "tasha")) {
-        snprintf(procfs_path, sizeof(procfs_path),
-                 "/proc/asound/card%d/codecs/tasha/version", card_num);
-        if ((fp = fopen(procfs_path, "r")) != NULL) {
-            fgets(codec_version, CODEC_VERSION_MAX_LENGTH, fp);
-            fclose(fp);
-        } else {
-            ALOGE("%s: ERROR. cannot open %s", __func__, procfs_path);
-            return -ENOENT;
-        }
+    snprintf(procfs_path, sizeof(procfs_path),
+             "/proc/asound/card%d/codecs/tasha/version", card_num);
+    if ((fp = fopen(procfs_path, "r")) != NULL) {
+        fgets(codec_version, CODEC_VERSION_MAX_LENGTH, fp);
         ALOGD("%s: codec version %s", __func__, codec_version);
+        fclose(fp);
+    } else if (strstr(snd_card_name, "tasha")) {
+        ALOGE("%s: ERROR. cannot open %s", __func__, procfs_path);
+        return -ENOENT;
     }
 
     return 0;
@@ -2845,6 +2858,8 @@ int audio_extn_utils_compress_set_render_mode_v2(struct compress *compr,
         metadata.value[0] = SNDRV_COMPRESS_RENDER_MODE_TTP;
     } else if (render_mode == RENDER_MODE_AUDIO_TTP_PASS_THROUGH) {
         metadata.value[0] = SNDRV_COMPRESS_RENDER_MODE_TTP_PASS_THROUGH;
+    } else if (render_mode == RENDER_MODE_AUDIO_ABSOLUTETIME) {
+        metadata.value[0] = SNDRV_COMPRESS_RENDER_MODE_ABSOLUTETIME;
     } else {
         ret = 0;
         ALOGE("%s:: invalid render mode %d", __func__, render_mode);
@@ -3020,6 +3035,47 @@ int audio_extn_utils_compress_set_render_window(
             struct audio_out_render_window_param *render_window __unused)
 {
     ALOGD("%s:: configuring render window not supported", __func__);
+    return 0;
+}
+#endif
+
+#ifdef SNDRV_COMPRESS_OUT_EXTERNAL_SINK_LATENCY
+int audio_extn_utils_set_external_sink_latency(struct stream_out *out,
+            struct audio_out_external_sink_latency_param *latency_param)
+{
+    struct snd_compr_metadata metadata;
+    int ret = -EINVAL;
+
+    if (!(is_offload_usecase(out->usecase))) {
+        ALOGE("%s:: not supported for non offload session", __func__);
+        goto exit;
+    }
+
+    if (!out->compr) {
+        ALOGD("%s:: Invalid compress handle",
+                __func__);
+        goto exit;
+    }
+
+    ALOGD("%s:: set value external sink latency  %d", __func__,
+                                latency_param->external_sink_latency);
+
+    metadata.key = SNDRV_COMPRESS_OUT_EXTERNAL_SINK_LATENCY;
+    metadata.value[0] = 0xFFFFFFFF & latency_param->external_sink_latency; /* LSB */
+    metadata.value[1] = \
+            (0xFFFFFFFF00000000 & latency_param->external_sink_latency) >> 32; /* MSB*/
+
+    ret = compress_set_metadata(out->compr, &metadata);
+    if(ret) {
+        ALOGE("%s::error %s", __func__, compress_get_error(out->compr));
+    }
+exit:
+    return ret;
+}
+#else
+int audio_extn_utils_set_external_sink_latency(struct stream_out *out __unused)
+{
+    ALOGD("%s:: configuring external sink latency not supported", __func__);
     return 0;
 }
 #endif

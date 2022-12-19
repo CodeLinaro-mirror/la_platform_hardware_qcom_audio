@@ -32,10 +32,11 @@ c_sources += audio_extn/fm.c
 c_sources += audio_extn/usb.c
 #endif
 
-#if HFP
+if HFP
+AM_CFLAGS += -DENABLE_HFP_CALIBRATION
 #AM_CFLAGS += -DHFP_ENABLED
 #c_sources += audio_extn/hfp.c
-#endif
+endif
 
 #if SSR
 #AM_CFLAGS += -DSSR_ENABLED
@@ -277,6 +278,9 @@ audio_primary_default_la_LIBADD += -lm -lc -lresolv
 
 if AUDIO_PARSER
 audio_primary_default_la_LIBADD += -laudioparsers
+endif
+if COMPRESS_INPUT
+audio_primary_default_la_LIBADD += -lrt
 endif
 audio_primary_default_la_CFLAGS = $(AM_CFLAGS) $(GLIB_CFLAGS)
 audio_primary_default_la_CFLAGS += -Dstrlcat=g_strlcat

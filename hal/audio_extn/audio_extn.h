@@ -1,6 +1,8 @@
 /*
- * Copyright (c) 2013-2020, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2021, The Linux Foundation. All rights reserved.
  * Not a Contribution.
+ *
+ * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Copyright (C) 2013 The Android Open Source Project
  *
@@ -703,7 +705,7 @@ enum {
 };
 
 // START: MST ==================================================
-#define MAX_CONTROLLERS 1
+#define MAX_CONTROLLERS 2
 #define MAX_STREAMS_PER_CONTROLLER 2
 // END: MST ==================================================
 
@@ -1375,6 +1377,9 @@ int audio_extn_utils_set_pan_scale_params(
 int audio_extn_utils_set_downmix_params(
             struct stream_out *out,
             struct mix_matrix_params *mm_params);
+int audio_extn_utils_set_external_sink_latency(
+            struct stream_out *out,
+            struct audio_out_external_sink_latency_param *latency_param);
 size_t audio_extn_utils_get_input_buffer_size(uint32_t, audio_format_t, int, int64_t, bool);
 int audio_extn_utils_get_perf_mode_flag(void);
 int audio_ext_get_presentation_position(struct stream_out *out,

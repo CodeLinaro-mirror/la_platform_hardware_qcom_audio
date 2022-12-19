@@ -33,6 +33,10 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
+ * Changes from Qualcomm Innovation Center are provided under the following license:
+ * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 #define LOG_TAG "audio_hw_extn"
@@ -346,6 +350,7 @@ static int update_audio_ack_state(const struct audio_device *adev,
     int ctl_index = 0;
     struct mixer_ctl *ctl = NULL;
     const char *ctl_prefix = "External Display";
+    const char *ctl_prefix2 = "External HDMI";
     const char *ctl_suffix = "Audio Ack";
     char mixer_ctl_name[MIXER_PATH_MAX_LENGTH] = {0};
 
@@ -356,9 +361,12 @@ static int update_audio_ack_state(const struct audio_device *adev,
         return -EINVAL;
     }
 
-    if (0 == ctl_index)
+    if ((ctl_index % 2) == 0)
         snprintf(mixer_ctl_name, sizeof(mixer_ctl_name),
                  "%s %s", ctl_prefix, ctl_suffix);
+    else if ((ctl_index % 2) != 0)
+        snprintf(mixer_ctl_name, sizeof(mixer_ctl_name),
+                 "%s %s", ctl_prefix2, ctl_suffix);
     else
         snprintf(mixer_ctl_name, sizeof(mixer_ctl_name),
                  "%s%d %s", ctl_prefix, ctl_index, ctl_suffix);
@@ -3915,6 +3923,10 @@ int audio_extn_out_set_param_data(struct stream_out *out,
                     (struct audio_out_channel_status_info *)(payload));
 
             break;
+        case AUDIO_EXTN_PARAM_EXTERNAL_SINK_LATENCY:
+            ret = audio_extn_utils_set_external_sink_latency(out,
+                    (struct audio_out_external_sink_latency_param *)(payload));
+            break;
         default:
             ALOGE("%s:: unsupported param_id %d", __func__, param_id);
             break;
@@ -5006,18 +5018,14 @@ void audio_extn_sco_reset_configuration()
 // END: A2DP_OFFLOAD =====================================================================
 
 // START: HFP ======================================================================
-#ifdef __LP64__
 #if LINUX_ENABLED
-#define HFP_LIB_PATH "/usr/lib64/hfp.so"
+#   define HFP_LIB_PATH STR_CAT(LE_LIBDIR, "/hfp.so")
 #else
-#define HFP_LIB_PATH "/vendor/lib64/libhfp.so"
-#endif
-#else
-#if LINUX_ENABLED
-#define HFP_LIB_PATH "/usr/lib/hfp.so"
-#else
-#define HFP_LIB_PATH "/vendor/lib/libhfp.so"
-#endif
+#   ifdef __LP64__
+#       define HFP_LIB_PATH "/vendor/lib64/libhfp.so"
+#   else
+#       define HFP_LIB_PATH "/vendor/lib/libhfp.so"
+#   endif
 #endif
 
 static void *hfp_lib_handle = NULL;
@@ -5653,6 +5661,12 @@ void hdmi_passthrough_feature_init(bool is_feature_enabled)
             !(passthru_is_convert_supported =
                  (passthru_is_convert_supported_t)dlsym(
                             hdmi_passthru_lib_handle, "passthru_is_convert_supported")) ||
+            !(passthru_is_passt_supported =
+                  (passthru_is_passt_supported_t)dlsym(
+                             hdmi_passthru_lib_handle, "passthru_is_passt_supported")) ||
+            !(passthru_update_stream_configuration =
+                  (passthru_update_stream_configuration_t)dlsym(
+                             hdmi_passthru_lib_handle, "passthru_update_stream_configuration")) ||
             !(passthru_is_passthrough_stream =
                  (passthru_is_passthrough_stream_t)dlsym(
                             hdmi_passthru_lib_handle, "passthru_is_passthrough_stream")) ||
@@ -5683,26 +5697,26 @@ void hdmi_passthrough_feature_init(bool is_feature_enabled)
             !(passthru_set_parameters =
                  (passthru_set_parameters_t)dlsym(
                             hdmi_passthru_lib_handle, "passthru_set_parameters")) ||
-            (passthru_is_enabled =
+            !(passthru_is_enabled =
                  (passthru_is_enabled_t)dlsym(
                             hdmi_passthru_lib_handle, "passthru_is_enabled")) ||
-            (passthru_is_active =
+            !(passthru_is_active =
                  (passthru_is_active_t)dlsym(
                             hdmi_passthru_lib_handle, "passthru_is_active")) ||
-            (passthru_should_standby =
+            !(passthru_should_standby =
                  (passthru_should_standby_t)dlsym(
                             hdmi_passthru_lib_handle, "passthru_should_standby")) ||
-            (passthru_get_channel_count =
+            !(passthru_get_channel_count =
                  (passthru_get_channel_count_t)dlsym(
                             hdmi_passthru_lib_handle, "passthru_get_channel_count")) ||
-            (passthru_update_dts_stream_configuration =
+            !(passthru_update_dts_stream_configuration =
                  (passthru_update_dts_stream_configuration_t)dlsym(
                             hdmi_passthru_lib_handle,
                             "passthru_update_dts_stream_configuration")) ||
-            (passthru_is_direct_passthrough =
+            !(passthru_is_direct_passthrough =
                  (passthru_is_direct_passthrough_t)dlsym(
                             hdmi_passthru_lib_handle, "passthru_is_direct_passthrough")) ||
-            (passthru_is_supported_backend_edid_cfg =
+            !(passthru_is_supported_backend_edid_cfg =
                  (passthru_is_supported_backend_edid_cfg_t)dlsym(
                             hdmi_passthru_lib_handle,
                             "passthru_is_supported_backend_edid_cfg"))) {
@@ -5737,6 +5751,8 @@ feature_disabled:
 
     passthru_init = NULL;
     passthru_is_convert_supported = NULL;
+    passthru_is_passt_supported = NULL;
+    passthru_update_stream_configuration = NULL;
     passthru_is_passthrough_stream = NULL;
     passthru_get_buffer_size = NULL;
     passthru_set_volume = NULL;

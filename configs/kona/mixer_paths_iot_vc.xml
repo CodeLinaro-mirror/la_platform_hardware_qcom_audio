@@ -25,6 +25,9 @@
 <!-- WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE   -->
 <!-- OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN -->
 <!-- IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.                          -->
+<!-- Changes from Qualcomm Innovation Center are provided under the following license:  -->
+<!-- Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved. -->
+<!-- SPDX-License-Identifier: BSD-3-Clause-Clear                            -->
 <mixer>
     <!-- These are the initial mixer settings -->
     <ctl name="Voice Rx Device Mute" id="0" value="0" />
@@ -353,7 +356,7 @@
     <ctl name="TX SMIC MUX7" value="ZERO" />
 
     <!-- VA controls -->
-    <ctl name="VA_CDC_DMA_TX_0 Channels" value="ZERO" />
+    <ctl name="VA_CDC_DMA_TX_0 Channels" value="One" />
     <ctl name="VA_AIF1_CAP DEC0" value="0" />
     <ctl name="VA_AIF1_CAP DEC1" value="0" />
     <ctl name="VA_AIF1_CAP DEC2" value="0" />
@@ -381,10 +384,10 @@
     <ctl name="TX_DEC1 Volume" value="96" />
     <ctl name="TX_DEC2 Volume" value="96" />
     <ctl name="TX_DEC3 Volume" value="96" />
-    <ctl name="TX_DEC4 Volume" value="84" />
-    <ctl name="TX_DEC5 Volume" value="84" />
-    <ctl name="TX_DEC6 Volume" value="84" />
-    <ctl name="TX_DEC7 Volume" value="84" />
+    <ctl name="TX_DEC4 Volume" value="104" />
+    <ctl name="TX_DEC5 Volume" value="104" />
+    <ctl name="TX_DEC6 Volume" value="104" />
+    <ctl name="TX_DEC7 Volume" value="104" />
 
     <ctl name="ADC1 Volume" value="12" />
     <ctl name="ADC2 Volume" value="12" />
@@ -664,7 +667,23 @@
         <path name="deep-buffer-playback" />
     </path>
 
+    <path name="hdmi">
+        <ctl name="PRIM_MI2S_RX Format" value="S32_LE" />
+    </path>
+
     <path name="low-latency-playback">
+        <ctl name="QUAT_MI2S_RX Audio Mixer MultiMedia5" value="1" />
+    </path>
+
+    <path name="low-latency-playback hdmi">
+        <ctl name="PRI_MI2S_RX Audio Mixer MultiMedia5" value="1" />
+    </path>
+
+    <path name="low-latency-playback voice-speaker-2">
+        <ctl name="QUAT_MI2S_RX Audio Mixer MultiMedia5" value="1" />
+    </path>
+
+    <path name="low-latency-playback voice-speaker">
         <ctl name="QUAT_MI2S_RX Audio Mixer MultiMedia5" value="1" />
     </path>
 
@@ -766,11 +785,11 @@
     </path>
 
     <path name="audio-ull-playback">
-        <ctl name="WSA_CDC_DMA_RX_0 Audio Mixer MultiMedia8" value="1" />
+        <ctl name="QUAT_MI2S_RX Audio Mixer MultiMedia8" value="1" />
     </path>
 
     <path name="audio-ull-playback handset">
-        <ctl name="RX_CDC_DMA_RX_0 Audio Mixer MultiMedia8" value="1" />
+        <ctl name="QUAT_MI2S_RX Audio Mixer MultiMedia8" value="1" />
     </path>
 
     <path name="audio-ull-playback speaker-protected">
@@ -857,6 +876,10 @@
         <path name="audio-ull-playback" />
     </path>
 
+    <path name="audio-ull-playback voice-speaker-2">
+        <ctl name="QUAT_MI2S_RX Audio Mixer MultiMedia8" value="1" />
+    </path>
+
     <path name="multi-channel-playback display-port">
         <ctl name="DISPLAY_PORT Mixer MultiMedia2" value="1" />
     </path>
@@ -867,6 +890,10 @@
 
     <path name="compress-offload-playback">
         <ctl name="QUAT_MI2S_RX Audio Mixer MultiMedia4" value="1" />
+    </path>
+
+    <path name="compress-offload-playback hdmi">
+        <ctl name="PRI_MI2S_RX Audio Mixer MultiMedia4" value="1" />
     </path>
 
     <path name="compress-offload-playback handset">
@@ -977,6 +1004,10 @@
 
     <path name="compress-offload-playback2">
         <ctl name="QUAT_MI2S_RX Audio Mixer MultiMedia7" value="1" />
+    </path>
+
+    <path name="compress-offload-playback2 hdmi">
+        <ctl name="PRI_MI2S_RX Audio Mixer MultiMedia7" value="1" />
     </path>
 
     <path name="compress-offload-playback2 handset">
@@ -2119,6 +2150,14 @@
     </path>
 
     <!-- VoIP Rx settings -->
+    <path name="audio-playback-voip voice-speaker">
+        <ctl name="QUAT_MI2S_RX Audio Mixer MultiMedia10" value="1" />
+    </path>
+
+    <path name="audio-playback-voip voice-speaker-2">
+        <ctl name="QUAT_MI2S_RX Audio Mixer MultiMedia10" value="1" />
+    </path>
+
     <path name="audio-playback-voip">
         <ctl name="QUAT_MI2S_RX Audio Mixer MultiMedia10" value="1" />
     </path>
@@ -2209,6 +2248,10 @@
     <path name="speaker-safe-and-bt-a2dp">
         <path name="speaker-safe" />
         <path name="bt-a2dp" />
+    </path>
+
+    <path name="deep-buffer-playback hdmi">
+        <ctl name="PRI_MI2S_RX Audio Mixer MultiMedia1" value="1" />
     </path>
 
     <path name="deep-buffer-playback bt-a2dp">
@@ -3271,10 +3314,10 @@
 
     <path name="quad-mic">
         <path name="speaker-qmic" />
-        <ctl name="TX_DEC1 Volume" value="112" />
-		<ctl name="TX_DEC2 Volume" value="112" />
-		<ctl name="TX_DEC3 Volume" value="112" />
-		<ctl name="TX_DEC4 Volume" value="112" />
+        <ctl name="TX_DEC1 Volume" value="104" />
+		<ctl name="TX_DEC2 Volume" value="104" />
+		<ctl name="TX_DEC3 Volume" value="104" />
+		<ctl name="TX_DEC4 Volume" value="104" />
     </path>
 
     <path name="unprocessed-quad-mic">

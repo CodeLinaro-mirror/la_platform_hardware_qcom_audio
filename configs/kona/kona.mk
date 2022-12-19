@@ -101,9 +101,13 @@ AUDIO_WRAPPER += libqahwwrapper
 AUDIO_HAL_TEST_APPS := hal_play_test
 AUDIO_HAL_TEST_APPS += hal_rec_test
 
+#STT Meta Test app
+AUDIO_STT_META := stt_meta_extract
+
 PRODUCT_PACKAGES += $(AUDIO_HARDWARE)
 PRODUCT_PACKAGES += $(AUDIO_WRAPPER)
 PRODUCT_PACKAGES += $(AUDIO_HAL_TEST_APPS)
+PRODUCT_PACKAGES += $(AUDIO_STT_META)
 
 ifeq ($(AUDIO_FEATURE_ENABLED_DLKM),true)
 BOARD_VENDOR_KERNEL_MODULES := \
@@ -230,9 +234,11 @@ persist.vendor.audio.apptype.multirec.enabled=false
 
 ##fluencetype can be "fluence" or "fluencepro" or "none"
 PRODUCT_PROPERTY_OVERRIDES += \
-ro.vendor.audio.sdk.fluencetype=none\
+ro.vendor.audio.sdk.fluencetype=fluencepro\
+ro.vendor.audio.sdk.fluence.nn.enabled=false\
 persist.vendor.audio.fluence.voicecall=true\
-persist.vendor.audio.fluence.voicerec=false\
+persist.vendor.audio.fluence.voicerec=true\
+persist.vendor.audio.fluence.audiorec=true\
 persist.vendor.audio.fluence.speaker=true\
 persist.vendor.audio.fluence.tmic.enabled=false
 
@@ -297,7 +303,7 @@ vendor.audio.offload.multiple.enabled=false
 
 #Disable Compress passthrough playback
 PRODUCT_PROPERTY_OVERRIDES += \
-vendor.audio.offload.passthrough=false
+vendor.audio.offload.passthrough=true
 
 #Disable surround sound recording
 PRODUCT_PROPERTY_OVERRIDES += \

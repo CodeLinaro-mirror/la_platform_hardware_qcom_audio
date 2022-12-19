@@ -2,6 +2,8 @@
  * Copyright (c) 2013-2020, The Linux Foundation. All rights reserved.
  * Not a contribution.
  *
+ * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ *
  * Copyright (C) 2013 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -33,6 +35,34 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
+ * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted (subject to the limitations in the disclaimer
+ * below) provided that the following conditions are met:
+ *
+ *     * Redistributions of source code must retain the above copyright
+ *       notice, this list of conditions and the following disclaimer.
+ *     * Redistributions in binary form must reproduce the above copyright
+ *       notice, this list of conditions and the following disclaimer in the
+ *       documentation and/or other materials provided with the distribution.
+ *     * Neither the name of Qualcomm Innovation Center, Inc. nor the names
+ *       of its contributors may be used to endorse or promote products
+ *       derived from this software without specific prior written permission.
+ *
+ * NO EXPRESS OR IMPLIED LICENSES TO ANY PARTY'S PATENT RIGHTS ARE GRANTED
+ * BY THIS LICENSE. THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND
+ * CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING,
+ * BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
+ * FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+ * HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+ * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED
+ * TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
+ * PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+ * LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+ * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE,
+ * EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
 #ifndef QCOM_AUDIO_HW_H
@@ -338,6 +368,7 @@ typedef enum render_mode {
     RENDER_MODE_AUDIO_STC_MASTER,
     RENDER_MODE_AUDIO_TTP,
     RENDER_MODE_AUDIO_TTP_PASS_THROUGH,
+    RENDER_MODE_AUDIO_ABSOLUTETIME,
 } render_mode_t;
 
 /* This defines the physical car audio streams supported in
@@ -597,6 +628,10 @@ struct stream_in {
 
     bool dsd_config_updated;
     uint64_t ttp_offset_cached;
+    bool hdmi_in_status;
+    long hdmi_in_wait_ns;
+    bool calc_timeout;
+    timer_t timer_handle;
 #ifndef LINUX_ENABLED
     error_log_t *error_log;
 #endif
@@ -791,6 +826,7 @@ struct audio_device {
     int    haptic_pcm_device_id;
     uint8_t *haptic_buffer;
     size_t haptic_buffer_size;
+    int fluence_nn_usecase_id;
 
     /* logging */
     snd_device_t last_logged_snd_device[AUDIO_USECASE_MAX][2]; /* [out, in] */
@@ -815,6 +851,8 @@ struct audio_device {
     bool ecall_flag;
     spdif_channel_status_t spdif_coaxial_status;
     spdif_channel_status_t spdif_optical_status;
+    int ext_controller;
+    int ext_stream;
 };
 
 struct audio_patch_record {
