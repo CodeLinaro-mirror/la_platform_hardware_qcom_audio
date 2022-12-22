@@ -24,6 +24,11 @@
 <!-- BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,  -->
 <!-- OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN -->
 <!-- IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.                          -->
+
+<!--Changes from Qualcomm Innovation Center are provided under the following license:-->
+<!--Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.-->
+<!--SPDX-License-Identifier: BSD-3-Clause-Clear-->
+
 <mixer>
     <!-- These are the initial mixer settings -->
     <ctl name="Voice Rx Device Mute" id="0" value="0" />
@@ -617,7 +622,7 @@
     </path>
 
     <path name="low-latency-playback">
-        <ctl name="RX_CDC_DMA_RX_0 Audio Mixer MultiMedia5" value="1" />
+        <ctl name="SEC_MI2S_RX Audio Mixer MultiMedia5" value="1" />
     </path>
 
     <path name="low-latency-playback handset">
@@ -734,7 +739,7 @@
     </path>
 
     <path name="audio-ull-playback">
-        <ctl name="RX_CDC_DMA_RX_0 Audio Mixer MultiMedia8" value="1" />
+        <ctl name="SEC_MI2S_RX Audio Mixer MultiMedia5" value="1" />
     </path>
 
     <path name="audio-ull-playback handset">
@@ -865,7 +870,7 @@
     </path>
 
     <path name="compress-offload-playback">
-        <ctl name="RX_CDC_DMA_RX_0 Audio Mixer MultiMedia4" value="1" />
+        <ctl name="SEC_MI2S_RX Audio Mixer MultiMedia5" value="1" />
     </path>
 
     <path name="compress-offload-playback handset">
@@ -990,7 +995,7 @@
     </path>
 
     <path name="compress-offload-playback2">
-        <ctl name="RX_CDC_DMA_RX_0 Audio Mixer MultiMedia7" value="1" />
+        <ctl name="SEC_MI2S_RX Audio Mixer MultiMedia5" value="1" />
     </path>
 
     <path name="compress-offload-playback2 handset">
@@ -1104,7 +1109,7 @@
     </path>
 
     <path name="compress-offload-playback3">
-        <ctl name="RX_CDC_DMA_RX_0 Audio Mixer MultiMedia10" value="1" />
+        <ctl name="SEC_MI2S_RX Audio Mixer MultiMedia5" value="1" />
     </path>
 
     <path name="compress-offload-playback3 handset">
@@ -1217,7 +1222,7 @@
     </path>
 
     <path name="compress-offload-playback4">
-        <ctl name="RX_CDC_DMA_RX_0 Audio Mixer MultiMedia11" value="1" />
+        <ctl name="SEC_MI2S_RX Audio Mixer MultiMedia5" value="1" />
     </path>
 
     <path name="compress-offload-playback4 handset">
@@ -1330,7 +1335,7 @@
     </path>
 
     <path name="compress-offload-playback5">
-        <ctl name="RX_CDC_DMA_RX_0 Audio Mixer MultiMedia12" value="1" />
+        <ctl name="SEC_MI2S_RX Audio Mixer MultiMedia5" value="1" />
     </path>
 
     <path name="compress-offload-playback5 handset">
@@ -1443,7 +1448,7 @@
     </path>
 
     <path name="compress-offload-playback6">
-        <ctl name="RX_CDC_DMA_RX_0 Audio Mixer MultiMedia13" value="1" />
+        <ctl name="SEC_MI2S_RX Audio Mixer MultiMedia5" value="1" />
     </path>
 
     <path name="compress-offload-playback6 handset">
@@ -1556,7 +1561,7 @@
     </path>
 
     <path name="compress-offload-playback7">
-        <ctl name="RX_CDC_DMA_RX_0 Audio Mixer MultiMedia14" value="1" />
+        <ctl name="SEC_MI2S_RX Audio Mixer MultiMedia5" value="1" />
     </path>
 
     <path name="compress-offload-playback7 handset">
@@ -1669,7 +1674,7 @@
     </path>
 
     <path name="compress-offload-playback8">
-        <ctl name="RX_CDC_DMA_RX_0 Audio Mixer MultiMedia15" value="1" />
+        <ctl name="SEC_MI2S_RX Audio Mixer MultiMedia5" value="1" />
     </path>
 
     <path name="compress-offload-playback8 handset">
@@ -1782,7 +1787,7 @@
     </path>
 
     <path name="compress-offload-playback9">
-        <ctl name="RX_CDC_DMA_RX_0 Audio Mixer MultiMedia16" value="1" />
+        <ctl name="SEC_MI2S_RX Audio Mixer MultiMedia5" value="1" />
     </path>
 
     <path name="compress-offload-playback9 handset">
@@ -2534,12 +2539,6 @@
     </path>
 
     <path name="speaker">
-        <ctl name="RX_MACRO RX0 MUX" value="AIF1_PB" />
-        <ctl name="RX_CDC_DMA_RX_0 Channels" value="One" />
-        <ctl name="RX INT0_1 MIX1 INP0" value="RX0" />
-        <ctl name="RX INT0 DEM MUX" value="CLSH_DSM_OUT" />
-        <ctl name="LO_RDAC Switch" value="1" />
-        <ctl name="SpkrMono WSA_RDAC" value="Switch" />
     </path>
 
     <path name="speaker-mono">
