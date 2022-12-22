@@ -131,6 +131,7 @@ BOARD_VENDOR_KERNEL_MODULES += \
     $(KERNEL_MODULES_OUT)/audio_rx_macro.ko \
     $(KERNEL_MODULES_OUT)/audio_tx_macro.ko \
     $(KERNEL_MODULES_OUT)/audio_machine_bengal.ko \
+    $(KERNEL_MODULES_OUT)/audio_tas571x.ko \
     $(KERNEL_MODULES_OUT)/audio_snd_event.ko
 endif
 
@@ -158,6 +159,7 @@ AUDIO_DLKM += audio_va_macro.ko
 AUDIO_DLKM += audio_rx_macro.ko
 AUDIO_DLKM += audio_tx_macro.ko
 AUDIO_DLKM += audio_machine_bengal.ko
+AUDIO_DLKM += audio_tas571x.ko
 AUDIO_DLKM += audio_snd_event.ko
 
 PRODUCT_PACKAGES += $(AUDIO_DLKM)
