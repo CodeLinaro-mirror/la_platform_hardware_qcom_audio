@@ -4,6 +4,8 @@
  *
  * Copyright (C) 2013 The Android Open Source Project
  *
+ * Copyright (c) 2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -108,6 +110,7 @@ enum {
     SND_DEVICE_OUT_VOICE_SPEAKER_STEREO,
     SND_DEVICE_OUT_VOICE_SPEAKER_VBAT,
     SND_DEVICE_OUT_VOICE_SPEAKER_2,
+    SND_DEVICE_OUT_VOICE_SPEAKER_2_VC,
     SND_DEVICE_OUT_VOICE_SPEAKER_2_VBAT,
     SND_DEVICE_OUT_VOICE_HEADPHONES,
     SND_DEVICE_OUT_VOICE_HEADSET,
@@ -323,6 +326,7 @@ enum {
     SND_DEVICE_IN_SPEAKER_QMIC_NS,
     SND_DEVICE_IN_SPEAKER_QMIC_AEC_NS,
     SND_DEVICE_IN_SPEAKER_QMIC_AEC_NS_NN,
+    SND_DEVICE_IN_SPEAKER_QMIC_AEC_NS_NN_VC,
     SND_DEVICE_IN_VOICE_REC_QMIC_FLUENCE,
     SND_DEVICE_IN_THREE_MIC,
     SND_DEVICE_IN_HANDSET_TMIC_FLUENCE_PRO,
