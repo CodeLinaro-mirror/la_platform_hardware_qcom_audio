@@ -6949,7 +6949,8 @@ snd_device_t platform_get_output_snd_device(void *platform, struct stream_out *o
                     else {
                         if (my_data->mono_speaker == SPKR_1)
                             snd_device = SND_DEVICE_OUT_VOICE_SPEAKER;
-                        else if (property_get_bool("persist.vendor.audio.msteams.acdb.enabled", false))
+                        else if (property_get_bool("persist.vendor.audio.msteams.acdb.enabled", false) ||
+                                adev->msteams_cert_cal_on)
                             snd_device = SND_DEVICE_OUT_VOICE_SPEAKER_2_VC;
                         else
                             snd_device = SND_DEVICE_OUT_VOICE_SPEAKER_2;
@@ -7142,8 +7143,9 @@ static snd_device_t get_snd_device_for_voice_comm_ecns_enabled(struct platform_d
         if (my_data->fluence_in_spkr_mode) {
             if ((my_data->fluence_type & FLUENCE_QUAD_MIC) &&
                 (my_data->source_mic_type & SOURCE_QUAD_MIC)) {
-                if (my_data->fluence_nn_enabled &&
-                        property_get_bool("persist.vendor.audio.msteams.acdb.enabled", false))
+                if ((my_data->fluence_nn_enabled) &&
+                        (property_get_bool("persist.vendor.audio.msteams.acdb.enabled", false) ||
+                         adev->msteams_cert_cal_on))
                     snd_device = SND_DEVICE_IN_SPEAKER_QMIC_AEC_NS_NN_VC;
                 else if (my_data->fluence_nn_enabled)
                     snd_device = SND_DEVICE_IN_SPEAKER_QMIC_AEC_NS_NN;
@@ -7206,7 +7208,8 @@ static snd_device_t get_snd_device_for_voice_comm_ecns_disabled(struct platform_
             if (my_data->fluence_in_spkr_mode) {
                 if ((my_data->fluence_type & FLUENCE_QUAD_MIC) &&
                     (my_data->source_mic_type & SOURCE_QUAD_MIC)) {
-                    if (property_get_bool("persist.vendor.audio.msteams.acdb.enabled", false))
+                    if (property_get_bool("persist.vendor.audio.msteams.acdb.enabled", false) ||
+                            adev->msteams_cert_cal_on)
                         snd_device = SND_DEVICE_IN_SPEAKER_QMIC_AEC_NS_NN_VC;
                     else if (my_data->fluence_nn_enabled)
                         snd_device = SND_DEVICE_IN_SPEAKER_QMIC_AEC_NS_NN;
