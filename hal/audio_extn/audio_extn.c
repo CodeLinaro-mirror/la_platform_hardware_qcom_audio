@@ -4,6 +4,8 @@
  *
  * Copyright (C) 2013 The Android Open Source Project
  *
+ * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -3497,7 +3499,8 @@ int audio_extn_hw_loopback_set_param_data(audio_patch_handle_t handle,
 
     switch(param_id) {
         case AUDIO_EXTN_PARAM_LOOPBACK_RENDER_WINDOW:
-            ret = audio_extn_hw_loopback_set_render_window(handle, payload);
+            ret = audio_extn_hw_loopback_set_render_window(handle,
+                    (struct audio_out_render_window_param *)payload);
             break;
         default:
             ALOGE("%s: unsupported param id %d", __func__, param_id);

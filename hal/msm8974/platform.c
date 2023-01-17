@@ -4,6 +4,8 @@
  *
  * Copyright (C) 2013 The Android Open Source Project
  *
+ * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -4673,7 +4675,7 @@ int platform_get_default_app_type(void *platform)
 int platform_get_default_app_type_v2(void *platform, usecase_type_t  type)
 {
     ALOGV("%s: Platform: %p, type: %d", __func__, platform, type);
-    if(type == PCM_CAPTURE)
+    if ((type == PCM_CAPTURE) || (type == TRANSCODE_LOOPBACK_TX))
         return DEFAULT_APP_TYPE_TX_PATH;
     else
         return DEFAULT_APP_TYPE_RX_PATH;
@@ -4985,6 +4987,8 @@ int platform_send_audio_calibration(void *platform, struct audio_usecase *usecas
         snd_device = usecase->in_snd_device;
     else if (usecase->type == TRANSCODE_LOOPBACK_RX)
         snd_device = usecase->out_snd_device;
+    else if (usecase->type == TRANSCODE_LOOPBACK_TX)
+        snd_device = usecase->in_snd_device;
 
     acdb_dev_id = acdb_device_table[platform_get_spkr_prot_snd_device(snd_device)];
     if (acdb_dev_id < 0) {
@@ -8077,6 +8081,7 @@ bool platform_sound_trigger_usecase_needs_event(audio_usecase_t uc_id)
     case USECASE_INCALL_MUSIC_UPLINK:
     case USECASE_INCALL_MUSIC_UPLINK2:
     case USECASE_AUDIO_RECORD_VOIP:
+    case USECASE_AUDIO_TRANSCODE_LOOPBACK_TX:
         needs_event = true;
         break;
     default:

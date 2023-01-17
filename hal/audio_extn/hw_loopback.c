@@ -1,5 +1,6 @@
 /*
 * Copyright (c) 2017-2019, The Linux Foundation. All rights reserved.
+* Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
 *
 * Redistribution and use in source and binary forms, with or without
 * modification, are permitted provided that the following conditions are
@@ -200,7 +201,8 @@ audio_patch_handle_t get_loopback_patch_type(loopback_patch_t*  loopback_patch)
                     if ((source_device & AUDIO_DEVICE_IN_HDMI) ||
                         (source_device & AUDIO_DEVICE_IN_SPDIF) ||
                         (source_device & AUDIO_DEVICE_IN_BLUETOOTH_A2DP) ||
-                        (source_device & AUDIO_DEVICE_IN_HDMI_ARC)) {
+                        (source_device & AUDIO_DEVICE_IN_HDMI_ARC) ||
+                        (source_device & AUDIO_DEVICE_IN_BUILTIN_MIC)) {
 
                        switch (loopback_patch->loopback_source.format) {
                            case AUDIO_FORMAT_PCM:
@@ -215,7 +217,10 @@ audio_patch_handle_t get_loopback_patch_type(loopback_patch_t*  loopback_patch)
                            case AUDIO_FORMAT_AAC_LATM_HE_V2:
                            case AUDIO_FORMAT_SBC:
                               is_source_supported = true;
-                           break;
+                              break;
+                           default:
+                              ALOGE("%s, Unsupported patch source format", __func__);
+                              break;
                        }
                     } else if (source_device & AUDIO_DEVICE_IN_LINE) {
                        is_source_supported = true;
@@ -269,8 +274,6 @@ int32_t release_loopback_session(loopback_patch_t *active_loopback_patch)
     struct audio_usecase *uc_info_rx, *uc_info_tx;
     struct audio_device *adev = audio_loopback_mod->adev;
     struct stream_inout *inout =  &active_loopback_patch->patch_stream;
-    struct audio_port_config *source_patch_config = &active_loopback_patch->
-                                                    loopback_source;
     int32_t pcm_dev_asm_rx_id = platform_get_pcm_device_id(USECASE_AUDIO_TRANSCODE_LOOPBACK_RX,
                                                            PCM_PLAYBACK);
 
@@ -353,7 +356,7 @@ int32_t release_loopback_session(loopback_patch_t *active_loopback_patch)
 }
 
 /* Callback funtion called in the case of failures */
-int loopback_stream_cb(stream_callback_event_t event, void *param, void *cookie)
+int loopback_stream_cb(stream_callback_event_t event, void *param __unused, void *cookie)
 {
     if (event == AUDIO_EXTN_STREAM_CBK_EVENT_ERROR) {
         pthread_mutex_lock(&audio_loopback_mod->lock);
@@ -438,7 +441,7 @@ int audio_extn_hw_loopback_set_render_window(struct audio_hw_device *dev,
 
 #if defined SNDRV_COMPRESS_LATENCY_MODE
 static void transcode_loopback_util_set_latency_mode(
-                             loopback_patch_t *active_loopback_patch,
+                             loopback_patch_t *active_loopback_patch __unused,
                              uint32_t latency_mode)
 {
     struct snd_compr_metadata metadata;
@@ -460,7 +463,7 @@ static void transcode_loopback_util_set_latency_mode(
 /* Create a loopback session based on active loopback patch selected */
 int create_loopback_session(loopback_patch_t *active_loopback_patch)
 {
-    int32_t ret = 0, bits_per_sample;
+    int32_t ret = 0;
     struct audio_usecase *uc_info_rx, *uc_info_tx;
     int32_t pcm_dev_asm_rx_id, pcm_dev_asm_tx_id;
     char dummy_write_buf[64];
@@ -691,7 +694,7 @@ int audio_extn_hw_loopback_create_audio_patch(struct audio_hw_device *dev,
 {
     int status = 0;
     audio_patch_handle_t loopback_patch_id = 0x0;
-    loopback_patch_t loopback_patch, *active_loopback_patch = NULL;
+    loopback_patch_t *active_loopback_patch = NULL;
 
     ALOGV("%s : Create audio patch begin", __func__);
 
@@ -847,7 +850,7 @@ struct audio_port_config* get_port_from_patch_db(port_info_t *port,
 int audio_extn_hw_loopback_get_audio_port(struct audio_hw_device *dev,
                                     struct audio_port *port_in)
 {
-    int status = 0, n=0, patch_num=-1;
+    int status = 0, patch_num=-1;
     port_info_t port_info;
     struct audio_port_config *port_out=NULL;
     ALOGV("%s %d", __func__, __LINE__);
@@ -893,7 +896,7 @@ int audio_extn_hw_loopback_get_audio_port(struct audio_hw_device *dev,
 int audio_extn_hw_loopback_set_audio_port_config(struct audio_hw_device *dev,
                                         const struct audio_port_config *config)
 {
-    int status = 0, n=0, patch_num=-1;
+    int status = 0, patch_num=-1;
     port_info_t port_info;
     struct audio_port_config *port_out=NULL;
     struct audio_device *adev = audio_loopback_mod->adev;
@@ -960,7 +963,7 @@ exit_set_port_config:
 int audio_extn_hw_loopback_init(struct audio_device *adev)
 {
     ALOGV("%s Audio loopback extension initializing", __func__);
-    int ret = 0, size = 0;
+    int ret = 0;
 
     if (audio_loopback_mod != NULL) {
         pthread_mutex_lock(&audio_loopback_mod->lock);
