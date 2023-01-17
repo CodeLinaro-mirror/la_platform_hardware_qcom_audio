@@ -18,7 +18,7 @@
  * limitations under the License.
  *
  * Changes from Qualcomm Innovation Center are provided under the following license:
- * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2022-2023, Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted (subject to the limitations in the
@@ -110,7 +110,7 @@
 #define PLATFORM_INFO_XML_PATH_CSRA8 "/etc/audio_platform_info_csra8.xml"
 #define PLATFORM_INFO_XML_PATH_CSRA8PLUS2 "/etc/audio_platform_info_csra8plus2.xml"
 #define MIXER_XML_PATH_EXTCODEC_I2S "/etc/mixer_paths_extcodec_i2s.xml"
-#define PLATFORM_INFO_XML_PATH_SCUBA_IDP "/etc/audio_platform_info_scubaidp.xml"
+#define PLATFORM_INFO_XML_PATH_SCUBA_IDP "/etc/audio_platform_info_scubaqrd.xml"
 #define PLATFORM_INFO_XML_PATH_SCUBA_QRD "/etc/audio_platform_info_scubaqrd.xml"
 #else
 #define PLATFORM_INFO_XML_PATH_INTCODEC  "/vendor/etc/audio_platform_info_intcodec.xml"
