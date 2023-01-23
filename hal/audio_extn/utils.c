@@ -111,10 +111,12 @@
 #define VNDK_FWK_LIB_PATH "/vendor/lib/libqti_vndfwk_detect.so"
 #endif
 
+#ifdef PLATFORM_AUTO
 /* 24 KHz ECNR support */
 #define ECNS_USE_CASE_ACDB_DEV_ID 95
 #define ECNS_UNSUPPORTED_CAPTURE_SAMPLE_RATE_FOR_ADM 24000
 #define ECNS_SUPPORTED_CAPTURE_SAMPLE_RATE_FOR_ADM 48000
+#endif
 
 typedef struct vndkfwk_s {
     void *lib_handle;
@@ -756,12 +758,14 @@ void audio_extn_utils_update_stream_input_app_type_cfg(void *platform,
     app_type_cfg->app_type = platform_get_default_app_type_v2(platform, PCM_CAPTURE);
     app_type_cfg->sample_rate = CODEC_BACKEND_DEFAULT_SAMPLE_RATE;
     app_type_cfg->bit_width = 16;
+#ifdef PLATFORM_AUTO
     if ((flags & AUDIO_INPUT_FLAG_TIMESTAMP) == 0 &&
         (flags & AUDIO_INPUT_FLAG_COMPRESS) == 0 &&
         (flags & AUDIO_INPUT_FLAG_FAST) != 0) {
         // Support low latency record for different sample rates
         app_type_cfg->sample_rate = sample_rate;
     }
+#endif
 }
 
 void audio_extn_utils_update_stream_output_app_type_cfg(void *platform,
@@ -939,10 +943,6 @@ void audio_extn_utils_update_stream_app_type_cfg_for_usecase(
         ALOGV("%s Selected apptype: %d", __func__, usecase->stream.out->app_type_cfg.app_type);
         break;
     case PCM_CAPTURE:
-        if (usecase->id == USECASE_AUDIO_RECORD_VOIP
-                              || usecase->id == USECASE_AUDIO_RECORD_VOIP_LOW_LATENCY)
-            usecase->stream.in->app_type_cfg.app_type = APP_TYPE_VOIP_AUDIO;
-        else
             audio_extn_utils_update_stream_input_app_type_cfg(adev->platform,
                                                 &adev->streams_input_cfg_list,
                                                 &usecase->stream.in->device_list,
@@ -1044,9 +1044,9 @@ static int set_stream_app_type_mixer_ctrl(struct audio_device *adev,
                                           snd_device_t snd_device)
 {
 
-    char mixer_ctl_name[MAX_LENGTH_MIXER_CONTROL_IN_INT];
+    char mixer_ctl_name[MAX_LENGTH_MIXER_CONTROL_IN_INT] = {0};
     struct mixer_ctl *ctl;
-    int app_type_cfg[MAX_LENGTH_MIXER_CONTROL_IN_INT], len = 0, rc = 0;
+    int app_type_cfg[MAX_LENGTH_MIXER_CONTROL_IN_INT] = {0}, len = 0, rc = 0;
     int snd_device_be_idx = -1;
 
     if (stream_type == PCM_PLAYBACK) {
@@ -1321,7 +1321,9 @@ int audio_extn_utils_get_app_sample_rate_for_device(
 {
     char value[PROPERTY_VALUE_MAX] = {0};
     int sample_rate = DEFAULT_OUTPUT_SAMPLING_RATE;
+#ifdef PLATFORM_AUTO
     int acdb_dev_id;
+#endif
 
     if ((usecase->type == PCM_PLAYBACK) && (usecase->stream.out != NULL)) {
         property_get("vendor.audio.playback.mch.downsample",value,"");
@@ -1362,7 +1364,9 @@ int audio_extn_utils_get_app_sample_rate_for_device(
             (compare_device_type(&usecase->stream.out->device_list,AUDIO_DEVICE_OUT_SPEAKER))) {
                 if (!((compare_device_type(&usecase->device_list, AUDIO_DEVICE_OUT_BUS)) && ((usecase->stream.out->flags &
                     (audio_output_flags_t)AUDIO_OUTPUT_FLAG_SYS_NOTIFICATION) || (usecase->stream.out->flags &
-                    (audio_output_flags_t)AUDIO_OUTPUT_FLAG_PHONE)))) {
+                    (audio_output_flags_t)AUDIO_OUTPUT_FLAG_PHONE) || (usecase->stream.out->flags &
+                    (audio_output_flags_t)AUDIO_OUTPUT_FLAG_NAV_GUIDANCE) || (usecase->stream.out->flags &
+                    (audio_output_flags_t)AUDIO_OUTPUT_FLAG_ALERTS)))) {
                     /* Reset to default if no native stream is active or default device is speaker*/
                     usecase->stream.out->app_type_cfg.sample_rate = DEFAULT_OUTPUT_SAMPLING_RATE;
                 }
@@ -1404,11 +1408,13 @@ int audio_extn_utils_get_app_sample_rate_for_device(
         /* ECNR module in DSP does not support 24 KHz sample rate. As a workaround,
            run ADM at 48 KHz when ECNR is enabled in ACDB topology (e.g. device id = 95)
         */
+#ifdef PLATFORM_AUTO
         acdb_dev_id = platform_get_snd_device_acdb_id(snd_device);
         if (sample_rate == ECNS_UNSUPPORTED_CAPTURE_SAMPLE_RATE_FOR_ADM && acdb_dev_id == ECNS_USE_CASE_ACDB_DEV_ID) {
             sample_rate = ECNS_SUPPORTED_CAPTURE_SAMPLE_RATE_FOR_ADM;
             ALOGD("%s: update sample rate from 24K to 48K to support ECNR in PCM_CAPTURE, sample_rate=%d",__func__,sample_rate);
         }
+#endif
     } else if (usecase->type == TRANSCODE_LOOPBACK_RX) {
         sample_rate = usecase->stream.inout->out_config.sample_rate;
     }
@@ -1419,7 +1425,7 @@ static int send_app_type_cfg_for_device(struct audio_device *adev,
                                         struct audio_usecase *usecase,
                                         int split_snd_device)
 {
-    char mixer_ctl_name[MAX_LENGTH_MIXER_CONTROL_IN_INT];
+    char mixer_ctl_name[MAX_LENGTH_MIXER_CONTROL_IN_INT] = {0};
     size_t app_type_cfg[MAX_LENGTH_MIXER_CONTROL_IN_INT] = {0};
     int len = 0, rc;
     struct mixer_ctl *ctl;
@@ -2498,6 +2504,7 @@ int audio_extn_utils_compress_get_dsp_latency(struct stream_out *out)
 {
     int ret = -EINVAL;
     struct snd_compr_metadata metadata;
+    memset(&metadata, 0, sizeof(struct snd_compr_metadata));
     int delay_ms = COMPRESS_OFFLOAD_PLAYBACK_LATENCY;
 
     /* override the latency for pcm offload use case */
@@ -2545,6 +2552,7 @@ int audio_extn_utils_compress_get_dsp_latency(struct stream_out *out __unused)
 int audio_extn_utils_compress_set_render_mode(struct stream_out *out)
 {
     struct snd_compr_metadata metadata;
+    memset(&metadata, 0, sizeof(struct snd_compr_metadata));
     int ret = -EINVAL;
 
     if (!(is_offload_usecase(out->usecase))) {
@@ -2589,6 +2597,7 @@ int audio_extn_utils_compress_set_clk_rec_mode(
             struct audio_usecase *usecase)
 {
     struct snd_compr_metadata metadata;
+    memset(&metadata, 0, sizeof(struct snd_compr_metadata));
     struct stream_out *out = NULL;
     int ret = -EINVAL;
 
@@ -2658,6 +2667,7 @@ int audio_extn_utils_compress_set_render_window(
             struct audio_out_render_window_param *render_window)
 {
     struct snd_compr_metadata metadata;
+    memset(&metadata, 0, sizeof(struct snd_compr_metadata));
     int ret = -EINVAL;
 
     if(render_window == NULL) {
@@ -2721,6 +2731,7 @@ int audio_extn_utils_compress_set_start_delay(
             struct audio_out_start_delay_param *delay_param)
 {
     struct snd_compr_metadata metadata;
+    memset(&metadata, 0, sizeof(struct snd_compr_metadata));
     int ret = -EINVAL;
 
     if(delay_param == NULL) {
@@ -2780,6 +2791,7 @@ int audio_extn_utils_compress_get_dsp_presentation_pos(struct stream_out *out,
     uint64_t *val = NULL;
     uint64_t time = 0;
     struct snd_compr_metadata metadata;
+    memset(&metadata, 0, sizeof(struct snd_compr_metadata));
 
     ALOGV("%s:: Quering DSP position with clock id %d",__func__, clock_id);
     metadata.key = SNDRV_COMPRESS_DSP_POSITION;
@@ -2817,6 +2829,7 @@ int audio_extn_utils_pcm_get_dsp_presentation_pos(struct stream_out *out,
     int ret = -EINVAL;
     uint64_t time = 0;
     struct snd_pcm_prsnt_position prsnt_position;
+    memset(&prsnt_position, 0, sizeof(struct snd_pcm_prsnt_position));
 
     ALOGV("%s:: Quering DSP position with clock id %d",__func__, clock_id);
     prsnt_position.clock_id = clock_id;
@@ -3003,6 +3016,7 @@ int audio_extn_utils_compress_enable_drift_correction(
         struct audio_out_enable_drift_correction *drift)
 {
     struct snd_compr_metadata metadata;
+    memset(&metadata, 0, sizeof(struct snd_compr_metadata));
     int ret = -EINVAL;
 
     if(drift == NULL) {
@@ -3052,6 +3066,7 @@ int audio_extn_utils_compress_correct_drift(
         struct audio_out_correct_drift *drift_param)
 {
     struct snd_compr_metadata metadata;
+    memset(&metadata, 0, sizeof(struct snd_compr_metadata));
     int ret = -EINVAL;
 
     if (drift_param == NULL) {
