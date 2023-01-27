@@ -100,7 +100,9 @@ AUDIO_HARDWARE += audio.a2dp.default
 endif
 AUDIO_HARDWARE += audio.usb.default
 AUDIO_HARDWARE += audio.r_submix.default
+ifneq ($(TARGET_BOARD_PLATFORM)$(TARGET_BOARD_SUFFIX), msmnile_gvmq)
 AUDIO_HARDWARE += audio.primary.msmnile
+endif
 
 #HAL Wrapper
 AUDIO_WRAPPER := libqahw
