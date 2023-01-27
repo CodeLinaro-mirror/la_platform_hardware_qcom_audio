@@ -35,7 +35,7 @@
  * limitations under the License.
  *
  * Changes from Qualcomm Innovation Center are provided under the following license:
- * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2022-2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  */
 
@@ -6428,7 +6428,7 @@ static ssize_t in_read(struct audio_stream_in *stream, void *buffer,
      * usecases so that other clients do not have access to voice recognition
      * data.
      */
-    if ((ret == 0 &&
+    if ((ret == 0 &&  voice_get_mic_mute(adev, in->usecase) &&
          !voice_is_in_call_rec_stream(in) &&
          in->usecase != USECASE_AUDIO_RECORD_AFE_PROXY) ||
         (adev->num_va_sessions &&
