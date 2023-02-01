@@ -1,5 +1,5 @@
 /*
-* Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+* Copyright (c) 2021, 2023 Qualcomm Innovation Center, Inc. All rights reserved.
 *
 * Redistribution and use in source and binary forms, with or without
 * modification, are permitted provided that the following conditions are
@@ -77,6 +77,19 @@ struct source_track_meta {
     struct   timespec ts;
 } __attribute__((packed));
 
+struct fluence_nn_nnvad_monitor_param {
+    int32_t speech_probability;
+    int32_t nspp_vad_flag;
+    int32_t asln_vad_flag;
+} __attribute__((packed));
+
+struct fluence_nn_nnvad_monitor_meta {
+    int32_t speech_probability;
+    int32_t nspp_vad_flag;
+    int32_t asln_vad_flag;
+    struct   timespec ts;
+} __attribute__((packed));
+
 static int get_sourcetrack_metadata(struct source_track_meta *source_track_meta,
                                                          struct mixer_ctl *ctl);
 
@@ -86,4 +99,6 @@ static int get_soundfocus_metadata(struct sound_focus_meta *sound_focus_meta,
 static int set_soundfocus_metadata(struct sound_focus_meta *sound_focus_meta,
                                                       struct mixer_ctl *ctl);
 
+static int get_fnn_metadata(struct fluence_nn_nnvad_monitor_meta *fnn_meta,
+                                                         struct mixer_ctl *ctl);
 #endif

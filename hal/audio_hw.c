@@ -2,8 +2,6 @@
  * Copyright (c) 2013-2022, The Linux Foundation. All rights reserved.
  * Not a Contribution.
  *
- * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
- *
  * Copyright (C) 2013 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -36,7 +34,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2022-2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted (subject to the limitations in the disclaimer
@@ -491,6 +489,7 @@ struct string_to_enum {
 };
 
 static const struct string_to_enum channels_name_to_enum_table[] = {
+    STRING_TO_ENUM(AUDIO_CHANNEL_OUT_MONO),
     STRING_TO_ENUM(AUDIO_CHANNEL_OUT_STEREO),
     STRING_TO_ENUM(AUDIO_CHANNEL_OUT_2POINT1),
     STRING_TO_ENUM(AUDIO_CHANNEL_OUT_QUAD),
@@ -3748,6 +3747,7 @@ static int stop_output_stream(struct stream_out *out)
         ALOGV("Disable passthrough , reset mixer to pcm");
         /* NO_PASSTHROUGH */
         out->compr_config.codec->compr_passthr = 0;
+        out->is_iec61937_info_available = false;
         audio_extn_passthru_on_stop(out);
         audio_extn_dolby_set_dap_bypass(adev, DAP_STATE_ON);
     }
@@ -4939,6 +4939,7 @@ static int out_set_parameters(struct audio_stream *stream, const char *kvpairs)
                                            out->extconn.cs.stream) != 0)) {
             out->extconn.cs.controller = out->extconn.cs.stream = -1;
             adev->ext_controller = out->extconn.cs.controller;
+            adev->ext_stream = out->extconn.cs.stream;
             val = AUDIO_DEVICE_OUT_SPEAKER;
         }
         /*
@@ -5880,6 +5881,7 @@ static ssize_t out_write(struct audio_stream_out *stream, const void *buffer,
     if ((out->devices & AUDIO_DEVICE_OUT_AUX_DIGITAL) &&
          !out->is_iec61937_info_available) {
 
+        channels = platform_edid_get_max_channels(out->dev->platform);
         if (!audio_extn_passthru_is_passthrough_stream(out)) {
             out->is_iec61937_info_available = true;
         } else if (audio_extn_passthru_is_enabled()) {
@@ -8718,6 +8720,16 @@ static int adev_set_parameters(struct audio_hw_device *dev, const char *kvpairs)
         }
     }
 
+    ret = str_parms_get_str(parms, "msteams_cert_calibration", value, sizeof(value));
+    if (ret >= 0) {
+        /* When set to false, HAL should disable EC and NS */
+        if (strcmp(value, AUDIO_PARAMETER_VALUE_ON) == 0){
+            adev->msteams_cert_cal_on = true;
+        } else {
+            adev->msteams_cert_cal_on = false;
+        }
+    }
+
     ret = str_parms_get_str(parms, "A2dpSuspended", value, sizeof(value));
     if (ret>=0) {
         if (!strncmp(value, "false", 5) &&
@@ -10254,6 +10266,7 @@ static int adev_open(const hw_module_t *module, const char *name,
     adev->acdb_settings = TTY_MODE_OFF;
     adev->allow_afe_proxy_usage = true;
     adev->bt_sco_on = false;
+    adev->msteams_cert_cal_on = false;
     /* adev->cur_hdmi_channels = 0;  by calloc() */
     adev->snd_dev_ref_cnt = calloc(SND_DEVICE_MAX, sizeof(int));
     /* Init audio and voice feature */

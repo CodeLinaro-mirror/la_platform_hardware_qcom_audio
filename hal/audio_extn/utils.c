@@ -1008,7 +1008,7 @@ static int set_stream_app_type_mixer_ctrl(struct audio_device *adev,
 
     char mixer_ctl_name[MAX_LENGTH_MIXER_CONTROL_IN_INT];
     struct mixer_ctl *ctl;
-    int app_type_cfg[MAX_LENGTH_MIXER_CONTROL_IN_INT], len = 0, rc = 0;
+    ssize_t app_type_cfg[MAX_LENGTH_MIXER_CONTROL_IN_INT], len = 0, rc = 0;
     int snd_device_be_idx = -1;
 
     if (stream_type == PCM_PLAYBACK) {
@@ -1089,50 +1089,58 @@ static int audio_extn_utils_send_app_type_cfg_hfp(struct audio_device *adev,
         goto exit_send_app_type_cfg;
     }
 
+    /*
+     * Value of afe_loopback gets read  based on the property defined in
+     * audio_platform_info.xml. If afe loopback is set then do not execute
+     * session 1 path as app type mixer control will not be created for
+     * afe loopback
+     */
+
     if (usecase->type == PCM_HFP_CALL) {
+        if (!(platform_get_is_afe_loopback_enabled(adev->platform))) {
+            /* config HFP session:1 playback path */
+            if (is_bus_dev_usecase) {
+                app_type = usecase->out_app_type_cfg.app_type;
+                sample_rate= usecase->out_app_type_cfg.sample_rate;
+            } else {
+                snd_device = SND_DEVICE_NONE; // use legacy behavior
+                app_type = platform_get_default_app_type_v2(adev->platform, PCM_PLAYBACK);
+                sample_rate= CODEC_BACKEND_DEFAULT_SAMPLE_RATE;
+            }
+            rc = set_stream_app_type_mixer_ctrl(adev, pcm_device_id, app_type,
+                                                acdb_dev_id, sample_rate,
+                                                PCM_PLAYBACK,
+                                                snd_device);
+            if (rc < 0)
+                ALOGE("%s: config HFP session:1 playback path Failed", __func__);
 
-        /* config HFP session:1 playback path */
-        if (is_bus_dev_usecase) {
-            app_type = usecase->out_app_type_cfg.app_type;
-            sample_rate= usecase->out_app_type_cfg.sample_rate;
-        } else {
-            snd_device = SND_DEVICE_NONE; // use legacy behavior
-            app_type = platform_get_default_app_type_v2(adev->platform, PCM_PLAYBACK);
-            sample_rate= CODEC_BACKEND_DEFAULT_SAMPLE_RATE;
-        }
-        rc = set_stream_app_type_mixer_ctrl(adev, pcm_device_id, app_type,
-                                            acdb_dev_id, sample_rate,
-                                            PCM_PLAYBACK,
-                                            snd_device);
-        if (rc < 0)
-            ALOGE("%s: config HFP session:1 playback path Failed", __func__);
+            /* config HFP session:1 capture path */
+            if (is_bus_dev_usecase) {
+                snd_device = usecase->in_snd_device;
+                pcm_device_id = platform_get_pcm_device_id(usecase->id, PCM_CAPTURE);
+                acdb_dev_id = platform_get_snd_device_acdb_id(snd_device);
+                if (acdb_dev_id < 0) {
+                    ALOGE("%s: Couldn't get the acdb dev id", __func__);
+                    rc = -EINVAL;
+                    goto exit_send_app_type_cfg;
+                }
+                app_type = usecase->in_app_type_cfg.app_type;
+                sample_rate= usecase->in_app_type_cfg.sample_rate;
+            } else {
+                snd_device = SND_DEVICE_NONE; // use legacy behavior
+                app_type = platform_get_default_app_type_v2(adev->platform, PCM_CAPTURE);
+            }
+            rc = set_stream_app_type_mixer_ctrl(adev, pcm_device_id, app_type,
+                                                acdb_dev_id, sample_rate,
+                                                PCM_CAPTURE,
+                                                snd_device);
+            if (rc < 0)
+                ALOGE("%s: config HFP session:1 capture path Failed", __func__);
 
-        /* config HFP session:1 capture path */
-        if (is_bus_dev_usecase) {
-            snd_device = usecase->in_snd_device;
-            pcm_device_id = platform_get_pcm_device_id(usecase->id, PCM_CAPTURE);
-            acdb_dev_id = platform_get_snd_device_acdb_id(snd_device);
-            if (acdb_dev_id < 0) {
-                ALOGE("%s: Couldn't get the acdb dev id", __func__);
-                rc = -EINVAL;
+            if (is_bus_dev_usecase) {
+                ALOGD("%s: config HFP session:1 Bus Dev Usecase", __func__);
                 goto exit_send_app_type_cfg;
             }
-            app_type = usecase->in_app_type_cfg.app_type;
-            sample_rate= usecase->in_app_type_cfg.sample_rate;
-        } else {
-            snd_device = SND_DEVICE_NONE; // use legacy behavior
-            app_type = platform_get_default_app_type_v2(adev->platform, PCM_CAPTURE);
-        }
-        rc = set_stream_app_type_mixer_ctrl(adev, pcm_device_id, app_type,
-                                            acdb_dev_id, sample_rate,
-                                            PCM_CAPTURE,
-                                            snd_device);
-        if (rc < 0)
-            ALOGE("%s: config HFP session:1 capture path Failed", __func__);
-
-        if (is_bus_dev_usecase) {
-            ALOGD("%s: config HFP session:1 Bus Dev Usecase", __func__);
-            goto exit_send_app_type_cfg;
         }
 
         /* config HFP session:2 capture path */
@@ -1147,7 +1155,7 @@ static int audio_extn_utils_send_app_type_cfg_hfp(struct audio_device *adev,
         app_type = platform_get_default_app_type_v2(adev->platform, PCM_CAPTURE);
         rc = set_stream_app_type_mixer_ctrl(adev, pcm_device_id, app_type,
                                             acdb_dev_id, sample_rate, PCM_CAPTURE,
-                                            snd_device);
+                                            usecase->in_snd_device);
         if (rc < 0)
             ALOGE("%s: config HFP session:2 capture path Failed", __func__);
 
@@ -1155,7 +1163,7 @@ static int audio_extn_utils_send_app_type_cfg_hfp(struct audio_device *adev,
         app_type = platform_get_default_app_type_v2(adev->platform, PCM_PLAYBACK);
         rc = set_stream_app_type_mixer_ctrl(adev, pcm_device_id, app_type,
                                             acdb_dev_id, sample_rate,
-                                            PCM_PLAYBACK, SND_DEVICE_NONE);
+                                            PCM_PLAYBACK, usecase->out_snd_device);
         if (rc < 0)
             ALOGE("%s: config HFP session:2 playback path Failed", __func__);
     }
@@ -2011,8 +2019,15 @@ void audio_extn_utils_send_audio_calibration(struct audio_device *adev,
                          usecase->stream.in->app_type_cfg.app_type,
                          usecase->stream.in->app_type_cfg.sample_rate);
     } else if ((type == PCM_HFP_CALL) || (type == PCM_CAPTURE) ||
-               (type == TRANSCODE_LOOPBACK_RX && usecase->stream.inout != NULL) ||
-               (type == ICC_CALL) || (type == SYNTH_LOOPBACK)) {
+              (type == TRANSCODE_LOOPBACK_RX && usecase->stream.inout != NULL)) {
+#ifdef ENABLE_HFP_CALIBRATION
+        platform_send_audio_calibration_hfp(adev->platform, usecase->in_snd_device);
+#else
+        platform_send_audio_calibration(adev->platform, usecase,
+                         platform_get_default_app_type_v2(adev->platform, usecase->type),
+                         48000);
+#endif
+    } else if (type == TRANSCODE_LOOPBACK_RX && usecase->stream.inout != NULL) {
         platform_send_audio_calibration(adev->platform, usecase,
                          platform_get_default_app_type_v2(adev->platform, usecase->type),
                          48000);

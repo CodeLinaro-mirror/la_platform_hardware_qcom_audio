@@ -2,8 +2,6 @@
  * Copyright (c) 2013-2022, The Linux Foundation. All rights reserved.
  * Not a contribution.
  *
- * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
- *
  * Copyright (C) 2013 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -36,7 +34,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2022-2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted (subject to the limitations in the disclaimer
@@ -816,6 +814,7 @@ struct audio_device {
     bool vr_audio_mode_enabled;
     uint32_t dsp_bit_width_enforce_mode;
     bool bt_sco_on;
+    bool msteams_cert_cal_on;
     struct audio_device_config_param *device_cfg_params;
     unsigned int interactive_usecase_state;
     bool dp_allowed_for_voice;

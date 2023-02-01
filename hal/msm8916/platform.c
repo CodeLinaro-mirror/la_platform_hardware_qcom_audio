@@ -3891,6 +3891,12 @@ int platform_send_audio_calibration(void *platform, struct audio_usecase *usecas
     return 0;
 }
 
+int platform_send_audio_calibration_hfp(void *platform __unused,
+                                       snd_device_t snd_device __unused)
+{
+    return 0;
+}
+
 int platform_switch_voice_call_device_pre(void *platform)
 {
     struct platform_data *my_data = (struct platform_data *)platform;
@@ -7852,6 +7858,11 @@ int platform_edid_get_highest_supported_sr(void *platform)
     }
 
     return 0;
+}
+
+int platform_get_is_afe_loopback_enabled(void *platform __unused)
+{
+   return 0;
 }
 
 int platform_set_edid_channels_configuration(void *platform, int channels, int backend_idx __unused, snd_device_t snd_device __unused) {

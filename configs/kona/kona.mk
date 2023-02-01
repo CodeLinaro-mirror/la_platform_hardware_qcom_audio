@@ -232,6 +232,9 @@ persist.vendor.audio.ambisonic.auto.profile=false
 PRODUCT_PROPERTY_OVERRIDES += \
 persist.vendor.audio.apptype.multirec.enabled=false
 
+PRODUCT_PROPERTY_OVERRIDES += \
+persist.vendor.audio.msteams.acdb.enabled=false
+
 ##fluencetype can be "fluence" or "fluencepro" or "none"
 PRODUCT_PROPERTY_OVERRIDES += \
 ro.vendor.audio.sdk.fluencetype=fluencepro\
@@ -303,7 +306,7 @@ vendor.audio.offload.multiple.enabled=false
 
 #Disable Compress passthrough playback
 PRODUCT_PROPERTY_OVERRIDES += \
-vendor.audio.offload.passthrough=false
+vendor.audio.offload.passthrough=true
 
 #Disable surround sound recording
 PRODUCT_PROPERTY_OVERRIDES += \
