@@ -264,8 +264,10 @@ struct pcm_config pcm_config_mmap_capture = {
 #define AFE_PROXY_CHANNEL_COUNT 2
 #define AFE_PROXY_SAMPLING_RATE 48000
 
-#define AFE_PROXY_PLAYBACK_PERIOD_SIZE  768
+#define AFE_PROXY_PLAYBACK_PERIOD_SIZE  320
 #define AFE_PROXY_PLAYBACK_PERIOD_COUNT 4
+
+#define AFE_PROXY_PLAYBACK_DURATION 20
 
 struct pcm_config pcm_config_afe_proxy_playback = {
     .channels = AFE_PROXY_CHANNEL_COUNT,
@@ -7330,7 +7332,8 @@ int adev_open_output_stream(struct audio_hw_device *dev,
                 __func__, ret);
             goto error_open;
         }
-    } else if (out->devices == AUDIO_DEVICE_OUT_TELEPHONY_TX) {
+    } else if (out->devices == AUDIO_DEVICE_OUT_PROXY ||
+                 out->devices == AUDIO_DEVICE_OUT_TELEPHONY_TX) {
         switch (config->sample_rate) {
             case 0:
                 out->sample_rate = AFE_PROXY_SAMPLING_RATE;
@@ -7344,21 +7347,6 @@ int adev_open_output_stream(struct audio_hw_device *dev,
                 ALOGE("%s: Unsupported sampling rate %d for Telephony TX", __func__,
                       config->sample_rate);
                 config->sample_rate = AFE_PROXY_SAMPLING_RATE;
-                ret = -EINVAL;
-                break;
-        }
-        //FIXME: add support for MONO stream configuration when audioflinger mixer supports it
-        switch (config->channel_mask) {
-            case AUDIO_CHANNEL_NONE:
-                out->channel_mask = AUDIO_CHANNEL_OUT_STEREO;
-                break;
-            case AUDIO_CHANNEL_OUT_STEREO:
-                out->channel_mask = config->channel_mask;
-                break;
-            default:
-                ALOGE("%s: Unsupported channel mask %#x for Telephony TX", __func__,
-                      config->channel_mask);
-                config->channel_mask = AUDIO_CHANNEL_OUT_STEREO;
                 ret = -EINVAL;
                 break;
         }
@@ -7385,7 +7373,13 @@ int adev_open_output_stream(struct audio_hw_device *dev,
         out->config.channels =
                 audio_channel_count_from_out_mask(out->channel_mask);
         out->config.format = pcm_format_from_audio_format(out->format);
-        adev->voice_tx_output = out;
+        out->config.period_size = get_output_period_size(config->sample_rate, out->format,
+                                             out->config.channels, AFE_PROXY_PLAYBACK_DURATION);
+        if (out->config.period_size <= 0) {
+            ALOGE("Invalid configuration period size is not valid");
+            ret = -EINVAL;
+            goto error_open;
+        }
     } else {
         unsigned int channels = 0;
         /*Update config params to default if not set by the caller*/
