@@ -28,7 +28,7 @@
 
  * Changes from Qualcomm Innovation Center are provided under the following license:
 
- * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2022, 2023 Qualcomm Innovation Center, Inc. All rights reserved.
 
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted (subject to the limitations in the
@@ -391,11 +391,21 @@ static void process_pcm_id(const XML_Char **attr)
 
     int id = atoi((char *)attr[5]);
 
+#ifdef PLATFORM_AUTO
     if (platform_set_usecase_pcm_id(index, type, id) < 0) {
         ALOGE("%s: usecase %s type %d id %d was not set!",
               __func__, attr[1], type, id);
         goto done;
     }
+#else
+    int fe_id = -1;
+
+    if (platform_set_usecase_pcm_id(index, type, id) < 0) {
+        ALOGE("%s: usecase %s type %d id %d was not set!",
+              __func__, attr[1], type, id);
+        goto done;
+    }
+#endif
 
 done:
     return;
@@ -1671,7 +1681,9 @@ int platform_info_init(const char *filename, void *platform, caller_t caller_typ
 
     my_data.caller = caller_type;
     my_data.platform = platform;
-    my_data.kvpairs = str_parms_create();
+
+    if (!my_data.kvpairs)
+        my_data.kvpairs = str_parms_create();
 
     XML_SetElementHandler(parser, start_tag, end_tag);
 
@@ -1709,4 +1721,12 @@ err_close_file:
 done:
     pthread_mutex_unlock(&parser_lock);
     return ret;
+}
+
+void platform_info_deinit()
+{
+    if (my_data.kvpairs) {
+        str_parms_destroy(my_data.kvpairs);
+        my_data.kvpairs = NULL;
+    }
 }
