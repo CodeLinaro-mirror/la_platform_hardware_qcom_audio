@@ -17,7 +17,7 @@
  * limitations under the License.
  *
  * Changes from Qualcomm Innovation Center are provided under the following license:
- * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2022-2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  */
 
@@ -41,6 +41,12 @@
 #include "voice_extn.h"
 #include "adsp_hdlr.h"
 #include "audio_feature_manager.h"
+
+#ifdef VERY_VERY_VERBOSE_LOGGING
+#define ALOGVV ALOGV
+#else
+#define ALOGVV(a...) do { } while(0)
+#endif
 
 #ifdef DYNAMIC_LOG_ENABLED
 #include <log_xml_parser.h>
@@ -516,7 +522,7 @@ int voice_extn_get_session_from_use_case(struct audio_device *adev,
         break;
 
     default:
-        ALOGE("%s: Invalid usecase_id:%d\n", __func__, usecase_id);
+        ALOGVV("%s: Invalid usecase_id:%d\n", __func__, usecase_id);
         *session = NULL;
         return -EINVAL;
     }
