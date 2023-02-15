@@ -25,6 +25,10 @@
 * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
 * OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
 * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+*
+* Changes from Qualcomm Innovation Center are provided under the following license:
+* Copyright (c) 2023 Qualcomm Innovation Center, Inc. All rights reserved.
+*
 */
 
 #define LOG_TAG "qahw"
@@ -614,6 +618,12 @@ ssize_t qahw_out_write_l(qahw_stream_handle_t *out_handle,
 
     /*TBD:: validate other meta data parameters */
     pthread_mutex_lock(&qahw_stream_out->lock);
+
+    if (!is_valid_qahw_stream_l((void *)qahw_stream_out, STREAM_DIR_OUT)) {
+        ALOGE("%s::Invalid out handle %p", __func__, out_handle);
+        goto exitLock;
+    }
+
     out = qahw_stream_out->stream;
     if (qahw_stream_out->qahwi_out_write_v2) {
         rc = qahw_stream_out->qahwi_out_write_v2(out, out_buf->buffer,
@@ -626,6 +636,7 @@ ssize_t qahw_out_write_l(qahw_stream_handle_t *out_handle,
         rc = -ENOSYS;
         ALOGW("%s not supported", __func__);
     }
+exitLock:
     pthread_mutex_unlock(&qahw_stream_out->lock);
 exit:
     return rc;
