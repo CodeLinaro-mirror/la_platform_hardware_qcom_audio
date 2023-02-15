@@ -232,6 +232,9 @@ persist.vendor.audio.ambisonic.auto.profile=false
 PRODUCT_PROPERTY_OVERRIDES += \
 persist.vendor.audio.apptype.multirec.enabled=false
 
+PRODUCT_PROPERTY_OVERRIDES += \
+persist.vendor.audio.msteams.acdb.enabled=false
+
 ##fluencetype can be "fluence" or "fluencepro" or "none"
 PRODUCT_PROPERTY_OVERRIDES += \
 ro.vendor.audio.sdk.fluencetype=fluencepro\

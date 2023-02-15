@@ -1,6 +1,5 @@
 /*
  * Copyright (c) 2015-2019, The Linux Foundation. All rights reserved.
- * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -26,6 +25,10 @@
  * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
  * OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
  * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ *
+ * Changes from Qualcomm Innovation Center are provided under the following license:
+ * Copyright (c) 2022-2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 #define LOG_TAG "source_track"
 /*#define LOG_NDEBUG 0*/
@@ -168,6 +171,7 @@ static bool is_stt_supported_snd_device(snd_device_t snd_device)
     case SND_DEVICE_IN_VOICE_SPEAKER_QMIC:
     case SND_DEVICE_IN_HANDSET_GENERIC_QMIC:
     case SND_DEVICE_IN_SPEAKER_QMIC_AEC_NS_NN:
+    case SND_DEVICE_IN_SPEAKER_QMIC_AEC_NS_NN_VC:
     case SND_DEVICE_IN_HANDSET_QMIC_NS_NN:
         ret = true;
         break;

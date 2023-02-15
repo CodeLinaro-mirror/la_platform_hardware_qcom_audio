@@ -15,6 +15,10 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
+ * Changes from Qualcomm Innovation Center are provided under the following license:
+ * Copyright (c) 2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 #ifndef QCOM_AUDIO_PLATFORM_H
@@ -108,6 +112,7 @@ enum {
     SND_DEVICE_OUT_VOICE_SPEAKER_STEREO,
     SND_DEVICE_OUT_VOICE_SPEAKER_VBAT,
     SND_DEVICE_OUT_VOICE_SPEAKER_2,
+    SND_DEVICE_OUT_VOICE_SPEAKER_2_VC,
     SND_DEVICE_OUT_VOICE_SPEAKER_2_VBAT,
     SND_DEVICE_OUT_VOICE_HEADPHONES,
     SND_DEVICE_OUT_VOICE_HEADSET,
@@ -323,6 +328,7 @@ enum {
     SND_DEVICE_IN_SPEAKER_QMIC_NS,
     SND_DEVICE_IN_SPEAKER_QMIC_AEC_NS,
     SND_DEVICE_IN_SPEAKER_QMIC_AEC_NS_NN,
+    SND_DEVICE_IN_SPEAKER_QMIC_AEC_NS_NN_VC,
     SND_DEVICE_IN_VOICE_REC_QMIC_FLUENCE,
     SND_DEVICE_IN_THREE_MIC,
     SND_DEVICE_IN_HANDSET_TMIC_FLUENCE_PRO,

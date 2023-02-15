@@ -1,6 +1,6 @@
 /*
 * Copyright (c) 2015-2019, The Linux Foundation. All rights reserved.
-* Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+* Copyright (c) 2021, 2023 Qualcomm Innovation Center, Inc. All rights reserved.
 *
 * Redistribution and use in source and binary forms, with or without
 * modification, are permitted provided that the following conditions are
@@ -44,6 +44,45 @@
 /*#define LOG_NDEBUG 0*/
 
 #define nullptr NULL
+
+static int get_fnn_metadata(struct fluence_nn_nnvad_monitor_meta *fnn_meta,
+                                                         struct mixer_ctl *ctl) {
+
+    int ret = 0, count;
+    struct timespec ts;
+
+    if (!ctl) {
+        ALOGE("%s: not a valid ctrl", __func__);
+        return -EINVAL;
+    } else {
+        ALOGD("%s from mixer", __func__);
+        mixer_ctl_update(ctl);
+
+        count = mixer_ctl_get_num_values(ctl);
+
+        if (count != (sizeof(struct fluence_nn_nnvad_monitor_meta) - sizeof(ts))) {
+            ALOGE("%s: mixer_ctl_get_num_values() invalid fnn data size %d",
+                                                                           __func__, count);
+            ret = -EINVAL;
+            goto done;
+        }
+
+        ret = mixer_ctl_get_array(ctl, (void *)fnn_meta, count);
+
+        if (ret != 0) {
+            ALOGE("%s: mixer_ctl_get_array() failed to get fnn Params", __func__);
+            ret = -EINVAL;
+            goto done;
+        }
+
+        clock_gettime(CLOCK_MONOTONIC, &ts);
+        fnn_meta->ts = ts;
+    }
+
+done:
+    ALOGD("%s exit with %d", __func__, ret);
+    return ret;
+}
 
 static int get_sourcetrack_metadata(struct source_track_meta *source_track_meta,
                                                         struct mixer_ctl *ctl) {
@@ -188,6 +227,7 @@ static void usage() {
     printf(" stt_meta_extract      -> Get source track meta data while record in progress\n\n");
     printf(" stt_meta_extract -t 1 -> Get source track meta data while record in progress\n\n");
     printf(" stt_meta_extract -f 1 -> Get sound focus meta data while record in progress\n\n");
+    printf(" stt_meta_extract -v 1 -> Get fluence nn meta data while record in progress\n\n");
     printf(" stt_meta_extract -s 45,110,235,310,1,0,0,1,50 -> Set sound focus param data\n");
     printf("                                    secort_startangles[4],secotr_enable[4],gain \n\n");
     printf(" stt_meta_extract -g 200 -n 5 ->    Get stt meta data 5 times for every 200msec\n\n");
@@ -195,10 +235,11 @@ static void usage() {
 }
 
 static int derive_mixer_ctl_stt(struct mixer **stt_mixer, struct mixer_ctl **ctl_st,
-                                                   struct mixer_ctl **ctl_sf, char* be_intf) {
+                                                   struct mixer_ctl **ctl_sf, struct mixer_ctl **ctl_fnn, char* be_intf) {
 
     char sound_focus_mixer_ctl_name[MIXER_PATH_MAX_LENGTH] = "Sound Focus Audio Tx ";
     char source_tracking_mixer_ctl_name[MIXER_PATH_MAX_LENGTH] = "Source Tracking Audio Tx ";
+    char fnn_mixer_ctl_name[MIXER_PATH_MAX_LENGTH] = "Fnn Audio Tx ";
     struct mixer *mixer = NULL;
     int ret = 0, retry_num = 0;
     struct mixer_ctl *ctl = NULL;
@@ -218,8 +259,14 @@ static int derive_mixer_ctl_stt(struct mixer **stt_mixer, struct mixer_ctl **ctl
         return -EINVAL;
     }
 
+    if (!ctl_fnn) {
+        ALOGE("%s: invalid Sound focus mixer ctl", __func__);
+        return -EINVAL;
+    }
+
     strlcat(sound_focus_mixer_ctl_name, be_intf, MIXER_PATH_MAX_LENGTH);
     strlcat(source_tracking_mixer_ctl_name, be_intf, MIXER_PATH_MAX_LENGTH);
+    strlcat(fnn_mixer_ctl_name, be_intf, MIXER_PATH_MAX_LENGTH);
 
     mixer = mixer_open(SOUND_CARD);
 
@@ -254,6 +301,15 @@ static int derive_mixer_ctl_stt(struct mixer **stt_mixer, struct mixer_ctl **ctl
     } else
         *ctl_sf = ctl;
 
+    ctl = mixer_get_ctl_by_name(mixer, fnn_mixer_ctl_name);
+    if (!ctl) {
+        ALOGE("%s: Could not get ctl for mixer cmd - %s",
+                  __func__, fnn_mixer_ctl_name);
+        ret = -EINVAL;
+        goto clean;
+    } else
+        *ctl_fnn = ctl;
+
     return ret;
 
 clean:
@@ -266,17 +322,19 @@ clean:
 int main(int argc, char* argv[]) {
     int get_data_iter = 1, get_data_time_gap = RETRY_US, idx, count, sect, ret = 0;
     bool is_source_track_get = true, is_sound_focus_get = false, is_sound_focus_set = false;
+    bool is_fnn_get = false;
     char *be_intf = "TX_CDC_DMA_TX_3";
     FILE * log_file = NULL;
     const char *log_filename = NULL;
 
     struct option long_options[] = {
-        {"meta-time-gap",       required_argument,    0, 'g'},    // time-gap between two meta data
-        {"get-data-iterations", required_argument,    0, 'n'},    // number of meta data events
-        {"source_track_data",   required_argument,    0, 't'},    // Extract Source track meta data
-        {"sound_focus_data",    required_argument,    0, 'f'},    // Extract Sound focus meta data
+        {"meta-time-gap",       required_argument,    0, 'g'},   // time-gap between two meta data
+        {"get-data-iterations", required_argument,    0, 'n'},   // number of meta data events
+        {"source_track_data",   required_argument,    0, 't'},   // Extract Source track meta data
+        {"sound_focus_data",    required_argument,    0, 'f'},   // Extract Sound focus meta data
         {"sound focus set",     required_argument,    0, 's'},   // Set Sound focus meta data
         {"audio be interface",  required_argument,    0, 'b'},   // update audio back end interface
+        {"fnn_data",            required_argument,    0, 'v'},   // Extract fnn meta data
         {"log file_name",       required_argument,    0, 'l'},   // update log file name
         {"help",                no_argument,          0, 'h'}
     };
@@ -290,7 +348,7 @@ int main(int argc, char* argv[]) {
 
     while ((opt = getopt_long(argc,
                               argv,
-                              "-g:n:t:f:s:b:l:h:",
+                              "-g:n:t:f:s:b:l:v:h:",
                               long_options,
                               &option_index)) != -1) {
         printf("for argument %c, value is %s\n", opt, optarg);
@@ -327,6 +385,10 @@ int main(int argc, char* argv[]) {
                 log_file = stdout;
             }
             break;
+        case 'v':
+            is_fnn_get = atoi(optarg);
+            fprintf(log_file, "is_fnn_get: %d\n", is_fnn_get);
+            break;
         case 'h':
             usage();
             return 0;
@@ -340,15 +402,17 @@ int main(int argc, char* argv[]) {
     printf("STT GET META \n");
     struct source_track_meta source_track_metadata;
     struct sound_focus_meta sound_focus_metadata;
+    struct fluence_nn_nnvad_monitor_meta fnn_metadata;
 
     memset(&source_track_metadata, 0xFF, sizeof(struct source_track_meta));
     memset(&sound_focus_metadata, 0x0, sizeof(struct sound_focus_meta));
+    memset(&fnn_metadata, 0x0, sizeof(struct fluence_nn_nnvad_monitor_meta));
 
     /* Open mixer for snd card 0 */
     struct mixer *stt_mixer = NULL;
-    struct mixer_ctl *ctl_st = NULL, *ctl_sf = NULL;
+    struct mixer_ctl *ctl_st = NULL, *ctl_sf = NULL, *ctl_fnn = NULL;
 
-    ret = derive_mixer_ctl_stt(&stt_mixer, &ctl_st, &ctl_sf, be_intf);
+    ret = derive_mixer_ctl_stt(&stt_mixer, &ctl_st, &ctl_sf, &ctl_fnn, be_intf);
 
     if (is_sound_focus_set) {
         ret = set_soundfocus_metadata(&sound_focus_metadataset, ctl_sf);
@@ -366,12 +430,23 @@ int main(int argc, char* argv[]) {
             get_soundfocus_metadata(&sound_focus_metadata, ctl_sf);
             if (ret != 0)
                 goto done;
-    }
+        }
 
         if (is_source_track_get) {
             get_sourcetrack_metadata(&source_track_metadata, ctl_st);
             if (ret != 0)
                 goto done;
+        }
+
+        if (is_fnn_get) {
+            ret = get_fnn_metadata(&fnn_metadata, ctl_fnn);
+            if (ret != 0) {
+                fprintf(log_file, "printing source track meta data return: %d\n", ret);
+                goto done;
+            }
+            fprintf(log_file, "speech_probability: %d\n", fnn_metadata.speech_probability);
+            fprintf(log_file, "nspp_vad_flag: %d\n", fnn_metadata.nspp_vad_flag);
+            fprintf(log_file, "asln_vad_flag: %d\n", fnn_metadata.asln_vad_flag);
         }
 
         /* Print meta data */
