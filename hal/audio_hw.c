@@ -34,10 +34,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * Changes from Qualcomm Innovation Center are provided under the following license:
- * Copyright (c) 2023-2024 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
  * SPDX-License-Identifier: BSD-3-Clause-Clear
- *
  */
 
 #define LOG_TAG "audio_hw_primary"
@@ -4980,7 +4979,7 @@ static size_t out_get_buffer_size(const struct audio_stream *stream)
                 audio_stream_out_frame_size((const struct audio_stream_out *)stream);
 }
 
-static uint32_t out_get_channels(const struct audio_stream *stream)
+static audio_channel_mask_t out_get_channels(const struct audio_stream *stream)
 {
     struct stream_out *out = (struct stream_out *)stream;
 
@@ -7309,7 +7308,7 @@ static size_t in_get_buffer_size(const struct audio_stream *stream)
         audio_stream_in_frame_size((const struct audio_stream_in *)stream);
 }
 
-static uint32_t in_get_channels(const struct audio_stream *stream)
+static audio_channel_mask_t in_get_channels(const struct audio_stream *stream)
 {
     struct stream_in *in = (struct stream_in *)stream;
 
