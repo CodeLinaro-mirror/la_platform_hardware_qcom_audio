@@ -9562,6 +9562,13 @@ static int adev_set_parameters(struct audio_hw_device *dev, const char *kvpairs)
             }
         }
     }
+    else
+    {
+        if (AUDIO_HW_A2DP_OFFLOAD_IS_NOT_SUPPORTED == status)
+        {
+            status = 0;
+        }
+    }
 
     //handle vr audio setparam
     ret = str_parms_get_str(parms, AUDIO_PARAMETER_KEY_VR_AUDIO_MODE,
