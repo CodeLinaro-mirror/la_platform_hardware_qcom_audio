@@ -119,6 +119,15 @@ MM_AUDIO += QRD_Hdmi_cal.acdb
 MM_AUDIO += QRD_Headset_cal.acdb
 MM_AUDIO += QRD_Speaker_cal.acdb
 MM_AUDIO += QRD_workspaceFile.qwsp
+MM_AUDIO += IOT_Bluetooth_cal.acdb
+MM_AUDIO += IOT_Codec_cal.acdb
+MM_AUDIO += IOT_General_cal.acdb
+MM_AUDIO += IOT_Global_cal.acdb
+MM_AUDIO += IOT_Handset_cal.acdb
+MM_AUDIO += IOT_Hdmi_cal.acdb
+MM_AUDIO += IOT_Headset_cal.acdb
+MM_AUDIO += IOT_Speaker_cal.acdb
+MM_AUDIO += IOT_workspaceFile.qwsp
 ifeq ($(TARGET_BOARD_AUTO),true)
 MM_AUDIO += adsp_avs_config.acdb
 MM_AUDIO += Bluetooth_cal.acdb
