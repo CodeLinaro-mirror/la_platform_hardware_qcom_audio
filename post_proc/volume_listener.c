@@ -1,6 +1,8 @@
 /*
  * Copyright (c) 2015-2017, 2019-2020, The Linux Foundation. All rights reserved.
+ * Changes from Qualcomm Innovation Center are provided under the following license:
  * Copyright (c) 2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
