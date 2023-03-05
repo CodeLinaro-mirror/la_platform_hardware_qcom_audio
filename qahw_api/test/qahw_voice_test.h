@@ -29,7 +29,7 @@
 
 /*
 ** Changes from Qualcomm Innovation Center are provided under the following license:
-** Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
+** Copyright (c) 2022-2023 Qualcomm Innovation Center, Inc. All rights reserved.
 **
 ** Redistribution and use in source and binary forms, with or without
 ** modification, are permitted (subject to the limitations in the
@@ -81,6 +81,7 @@
 #include "qahw_api.h"
 #include "qahw_defs.h"
 #include "qahw_playback_test.h"
+#include "qahw_usb_test.h"
 
 #define MAX_VOICE_TEST_DEVICES 2
 
@@ -102,6 +103,7 @@ typedef struct {
     char* rec_file;
     char* playback_file;
     char* playback_dl_file;
+    char* usb_rec_file;
     float vol;
     bool mute;
     int mute_dir;
