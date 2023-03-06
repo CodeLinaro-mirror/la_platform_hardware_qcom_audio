@@ -4905,6 +4905,13 @@ int platform_set_voice_volume(void *platform, int volume, uint32_t vsid)
     else
         set_values[0] = 0;
 
+    if (vsid)
+        set_values[1] = (long) vsid;
+    else
+        set_values[1] = ALL_SESSION_VSID;
+
+    set_values[2] = DEFAULT_VOLUME_RAMP_DURATION_MS;
+
     ctl = mixer_get_ctl_by_name(adev->mixer, mute_mixer_ctl_name);
     if (!ctl) {
         ALOGE("%s: Could not get ctl for mixer cmd - %s",
