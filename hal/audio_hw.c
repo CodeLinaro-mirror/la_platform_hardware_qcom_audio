@@ -36,7 +36,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2022-2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted (subject to the limitations in the disclaimer
@@ -5168,7 +5168,7 @@ static size_t out_get_buffer_size(const struct audio_stream *stream)
                 audio_stream_out_frame_size((const struct audio_stream_out *)stream);
 }
 
-static uint32_t out_get_channels(const struct audio_stream *stream)
+static audio_channel_mask_t out_get_channels(const struct audio_stream *stream)
 {
     struct stream_out *out = (struct stream_out *)stream;
 
@@ -7516,7 +7516,7 @@ static size_t in_get_buffer_size(const struct audio_stream *stream)
         audio_stream_in_frame_size((const struct audio_stream_in *)stream);
 }
 
-static uint32_t in_get_channels(const struct audio_stream *stream)
+static audio_channel_mask_t in_get_channels(const struct audio_stream *stream)
 {
     struct stream_in *in = (struct stream_in *)stream;
 
