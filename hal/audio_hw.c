@@ -8127,7 +8127,7 @@ static int in_get_active_microphones(const struct audio_stream_in *stream,
 
     lock_input_stream(in);
     pthread_mutex_lock(&adev->lock);
-    int ret = platform_get_active_microphones(adev->platform,
+    int ret = platform_get_active_microphones(adev->platform, in->car_audio_stream,
                                               audio_channel_count_from_in_mask(in->channel_mask),
                                               in->usecase, mic_array, mic_count);
     pthread_mutex_unlock(&adev->lock);

@@ -414,7 +414,7 @@ bool platform_set_microphone_map(void *platform, snd_device_t in_snd_device,
 int platform_get_microphones(void *platform,
                              struct audio_microphone_characteristic_t *mic_array,
                              size_t *mic_count);
-int platform_get_active_microphones(void *platform, unsigned int channels,
+int platform_get_active_microphones(void *platform, int car_audio_stream, unsigned int channels,
                                     audio_usecase_t usecase,
                                     struct audio_microphone_characteristic_t *mic_array,
                                     size_t *mic_count);
