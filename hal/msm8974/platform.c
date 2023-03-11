@@ -4009,9 +4009,9 @@ acdb_init_fail:
             my_data->current_backend_cfg[DEFAULT_CODEC_BACKEND].samplerate_mixer_ctl =
                 strdup("WSA_CDC_DMA_RX_0 SampleRate");
             my_data->current_backend_cfg[DEFAULT_CODEC_TX_BACKEND].bitwidth_mixer_ctl =
-                strdup("TX_CDC_DMA_TX_3 Format");
+                strdup("TX_CDC_DMA_TX_4 Format");
             my_data->current_backend_cfg[DEFAULT_CODEC_TX_BACKEND].samplerate_mixer_ctl =
-                strdup("TX_CDC_DMA_TX_3 SampleRate");
+                strdup("TX_CDC_DMA_TX_4 SampleRate");
             my_data->current_backend_cfg[HEADPHONE_BACKEND].bitwidth_mixer_ctl =
                 strdup("SEC_MI2S_RX Format");
             my_data->current_backend_cfg[HEADPHONE_BACKEND].samplerate_mixer_ctl =

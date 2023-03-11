@@ -67,7 +67,7 @@
     <ctl name="MultiMedia5 Mixer TX_CDC_DMA_TX_3" value="0" />
     <ctl name="MultiMedia5 Mixer TX_CDC_DMA_TX_4" value="0" />
     <ctl name="MultiMedia1 Mixer TX_CDC_DMA_TX_3" value="0" />
-    <ctl name="MultiMedia1 Mixer TX_CDC_DMA_TX_4" value="0" />
+    <ctl name="MultiMedia1 Mixer TX_CDC_DMA_TX_4" value="1" />
     <ctl name="MultiMedia8 Mixer TX_CDC_DMA_TX_3" value="0" />
     <ctl name="MultiMedia8 Mixer TX_CDC_DMA_TX_4" value="0" />
     <ctl name="MultiMedia2 Mixer TX_CDC_DMA_TX_3" value="0" />
@@ -1900,7 +1900,7 @@
     </path>
 
     <path name="audio-record">
-        <ctl name="MultiMedia1 Mixer TX_CDC_DMA_TX_3" value="1" />
+        <ctl name="MultiMedia1 Mixer TX_CDC_DMA_TX_4" value="1" />
     </path>
 
     <path name="audio-record usb-headset-mic">
@@ -2614,7 +2614,7 @@
     </path>
 
     <path name="handset-mic">
-        <path name="dmic3" />
+        <path name="amic2" />
     </path>
 
     <path name="headphones">
