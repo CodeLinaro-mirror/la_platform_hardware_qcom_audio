@@ -4,7 +4,7 @@
  *
  * Copyright (C) 2014 The Android Open Source Project
  *
- * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2022-2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -1268,7 +1268,6 @@ static int send_app_type_cfg_for_device(struct audio_device *adev,
             ALOGI("%s using %d sample rate for A2DP dec CoPP in loopback",
                     __func__, usecase->stream.in->app_type_cfg.sample_rate);
         }
-        sample_rate = usecase->stream.in->app_type_cfg.sample_rate;
         app_type_cfg[len++] = sample_rate;
         if (snd_device_be_idx > 0)
             app_type_cfg[len++] = snd_device_be_idx;
