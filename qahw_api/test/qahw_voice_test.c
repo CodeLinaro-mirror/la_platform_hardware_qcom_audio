@@ -29,7 +29,7 @@
 
 /*
 ** Changes from Qualcomm Innovation Center are provided under the following license:
-** Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
+** Copyright (c) 2022-2023 Qualcomm Innovation Center, Inc. All rights reserved.
 **
 ** Redistribution and use in source and binary forms, with or without
 ** modification, are permitted (subject to the limitations in the
@@ -66,6 +66,7 @@
 
 #include "qahw_voice_test.h"
 
+
 #define ID_RIFF 0x46464952
 #define ID_WAVE 0x45564157
 #define ID_FMT  0x20746d66
@@ -78,10 +79,30 @@
 #define SUBCHUNK1_SIZE(x) ((8) + (x))
 #define SUBCHUNK2_SIZE 8
 
+int first_usb_read_done = 0;
+int first_usb_write_done = 0;
+int thread_state;
+int tflag = 0;
+int read_started = 0;
+qahw_stream_handle_t* hal_out_handle = NULL;
+pthread_mutex_t usb_lock;
+pthread_cond_t usb_read_cond;
+pthread_cond_t usb_write_cond;
+pthread_t usb_tid;
+char *buffer_pointer =NULL;
+char *usb_data_ptr = NULL;
+
 voice_stream_config stream_params;
 volatile bool stop = false;
 volatile bool stop_dl = false;
 void *context = NULL;
+int capturing = 1;
+unsigned int usb_rec_buf_size = 400;
+char *usb_rec_buffer = NULL;
+
+typedef struct {
+    char eventType[50];
+} thread_event_type;
 
 struct wav_header {
     uint32_t riff_id;
@@ -111,7 +132,7 @@ static void init_stream(void) {
     stream_params.in_dl_call_playback = false;
     stream_params.hpcm = false;
     stream_params.hpcm_tp = 2;
-	stream_params.hpcm_sr = 8000;
+    stream_params.hpcm_sr = 8000;
     stream_params.tp_dir = 0;
     stream_params.rec_file = "/data/default_rec.wav";
     stream_params.playback_file = NULL;
@@ -132,6 +153,9 @@ static void init_stream(void) {
     pthread_cond_init(&stream_params.write_cond_dl, (const pthread_condattr_t *) NULL);
     pthread_mutex_init(&stream_params.drain_lock_dl, (const pthread_mutexattr_t *)NULL);
     pthread_cond_init(&stream_params.drain_cond_dl, (const pthread_condattr_t *) NULL);
+    pthread_mutex_init(&usb_lock, (const pthread_mutexattr_t *)NULL);
+    pthread_cond_init(&usb_read_cond, (const pthread_condattr_t *) NULL);
+    pthread_cond_init(&usb_write_cond, (const pthread_condattr_t *) NULL);
 }
 
 static void deinit_streams(void)
@@ -144,6 +168,37 @@ static void deinit_streams(void)
     pthread_mutex_destroy(&stream_params.write_lock_dl);
     pthread_cond_destroy(&stream_params.drain_cond_dl);
     pthread_mutex_destroy(&stream_params.drain_lock_dl);
+}
+
+static void* manage_thread_event(void *event) {
+    thread_event_type *thread_event = (thread_event_type *)event;
+    int ret = 0;
+
+    pthread_mutex_lock(&usb_lock);
+    if (strcmp(thread_event->eventType, "ReadWait") == 0) {
+        ret = pthread_cond_wait(&usb_read_cond, &usb_lock);
+        fprintf(stderr, "%s:Out of ReadWait, ret:%d\n", __func__,ret);
+    }
+
+    if (strcmp(thread_event->eventType, "ReadSignal") == 0) {
+        pthread_cond_signal(&usb_read_cond);
+    }
+
+    if (strcmp(thread_event->eventType, "WriteWait") == 0) {
+        ret = pthread_cond_wait(&usb_write_cond, &usb_lock);
+        fprintf(stderr, "%s:Out of WriteWait, ret:%d\n", __func__,ret);
+    }
+
+    if (strcmp(thread_event->eventType, "WriteSignal") == 0) {
+        pthread_cond_signal(&usb_write_cond);
+    }
+    pthread_mutex_unlock(&usb_lock);
+    return NULL;
+}
+
+static void sigint_handler(int sig)
+{
+   capturing = 0;
 }
 static int async_callback(qahw_stream_callback_event_t event, void *param,
                   void *cookie)
@@ -291,6 +346,101 @@ static int write_to_hal_dl(qahw_stream_handle_t* out_handle, char *data,
     pthread_mutex_unlock(&stream_params->write_lock_dl);
     return ret;
 }
+static void* usb_rec_func(void * thread_param)
+{
+    voice_stream_config *params = (voice_stream_config *)thread_param;
+    unsigned int input_buf_size = 0;
+    int ret = 0;
+    int write_to_file = 0;
+    char  *data_ptr = NULL;
+    char *buffer_pointer =NULL;
+    int bytes_written_to_usb = 0;
+    int read_usb_size = 400;
+    int usb_bytes_read = 0;
+    int out_bytes_wanted = 4400;
+    struct pcm *usb_rec_pcm_hndl;
+    thread_event_type *t_event_type = NULL;
+    struct wav_header hdr;
+    double time_elapsed = 0;
+    int total_bytes_read_on_usb = 0;
+    time_t start_time = time(0);
+    struct timespec end;
+    struct timespec now;
+    unsigned int cap_time = params->call_length;
+    t_event_type = (thread_event_type *)malloc(sizeof(thread_event_type));
+
+    if (t_event_type == NULL) {
+        fprintf(stderr, "failed to for t_event_type\n");
+        pthread_exit(0);
+    }
+    usb_rec_pcm_hndl = get_rec_pcm_hndl();
+    usb_data_ptr = (char *)malloc(out_bytes_wanted);
+    if (usb_data_ptr == NULL) {
+        fprintf(stderr, "failed to allocate usb_data_ptr\n");
+        pthread_exit(0);
+    }
+    usb_rec_buf_size = pcm_frames_to_bytes(usb_rec_pcm_hndl,  pcm_get_buffer_size(usb_rec_pcm_hndl));
+    usb_rec_buffer = (char *)calloc(1, 2*usb_rec_buf_size);
+    if (usb_rec_buffer == NULL) {
+        fprintf(stderr, " usb_rec_buffer calloc failed\n");
+        free(usb_rec_buffer);
+        pcm_close(usb_rec_pcm_hndl);
+        return NULL;
+    }
+    if (params->usb_rec_file == NULL) {
+        fprintf(stderr, "no record stream provided\n");
+    }
+    FILE *fd = fopen(params->usb_rec_file, "w");
+    if (fd == NULL) {
+        fprintf(stderr, "File open failed \n");
+        pthread_exit(0);
+    }
+    hdr.riff_id = ID_RIFF;
+    hdr.riff_sz = 0;
+    hdr.riff_fmt = ID_WAVE;
+    hdr.fmt_id = ID_FMT;
+    hdr.fmt_sz = 16;
+    hdr.audio_format = FORMAT_PCM;
+    hdr.num_channels = 2;
+    hdr.sample_rate = 48000;
+    hdr.byte_rate = 96000;
+    hdr.block_align = hdr.num_channels * (16 / 8);
+    hdr.bits_per_sample = 16;
+    hdr.data_id = ID_DATA;
+    hdr.data_sz = 0;
+    fwrite(&hdr, 1, sizeof(hdr), fd);
+    fprintf(stderr, "file %s opened for write \n", params->usb_rec_file);
+
+    clock_gettime(CLOCK_MONOTONIC, &now);
+    end.tv_sec = now.tv_sec + cap_time;
+    end.tv_nsec = now.tv_nsec;
+
+    while (capturing && !pcm_read(usb_rec_pcm_hndl, usb_rec_buffer, usb_rec_buf_size)) {
+        if (fwrite(usb_rec_buffer, 1, usb_rec_buf_size, fd) != usb_rec_buf_size) {
+            fprintf(stderr,"Error capturing sample\n");
+            break;
+        }
+        bytes_written_to_usb = write_to_hal(hal_out_handle, usb_rec_buffer, usb_rec_buf_size, params);
+        fprintf(stderr, " %s:bytes_written_to_usb:%d\n", __func__,bytes_written_to_usb);
+        total_bytes_read_on_usb += usb_rec_buf_size;
+        if (cap_time) {
+            clock_gettime(CLOCK_MONOTONIC, &now);
+            if (now.tv_sec > end.tv_sec ||
+               (now.tv_sec == end.tv_sec && now.tv_nsec >= end.tv_nsec)) {
+                hdr.data_sz = total_bytes_read_on_usb;
+                hdr.riff_sz = total_bytes_read_on_usb + 44 - 8;
+                fseek(fd, 0, SEEK_SET);
+                fwrite(&hdr, 1, sizeof(hdr), fd);
+                fclose(fd);
+                fd = NULL;
+                break;
+            }
+       }
+    }
+    fprintf(stderr, " %s:total_bytes_read_on_usb:%d\n", __func__,total_bytes_read_on_usb);
+    pthread_exit(0);
+}
+
 
 void usage() {
     printf(" \n Command \n");
@@ -332,12 +482,21 @@ void *rec_start(void *thread_param) {
     audio_devices_t in_device[1] = { AUDIO_DEVICE_IN_WIRED_HEADSET };
     struct qahw_stream_attributes attr;
     qahw_buffer_t in_buf;
+    unsigned int usb_buffer_size;
+    struct pcm *usb_plbk_pcm_hndl = NULL;
+    bool isVoiceOverUsb = false;
     int data_sz = 0;
+    int read_usb_size = 0;
+    int num_usb_read = 0;
     ssize_t bytes_read = -1;
+    char *usb_buffer = NULL;
+    char *buffer_pointer =NULL;
+    int input_buf_size = 0;
+    unsigned int usb_buf_size = 0;
 
-    fprintf(stderr, "%s starting rec thread\n", __func__);
+    fprintf(stderr, "%s: starting rec thread\n", __func__);
     if (qahw_mod_handle == NULL) {
-        fprintf(stderr, " qahw_load_module failed\n");
+        fprintf(stderr, "%s: qahw_load_module failed\n" ,__func__);
         pthread_exit(0);
     }
 
@@ -346,7 +505,7 @@ void *rec_start(void *thread_param) {
     }
 
     if(params->in_call_rec) {
-        fprintf(stderr, " setting in call record params\n");
+        fprintf(stderr, "%s: setting in call record params\n", __func__);
         switch (params->tp_dir) {
         case 0:
             attr.type = QAHW_AUDIO_CAPTURE_VOICE_CALL_RX;
@@ -358,7 +517,7 @@ void *rec_start(void *thread_param) {
             attr.type = QAHW_AUDIO_CAPTURE_VOICE_CALL_RX_TX;
             break;
         default:
-            fprintf(stderr, " invalid tp direction");
+            fprintf(stderr, "%s: invalid tp direction \n", __func__);
             pthread_exit(0);
             break;
         }
@@ -396,7 +555,7 @@ void *rec_start(void *thread_param) {
                           NULL,
                           &(in_handle));
     if (rc) {
-        fprintf(stderr, " open input device failed!\n");
+        fprintf(stderr, "%s: open input device failed!\n", __func__);
         pthread_exit(0);
     }
 
@@ -412,11 +571,27 @@ void *rec_start(void *thread_param) {
         fprintf(stderr, "calloc failed!!, handle(%d)\n", in_handle);
         pthread_exit(0);
     }
+
+    usb_plbk_pcm_hndl = get_plbk_pcm_hndl();
+    if (usb_plbk_pcm_hndl != NULL) {
+        isVoiceOverUsb = true;
+        usb_buf_size =  pcm_frames_to_bytes(usb_plbk_pcm_hndl, pcm_get_buffer_size(usb_plbk_pcm_hndl));
+        usb_buffer = (char *)calloc(1, usb_buf_size);
+        if (usb_buffer == NULL) {
+            fprintf(stderr, " usb_buffer calloc failed\n");
+            isVoiceOverUsb = false;
+            free(buffer);
+            pcm_close(usb_plbk_pcm_hndl);
+        }
+    }
+
+
     if (params->rec_file == NULL) {
         fprintf(stderr, "no record stream provided\n", in_handle);
         pthread_exit(0);
         return NULL;
     }
+
     FILE *fd = fopen(params->rec_file, "w");
     if (fd == NULL) {
         fprintf(stderr, "File open failed \n");
@@ -450,11 +625,28 @@ void *rec_start(void *thread_param) {
         in_buf.size = in_buffer_size;
         fprintf(stderr, " calling qahw_stream_read, in_buffer_size:%d \n", in_buffer_size);
         bytes_read = qahw_stream_read(in_handle, &in_buf);
-        fprintf(stderr, " returned from qahw_stream_read, in_buffer_size:%d \n", in_buffer_size);
-        written_size = fwrite(in_buf.buffer, 1, in_buffer_size, fd);
-        if (written_size < in_buffer_size) {
-            fprintf(stderr, "Error in fwrite\n");
-            break;
+        fprintf(stderr, " returned from qahw_stream_read, in_buffer_size:%d, bytes_read:%d \n", in_buffer_size, bytes_read);
+        buffer_pointer = in_buf.buffer;
+        input_buf_size = in_buf.size;
+        if (isVoiceOverUsb && (usb_plbk_pcm_hndl != NULL)) {
+            while ((buffer_pointer != NULL) && (input_buf_size > 0)) {
+                read_usb_size = (usb_buf_size < input_buf_size ) ? usb_buf_size : input_buf_size;
+                snprintf(usb_buffer,read_usb_size, "%s\n", buffer_pointer);
+                if (pcm_write(usb_plbk_pcm_hndl, usb_buffer, read_usb_size)) {
+                    fprintf(stderr, "Error playing sample on usb device node\n");
+                    break;
+                } else {
+                    fprintf(stderr, "playing sample on usb device node\n");
+                }
+                buffer_pointer += read_usb_size;
+                input_buf_size -= read_usb_size;
+            }
+        } else {
+            written_size = fwrite(in_buf.buffer, 1, in_buffer_size, fd);
+            if (written_size < in_buffer_size) {
+                fprintf(stderr, "Error in fwrite\n");
+                break;
+            }
         }
         data_sz += in_buffer_size;
     }
@@ -519,13 +711,17 @@ void *playback_start(void *thread_param) {
     uint32_t num_dev = 1;
     audio_devices_t out_device[1] = { AUDIO_DEVICE_OUT_SPEAKER };
     struct qahw_stream_attributes attr;
+    struct pcm *usb_rec_pcm_hndl = NULL;
     size_t in_bytes_wanted = 0;
     size_t out_bytes_wanted = 0;
     size_t write_length = 0;
     size_t bytes_remaining = 0;
     ssize_t bytes_written = 0;
     FILE *fp = NULL;
+    FILE *usb_rec_fd = NULL;
     size_t bytes_read = 0;
+    size_t usb_bytes_read = 0;
+    unsigned int total_bytes_read_on_usb = 0;
     qahw_buffer_t out_buf;
     char  *data_ptr = NULL;
     bool exit = false;
@@ -535,10 +731,23 @@ void *playback_start(void *thread_param) {
     size_t bytes_to_read = 0;
     size_t offset = 0;
     bool is_offload = false;
+    bool isVoiceOverUsb = false;
     struct qahw_modifier_kv modifier;
     unsigned int total_bytes_read = 0;
+    struct wav_header file_header;
+    unsigned int usb_frames = 0;
+    char *usb_rec_buffer = NULL;
+    int ret = 0;
+    double time_elapsed = 0;
+    time_t start_time = time(0);
+    char *buffer_pointer =NULL;
+    int input_buf_size = 0;
+    int read_usb_size = 0;
+    thread_event_type *t_event_type = NULL;
+    struct timespec end;
+    struct timespec now;
+    unsigned int play_time = params->call_length;
 
-    fprintf(stderr, "\n Enter");
     if (qahw_mod_handle == NULL) {
         fprintf(stderr, " qahw_load_module failed");
         pthread_exit(0);
@@ -589,7 +798,15 @@ void *playback_start(void *thread_param) {
         attr.attr.audio.config.format = AUDIO_FORMAT_PCM_16_BIT;
         attr.attr.audio.config.channel_mask = 0x3;
     }
-
+    usb_rec_pcm_hndl = get_rec_pcm_hndl();
+    if (usb_rec_pcm_hndl != NULL) {
+        isVoiceOverUsb = true;
+        t_event_type = (thread_event_type *)malloc(sizeof(thread_event_type));
+        if (t_event_type == NULL) {
+            fprintf(stderr, "failed to for t_event_type\n");
+            pthread_exit(0);
+        }
+    }
 
     if (params->playback_file != NULL) {
         fp = fopen(params->playback_file, "r");
@@ -601,7 +818,7 @@ void *playback_start(void *thread_param) {
         fprintf(stderr, "invalid playback file" );
         pthread_exit(0);
     }
-    if (!params->hpcm) {
+    if (!params->hpcm && !isVoiceOverUsb) {
         if (params->file_type == FILE_WAV ) {
         /*
         * Read the wave header
@@ -666,6 +883,7 @@ void *playback_start(void *thread_param) {
         }
     }
     rc = qahw_stream_get_buffer_size(out_handle ,&in_bytes_wanted, &out_bytes_wanted);
+    fprintf(stderr, "out_bytes_wanted:%d\n", out_bytes_wanted);
     data_ptr = (char *)malloc(out_bytes_wanted);
     if (data_ptr == NULL) {
         fprintf(stderr, "failed to allocate data buffer\n");
@@ -677,52 +895,74 @@ void *playback_start(void *thread_param) {
     }
     bytes_to_read = -1;
     read_complete_file = true;
-    while (!exit && !stop) {
-        if (!bytes_remaining) {
-            fprintf(stderr, "reading bytes %zd\n", out_bytes_wanted);
-            bytes_read = fread(data_ptr, 1, out_bytes_wanted, fp);
-            fprintf(stderr, "read bytes %zd\n", bytes_read);
-            if ((!read_complete_file && (bytes_to_read <= 0)) || (bytes_read <= 0)) {
-                fprintf(stderr, "end of file\n");
-                if (is_offload) {
-                    params->drain_received = false;
-                    qahw_stream_drain(out_handle, QAHW_DRAIN_ALL);
-                    if(!params->drain_received) {
-                        pthread_mutex_lock(&params->drain_lock);
-                        pthread_cond_wait(&params->drain_cond, &params->drain_lock);
-                        pthread_mutex_unlock(&params->drain_lock);
+    if (isVoiceOverUsb && (usb_rec_pcm_hndl != NULL)) {
+        out_bytes_wanted = usb_rec_buf_size;
+        hal_out_handle = out_handle;
+        pthread_create(&usb_tid, NULL, usb_rec_func, thread_param);
+        clock_gettime(CLOCK_MONOTONIC, &now);
+        end.tv_sec = now.tv_sec + play_time;
+        end.tv_nsec = now.tv_nsec;
+
+        while (play_time) {
+            clock_gettime(CLOCK_MONOTONIC, &now);
+            if (now.tv_sec > end.tv_sec ||
+                (now.tv_sec == end.tv_sec && now.tv_nsec >= end.tv_nsec)) {
+                fprintf(stderr, "Test for VoiceOverUsb session completed.\n");
+                pthread_join(usb_tid, NULL);
+                pthread_cond_destroy(&usb_read_cond);
+                pthread_cond_destroy(&usb_write_cond);
+                pthread_mutex_destroy(&usb_lock);
+                play_time = 0;
+            }
+        }
+    } else {
+        while (!exit && !stop) {
+            if (!bytes_remaining) {
+                fprintf(stderr, "reading bytes %zd\n", out_bytes_wanted);
+                bytes_read = fread(data_ptr, 1, out_bytes_wanted, fp);
+                fprintf(stderr, "read bytes %zd\n", bytes_read);
+                if ((!read_complete_file && (bytes_to_read <= 0)) || (bytes_read <= 0)) {
+                    fprintf(stderr, "end of file\n");
+                    if (is_offload) {
+                        params->drain_received = false;
+                        qahw_stream_drain(out_handle, QAHW_DRAIN_ALL);
+                        if(!params->drain_received) {
+                            pthread_mutex_lock(&params->drain_lock);
+                            pthread_cond_wait(&params->drain_cond, &params->drain_lock);
+                            pthread_mutex_unlock(&params->drain_lock);
+                        }
+                        fprintf(stderr, "out of compress drain\n");
                     }
-                    fprintf(stderr, "out of compress drain\n");
+                    /*
+                     * Caution: Below ADL log shouldnt be altered without notifying
+                     * automation APT since it used for automation testing
+                     */
+                    fprintf(stderr, "ADL: playback completed successfully\n");
+                    exit = true;
+                    continue;
+                } else {
+                    if (!read_complete_file) {
+                        bytes_to_read -= bytes_read;
+                        if ((bytes_to_read > 0) && (bytes_to_read < out_bytes_wanted))
+                            out_bytes_wanted = bytes_to_read;
+                    }
                 }
-                /*
-                 * Caution: Below ADL log shouldnt be altered without notifying
-                 * automation APT since it used for automation testing
-                 */
-                fprintf(stderr, "ADL: playback completed successfully\n");
+                bytes_remaining = write_length = bytes_read;
+            }
+
+            offset = write_length - bytes_remaining;
+            fprintf(stderr, "writing to hal %zd bytes, offset %d, write length %zd\n",
+                    bytes_remaining, offset, write_length);
+
+            bytes_written = bytes_remaining;
+            bytes_written = write_to_hal(out_handle, data_ptr+offset, bytes_remaining, params);
+            if (bytes_written < 0) {
+                fprintf(stderr, "write failed %d", bytes_written);
                 exit = true;
                 continue;
-            } else {
-                if (!read_complete_file) {
-                    bytes_to_read -= bytes_read;
-                    if ((bytes_to_read > 0) && (bytes_to_read < out_bytes_wanted))
-                        out_bytes_wanted = bytes_to_read;
-                }
             }
-            bytes_remaining = write_length = bytes_read;
+            bytes_remaining -= bytes_written;
         }
-
-        offset = write_length - bytes_remaining;
-        fprintf(stderr, "writing to hal %zd bytes, offset %d, write length %zd\n",
-                bytes_remaining, offset, write_length);
-
-        bytes_written = bytes_remaining;
-        bytes_written = write_to_hal(out_handle, data_ptr+offset, bytes_remaining, params);
-        if (bytes_written < 0) {
-            fprintf(stderr, "write failed %d", bytes_written);
-            exit = true;
-            continue;
-        }
-        bytes_remaining -= bytes_written;
     }
 
     fclose(fp);
@@ -950,6 +1190,9 @@ int main(int argc, char *argv[]) {
     char *freq = NULL;
     qahw_stream_direction dir;
     int call_count = 0;
+    bool isVoiceOverUsb = false;
+    int period_size = 0;
+    int period_count = 0;
     int call_lenght = 0;
     pthread_t tid_rec;
     pthread_t tid_pb;
@@ -979,12 +1222,15 @@ int main(int argc, char *argv[]) {
         { "stream_type", no_argument,  0, 'n' },
         { "dtmf_detect", no_argument,  0, 'w' },
         { "hpcm_sr", required_argument,  0, 's' },
+        { "voice_over_usb", no_argument,  0, 'g' },
+        { "usb_period_size", required_argument,  0, 'j' },
+        { "usb_period_count", no_argument,  0, 'k' },
         { 0, 0, 0, 0 }
     };
 
     while ((opt = getopt_long(argc,
                               argv,
-                                "-v:d:l:m:p:r:t:f:a:b:h:i:u:y:c:w:o:e:n:s:",
+                                "-v:d:l:m:p:r:t:f:a:b:h:i:u:y:c:w:o:e:n:s:g:j:k:",
                               long_options,
                               &option_index)) != -1) {
 
@@ -993,6 +1239,17 @@ int main(int argc, char *argv[]) {
         switch (opt) {
         case 'i':
             stream_params.vsid = optarg;
+            break;
+        case 'g':
+            isVoiceOverUsb = true;
+            break;
+        case 'j':
+            period_size = atoll(optarg);
+             fprintf(stderr, "period_size:%d\n", period_size);
+            break;
+        case 'k':
+            period_count = atoll(optarg);
+            fprintf(stderr, "period_count:%d\n", period_count);
             break;
         case 'd':
             stream_params.output_device[0] = atoll(optarg);
@@ -1061,6 +1318,19 @@ int main(int argc, char *argv[]) {
         default:
             usage();
             return 0;
+        }
+    }
+    /*making dummy voice Over USB run, */
+    /*to be cleaned */
+    if (isVoiceOverUsb) {
+        stream_params.in_call_playback = true;
+        stream_params.in_call_rec = true;
+        stream_params.usb_rec_file = "/data/audio/usb_rec2.wav";
+        rc = usb_init(period_size, period_count);
+        if (rc) {
+            fprintf(stderr, "USB init failed\n");
+        } else {
+            fprintf(stderr, "USB init success\n");
         }
     }
 
@@ -1174,7 +1444,7 @@ int main(int argc, char *argv[]) {
             }
         }
         if (stream_params.in_dl_call_playback) {
-            fprintf(stderr, "\n Create incall playback thread \n");
+            fprintf(stderr, "\n Create incall dl playback thread \n");
             rc = pthread_create(&tid_dl_pb, NULL, playback_dl_start, (void *)&stream_params);
             if (rc) {
                 fprintf(stderr, "in call playback thread creation failed %d\n");

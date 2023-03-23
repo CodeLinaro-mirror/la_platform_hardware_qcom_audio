@@ -152,9 +152,10 @@ VOICE_INCLUDES += -I $(top_srcdir)/qahw/inc
 AM_CFLAGS = -I $(PKG_CONFIG_SYSROOT_DIR)/usr/include/mm-audio/qahw/inc
 endif
 
-hal_voice_test_SOURCES = test/qahw_voice_test.c
-
+hal_voice_test_SOURCES = test/qahw_voice_test.c \
+                         test/qahw_usb_test.c
 hal_voice_test_LDADD = -lutils
+hal_voice_test_LDADD += -lcutils
 hal_voice_test_LDADD += libqahw.la
 
 if QAHW_V1
