@@ -82,6 +82,10 @@ ifeq ($(strip $(AUDIO_FEATURE_ENABLED_DYNAMIC_LOG)), true)
     LOCAL_SHARED_LIBRARIES += libaudio_log_utils
 endif
 
+ifeq ($(ENABLE_AUDIO_LEGACY_TECHPACK), true)
+    LOCAL_CFLAGS += -DENABLE_AUDIO_LEGACY_SSR
+endif
+
 LOCAL_HEADER_LIBRARIES += libhardware_headers
 LOCAL_HEADER_LIBRARIES += libsystem_headers
 LOCAL_HEADER_LIBRARIES += libaudiologutils_headers
