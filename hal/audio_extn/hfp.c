@@ -464,6 +464,7 @@ static int32_t start_hfp(struct audio_device *adev,
             ALOGE("%s: failed to start ext hw plugin", __func__);
     }
 
+    pcm_dev_rx_id = fp_platform_get_pcm_device_id(uc_info->id, PCM_PLAYBACK);
     pcm_dev_tx_id = fp_platform_get_pcm_device_id(uc_info->id, PCM_CAPTURE);
     pcm_dev_asm_rx_id = hfpmod->hfp_pcm_dev_id;
     pcm_dev_asm_tx_id = hfpmod->hfp_pcm_dev_id;

@@ -84,6 +84,7 @@ endif
 
 LOCAL_HEADER_LIBRARIES += libhardware_headers
 LOCAL_HEADER_LIBRARIES += libsystem_headers
+LOCAL_HEADER_LIBRARIES += libaudiologutils_headers
 ifneq ($(filter kona lahaina holi,$(TARGET_BOARD_PLATFORM)),)
 LOCAL_SANITIZE := integer_overflow
 endif
@@ -153,6 +154,7 @@ endif
 
 LOCAL_HEADER_LIBRARIES += libhardware_headers
 LOCAL_HEADER_LIBRARIES += libsystem_headers
+LOCAL_HEADER_LIBRARIES += libaudiologutils_headers
 ifneq ($(filter kona lahaina holi,$(TARGET_BOARD_PLATFORM)),)
 LOCAL_SANITIZE := integer_overflow
 endif
@@ -229,6 +231,8 @@ endif
 
 LOCAL_HEADER_LIBRARIES += libhardware_headers
 LOCAL_HEADER_LIBRARIES += libsystem_headers
+LOCAL_HEADER_LIBRARIES += libaudiologutils_headers
+LOCAL_HEADER_LIBRARIES += libsurround_3mic_headers
 ifneq ($(filter kona lahaina holi,$(TARGET_BOARD_PLATFORM)),)
 LOCAL_SANITIZE := integer_overflow
 endif
@@ -302,6 +306,7 @@ endif
 
 LOCAL_HEADER_LIBRARIES += libhardware_headers
 LOCAL_HEADER_LIBRARIES += libsystem_headers
+LOCAL_HEADER_LIBRARIES += libaudiologutils_headers
 ifneq ($(filter kona lahaina holi,$(TARGET_BOARD_PLATFORM)),)
 LOCAL_SANITIZE := integer_overflow
 endif
@@ -376,6 +381,7 @@ endif
 
 LOCAL_HEADER_LIBRARIES += libhardware_headers
 LOCAL_HEADER_LIBRARIES += libsystem_headers
+LOCAL_HEADER_LIBRARIES += libaudiologutils_headers
 ifneq ($(filter kona lahaina holi,$(TARGET_BOARD_PLATFORM)),)
 LOCAL_SANITIZE := integer_overflow
 endif
@@ -518,6 +524,7 @@ endif
 
 LOCAL_HEADER_LIBRARIES += libhardware_headers
 LOCAL_HEADER_LIBRARIES += libsystem_headers
+LOCAL_HEADER_LIBRARIES += libaudiologutils_headers
 ifneq ($(filter kona lahaina holi,$(TARGET_BOARD_PLATFORM)),)
 LOCAL_SANITIZE := integer_overflow
 endif
@@ -667,6 +674,7 @@ endif
 
 LOCAL_HEADER_LIBRARIES += libhardware_headers
 LOCAL_HEADER_LIBRARIES += libsystem_headers
+LOCAL_HEADER_LIBRARIES += libaudiologutils_headers
 ifneq ($(filter kona lahaina holi,$(TARGET_BOARD_PLATFORM)),)
 LOCAL_SANITIZE := integer_overflow
 endif
@@ -890,6 +898,8 @@ endif
 
 LOCAL_HEADER_LIBRARIES += libhardware_headers
 LOCAL_HEADER_LIBRARIES += libsystem_headers
+LOCAL_HEADER_LIBRARIES += libaudiologutils_headers
+LOCAL_HEADER_LIBRARIES += libaudio-parsers_headers
 ifneq ($(filter kona lahaina holi,$(TARGET_BOARD_PLATFORM)),)
 LOCAL_SANITIZE := integer_overflow
 endif
