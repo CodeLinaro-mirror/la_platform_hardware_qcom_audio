@@ -67,7 +67,8 @@ VOICE_CFLAGS += -D__unused=__attribute__\(\(__unused__\)\)
 VOICE_INCLUDES = -I $(top_srcdir)/qahw_api/inc
 VOICE_INCLUDES += -I $(top_srcdir)/qahw/inc
 
-hal_voice_test_SOURCES = qahw_voice_test.c
+hal_voice_test_SOURCES = qahw_voice_test.c \
+                         qahw_usb_test.c
 
 hal_voice_test_LDADD = -lutils ../libqahw.la
 AM_CFLAGS = -I $(PKG_CONFIG_SYSROOT_DIR)/usr/include/mm-audio/qahw/inc
