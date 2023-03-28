@@ -1,21 +1,35 @@
 AM_CFLAGS = -I $(top_srcdir)/hal \
         -I $(top_srcdir)/hal/audio_extn \
         -I $(top_srcdir)/hal/voice_extn \
-        -I $(PKG_CONFIG_SYSROOT_DIR)/usr/include/audio-kernel \
+        -I $(PKG_CONFIG_SYSROOT_DIR)/usr/include/audio-kernel/audio \
         -I $(PKG_CONFIG_SYSROOT_DIR)/usr/include \
         -I $(top_srcdir)/hal/${TARGET_PLATFORM}
 
 AM_CFLAGS += -DAUDIO_GKI_ENABLED
-c_sources = $(top_srcdir)/hal/audio_hw.c \
-            $(top_srcdir)/hal/platform_info.c \
-            $(top_srcdir)/hal/voice.c \
-            $(top_srcdir)/hal/acdb.c \
-            $(top_srcdir)/hal/${TARGET_PLATFORM}/platform.c \
-            utils.c \
-            audio_extn.c \
-            device_utils.c \
-            audio_stub.c
 
+h_sources = audio_defs.h \
+            audio_extn.h \
+            ../audio_hw.h \
+            ../voice.h
+
+################################## A2DP OFFLOAD LIB ####################################
+c_sources = a2dp.c
+library_include_HEADERS = $(h_sources)
+library_includedir = $(includedir)
+
+lib_LTLIBRARIES = audio.a2dp.offload.la
+audio_a2dp_offload_la_SOURCES = $(c_sources)
+audio_a2dp_offload_la_LIBADD = $(GLIB_LIBS) -llog -lcutils -ltinyalsa
+audio_a2dp_offload_la_LIBADD += -ltinycompress -laudioroute -ldl -lexpat -laudioutils
+audio_a2dp_offload_la_CFLAGS = $(AM_CFLAGS) $(GLIB_CFLAGS)
+audio_a2dp_offload_la_CFLAGS += -Dstrlcat=g_strlcat
+audio_a2dp_offload_la_CFLAGS += -DINT_MAX=0x7fffffff
+audio_a2dp_offload_la_CFLAGS += -D__unused=__attribute__\(\(__unused__\)\)
+audio_a2dp_offload_la_CFLAGS += -DLINUX_ENABLED $(TARGET_CFLAGS) -DAUDIO_EXTN_FORMATS_ENABLED
+audio_a2dp_offload_la_CFLAGS += -DNDEBUG
+audio_a2dp_offload_la_LDFLAGS = -module -shared -avoid-version
+
+################################## A2DP OFFLOAD LIB ####################################
 
 if FM_POWER_OPT
 AM_CFLAGS += -DFM_POWER_OPT
@@ -42,7 +56,7 @@ AM_CFLAGS += -DCOMPRESS_VOIP_ENABLED
 c_sources += $(top_srcdir)/hal/voice_extn/compress_voip.c
 endif
 
-if SPKR_PROTECTION
+if SPKR_PROT
 AM_CFLAGS += -DSPKR_PROT_ENABLED
 c_sources += spkr_protection.c
 endif
@@ -135,11 +149,6 @@ AM_CFLAGS += -DKEEP_ALIVE_ENABLED
 c_sources += keep_alive.c
 endif
 
-if AUDIO_HW_EXTN_API
-AM_CFLAGS += -DAUDIO_HW_EXTN_API_ENABLED
-c_sources += $(top_srcdir)/hal/audio_hw_extn_api.c
-endif
-
 if GEF
 AM_CFLAGS += -DAUDIO_GENERIC_EFFECT_FRAMEWORK_ENABLED
 c_sources += gef.c
@@ -196,22 +205,6 @@ if LL_AS_PRIMARY_OUTPUT
 AM_CFLAGS += -DUSE_LL_AS_PRIMARY_OUTPUT
 endif
 
-lib_LTLIBRARIES = libautohal.la
-c_sources += auto_hal.c
-libautohal_la_SOURCES = $(c_sources)
-libautohal_la_LIBADD = $(GLIB_LIBS) -llog -lcutils -ltinyalsa
-libautohal_la_LIBADD += -ltinycompress -laudioroute -ldl -lexpat -laudioutils
-libautohal_la_LIBADD += -lm -lc -lresolv
-libautohal_la_CFLAGS = $(AM_CFLAGS) $(GLIB_CFLAGS)
-libautohal_la_CFLAGS += -Dstrlcat=g_strlcat
-libautohal_la_CFLAGS += -DINT_MAX=0x7fffffff -Wno-error=deprecated-declarations -DPATH_MAX=1024 -DULONG_MAX=0xFFFFFFFFFFFFFFFFUL
-libautohal_la_CFLAGS += -D__unused=__attribute__\(\(__unused__\)\)
-libautohal_la_CFLAGS += -DLINUX_ENABLED $(TARGET_CFLAGS) -DAUDIO_EXTN_FORMATS_ENABLED
-libautohal_la_CFLAGS += -DNDEBUG
-libautohal_la_LDFLAGS = -module -shared -avoid-version
-libautohal_la_CPPFLAGS = $(AM_CFLAGS) $(GLIB_CFLAGS)
-libautohal_la_CPPFLAGS += -DLINUX_ENABLED
-
 if HFP
 AM_CFLAGS += -DHFP_ENABLED
 c_sources += hfp.c
@@ -240,12 +233,7 @@ endif
 libhfp_la_LDFLAGS = -module -shared -avoid-version
 endif
 
-if SPKR_PROTECTION
-h_sources = audio_defs.h \
-            audio_extn.h \
-            ../audio_hw.h \
-            ../voice.h
-
+if SPKR_PROT
 AM_CFLAGS += -DSPKR_PROT_ENABLED
 library_include_HEADERS = $(h_sources)
 library_includedir = $(includedir)

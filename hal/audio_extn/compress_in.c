@@ -78,6 +78,7 @@
 #include <time.h>
 #include <stdlib.h>
 #include <dlfcn.h>
+#include <signal.h>
 
 #include "audio_extn.h"
 #include "audio_defs.h"

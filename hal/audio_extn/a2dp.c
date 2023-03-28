@@ -2660,7 +2660,7 @@ bool configure_aac_enc_format_v3(audio_aac_encoder_config_v3 *aac_bt_cfg)
 
     ctl_enc_data = mixer_get_ctl_by_name(a2dp.adev->mixer, MIXER_ENC_CONFIG_BLOCK);
     if (!ctl_enc_data) {
-        ALOGE(" ERROR  a2dp encoder CONFIG data mixer control not identifed");
+        ALOGE(" ERROR  a2dp encoder CONFIG data mixer control not identified");
         is_configured = false;
         goto fail;
     }
