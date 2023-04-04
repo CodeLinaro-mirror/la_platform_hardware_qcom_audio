@@ -146,7 +146,7 @@
             <param capture_device="HANDSET" />
             <!-- adm_cfg_profile should match with the one defined under adm_config -->
             <!-- Set it to NONE if LSM directly connects to AFE -->
-            <param adm_cfg_profile="FFECNS" />
+            <param adm_cfg_profile="NONE" />
             <!-- fluence_type: "FLUENCE_MIC", "FLUENCE_DMIC", "FLUENCE_TMIC"   -->
             <!-- "FLUENCE_QMIC". Param value is valid when adm_cfg_profile -->
             <!-- is FFECNS -->
