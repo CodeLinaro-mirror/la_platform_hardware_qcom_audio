@@ -8127,7 +8127,7 @@ static int in_get_active_microphones(const struct audio_stream_in *stream,
 
     lock_input_stream(in);
     pthread_mutex_lock(&adev->lock);
-    int ret = platform_get_active_microphones(adev->platform,
+    int ret = platform_get_active_microphones(adev->platform, in->car_audio_stream,
                                               audio_channel_count_from_in_mask(in->channel_mask),
                                               in->usecase, mic_array, mic_count);
     pthread_mutex_unlock(&adev->lock);
@@ -9477,6 +9477,13 @@ static int adev_set_parameters(struct audio_hw_device *dev, const char *kvpairs)
             }
         }
     }
+    else
+    {
+        if (AUDIO_HW_A2DP_OFFLOAD_IS_NOT_SUPPORTED == status)
+        {
+            status = 0;
+        }
+    }
 
     //handle vr audio setparam
     ret = str_parms_get_str(parms, AUDIO_PARAMETER_KEY_VR_AUDIO_MODE,
@@ -10264,7 +10271,7 @@ static int adev_open_input_stream(struct audio_hw_device *dev,
             in->config.period_size = buffer_size / frame_size;
             in->af_period_multiplier = 1;
 
-            if (in->source == AUDIO_SOURCE_VOICE_COMMUNICATION) {
+            if (in->source == AUDIO_SOURCE_VOICE_COMMUNICATION && (!is_pcm_low_latency_record_usecase(in->usecase))) {
                 /* optionally use VOIP usecase depending on config(s) */
                 ret = adev_update_voice_comm_input_stream(in, config);
             }
