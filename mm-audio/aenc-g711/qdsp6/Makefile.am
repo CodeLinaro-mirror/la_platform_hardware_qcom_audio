@@ -21,7 +21,7 @@ lib_LTLIBRARIES = libOmxG711Enc.la
 libOmxG711Enc_la_SOURCES = $(C_SOURCES)
 libOmxG711Enc_la_CFLAGS = $(AM_CFLAGS) -Dstrlcpy=g_strlcpy $(GLIB_CFLAGS) -include glib.h
 libOmxG711Enc_la_CPPFLAGS = $(AM_CFLAGS) -Dstrlcpy=g_strlcpy $(GLIB_CFLAGS) -include glib.h
-libOmxG711Enc_la_LIBADD = $(GLIB_LIBS) -lcutils -llog -lstdc++
+libOmxG711Enc_la_LIBADD = -lpthread $(GLIB_LIBS) -lcutils -llog -lstdc++
 libOmxG711Enc_la_LDFLAGS = -shared -avoid-version
 
 bin_PROGRAMS = mm_aenc_omxg711_test

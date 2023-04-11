@@ -1451,6 +1451,13 @@ static int __unused audio_extn_hw_loopback_create_audio_patch(struct audio_hw_de
 {
     return 0;
 }
+static int __unused audio_extn_hw_loopback_create_audio_patch_v2(struct audio_hw_device *dev __unused,
+                                     audio_extn_source_port_config_t *source_port_config __unused,
+                                     audio_extn_sink_port_config_t *sink_port_config __unused,
+                                     audio_patch_handle_t *handle __unused)
+{
+    return 0;
+}
 static int __unused audio_extn_hw_loopback_release_audio_patch(struct audio_hw_device *dev __unused,
                                              audio_patch_handle_t handle __unused)
 {
