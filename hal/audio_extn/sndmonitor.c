@@ -27,7 +27,7 @@
 * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 *
 * Changes from Qualcomm Innovation Center are provided under the following license:
-* Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
+* Copyright (c) 2022-2023, Qualcomm Innovation Center, Inc. All rights reserved.
 *
 * Redistribution and use in source and binary forms, with or without
 * modification, are permitted (subject to the limitations in the
@@ -487,6 +487,16 @@ bool on_sndcard_state_update(sndcard_t *s)
 
     ALOGV("card num %d, new state %s", s->card, rd_buf);
 
+#ifdef PLATFORM_SA410M
+    if (strstr(rd_buf, "0"))
+        status = CARD_STATUS_OFFLINE;
+    else if (strstr(rd_buf, "1"))
+        status = CARD_STATUS_ONLINE;
+    else {
+        ALOGE("unknown state");
+        return 0;
+    }
+#else
     if (strstr(rd_buf, "OFFLINE"))
         status = CARD_STATUS_OFFLINE;
     else if (strstr(rd_buf, "ONLINE"))
@@ -495,6 +505,7 @@ bool on_sndcard_state_update(sndcard_t *s)
         ALOGE("unknown state");
         return 0;
     }
+#endif
 
     if (status == s->status) // no change
         return 0;
