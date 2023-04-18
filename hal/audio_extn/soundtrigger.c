@@ -25,11 +25,11 @@
  * OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
  * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * Changes from Qualcomm Innovation Center are provided under the following license:
- * Copyright (c) 2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
  * SPDX-License-Identifier: BSD-3-Clause-Clear
- *
  */
+
 #define LOG_TAG "soundtrigger"
 /* #define LOG_NDEBUG 0 */
 #define LOG_NDDEBUG 0
@@ -46,6 +46,7 @@
 #include "audio_extn.h"
 #include "platform.h"
 #include "platform_api.h"
+#include "soundtrigger.h"
 
 /*-------------------- Begin: AHAL-STHAL Interface ---------------------------*/
 /*
@@ -61,106 +62,8 @@
 #define STHAL_PROP_API_VERSION_2_0 MAKE_HAL_VERSION(2, 0)
 #define STHAL_PROP_API_CURRENT_VERSION STHAL_PROP_API_VERSION_2_0
 
-#define ST_EVENT_CONFIG_MAX_STR_VALUE 32
 #define ST_DEVICE_HANDSET_MIC 1
 
-typedef enum {
-    ST_EVENT_SESSION_REGISTER,
-    ST_EVENT_SESSION_DEREGISTER,
-    ST_EVENT_START_KEEP_ALIVE,
-    ST_EVENT_STOP_KEEP_ALIVE,
-    ST_EVENT_UPDATE_ECHO_REF
-} sound_trigger_event_type_t;
-
-typedef enum {
-    AUDIO_EVENT_CAPTURE_DEVICE_INACTIVE,
-    AUDIO_EVENT_CAPTURE_DEVICE_ACTIVE,
-    AUDIO_EVENT_PLAYBACK_STREAM_INACTIVE,
-    AUDIO_EVENT_PLAYBACK_STREAM_ACTIVE,
-    AUDIO_EVENT_STOP_LAB,
-    AUDIO_EVENT_SSR,
-    AUDIO_EVENT_NUM_ST_SESSIONS,
-    AUDIO_EVENT_READ_SAMPLES,
-    AUDIO_EVENT_DEVICE_CONNECT,
-    AUDIO_EVENT_DEVICE_DISCONNECT,
-    AUDIO_EVENT_SVA_EXEC_MODE,
-    AUDIO_EVENT_SVA_EXEC_MODE_STATUS,
-    AUDIO_EVENT_CAPTURE_STREAM_INACTIVE,
-    AUDIO_EVENT_CAPTURE_STREAM_ACTIVE,
-    AUDIO_EVENT_BATTERY_STATUS_CHANGED,
-    AUDIO_EVENT_GET_PARAM,
-    AUDIO_EVENT_UPDATE_ECHO_REF,
-    AUDIO_EVENT_SCREEN_STATUS_CHANGED,
-    AUDIO_EVENT_ROUTE_INIT_DONE
-} audio_event_type_t;
-
-typedef enum {
-    USECASE_TYPE_PCM_PLAYBACK,
-    USECASE_TYPE_PCM_CAPTURE,
-    USECASE_TYPE_VOICE_CALL,
-    USECASE_TYPE_VOIP_CALL,
-} audio_stream_usecase_type_t;
-
-typedef enum {
-    SND_CARD_STATUS_OFFLINE,
-    SND_CARD_STATUS_ONLINE,
-    CPE_STATUS_OFFLINE,
-    CPE_STATUS_ONLINE,
-    SLPI_STATUS_OFFLINE,
-    SLPI_STATUS_ONLINE
-} ssr_event_status_t;
-
-struct sound_trigger_session_info {
-    void* p_ses; /* opaque pointer to st_session obj */
-    int capture_handle;
-    struct pcm *pcm;
-    struct pcm_config config;
-};
-
-struct audio_read_samples_info {
-    struct sound_trigger_session_info *ses_info;
-    void *buf;
-    size_t num_bytes;
-};
-
-struct audio_hal_usecase {
-    audio_stream_usecase_type_t type;
-};
-
-struct sound_trigger_event_info {
-    struct sound_trigger_session_info st_ses;
-    bool st_ec_ref_enabled;
-};
-typedef struct sound_trigger_event_info sound_trigger_event_info_t;
-
-struct sound_trigger_device_info {
-    struct listnode devices;
-};
-
-struct sound_trigger_get_param_data {
-    char *param;
-    int sm_handle;
-    struct str_parms *reply;
-};
-
-struct audio_event_info {
-    union {
-        ssr_event_status_t status;
-        int value;
-        struct sound_trigger_session_info ses_info;
-        struct audio_read_samples_info aud_info;
-        char str_value[ST_EVENT_CONFIG_MAX_STR_VALUE];
-        struct audio_hal_usecase usecase;
-        bool audio_ec_ref_enabled;
-        struct sound_trigger_get_param_data st_get_param_data;
-        struct audio_route *audio_route;
-    } u;
-    struct sound_trigger_device_info device_info;
-};
-typedef struct audio_event_info audio_event_info_t;
-/* STHAL callback which is called by AHAL */
-typedef int (*sound_trigger_hw_call_back_t)(audio_event_type_t,
-                                  struct audio_event_info*);
 
 /*---------------- End: AHAL-STHAL Interface ----------------------------------*/
 
@@ -324,14 +227,14 @@ static void stdev_snd_mon_cb(void * stream __unused, struct str_parms * parms)
     return;
 }
 
-int audio_hw_call_back(sound_trigger_event_type_t event,
+void audio_hw_call_back(sound_trigger_event_type_t event,
                        sound_trigger_event_info_t* config)
 {
     int status = 0;
     struct sound_trigger_info  *st_ses_info;
 
     if (!st_dev)
-       return -EINVAL;
+       return;
 
     pthread_mutex_lock(&st_dev->lock);
     switch (event) {
@@ -399,8 +302,9 @@ int audio_hw_call_back(sound_trigger_event_type_t event,
         break;
     }
     pthread_mutex_unlock(&st_dev->lock);
+
 done:
-    return status;
+    return;
 }
 
 int audio_extn_sound_trigger_read(struct stream_in *in, void *buffer,
