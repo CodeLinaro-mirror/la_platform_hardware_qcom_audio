@@ -163,7 +163,11 @@ static int add_new_sndcard(int card, int fd)
         free(s);
         return -1;
     }
+#ifdef ENABLE_AUDIO_LEGACY_SSR
+    bool online = state && !strcmp(state, "1");
+#else
     bool online = state && !strcmp(state, "ONLINE");
+#endif
 
     ALOGV("card %d initial state %s %d", card, state, online);
 
@@ -235,7 +239,11 @@ static int enum_sndcards()
             continue;
         }
 
+#ifdef ENABLE_AUDIO_LEGACY_SSR
+        snprintf(path, sizeof(path), "/sys/kernel/snd_card/card_state");
+#else
         snprintf(path, sizeof(path), "/proc/asound/card%s/state", ptr);
+#endif
         ALOGV("Opening sound card state : %s", path);
 
         fd = open(path, O_RDONLY);
@@ -454,6 +462,16 @@ bool on_sndcard_state_update(sndcard_t *s)
 
     ALOGV("card num %d, new state %s", s->card, rd_buf);
 
+#ifdef ENABLE_AUDIO_LEGACY_SSR
+    if (strstr(rd_buf, "0"))
+        status = CARD_STATUS_OFFLINE;
+    else if (strstr(rd_buf, "1"))
+        status = CARD_STATUS_ONLINE;
+    else {
+        ALOGE("unknown state");
+        return 0;
+    }
+#else
     if (strstr(rd_buf, "OFFLINE"))
         status = CARD_STATUS_OFFLINE;
     else if (strstr(rd_buf, "ONLINE"))
@@ -462,6 +480,8 @@ bool on_sndcard_state_update(sndcard_t *s)
         ALOGE("unknown state");
         return 0;
     }
+
+#endif
 
     if (status == s->status) // no change
         return 0;

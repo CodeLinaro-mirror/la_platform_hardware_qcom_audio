@@ -263,6 +263,10 @@ vendor.audio.offload.track.enable=true
 PRODUCT_PROPERTY_OVERRIDES += \
 vendor.voice.path.for.pcm.voip=true
 
+#enable use of display-port for voice usecases
+PRODUCT_PROPERTY_OVERRIDES += \
+vendor.audio.enable.dp.for.voice=false
+
 #Enable multi channel aac through offload
 PRODUCT_PROPERTY_OVERRIDES += \
 vendor.audio.offload.multiaac.enable=true
