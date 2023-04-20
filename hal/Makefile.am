@@ -271,6 +271,7 @@ endif
 
 AM_CFLAGS += -DMAX_TARGET_SPECIFIC_CHANNEL_CNT="16"
 AM_CFLAGS += -DENABLE_AUDIO_LEGACY_PURE
+AM_CFLAGS += -fcommon
 
 h_sources = audio_extn/audio_defs.h \
             audio_extn/audio_extn.h \

@@ -7,6 +7,7 @@ AM_CFLAGS = -I $(top_srcdir)/hal \
 
 AM_CFLAGS += -DAUDIO_GKI_ENABLED
 AM_CFLAGS += -DENABLE_AUDIO_LEGACY_PURE
+AM_CFLAGS += -fcommon
 
 h_sources = audio_defs.h \
             audio_extn.h \
