@@ -42,7 +42,7 @@
 /*
 * Changes from Qualcomm Innovation Center are provided under the following license:
 *
-* Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
+* Copyright (c) 2022-2023 Qualcomm Innovation Center, Inc. All rights reserved.
 *
 * Redistribution and use in source and binary forms, with or without
 * modification, are permitted (subject to the limitations in the
@@ -5231,14 +5231,24 @@ exit:
 #ifdef __LP64__
 #if LINUX_ENABLED
 #define A2DP_OFFLOAD_LIB_PATH "/usr/lib64/audio.a2dp.offload.so"
+#define LINUX_PATH true
+#ifdef HAL_LIBRARY_PATH
+#define A2DP_OFFLOAD_LIB_PATH HAL_LIBRARY_PATH
+#endif
 #else
 #define A2DP_OFFLOAD_LIB_PATH "/vendor/lib64/liba2dpoffload.so"
+#define LINUX_PATH false
 #endif
 #else
 #if LINUX_ENABLED
 #define A2DP_OFFLOAD_LIB_PATH "/usr/lib/audio.a2dp.offload.so"
+#define LINUX_PATH true
+#ifdef HAL_LIBRARY_PATH
+#define A2DP_OFFLOAD_LIB_PATH HAL_LIBRARY_PATH
+#endif
 #else
 #define A2DP_OFFLOAD_LIB_PATH "/vendor/lib/liba2dpoffload.so"
+#define LINUX_PATH false
 #endif
 #endif
 
@@ -5307,7 +5317,14 @@ int a2dp_offload_feature_init(bool is_feature_enabled)
                   is_feature_enabled ? "Enabled" : "NOT Enabled");
     if (is_feature_enabled) {
         // dlopen lib
-        a2dp_lib_handle = dlopen(A2DP_OFFLOAD_LIB_PATH, RTLD_NOW);
+        if (LINUX_PATH) {
+             char liba2dp_path[100];
+             snprintf(liba2dp_path, sizeof(liba2dp_path),
+                      "%s/audio.a2dp.offload.so", A2DP_OFFLOAD_LIB_PATH);
+             a2dp_lib_handle = dlopen(liba2dp_path, RTLD_NOW);
+         } else {
+             a2dp_lib_handle = dlopen(A2DP_OFFLOAD_LIB_PATH, RTLD_NOW);
+         }
 
         if (!a2dp_lib_handle) {
             ALOGE("%s: dlopen failed", __func__);
@@ -6842,11 +6859,6 @@ int auto_hal_feature_init(bool is_feature_enabled)
 {
     ALOGD("%s: Called with feature %s", __func__,
                   is_feature_enabled ? "Enabled" : "NOT Enabled");
-
-#ifdef LINUX_ENABLED
-    is_feature_enabled = true;
-#endif
-
     if (is_feature_enabled) {
         // dlopen lib
         auto_hal_lib_handle = dlopen(AUTO_HAL_LIB_PATH, RTLD_NOW);
@@ -7290,7 +7302,7 @@ void audio_extn_feature_init()
         property_get_bool("vendor.audio.feature.usb_offload_sidetone_volume.enable",
                            false));
     a2dp_offload_feature_init(
-        property_get_bool("vendor.audio.feature.a2dp_offload.enable",
+        property_get_bool("vendor.audio.feature.a2dp.offload.enable",
                            false));
     wsa_feature_init(
         property_get_bool("vendor.audio.feature.wsa.enable",
@@ -7331,17 +7343,9 @@ void audio_extn_feature_init()
     hwdep_cal_feature_init(
         property_get_bool("vendor.audio.feature.hwdep_cal.enable",
                            false));
-    #ifdef LINUX_ENABLED
-    #ifdef HFP_ENABLED
-        hfp_feature_init(true);
-    #else
-        hfp_feature_init(false);
-    #endif
-    #else
     hfp_feature_init(
         property_get_bool("vendor.audio.feature.hfp.enable",
                             false));
-    #endif
     icc_feature_init(
         property_get_bool("vendor.audio.feature.icc.enable",
                            false));
