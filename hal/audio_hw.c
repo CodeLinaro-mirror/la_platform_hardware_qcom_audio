@@ -8444,7 +8444,8 @@ int adev_open_output_stream(struct audio_hw_device *dev,
         out->config.period_size = HDMI_MULTI_PERIOD_BYTES / (out->config.channels *
                                                          audio_bytes_per_sample(config->format));
         out->config.format = pcm_format_from_audio_format(out->format);
-    } else if (compare_device_type(&out->device_list, AUDIO_DEVICE_OUT_BUS)) {
+    } else if ((compare_device_type(&out->device_list, AUDIO_DEVICE_OUT_BUS)) &&
+                (out->flags != AUDIO_OUTPUT_FLAG_DIRECT)) {
             ret = audio_extn_auto_hal_open_output_stream(out);
             if (ret) {
                 ALOGE("%s: Failed to open output stream for bus device", __func__);
