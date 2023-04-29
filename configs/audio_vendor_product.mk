@@ -42,6 +42,7 @@ MM_AUDIO += libdsd2pcm
 MM_AUDIO += audioflacapp
 MM_AUDIO += libOmxWmaDec
 MM_AUDIO += libOmxApeDec
+MM_AUDIO += libOmxAlacDecSw
 MM_AUDIO += libOmxApeDecSw
 ifeq ($(TARGET_BOARD_PLATFORM),sdm845)
 MM_AUDIO += libOmxQcelp13Dec
