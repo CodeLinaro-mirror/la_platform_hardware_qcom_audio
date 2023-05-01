@@ -16,7 +16,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2022-2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted (subject to the limitations in the disclaimer
@@ -6825,7 +6825,7 @@ int platform_set_ext_display_device_v2(void *platform, int controller, int strea
     const char *ctl_name_prefix2 = "External HDMI";
     const char *ctl_name_suffix = "Audio Device";
     char mixer_ctl_name[MIXER_PATH_MAX_LENGTH] = {0};
-    int device_values[2] = {-1, -1};
+    long int device_values[2] = {-1, -1};
 
     if (!audio_extn_is_display_port_enabled()) {
         ALOGE("%s: display port is not supported", __func__);
