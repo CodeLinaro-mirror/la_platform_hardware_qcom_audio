@@ -7263,6 +7263,9 @@ snd_device_t platform_get_output_snd_device(void *platform, struct stream_out *o
                     snd_device = SND_DEVICE_OUT_DISPLAY_PORT +
                         ((controller * MAX_STREAMS_PER_CONTROLLER) + stream);
                     break;
+                case EXT_DISPLAY_TYPE_HDMI:
+                    snd_device = SND_DEVICE_OUT_HDMI;
+                    break;
                 default:
                     ALOGE("%s: Invalid disp_type %d", __func__,
                            my_data->ext_disp[controller][stream].type);
@@ -9594,7 +9597,8 @@ void platform_get_parameters(void *platform,
         if (adev->dp_allowed_for_voice) {
             for (i = 0; i < MAX_CONTROLLERS; ++i) {
                 for (j = 0; j < MAX_STREAMS_PER_CONTROLLER; ++j) {
-                    if (my_data->ext_disp[i][j].type == EXT_DISPLAY_TYPE_DP) {
+                    if (my_data->ext_disp[i][j].type == EXT_DISPLAY_TYPE_DP
+                         ||  my_data->ext_disp[i][j].type == EXT_DISPLAY_TYPE_HDMI) {
                         enabled = true;
                         break;
                     }
