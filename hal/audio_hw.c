@@ -2,8 +2,6 @@
  * Copyright (c) 2013-2021, The Linux Foundation. All rights reserved.
  * Not a Contribution.
  *
- * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
- *
  * Copyright (C) 2013 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -9695,6 +9693,16 @@ static int adev_set_parameters(struct audio_hw_device *dev, const char *kvpairs)
             if (ret < 0) {
                 ALOGE("%s: Failed to query disp type, ret:%d", __func__, ret);
             } else {
+                // Update ctl and stream values for all the existing streams during HDMI connection,
+                // as adev_open_output_stream() doesn't get called for existing streams and values
+                // remain unupdated for those streams.
+                list_for_each(node, &adev->active_outputs_list) {
+                    streams_output_ctxt_t *out_ctxt = node_to_item(node,
+                            streams_output_ctxt_t,
+                            list);
+                    out_ctxt->output->extconn.cs.controller = controller;
+                    out_ctxt->output->extconn.cs.stream = stream;
+                }
                 platform_cache_edid_v2(adev->platform, controller, stream);
             }
         } else if (audio_is_usb_out_device(device) || audio_is_usb_in_device(device)) {
