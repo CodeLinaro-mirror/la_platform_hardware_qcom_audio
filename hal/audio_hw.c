@@ -7986,13 +7986,20 @@ exit:
             pthread_mutex_unlock(&adev->lock);
             in->standby = true;
         }
-        if (!audio_extn_cin_attached_usecase(in)) {
+        /* In hdmi-in compress usecase to during playback if hdmi cable is
+         * disconnected then read function is in block state.
+         * to unblock read call, needs to send silent buffer in case of hdmi-in
+         */
+        if (!audio_extn_cin_attached_usecase(in) || (true == in->hdmi_in_status)) {
             bytes_read = bytes;
             memset(buffer, 0, bytes);
         }
+
         in_standby(&in->stream.common);
+
         if (in->usecase == USECASE_AUDIO_RECORD_LOW_LATENCY)
             adev->adm_routing_changed = false;
+
         ALOGV("%s: read failed status %d- sleeping for buffer duration", __func__, ret);
         usleep((uint64_t)bytes * 1000000 / audio_stream_in_frame_size(stream) /
                                    in_get_sample_rate(&in->stream.common));

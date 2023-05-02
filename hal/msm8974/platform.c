@@ -8250,6 +8250,7 @@ snd_device_t platform_get_input_snd_device(void *platform,
             snd_device = SND_DEVICE_IN_BT_A2DP;
         } else if (compare_device_type(&in_devices, AUDIO_DEVICE_IN_AUX_DIGITAL)) {
             snd_device = SND_DEVICE_IN_HDMI_MIC;
+            in->hdmi_in_status = true;
         } else if (compare_device_type(&in_devices, AUDIO_DEVICE_IN_HDMI_ARC)) {
             snd_device = SND_DEVICE_IN_HDMI_ARC;
         } else if (compare_device_type(&in_devices, AUDIO_DEVICE_IN_ANLG_DOCK_HEADSET) ||
@@ -8329,6 +8330,7 @@ snd_device_t platform_get_input_snd_device(void *platform,
             }
         } else if (compare_device_type(out_devices, AUDIO_DEVICE_OUT_AUX_DIGITAL)) {
             snd_device = SND_DEVICE_IN_HDMI_MIC;
+            in->hdmi_in_status = true;
         } else if (compare_device_type(out_devices, AUDIO_DEVICE_OUT_ANLG_DOCK_HEADSET) ||
                    compare_device_type(out_devices, AUDIO_DEVICE_OUT_DGTL_DOCK_HEADSET)) {
             snd_device = SND_DEVICE_IN_USB_HEADSET_MIC;
