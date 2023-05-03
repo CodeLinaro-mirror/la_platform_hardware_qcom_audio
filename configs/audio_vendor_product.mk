@@ -58,7 +58,9 @@ MM_AUDIO += audiod
 MM_AUDIO += libsmwrapper
 MM_AUDIO += libadpcmdec
 MM_AUDIO += libmulawdec
+ifneq ($(TARGET_IS_HEADLESS),true)
 MM_AUDIO += sound_trigger.primary.$(TARGET_BOARD_PLATFORM)
+endif #TARGET_IS_HEADLESS
 MM_AUDIO += sound_trigger_test
 MM_AUDIO += libhwdaphal
 MM_AUDIO += libqcomvisualizer
