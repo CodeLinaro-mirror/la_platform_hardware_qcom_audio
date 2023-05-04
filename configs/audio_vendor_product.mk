@@ -36,6 +36,7 @@ MM_AUDIO += audio_effects.conf
 MM_AUDIO += ftm_test_config
 MM_AUDIO += libFlacSwDec
 MM_AUDIO += libAlacSwDec
+MM_AUDIO += libOmxAlacDec
 MM_AUDIO += libApeSwDec
 MM_AUDIO += libMpeghSwEnc
 MM_AUDIO += libdsd2pcm
