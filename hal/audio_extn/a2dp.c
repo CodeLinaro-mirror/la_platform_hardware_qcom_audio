@@ -26,6 +26,12 @@
 * OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
 * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
+
+/* Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
+*/
+
 #define LOG_TAG "a2dp_offload"
 /*#define LOG_NDEBUG 0*/
 #define LOG_NDDEBUG 0
@@ -42,6 +48,7 @@
 #include <hardware/audio.h>
 #include <hardware/hardware.h>
 #include <cutils/properties.h>
+#include <system/audio.h>
 
 #ifdef DYNAMIC_LOG_ENABLED
 #include <log_xml_parser.h>
@@ -249,9 +256,9 @@ typedef int (*audio_source_suspend_t)(void);
 typedef void (*audio_source_handoff_triggered_t)(void);
 typedef void (*clear_source_a2dpsuspend_flag_t)(void);
 typedef void * (*audio_get_enc_config_t)(uint8_t *multicast_status,
-                                uint8_t *num_dev, codec_t *codec_type);
+                                uint8_t *num_dev, audio_format_t *codec_type);
 typedef int (*audio_source_check_a2dp_ready_t)(void);
-typedef int (*audio_is_source_scrambling_enabled_t)(void);
+typedef bool (*audio_is_source_scrambling_enabled_t)(void);
 typedef bool (*audio_is_tws_mono_mode_enable_t)(void);
 typedef int (*audio_sink_start_t)(void);
 typedef int (*audio_sink_stop_t)(void);
@@ -1318,7 +1325,7 @@ static void a2dp_check_and_set_scrambler()
     if (a2dp.audio_is_source_scrambling_enabled && (a2dp.bt_state_source != A2DP_STATE_DISCONNECTED))
         scrambler_mode = a2dp.audio_is_source_scrambling_enabled();
 
-    if (scrambler_mode) {
+    if (scrambler_mode == true) {
         //enable scrambler in dsp
         ctrl_scrambler_mode = mixer_get_ctl_by_name(a2dp.adev->mixer,
                                             MIXER_SCRAMBLER_MODE);
@@ -2861,6 +2868,7 @@ bool configure_a2dp_encoder_format()
     void *codec_info = NULL;
     uint8_t multi_cast = 0, num_dev = 1;
     codec_t codec_type = CODEC_TYPE_INVALID;
+    audio_format_t audio_format = AUDIO_FORMAT_INVALID;
     bool is_configured = false;
     audio_aptx_encoder_config aptx_encoder_cfg;
 
@@ -2870,11 +2878,12 @@ bool configure_a2dp_encoder_format()
     }
     ALOGD("configure_a2dp_encoder_format start");
     codec_info = a2dp.audio_get_enc_config(&multi_cast, &num_dev,
-                               &codec_type);
+                               &audio_format);
 
     // ABR disabled by default for all codecs
     a2dp.abr_config.is_abr_enabled = false;
     a2dp.is_aptx_adaptive = false;
+    codec_type = (codec_t) audio_format;
 
     switch(codec_type) {
         case CODEC_TYPE_SBC:
