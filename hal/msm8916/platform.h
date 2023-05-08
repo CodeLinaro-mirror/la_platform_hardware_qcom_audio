@@ -21,6 +21,8 @@
 #define QCOM_AUDIO_PLATFORM_H
 #include <sound/voice_params.h>
 
+#define PLATFORM_MDM9607
+
 enum {
     FLUENCE_NONE,
     FLUENCE_DUAL_MIC = 0x1,
@@ -58,7 +60,10 @@ enum {
  * as standard android device AUDIO_DEVICE_OUT_WIRED_HEADPHONE
  * for other layers.
  */
-#define AUDIO_DEVICE_OUT_ALL_CODEC_BACKEND \
+
+#define AUDIO_DEVICE_OUT_ALL_CODEC_BACKEND 0
+
+#define AUDIO_DEVICE_OUT_ALL_DEVICES_BACKEND \
     (AUDIO_DEVICE_OUT_EARPIECE | AUDIO_DEVICE_OUT_SPEAKER | \
      AUDIO_DEVICE_OUT_WIRED_HEADSET | AUDIO_DEVICE_OUT_WIRED_HEADPHONE|\
      AUDIO_DEVICE_OUT_LINE)
@@ -68,7 +73,10 @@ enum {
  * All these devices are handled by the internal HW codec. We can
  * enable any one of these devices at any time
  */
-#define AUDIO_DEVICE_IN_ALL_CODEC_BACKEND \
+
+#define AUDIO_DEVICE_IN_ALL_CODEC_BACKEND 0
+
+#define AUDIO_DEVICE_IN_ALL_DEVICES_BACKEND \
     (AUDIO_DEVICE_IN_BUILTIN_MIC | AUDIO_DEVICE_IN_BACK_MIC | \
      AUDIO_DEVICE_IN_WIRED_HEADSET | AUDIO_DEVICE_IN_VOICE_CALL) & ~AUDIO_DEVICE_BIT_IN
 
