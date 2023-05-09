@@ -94,3 +94,19 @@ audio_spkr_prot_la_CFLAGS += -DLINUX_ENABLED $(TARGET_CFLAGS) -DAUDIO_EXTN_FORMA
 audio_spkr_prot_la_CFLAGS += -DNDEBUG
 audio_spkr_prot_la_LDFLAGS = -module -shared -avoid-version
 endif
+
+if HDMI_EDID
+library_include_HEADERS = $(h_sources)
+library_includedir = $(includedir)
+lib_LTLIBRARIES += audio.hdmi.edid.la
+audio_hdmi_edid_la_SOURCES =  edid.c
+audio_hdmi_edid_la_LIBADD = $(GLIB_LIBS) -llog -lcutils -ltinyalsa
+audio_hdmi_edid_la_LIBADD += -ltinycompress -laudioroute -ldl -lexpat -laudioutils
+audio_hdmi_edid_la_CFLAGS = $(AM_CFLAGS) $(GLIB_CFLAGS)
+audio_hdmi_edid_la_CFLAGS += -Dstrlcat=g_strlcat
+audio_hdmi_edid_la_CFLAGS += -DINT_MAX=0x7fffffff
+audio_hdmi_edid_la_CFLAGS += -D__unused=__attribute__\(\(__unused__\)\)
+audio_hdmi_edid_la_CFLAGS += -DLINUX_ENABLED $(TARGET_CFLAGS) -DAUDIO_EXTN_FORMATS_ENABLED
+audio_hdmi_edid_la_CFLAGS += -DNDEBUG
+audio_hdmi_edid_la_LDFLAGS = -module -shared -avoid-version
+endif
