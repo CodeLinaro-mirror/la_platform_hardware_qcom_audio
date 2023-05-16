@@ -9,7 +9,7 @@ AC_PREREQ([2.69])
 # Initialize the hal-interface package version 1.0.0
 AC_INIT(halinterface,1.0.0)
 # Does not strictly follow GNU Coding standards
-AM_INIT_AUTOMAKE([foreign])
+AM_INIT_AUTOMAKE([foreign subdir-objects])
 # Disables auto rebuilding of configure, Makefile.ins
 #AM_MAINTAINER_MODE
 # defines some macros variable to be included by source
@@ -123,28 +123,7 @@ fi
 if (test x$TARGET_SUPPORT = xsdmsteppe); then
          AC_SUBST([TARGET_PLATFORM], ["msm8974"])
          TARGET_CFLAGS="-DPLATFORM_MSMSTEPPE"
-         TARGET_CFLAGS+=" -DMAX_TARGET_SPECIFIC_CHANNEL_CNT=\"16\""
-         TARGET_CFLAGS+=" -DINCALL_STEREO_CAPTURE_ENABLED"
 fi
-if (test x$TARGET_SUPPORT = xqrbx210); then
-         AC_SUBST([TARGET_PLATFORM], ["msm8974"])
-         TARGET_CFLAGS=" -DPLATFORM_BENGAL"
-         TARGET_CFLAGS+=" -DMAX_TARGET_SPECIFIC_CHANNEL_CNT=\"4\""
-         TARGET_CFLAGS+=" -DINCALL_STEREO_CAPTURE_ENABLED"
-fi
-if (test x$TARGET_SUPPORT = xqrb5165); then
-         AC_SUBST([TARGET_PLATFORM], ["msm8974"])
-         TARGET_CFLAGS=" -DPLATFORM_KONA"
-         TARGET_CFLAGS+=" -DMAX_TARGET_SPECIFIC_CHANNEL_CNT=\"4\""
-         TARGET_CFLAGS+=" -DINCALL_STEREO_CAPTURE_ENABLED"
-fi
-if (test x$TARGET_SUPPORT = xmsmnile_au); then
-         AC_SUBST([TARGET_PLATFORM], ["msm8974"])
-         TARGET_CFLAGS="-DPLATFORM_MSMNILE"
-fi
-if (test x$TARGET_SUPPORT = xmsmsteppe_au); then
-         AC_SUBST([TARGET_PLATFORM], ["msm8974"])
-         TARGET_CFLAGS="-DPLATFORM_MSMSTEPPE"
 if (test x$TARGET_SUPPORT = xqrb5165); then
          AC_SUBST([TARGET_PLATFORM], ["msm8974"])
          TARGET_CFLAGS=" -DPLATFORM_KONA"

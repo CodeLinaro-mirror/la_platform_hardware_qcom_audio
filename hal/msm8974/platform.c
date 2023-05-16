@@ -16,7 +16,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2022-2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted (subject to the limitations in the disclaimer
@@ -6825,7 +6825,7 @@ int platform_set_ext_display_device_v2(void *platform, int controller, int strea
     const char *ctl_name_prefix2 = "External HDMI";
     const char *ctl_name_suffix = "Audio Device";
     char mixer_ctl_name[MIXER_PATH_MAX_LENGTH] = {0};
-    int device_values[2] = {-1, -1};
+    long int device_values[2] = {-1, -1};
 
     if (!audio_extn_is_display_port_enabled()) {
         ALOGE("%s: display port is not supported", __func__);
@@ -7262,6 +7262,9 @@ snd_device_t platform_get_output_snd_device(void *platform, struct stream_out *o
                 case EXT_DISPLAY_TYPE_DP:
                     snd_device = SND_DEVICE_OUT_DISPLAY_PORT +
                         ((controller * MAX_STREAMS_PER_CONTROLLER) + stream);
+                    break;
+                case EXT_DISPLAY_TYPE_HDMI:
+                    snd_device = SND_DEVICE_OUT_HDMI;
                     break;
                 default:
                     ALOGE("%s: Invalid disp_type %d", __func__,
@@ -8247,6 +8250,7 @@ snd_device_t platform_get_input_snd_device(void *platform,
             snd_device = SND_DEVICE_IN_BT_A2DP;
         } else if (compare_device_type(&in_devices, AUDIO_DEVICE_IN_AUX_DIGITAL)) {
             snd_device = SND_DEVICE_IN_HDMI_MIC;
+            in->hdmi_in_status = true;
         } else if (compare_device_type(&in_devices, AUDIO_DEVICE_IN_HDMI_ARC)) {
             snd_device = SND_DEVICE_IN_HDMI_ARC;
         } else if (compare_device_type(&in_devices, AUDIO_DEVICE_IN_ANLG_DOCK_HEADSET) ||
@@ -8326,6 +8330,7 @@ snd_device_t platform_get_input_snd_device(void *platform,
             }
         } else if (compare_device_type(out_devices, AUDIO_DEVICE_OUT_AUX_DIGITAL)) {
             snd_device = SND_DEVICE_IN_HDMI_MIC;
+            in->hdmi_in_status = true;
         } else if (compare_device_type(out_devices, AUDIO_DEVICE_OUT_ANLG_DOCK_HEADSET) ||
                    compare_device_type(out_devices, AUDIO_DEVICE_OUT_DGTL_DOCK_HEADSET)) {
             snd_device = SND_DEVICE_IN_USB_HEADSET_MIC;
@@ -9594,7 +9599,8 @@ void platform_get_parameters(void *platform,
         if (adev->dp_allowed_for_voice) {
             for (i = 0; i < MAX_CONTROLLERS; ++i) {
                 for (j = 0; j < MAX_STREAMS_PER_CONTROLLER; ++j) {
-                    if (my_data->ext_disp[i][j].type == EXT_DISPLAY_TYPE_DP) {
+                    if (my_data->ext_disp[i][j].type == EXT_DISPLAY_TYPE_DP
+                         ||  my_data->ext_disp[i][j].type == EXT_DISPLAY_TYPE_HDMI) {
                         enabled = true;
                         break;
                     }

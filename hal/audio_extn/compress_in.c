@@ -26,7 +26,7 @@
 * OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
 * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 *
-* Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
+* Copyright (c) 2022-2023 Qualcomm Innovation Center, Inc. All rights reserved.
 *
 * Redistribution and use in source and binary forms, with or without
 * modification, are permitted (subject to the limitations in the disclaimer
@@ -78,6 +78,7 @@
 #include <time.h>
 #include <stdlib.h>
 #include <dlfcn.h>
+#include <signal.h>
 
 #include "audio_extn.h"
 #include "audio_defs.h"
@@ -531,7 +532,8 @@ int cin_read(struct stream_in *in, void *buffer,
                         size_t bytes, size_t *bytes_read)
 {
     int ret = -EINVAL;
-    size_t read_size = bytes;
+    size_t read_size = 0;
+    size_t size_read = 0;
     size_t mdata_size = (sizeof(struct snd_codec_metadata));
     cin_private_data_t *cin_data = (cin_private_data_t *) in->cin_extn;
 
@@ -558,13 +560,23 @@ int cin_read(struct stream_in *in, void *buffer,
         if (!(in->flags & (AUDIO_INPUT_FLAG_TIMESTAMP | AUDIO_INPUT_FLAG_PASSTHROUGH)))
             mdata_size = 0;
 
-        if (buffer && read_size) {
+        if (buffer && bytes) {
             /* start timer to calculate 200ms timeout */
             if ((true == in->hdmi_in_status) &&
                 (!(in->flags & (AUDIO_INPUT_FLAG_TIMESTAMP))))
                 start_timer(in->timer_handle, in->hdmi_in_wait_ns);
 
-            read_size = compress_read(cin_data->compr, buffer, read_size);
+            while (read_size < bytes) {
+                size_read = compress_read(cin_data->compr, buffer, bytes);
+
+                if (size_read < 0) {
+                    read_size = size_read;
+                    break;
+                }
+
+                read_size += size_read;
+            }
+
             /* stop timer in case of success return by compress_read */
             if ((true == in->hdmi_in_status) &&
                 (!(in->flags & (AUDIO_INPUT_FLAG_TIMESTAMP))))

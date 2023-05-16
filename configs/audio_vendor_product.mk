@@ -36,10 +36,15 @@ MM_AUDIO += audio_effects.conf
 MM_AUDIO += ftm_test_config
 MM_AUDIO += libFlacSwDec
 MM_AUDIO += libAlacSwDec
+MM_AUDIO += libOmxAlacDec
 MM_AUDIO += libApeSwDec
 MM_AUDIO += libMpeghSwEnc
 MM_AUDIO += libdsd2pcm
 MM_AUDIO += audioflacapp
+MM_AUDIO += libOmxWmaDec
+MM_AUDIO += libOmxApeDec
+MM_AUDIO += libOmxAlacDecSw
+MM_AUDIO += libOmxApeDecSw
 ifeq ($(TARGET_BOARD_PLATFORM),sdm845)
 MM_AUDIO += libOmxQcelp13Dec
 MM_AUDIO += libOmxEvrcDec

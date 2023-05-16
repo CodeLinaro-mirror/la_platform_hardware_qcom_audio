@@ -1,7 +1,7 @@
 AM_CFLAGS = -I $(top_srcdir)/hal \
         -I $(top_srcdir)/hal/audio_extn \
         -I $(top_srcdir)/hal/voice_extn \
-        -I $(PKG_CONFIG_SYSROOT_DIR)/usr/include/audio-kernel \
+        -I $(PKG_CONFIG_SYSROOT_DIR)/usr/include/audio-kernel/audio \
         -I $(PKG_CONFIG_SYSROOT_DIR)/usr/include \
         -I $(top_srcdir)/hal/${TARGET_PLATFORM}
 
@@ -13,8 +13,6 @@ c_sources = audio_hw.c \
             audio_extn/utils.c \
             audio_extn/audio_extn.c \
             audio_extn/device_utils.c \
-            audio_extn/audio_stub.c
-            acdb.c \
             audio_extn/audio_hidl.cpp
 
 if HDMI_EDID
@@ -272,6 +270,8 @@ AM_CFLAGS += -DENABLE_EXTENDED_COMPRESS_FORMAT
 endif
 
 AM_CFLAGS += -DMAX_TARGET_SPECIFIC_CHANNEL_CNT="16"
+AM_CFLAGS += -DENABLE_AUDIO_LEGACY_PURE
+AM_CFLAGS += -fcommon
 
 h_sources = audio_extn/audio_defs.h \
             audio_extn/audio_extn.h \
@@ -298,7 +298,6 @@ if HAL_PATH_SPECIFIED
 audio_primary_default_la_CFLAGS += -DHAL_LIBRARY_PATH=\"@HAL_PATH@\"
 endif
 audio_primary_default_la_CFLAGS += -Dstrlcat=g_strlcat
-audio_primary_default_la_CFLAGS += -DINT_MAX=0x7fffffff -Wno-error=deprecated-declarations -DPATH_MAX=1024 -DULONG_MAX=0xFFFFFFFFFFFFFFFFUL
 audio_primary_default_la_CFLAGS += -DINT_MAX=0x7fffffff
 audio_primary_default_la_CFLAGS += -DULONG_MAX=\(__LONG_MAX__*2UL+1UL\)
 audio_primary_default_la_CFLAGS += -DPATH_MAX=4096
