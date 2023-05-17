@@ -293,8 +293,14 @@ audio_devices_t AudioVoice::GetMatchingTxDevice(audio_devices_t halRxDeviceId) {
 int AudioVoice::VoiceOutSetParameters(const char *kvpairs) {
     char value[32];
     int ret = 0, rx_device = 0, tx_device = 0, err;
+
+#ifdef USE_MUSL
+    pal_device_id_t pal_rx_device = (pal_device_id_t) 0;
+    pal_device_id_t pal_tx_device = (pal_device_id_t) 0;
+#else
     pal_device_id_t pal_rx_device = (pal_device_id_t) NULL;
     pal_device_id_t pal_tx_device = (pal_device_id_t) NULL;
+#endif
     pal_device_id_t* pal_device_ids = NULL;
     uint16_t device_count = 0;
     struct str_parms *parms = (str_parms *)NULL;
@@ -546,7 +552,7 @@ int AudioVoice::VoiceStart(voice_session_t *session) {
     int ret;
     struct pal_stream_attributes streamAttributes;
     std::shared_ptr<AudioDevice> adevice = AudioDevice::GetInstance();
-    struct pal_device palDevices[2] = {0};
+    struct pal_device palDevices[2];
     struct pal_channel_info out_ch_info = {0, {0}}, in_ch_info = {0, {0}};
     pal_param_payload *param_payload = nullptr;
 
@@ -556,6 +562,9 @@ int AudioVoice::VoiceStart(voice_session_t *session) {
     out_ch_info.channels = 2;
     out_ch_info.ch_map[0] = PAL_CHMAP_CHANNEL_FL;
     out_ch_info.ch_map[1] = PAL_CHMAP_CHANNEL_FR;
+
+    memset(&palDevices[0], 0, sizeof(palDevices[0]));
+    memset(&palDevices[1], 0, sizeof(palDevices[1]));
 
     palDevices[0].id = pal_voice_tx_device_id_;
     palDevices[0].config.ch_info = in_ch_info;
@@ -680,7 +689,7 @@ int AudioVoice::VoiceStop(voice_session_t *session) {
 
 int AudioVoice::VoiceSetDevice(voice_session_t *session) {
     int ret = 0;
-    struct pal_device palDevices[2] = {0};
+    struct pal_device palDevices[2];
     struct pal_channel_info out_ch_info = {0, {0}}, in_ch_info = {0, {0}};
     std::shared_ptr<AudioDevice> adevice = AudioDevice::GetInstance();
 
@@ -690,6 +699,9 @@ int AudioVoice::VoiceSetDevice(voice_session_t *session) {
     out_ch_info.channels = 2;
     out_ch_info.ch_map[0] = PAL_CHMAP_CHANNEL_FL;
     out_ch_info.ch_map[1] = PAL_CHMAP_CHANNEL_FR;
+
+    memset(&palDevices[0], 0, sizeof(palDevices[0]));
+    memset(&palDevices[1], 0, sizeof(palDevices[1]));
 
     palDevices[0].id = pal_voice_tx_device_id_;
     palDevices[0].config.ch_info = in_ch_info;
