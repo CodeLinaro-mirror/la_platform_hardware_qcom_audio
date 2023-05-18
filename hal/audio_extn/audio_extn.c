@@ -7302,7 +7302,7 @@ void audio_extn_feature_init()
         property_get_bool("vendor.audio.feature.usb_offload_sidetone_volume.enable",
                            false));
     a2dp_offload_feature_init(
-        property_get_bool("vendor.audio.feature.a2dp.offload.enable",
+        property_get_bool("vendor.audio.feature.a2dp_offload.enable",
                            false));
     wsa_feature_init(
         property_get_bool("vendor.audio.feature.wsa.enable",
