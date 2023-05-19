@@ -228,15 +228,15 @@ persist.vendor.audio.ambisonic.auto.profile=false
 PRODUCT_PROPERTY_OVERRIDES += \
 persist.vendor.audio.apptype.multirec.enabled=false
 
-##fluencetype can be "fluence" or "fluencepro" or "none"
+##fluencetype can be "fluence" or "fluencepro" or "none" or "fluencenn"
 PRODUCT_PROPERTY_OVERRIDES += \
-ro.vendor.audio.sdk.fluencetype=fluencepro\
-ro.vendor.audio.sdk.fluence.nn.enabled=false\
+ro.vendor.audio.sdk.fluencetype=fluencenn\
+ro.vendor.audio.sdk.fluence.nn.enabled=true\
 persist.vendor.audio.fluence.voicecall=true\
 persist.vendor.audio.fluence.voicerec=true\
 persist.vendor.audio.fluence.audiorec=true\
 persist.vendor.audio.fluence.speaker=true\
-persist.vendor.audio.fluence.tmic.enabled=false
+persist.vendor.audio.fluence.tmic.enabled=true
 
 ##speaker protection v3 switch and ADSP AFE API version
 PRODUCT_PROPERTY_OVERRIDES += \
