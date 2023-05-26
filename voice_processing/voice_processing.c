@@ -1,5 +1,6 @@
 /*
  * Copyright (C) 2013 The Android Open Source Project
+ * Copyright (c) 2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -43,14 +44,17 @@ enum effect_id
     NUM_ID
 };
 
+static int init(void);
+static void enable_gcov(void);
+
 #ifdef AUDIO_FEATURE_ENABLED_GCOV
 extern void  __gcov_flush();
-static void enable_gcov()
+static void enable_gcov(void)
 {
     __gcov_flush();
 }
 #else
-static void enable_gcov()
+static void enable_gcov(void)
 {
 }
 #endif
@@ -582,7 +586,8 @@ static int fx_command(effect_handle_t  self,
                     pReplyData == NULL ||
                     *replySize < (int)sizeof(effect_param_t) ||
                     // constrain memcpy below
-                    ((effect_param_t *)pCmdData)->psize > *replySize - sizeof(effect_param_t)) {
+                    ((effect_param_t *)pCmdData)->psize > *replySize - sizeof(effect_param_t) ||
+                    ((effect_param_t *)pCmdData)->psize > cmdSize - sizeof(effect_param_t)) {
                 ALOGV("fx_command() EFFECT_CMD_GET_PARAM invalid args");
                 return -EINVAL;
             }
