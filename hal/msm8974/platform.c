@@ -9231,6 +9231,15 @@ int platform_set_parameters(void *platform, struct str_parms *parms)
         ALOGD("Updating afe_loopback as %d from platform XML" , my_data->afe_loopback);
     }
 
+    err = str_parms_get_str(parms, PLATFORM_VOIPCALL_SPEAKER_CFG_IS_STEREO, value, len);
+    if (err >= 0) {
+        if (value && !strncmp(value, "false", sizeof("false")))
+            my_data->voice_speaker_stereo = false;
+        else
+            my_data->voice_speaker_stereo = true;
+        str_parms_del(parms, PLATFORM_VOIPCALL_SPEAKER_CFG_IS_STEREO);
+    }
+
     err = str_parms_get_str(parms, AUDIO_PARAMETER_KEY_MONO_SPEAKER, value, len);
     if (err >= 0) {
         if (!strncmp("left", value, sizeof("left")))
