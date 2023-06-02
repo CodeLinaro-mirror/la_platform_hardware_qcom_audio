@@ -2278,13 +2278,13 @@
     </path>
 
     <path name="voicemmode1-call">
-        <ctl name="RX_CDC_DMA_RX_0_Voice Mixer VoiceMMode1" value="1" />
-        <ctl name="VoiceMMode1_Tx Mixer TX_CDC_DMA_TX_3_MMode1" value="1" />
+        <ctl name="SEC_MI2S_RX_Voice Mixer VoiceMMode1" value="1"/>
+        <ctl name="VoiceMMode1_Tx Mixer TX_CDC_DMA_TX_4_MMode1" value="1" />
     </path>
 
     <path name="voicemmode1-call handset">
-        <ctl name="RX_CDC_DMA_RX_0_Voice Mixer VoiceMMode1" value="1" />
-        <ctl name="VoiceMMode1_Tx Mixer TX_CDC_DMA_TX_3_MMode1" value="1" />
+        <ctl name="SEC_MI2S_RX_Voice Mixer VoiceMMode1" value="1" />
+        <ctl name="VoiceMMode1_Tx Mixer TX_CDC_DMA_TX_4_MMode1" value="1" />
     </path>
 
     <path name="voicemmode1-call call-proxy">
@@ -2594,7 +2594,7 @@
     </path>
 
     <path name="speaker-mic">
-        <path name="dmic1" />
+        <path name="amic2" />
     </path>
 
     <path name="speaker-mic-liquid">
@@ -2614,6 +2614,7 @@
     </path>
 
     <path name="handset-mic">
+        <ctl name="TX_DEC0 Volume" value="110" />
         <path name="amic2" />
     </path>
 
