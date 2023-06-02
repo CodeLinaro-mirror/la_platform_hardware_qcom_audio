@@ -3292,9 +3292,9 @@
         <ctl name="TX DMIC MUX2" value="DMIC3" />
         <ctl name="TX_AIF1_CAP Mixer DEC3" value="1" />
         <ctl name="TX DMIC MUX3" value="DMIC5" />
-        <ctl name="TX_DEC1 Volume" value="104" />
-        <ctl name="TX_DEC2 Volume" value="104" />
-        <ctl name="TX_DEC3 Volume" value="104" />
+        <ctl name="TX_DEC1 Volume" value="96" />
+        <ctl name="TX_DEC2 Volume" value="96" />
+        <ctl name="TX_DEC3 Volume" value="96" />
     </path>
 
     <path name="three-mic">
