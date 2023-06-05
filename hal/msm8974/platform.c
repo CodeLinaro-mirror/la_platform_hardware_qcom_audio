@@ -113,6 +113,7 @@
 #define PLATFORM_INFO_XML_PATH_CSRA6_NAME "audio_platform_info_csra6.xml"
 #define PLATFORM_INFO_XML_PATH_CSRA8_NAME "audio_platform_info_csra8.xml"
 #define PLATFORM_INFO_XML_PATH_CSRA8PLUS2_NAME "audio_platform_info_csra8plus2.xml"
+#define PLATFORM_INFO_XML_PATH_WSA_RB1_NAME  "audio_platform_info_wsa_rb1.xml"
 
 #include <linux/msm_audio.h>
 #if defined (PLATFORM_MSM8998) || (PLATFORM_SDM845) || (PLATFORM_SDM710) || \
@@ -3784,6 +3785,22 @@ void *platform_init(struct audio_device *adev)
     } else if (!strncmp(snd_card_name, "qcs405-wsa-snd-card",
                sizeof("qcs405-wsa-snd-card"))) {
         platform_info_init(get_xml_file_path(PLATFORM_INFO_XML_PATH_WSA_NAME),
+            my_data, PLATFORM);
+    } else if (!strncmp(snd_card_name, "qcs405-csra6-snd-card",
+               sizeof("qcs405-csra6-snd-card"))) {
+        platform_info_init(get_xml_file_path(PLATFORM_INFO_XML_PATH_CSRA6_NAME),
+            my_data, PLATFORM);
+    } else if (!strncmp(snd_card_name, "qcs405-csra8-snd-card",
+               sizeof("qcs405-csra8-snd-card"))) {
+        platform_info_init(get_xml_file_path(PLATFORM_INFO_XML_PATH_CSRA8_NAME),
+            my_data, PLATFORM);
+    } else if (!strncmp(snd_card_name, "qcs405-csra8plus2-snd-card",
+               sizeof("qcs405-csra8plus2-snd-card"))) {
+        platform_info_init(get_xml_file_path(PLATFORM_INFO_XML_PATH_CSRA8PLUS2_NAME),
+            my_data, PLATFORM);
+    } else if (!strncmp(snd_card_name, "qcs404-wsa-rb1-snd-card",
+               sizeof("qcs404-wsa-rb1-snd-card"))) {
+        platform_info_init(get_xml_file_path(PLATFORM_INFO_XML_PATH_WSA_RB1_NAME),
             my_data, PLATFORM);
     } else if (!strncmp(snd_card_name, "qcs405-tdm-snd-card",
                sizeof("qcs405-tdm-snd-card"))) {
