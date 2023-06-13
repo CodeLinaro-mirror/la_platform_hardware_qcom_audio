@@ -866,6 +866,7 @@ static const char * const device_table[SND_DEVICE_MAX] = {
     [SND_DEVICE_IN_HANDSET_TMIC_NS] = "three-mic",
     [SND_DEVICE_IN_HANDSET_TMIC_AEC_NS] = "three-mic",
     [SND_DEVICE_IN_HANDSET_TMIC_NN] = "three-mic-nn",
+    [SND_DEVICE_IN_HANDSET_TMIC_NN_VC] = "three-mic-nn",
     [SND_DEVICE_IN_SPEAKER_TMIC_AEC] = "speaker-tmic",
     [SND_DEVICE_IN_SPEAKER_TMIC_NS] = "speaker-tmic",
     [SND_DEVICE_IN_SPEAKER_TMIC_AEC_NS] = "speaker-tmic",
@@ -964,6 +965,8 @@ static struct audio_effect_config effect_config_table[GET_IN_DEVICE_INDEX(SND_DE
     [GET_IN_DEVICE_INDEX(SND_DEVICE_IN_HANDSET_DMIC_NN)][EFFECT_NS] = {TX_VOICE_FLUENCE_NN, 0x8000, 0x10EAF, 0x02},
     [GET_IN_DEVICE_INDEX(SND_DEVICE_IN_HANDSET_TMIC_NN)][EFFECT_AEC] = {TX_VOICE_FLUENCE_NN, 0x8000, 0x10EAF, 0x01},
     [GET_IN_DEVICE_INDEX(SND_DEVICE_IN_HANDSET_TMIC_NN)][EFFECT_NS] = {TX_VOICE_FLUENCE_NN, 0x8000, 0x10EAF, 0x02},
+    [GET_IN_DEVICE_INDEX(SND_DEVICE_IN_HANDSET_TMIC_NN_VC)][EFFECT_AEC] = {TX_VOICE_FLUENCE_NN, 0x8000, 0x10EAF, 0x01},
+    [GET_IN_DEVICE_INDEX(SND_DEVICE_IN_HANDSET_TMIC_NN_VC)][EFFECT_NS] = {TX_VOICE_FLUENCE_NN, 0x8000, 0x10EAF, 0x02},
 
     [GET_IN_DEVICE_INDEX(SND_DEVICE_IN_VOICE_REC_MIC)][EFFECT_AEC] = {TX_VOICE_FLUENCEV5_SM, 0x0, 0x10EAF, 0x01},
     [GET_IN_DEVICE_INDEX(SND_DEVICE_IN_VOICE_REC_MIC)][EFFECT_NS] = {TX_VOICE_FLUENCEV5_SM, 0x0, 0x10EAF, 0x02},
@@ -1217,6 +1220,7 @@ static int acdb_device_table[SND_DEVICE_MAX] = {
     [SND_DEVICE_IN_HANDSET_TMIC_NS] = 155,
     [SND_DEVICE_IN_HANDSET_TMIC_AEC_NS] = 156,
     [SND_DEVICE_IN_HANDSET_TMIC_NN] = 198,
+    [SND_DEVICE_IN_HANDSET_TMIC_NN_VC] = 205,
     [SND_DEVICE_IN_SPEAKER_TMIC_AEC] = 158,
     [SND_DEVICE_IN_SPEAKER_TMIC_NS] = 159,
     [SND_DEVICE_IN_SPEAKER_TMIC_AEC_NS] = 160,
@@ -1503,6 +1507,7 @@ static struct name_to_index snd_device_name_index[SND_DEVICE_MAX] = {
     {TO_NAME_INDEX(SND_DEVICE_IN_HANDSET_TMIC_NS)},
     {TO_NAME_INDEX(SND_DEVICE_IN_HANDSET_TMIC_AEC_NS)},
     {TO_NAME_INDEX(SND_DEVICE_IN_HANDSET_TMIC_NN)},
+    {TO_NAME_INDEX(SND_DEVICE_IN_HANDSET_TMIC_NN_VC)},
     {TO_NAME_INDEX(SND_DEVICE_IN_SPEAKER_TMIC_AEC)},
     {TO_NAME_INDEX(SND_DEVICE_IN_SPEAKER_TMIC_NS)},
     {TO_NAME_INDEX(SND_DEVICE_IN_SPEAKER_TMIC_AEC_NS)},
@@ -2923,6 +2928,7 @@ static void set_platform_defaults(struct platform_data * my_data)
     hw_interface_table[SND_DEVICE_IN_HANDSET_TMIC_NS] = strdup("SLIMBUS_0_TX");
     hw_interface_table[SND_DEVICE_IN_HANDSET_TMIC_AEC_NS] = strdup("SLIMBUS_0_TX");
     hw_interface_table[SND_DEVICE_IN_HANDSET_TMIC_NN] = strdup("SLIMBUS_0_TX");
+    hw_interface_table[SND_DEVICE_IN_HANDSET_TMIC_NN_VC] = strdup("SLIMBUS_0_TX");
     hw_interface_table[SND_DEVICE_IN_SPEAKER_TMIC_AEC] = strdup("SLIMBUS_0_TX");
     hw_interface_table[SND_DEVICE_IN_SPEAKER_TMIC_NS] = strdup("SLIMBUS_0_TX");
     hw_interface_table[SND_DEVICE_IN_SPEAKER_TMIC_AEC_NS] = strdup("SLIMBUS_0_TX");
@@ -7513,10 +7519,15 @@ static snd_device_t get_snd_device_for_voice_comm_ecns_enabled(struct platform_d
     } else if (compare_device_type(in_devices, AUDIO_DEVICE_IN_BUILTIN_MIC)) {
         if ((my_data->fluence_type & FLUENCE_TRI_MIC) &&
             (my_data->source_mic_type & SOURCE_THREE_MIC)) {
-            snd_device = my_data->fluence_nn_enabled ?
-                            SND_DEVICE_IN_HANDSET_TMIC_NN
-                            : SND_DEVICE_IN_HANDSET_TMIC_AEC_NS;
-            adev->acdb_settings |= TMIC_FLAG;
+            if (property_get_bool("persist.vendor.audio.msteams.acdb.enabled", false) &&
+                              my_data->fluence_nn_enabled) {
+                snd_device = SND_DEVICE_IN_HANDSET_TMIC_NN;
+            } else {
+                snd_device = my_data->fluence_nn_enabled ?
+                                SND_DEVICE_IN_HANDSET_TMIC_NN_VC
+                                : SND_DEVICE_IN_HANDSET_TMIC_AEC_NS;
+                adev->acdb_settings |= TMIC_FLAG;
+           }
         } else if ((my_data->fluence_type & FLUENCE_DUAL_MIC) &&
             (my_data->source_mic_type & SOURCE_DUAL_MIC)) {
             snd_device = my_data->fluence_sb_enabled ?
@@ -7582,10 +7593,15 @@ static snd_device_t get_snd_device_for_voice_comm_ecns_disabled(struct platform_
         } else if (compare_device_type(in_devices, AUDIO_DEVICE_IN_BUILTIN_MIC)) {
             if ((my_data->fluence_type & FLUENCE_TRI_MIC) &&
                 (my_data->source_mic_type & SOURCE_THREE_MIC)) {
-                snd_device = my_data->fluence_nn_enabled ?
-                                 SND_DEVICE_IN_HANDSET_TMIC_NN
-                                 : SND_DEVICE_IN_HANDSET_TMIC_AEC_NS;
-                adev->acdb_settings |= TMIC_FLAG;
+                if (property_get_bool("persist.vendor.audio.msteams.acdb.enabled", false) &&
+                                  my_data->fluence_nn_enabled) {
+                    snd_device = SND_DEVICE_IN_HANDSET_TMIC_NN;
+                } else {
+                    snd_device = my_data->fluence_nn_enabled ?
+                                     SND_DEVICE_IN_HANDSET_TMIC_NN_VC
+                                     : SND_DEVICE_IN_HANDSET_TMIC_AEC_NS;
+                    adev->acdb_settings |= TMIC_FLAG;
+                }
             } else if ((my_data->fluence_type & FLUENCE_DUAL_MIC) &&
                 (my_data->source_mic_type & SOURCE_DUAL_MIC) &&
                 my_data->fluence_in_voice_comm) {
@@ -8220,8 +8236,8 @@ snd_device_t platform_get_input_snd_device(void *platform,
                     snd_device = SND_DEVICE_IN_HANDSET_TMIC_FLUENCE_PRO;
                 } else if ((my_data->fluence_type & FLUENCE_TRI_MIC) &&
                            (my_data->source_mic_type & SOURCE_THREE_MIC)) {
-                    snd_device = my_data->fluence_nn_enabled ?
-                                    SND_DEVICE_IN_HANDSET_TMIC_NN
+                   snd_device = my_data->fluence_nn_enabled ?
+                                    SND_DEVICE_IN_HANDSET_TMIC_NN_VC
                                     : SND_DEVICE_IN_HANDSET_TMIC;
                 } else if ((my_data->fluence_type & FLUENCE_DUAL_MIC) &&
                     (my_data->source_mic_type & SOURCE_DUAL_MIC)) {
