@@ -18,7 +18,7 @@
 
 /*
 ** Changes from Qualcomm Innovation Center are provided under the following license:
-** Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
+** Copyright (c) 2022-2023 Qualcomm Innovation Center, Inc. All rights reserved.
 **
 ** Redistribution and use in source and binary forms, with or without
 ** modification, are permitted (subject to the limitations in the
@@ -51,14 +51,22 @@
 ** IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 **/
 
+#ifndef USE_MUSL
 #include <sys/cdefs.h>
+#endif
 #include <stdint.h>
 #include <system/audio.h>
 
 #ifndef QTI_AUDIO_HAL_DEFS_H
 #define QTI_AUDIO_HAL_DEFS_H
 
+#ifdef USE_MUSL
+#ifdef __cplusplus
+extern "C" {
+#endif
+#else
 __BEGIN_DECLS
+#endif
 
 /**************************************/
 
@@ -746,7 +754,13 @@ struct qahw_mute_data {
     qahw_stream_direction direction;
 };
 
+#ifdef USE_MUSL
+#ifdef __cplusplus
+}
+#endif
+#else
 __END_DECLS
+#endif
 
 #endif  // QTI_AUDIO_HAL_DEFS_H
 
