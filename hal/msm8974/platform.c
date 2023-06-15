@@ -6890,10 +6890,10 @@ int platform_set_ext_display_device_v2(void *platform, int controller, int strea
         return -EINVAL;
     }
 
-    if ((ctl_index % 2) == 0)
+    if (ctl_index < 2)
         snprintf(mixer_ctl_name, sizeof(mixer_ctl_name),
                  "%s %s", ctl_name_prefix, ctl_name_suffix);
-    else if ((ctl_index % 2) != 0)
+    else if (ctl_index < 4)
         snprintf(mixer_ctl_name, sizeof(mixer_ctl_name),
                  "%s %s", ctl_name_prefix2, ctl_name_suffix);
     else
@@ -6951,10 +6951,10 @@ int platform_get_ext_disp_type_v2(void *platform, int controller, int stream)
         const char *ctl_name_suffix = "Type";
         char mixer_ctl_name[MIXER_PATH_MAX_LENGTH] = {0};
 
-        if ((ctl_index % 2) == 0)
+        if (ctl_index < 2)
             snprintf(mixer_ctl_name, sizeof(mixer_ctl_name),
                      "%s %s", ctl_name_prefix, ctl_name_suffix);
-        else if ((ctl_index % 2) != 0)
+        else if (ctl_index < 4)
             snprintf(mixer_ctl_name, sizeof(mixer_ctl_name),
                      "%s %s", ctl_name_prefix2, ctl_name_suffix);
         else
