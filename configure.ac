@@ -61,6 +61,7 @@ AC_ARG_ENABLE(target,
                         [qrbx210],    [TARGET_SUPPORT=qrbx210],
                         [qrb5165],    [TARGET_SUPPORT=qrb5165],
                         [sdmsteppe],    [TARGET_SUPPORT=sdmsteppe],
+                        [qcs40x],     [TARGET_SUPPORT=qcs40x],
                         [TARGET_SUPPORT=none])],
                [TARGET_SUPPORT=none]
 )

@@ -42,7 +42,7 @@
 /*
 * Changes from Qualcomm Innovation Center are provided under the following license:
 *
-* Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
+* Copyright (c) 2022-2023 Qualcomm Innovation Center, Inc. All rights reserved.
 *
 * Redistribution and use in source and binary forms, with or without
 * modification, are permitted (subject to the limitations in the
@@ -553,7 +553,7 @@ static void set_custom_mtmx_params_v2(struct audio_device *adev,
     char *capture_mixer_name_prefix = "AudStr Capture";
     char *mixer_name_suffix = "ChMixer Cfg";
     char mixer_ctl_name[128] = {0};
-    int chmixer_cfg[5] = {0}, len = 0;
+    long int chmixer_cfg[5] = {0}, len = 0;
     int be_id = -1, err = 0;
 
     be_id = platform_get_snd_device_backend_index(pinfo->snd_device);
@@ -631,9 +631,9 @@ static struct audio_custom_mtmx_params *update_channel_weightage_params(
 
     /*
      * Allocate memory for coefficients in audio_custom_mtmx_params.
-     * Coefficent in audio_custom_mtmx_params is of type uint32_t.
+     * Coefficent in audio_custom_mtmx_params is of type long int.
      */
-    size += sizeof(uint32_t) * ip_channels * op_channels;
+    size += sizeof(long int) * ip_channels * op_channels;
     params = (struct audio_custom_mtmx_params *) calloc(1, size);
 
     if (!params) {
@@ -5231,14 +5231,24 @@ exit:
 #ifdef __LP64__
 #if LINUX_ENABLED
 #define A2DP_OFFLOAD_LIB_PATH "/usr/lib64/audio.a2dp.offload.so"
+#define LINUX_PATH true
+#ifdef HAL_LIBRARY_PATH
+#define A2DP_OFFLOAD_LIB_PATH HAL_LIBRARY_PATH
+#endif
 #else
 #define A2DP_OFFLOAD_LIB_PATH "/vendor/lib64/liba2dpoffload.so"
+#define LINUX_PATH false
 #endif
 #else
 #if LINUX_ENABLED
 #define A2DP_OFFLOAD_LIB_PATH "/usr/lib/audio.a2dp.offload.so"
+#define LINUX_PATH true
+#ifdef HAL_LIBRARY_PATH
+#define A2DP_OFFLOAD_LIB_PATH HAL_LIBRARY_PATH
+#endif
 #else
 #define A2DP_OFFLOAD_LIB_PATH "/vendor/lib/liba2dpoffload.so"
+#define LINUX_PATH false
 #endif
 #endif
 
@@ -5307,7 +5317,14 @@ int a2dp_offload_feature_init(bool is_feature_enabled)
                   is_feature_enabled ? "Enabled" : "NOT Enabled");
     if (is_feature_enabled) {
         // dlopen lib
-        a2dp_lib_handle = dlopen(A2DP_OFFLOAD_LIB_PATH, RTLD_NOW);
+        if (LINUX_PATH) {
+             char liba2dp_path[100];
+             snprintf(liba2dp_path, sizeof(liba2dp_path),
+                      "%s/audio.a2dp.offload.so", A2DP_OFFLOAD_LIB_PATH);
+             a2dp_lib_handle = dlopen(liba2dp_path, RTLD_NOW);
+         } else {
+             a2dp_lib_handle = dlopen(A2DP_OFFLOAD_LIB_PATH, RTLD_NOW);
+         }
 
         if (!a2dp_lib_handle) {
             ALOGE("%s: dlopen failed", __func__);
@@ -6842,11 +6859,6 @@ int auto_hal_feature_init(bool is_feature_enabled)
 {
     ALOGD("%s: Called with feature %s", __func__,
                   is_feature_enabled ? "Enabled" : "NOT Enabled");
-
-#ifdef LINUX_ENABLED
-    is_feature_enabled = true;
-#endif
-
     if (is_feature_enabled) {
         // dlopen lib
         auto_hal_lib_handle = dlopen(AUTO_HAL_LIB_PATH, RTLD_NOW);
@@ -7331,17 +7343,9 @@ void audio_extn_feature_init()
     hwdep_cal_feature_init(
         property_get_bool("vendor.audio.feature.hwdep_cal.enable",
                            false));
-    #ifdef LINUX_ENABLED
-    #ifdef HFP_ENABLED
-        hfp_feature_init(true);
-    #else
-        hfp_feature_init(false);
-    #endif
-    #else
     hfp_feature_init(
         property_get_bool("vendor.audio.feature.hfp.enable",
                             false));
-    #endif
     icc_feature_init(
         property_get_bool("vendor.audio.feature.icc.enable",
                            false));

@@ -1,5 +1,5 @@
 /*
-* Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+* Copyright (c) 2021,2023 Qualcomm Innovation Center, Inc. All rights reserved.
 *
 * Redistribution and use in source and binary forms, with or without
 * modification, are permitted provided that the following conditions are
@@ -44,10 +44,16 @@
 #define MAX_SECTORS 8
 #define NUM_SECTORS 4
 #define TOTAL_DEGREES 360
+#define TOTAL_SPEAKERS 5
 #define NSEC_MSEC_CONVERT 1000
 #define ASCI_NUM 48
 #define DECI 10
 #define MIXER_PATH_MAX_LENGTH 100
+
+enum fluence_version {
+    FV_11,
+    FV_13
+};
 
 struct sound_focus_param {
     uint16_t  start_angle[MAX_SECTORS];
@@ -60,6 +66,24 @@ struct sound_focus_meta {
     uint8_t   enable[MAX_SECTORS];
     uint16_t  gain_step;
     struct   timespec ts;
+} __attribute__((packed));
+
+struct source_tracking_param_fnn {
+    int32_t  speech_probablity_q20;
+    int16_t  speakers[TOTAL_SPEAKERS];
+    int16_t  reserved;
+    uint8_t  polarActivity[TOTAL_DEGREES];
+    uint32_t  session_time_lsw;
+    uint32_t  session_time_msw;
+} __attribute__((packed));
+
+struct source_track_meta_fnn {
+    int32_t  speech_probablity_q20;
+    int16_t  speakers[TOTAL_SPEAKERS];
+    int16_t  reserved;
+    uint8_t  polarActivity[TOTAL_DEGREES];
+    uint32_t  session_time_lsw;
+    uint32_t  session_time_msw;
 } __attribute__((packed));
 
 struct source_tracking_param {
@@ -77,8 +101,8 @@ struct source_track_meta {
     struct   timespec ts;
 } __attribute__((packed));
 
-static int get_sourcetrack_metadata(struct source_track_meta *source_track_meta,
-                                                         struct mixer_ctl *ctl);
+static int get_sourcetrack_metadata(void *source_track_meta, unsigned int meta_size,
+                                                             struct mixer_ctl *ctl);
 
 static int get_soundfocus_metadata(struct sound_focus_meta *sound_focus_meta,
                                                       struct mixer_ctl *ctl);

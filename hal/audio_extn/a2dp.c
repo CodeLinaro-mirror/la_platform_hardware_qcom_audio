@@ -89,6 +89,7 @@
 
 #define BT_IPC_SOURCE_LIB_NAME "btaudio_offload_if.so"
 #define BT_IPC_SINK_LIB_NAME    "libbthost_if_sink.so"
+#define BT_IPC_SOURCE_LIB2_NAME  "libbthost_if.so"
 #define MEDIA_FMT_NONE                                     0
 #define MEDIA_FMT_AAC                                      0x00010DA6
 #define MEDIA_FMT_APTX                                     0x000131ff
@@ -1203,7 +1204,13 @@ static void a2dp_source_init()
         a2dp.bt_lib_source_handle = dlopen(BT_IPC_SOURCE_LIB_NAME, RTLD_NOW);
         if (a2dp.bt_lib_source_handle == NULL) {
             ALOGE("%s: dlopen failed for %s", __func__, BT_IPC_SOURCE_LIB_NAME);
-            return;
+            ALOGD("%s Falling back to %s since LE uses non-hidl based", __func__,
+                                BT_IPC_SOURCE_LIB2_NAME);
+            a2dp.bt_lib_source_handle = dlopen(BT_IPC_SOURCE_LIB2_NAME, RTLD_NOW);
+            if(a2dp.bt_lib_source_handle == NULL) {
+                ALOGE("%s: DLOPEN failed for %s", __func__, BT_IPC_SOURCE_LIB2_NAME);
+                return;
+            }
         }
     }
 
@@ -2416,6 +2423,16 @@ static int update_aptx_dsp_config_v1(struct custom_enc_cfg_t *aptx_dsp_cfg,
             aptx_dsp_cfg->sample_rate, aptx_dsp_cfg->num_channels);
 
     return ret;
+}
+
+static void audio_a2dp_update_tws_channel_mode()
+{
+    return;
+}
+
+static void audio_a2dp_update_lc3_channel_mode()
+{
+    return;
 }
 #endif
 

@@ -278,6 +278,10 @@ h_sources = audio_extn/audio_defs.h \
             audio_hw.h \
             voice.h
 
+if SOUND_TRIGGER
+h_sources += audio_extn/soundtrigger.h
+endif
+
 library_include_HEADERS = $(h_sources)
 library_includedir = $(includedir)
 
