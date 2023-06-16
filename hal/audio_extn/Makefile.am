@@ -35,11 +35,47 @@ audio_a2dp_offload_la_LDFLAGS = -module -shared -avoid-version
 
 ################################## A2DP OFFLOAD LIB ####################################
 
-
+################################## SSR LIB ####################################
 if SSR
 AM_CFLAGS += -DSSR_ENABLED
-c_sources += ssr.c
+AM_CFLAGS +=  -I ${WORKSPACE}/audio/mm-audio-noship/surround_sound_3mic/libsurround_3mic_proc/surround_rec_interface/inc/
+
+c_sources = ssr.c \
+            device_utils.c
+
+library_include_HEADERS = $(h_sources)
+library_includedir = $(includedir)
+
+lib_LTLIBRARIES += audio.ssrec.la
+audio_ssrec_la_SOURCES = $(c_sources)
+audio_ssrec_la_LIBADD = $(GLIB_LIBS) -llog -lcutils -ltinyalsa
+audio_ssrec_la_LIBADD += -ltinycompress -laudioroute -ldl -lexpat -laudioutils
+audio_ssrec_la_CFLAGS = $(AM_CFLAGS) $(GLIB_CFLAGS)
+audio_ssrec_la_CFLAGS += -Dstrlcat=g_strlcat
+audio_ssrec_la_CFLAGS += -DINT_MAX=0x7fffffff
+audio_ssrec_la_CFLAGS += -D__unused=__attribute__\(\(__unused__\)\)
+audio_ssrec_la_CFLAGS += -DLINUX_ENABLED $(TARGET_CFLAGS) -DAUDIO_EXTN_FORMATS_ENABLED
+audio_ssrec_la_CFLAGS += -DNDEBUG
+audio_ssrec_la_LDFLAGS = -module -shared -avoid-version
 endif
+
+################################## SND MONITOR LIB ####################################
+c_sources = sndmonitor.c
+library_include_HEADERS = $(h_sources)
+library_includedir = $(includedir)
+
+lib_LTLIBRARIES += audio.snd.monitor.la
+audio_snd_monitor_la_SOURCES = $(c_sources)
+audio_snd_monitor_la_LIBADD = $(GLIB_LIBS) -llog -lcutils -ltinyalsa
+audio_snd_monitor_la_LIBADD += -ltinycompress -laudioroute -ldl -lexpat -laudioutils
+audio_snd_monitor_la_CFLAGS = $(AM_CFLAGS) $(GLIB_CFLAGS)
+audio_snd_monitor_la_CFLAGS += -Dstrlcat=g_strlcat
+audio_snd_monitor_la_CFLAGS += -DINT_MAX=0x7fffffff
+audio_snd_monitor_la_CFLAGS += -D__unused=__attribute__\(\(__unused__\)\)
+audio_snd_monitor_la_CFLAGS += -DLINUX_ENABLED $(TARGET_CFLAGS) -DAUDIO_EXTN_FORMATS_ENABLED
+audio_snd_monitor_la_CFLAGS += -DNDEBUG
+audio_snd_monitor_la_LDFLAGS = -module -shared -avoid-version
+
 
 if COMPRESS_CAPTURE
 AM_CFLAGS += -DCOMPRESS_CAPTURE_ENABLED

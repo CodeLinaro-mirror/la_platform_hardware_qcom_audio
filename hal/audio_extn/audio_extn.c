@@ -2783,15 +2783,11 @@ void audio_extn_dsm_feedback_enable(struct audio_device *adev, snd_device_t snd_
 //END:   DSM_FEEDBACK ================================================================
 
 //START: SND_MONITOR_FEATURE ================================================================
+#if LINUX_ENABLED
+#define SND_MONITOR_PATH  STR_CAT(LE_LIBDIR, "/audio.snd.monitor.so")
+#else
 #ifdef __LP64__
-#if LINUX_ENABLED
-#define SND_MONITOR_PATH  "/usr/lib64/audio.snd.monitor.so"
-#else
 #define SND_MONITOR_PATH  "/vendor/lib64/libsndmonitor.so"
-#endif
-#else
-#if LINUX_ENABLED
-#define SND_MONITOR_PATH  "/usr/lib/audio.snd.monitor.so"
 #else
 #define SND_MONITOR_PATH  "/vendor/lib/libsndmonitor.so"
 #endif
@@ -3136,17 +3132,13 @@ void audio_extn_source_track_get_parameters(const struct audio_device *adev,
 //END: SOURCE_TRACKING_FEATURE ================================================
 
 //START: SSREC_FEATURE ==========================================================
+#ifdef LINUX_ENABLED
+#define SSREC_LIB_PATH  STR_CAT(LE_LIBDIR, "/audio.ssrec.so")
+#else
 #ifdef __LP64__
-#if LINUX_ENABLED
-#define SSREC_LIB_PATH  "/usr/lib64/audio.ssrec.so"
+#define SSREC_LIB_PATH "/usr/lib64/audio.ssrec.so"
 #else
-#define SSREC_LIB_PATH  "/vendor/lib64/libssrec.so"
-#endif
-#else
-#if LINUX_ENABLED
-#define SSREC_LIB_PATH  "/usr/lib/audio.ssrec.so"
-#else
-#define SSREC_LIB_PATH  "/vendor/lib/libssrec.so"
+#define SSREC_LIB_PATH "/vendor/lib/libssrec.so"
 #endif
 #endif
 
