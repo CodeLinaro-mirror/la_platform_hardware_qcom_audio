@@ -236,7 +236,7 @@ persist.vendor.audio.fluence.voicecall=true\
 persist.vendor.audio.fluence.voicerec=true\
 persist.vendor.audio.fluence.audiorec=true\
 persist.vendor.audio.fluence.speaker=true\
-persist.vendor.audio.fluence.tmic.enabled=true
+persist.vendor.audio.fluence.tmic.enabled=true\
 persist.vendor.audio.msteams.acdb.enabled=true
 
 ##speaker protection v3 switch and ADSP AFE API version
