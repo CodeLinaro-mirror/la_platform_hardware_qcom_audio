@@ -165,7 +165,8 @@ BatteryListenerImpl::BatteryListenerImpl(cb_fn_t cb) :
 
 BatteryListenerImpl::~BatteryListenerImpl()
 {
-    mThread->join();
+    if (mThread != nullptr)
+        mThread->join();
 }
 
 void BatteryListenerImpl::reset(){
