@@ -3774,6 +3774,10 @@ void *platform_init(struct audio_device *adev)
                sizeof("kona-qrd-snd-card"))) {
         platform_info_init(get_xml_file_path(PLATFORM_INFO_XML_PATH_QRD_NAME),
             my_data, PLATFORM);
+    } else if (!strncmp(snd_card_name, "kona-iot-snd-card",
+               sizeof("kona-iot-snd-card"))) {
+        platform_info_init(get_xml_file_path(PLATFORM_INFO_XML_PATH_IOT_NAME),
+            my_data, PLATFORM);
     } else if (!strncmp(snd_card_name, "sm8150-tavil-qrd-snd-card",
                sizeof("sm8150-tavil-qrd-snd-card"))) {
         platform_info_init(get_xml_file_path(PLATFORM_INFO_XML_PATH_QRD_NAME),
