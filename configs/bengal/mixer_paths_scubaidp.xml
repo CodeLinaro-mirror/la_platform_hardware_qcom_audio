@@ -2210,12 +2210,26 @@
     </path>
 
     <path name="hfp-sco">
+        <ctl name="SEC_MI2S_RX Port Mixer SLIM_7_TX" value="1" />
+        <ctl name="SLIMBUS_7_RX Audio Mixer MultiMedia6" value="1" />
+        <ctl name="MultiMedia6 Mixer TX_CDC_DMA_TX_4" value="1" />
+        <ctl name="SEC_MI2S_RX_DL_HL Switch" value="1" />
+    </path>
+
+    <path name="hfp-sco handset">
+        <path name="hfp-sco" />
+    </path>
+
+    <path name="hfp-sco-wb handset">
+        <ctl name="BT SampleRate" value="KHZ_16" />
+        <path name="hfp-sco" />
     </path>
 
     <path name="hfp-sco headphones">
     </path>
 
    <path name="hfp-sco-wb">
+        <ctl name="BT SampleRate" value="KHZ_16" />
         <path name="hfp-sco" />
    </path>
 
@@ -2541,6 +2555,9 @@
     <path name="speaker">
     </path>
 
+    <path name="voice-speaker-hfp">
+    </path>
+
     <path name="speaker-mono">
         <path name="speaker" />
     </path>
@@ -2602,6 +2619,10 @@
     </path>
 
     <path name="speaker-mic-sbc">
+    </path>
+
+    <path name="voice-speaker-mic-hfp">
+        <path name="speaker-mic" />
     </path>
 
     <path name="handset">
@@ -2668,7 +2689,6 @@
         <path name="amic2" />
     </path>
     <path name="voice-handset">
-        <path name="handset" />
     </path>
 
     <path name="voice-handset-tmus">
