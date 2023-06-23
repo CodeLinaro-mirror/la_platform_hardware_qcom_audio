@@ -2299,7 +2299,7 @@ int select_devices(struct audio_device *adev, audio_usecase_t uc_id)
         if (usecase->stream.out->ecall == 1)
         {
             ALOGE("ecall is set in select_devices in_snd_device:(%d) and out_snd_device: (%d)", in_snd_device, out_snd_device);
-
+#ifndef PLATFORM_MDM9607
             switch(in_snd_device){
             case SND_DEVICE_IN_HANDSET_MIC:
                 in_snd_device = SND_DEVICE_IN_ECALL_HANDSET_MIC;
@@ -2362,7 +2362,7 @@ int select_devices(struct audio_device *adev, audio_usecase_t uc_id)
                 out_snd_device = SND_DEVICE_OUT_ECALL_HANDSET;
                 break;
             }
-
+#endif
             usecase->devices = out_snd_device;
         }
 
