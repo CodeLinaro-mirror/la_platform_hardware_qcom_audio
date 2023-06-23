@@ -29,7 +29,7 @@
 <!-- Copyright (c) 2023 Qualcomm Innovation Center, Inc. All rights reserved.-->
 <!-- SPDX-License-Identifier: BSD-3-Clause-Clear-->
 <audio_platform_info>
-    <custom_mtmx_params param_id="0" in_channel_count="6" out_channel_count="6" 		
+    <custom_mtmx_params param_id="0" in_channel_count="6" out_channel_count="6"
 usecase="USECASE_AUDIO_RECORD_VOIP,USECASE_AUDIO_RECORD_COMPRESS2,USECASE_AUDIO_RECORD_COMPRESS3,USECASE_AUDIO_RECORD_COMPRESS4,USECASE_AUDIO_RECORD_COMPRESS5,USECASE_AUDIO_RECORD_COMPRESS6" snd_device="SND_DEVICE_IN_HANDSET_QMIC_AND_EC_REF_LOOPBACK" fe_id="10,18,19,28,29,30" >
         <custom_mtmx_param_coeffs out_channel_index="0"  values="16384 0 0 0 0 0"/>
         <custom_mtmx_param_coeffs out_channel_index="1"  values="0 16384 0 0 0 0"/>
@@ -38,7 +38,7 @@ usecase="USECASE_AUDIO_RECORD_VOIP,USECASE_AUDIO_RECORD_COMPRESS2,USECASE_AUDIO_
         <custom_mtmx_param_coeffs out_channel_index="4"  values="0 0 0 0 16384 0"/>
         <custom_mtmx_param_coeffs out_channel_index="5"  values="0 0 0 0 0 16384"/>
     </custom_mtmx_params>
-    
+
     <custom_mtmx_in_params usecase="USECASE_AUDIO_RECORD_VOIP,USECASE_AUDIO_RECORD_COMPRESS2,USECASE_AUDIO_RECORD_COMPRESS3,USECASE_AUDIO_RECORD_COMPRESS4,USECASE_AUDIO_RECORD_COMPRESS5,USECASE_AUDIO_RECORD_COMPRESS6" out_channel_count="6" >
         <custom_mtmx_param_in_chs in_channel_index="0" channel_count="4" device="AUDIO_DEVICE_IN_BUILTIN_MIC" interface="VA_CDC_DMA_TX_0" />
         <custom_mtmx_param_in_chs in_channel_index="1" channel_count="2" device="AUDIO_DEVICE_IN_LOOPBACK" interface="AFE_LOOPBACK_TX" />
@@ -501,6 +501,16 @@ usecase="USECASE_AUDIO_RECORD_VOIP,USECASE_AUDIO_RECORD_COMPRESS2,USECASE_AUDIO_
                         <mic_info mic_device_id="builtin_mic_2"
                             channel_mapping="AUDIO_MICROPHONE_CHANNEL_MAPPING_PROCESSED"/>
                         <mic_info mic_device_id="builtin_mic_3"
+                            channel_mapping="AUDIO_MICROPHONE_CHANNEL_MAPPING_PROCESSED"/>
+                    </snd_dev>
+                    <snd_dev in_snd_device="SND_DEVICE_IN_HANDSET_QMIC">
+                        <mic_info mic_device_id="builtin_mic_1"
+                            channel_mapping="AUDIO_MICROPHONE_CHANNEL_MAPPING_PROCESSED"/>
+                        <mic_info mic_device_id="builtin_mic_2"
+                            channel_mapping="AUDIO_MICROPHONE_CHANNEL_MAPPING_PROCESSED"/>
+                        <mic_info mic_device_id="builtin_mic_3"
+                            channel_mapping="AUDIO_MICROPHONE_CHANNEL_MAPPING_PROCESSED"/>
+                        <mic_info mic_device_id="builtin_mic_4"
                             channel_mapping="AUDIO_MICROPHONE_CHANNEL_MAPPING_PROCESSED"/>
                     </snd_dev>
             </input_snd_device_mic_mapping>
