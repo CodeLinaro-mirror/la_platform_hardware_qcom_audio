@@ -8462,13 +8462,6 @@ int adev_open_output_stream(struct audio_hw_device *dev,
         out->config.period_size = HDMI_MULTI_PERIOD_BYTES / (out->config.channels *
                                                          audio_bytes_per_sample(config->format));
         out->config.format = pcm_format_from_audio_format(out->format);
-    } else if (compare_device_type(&out->device_list, AUDIO_DEVICE_OUT_BUS)) {
-            ret = audio_extn_auto_hal_open_output_stream(out);
-            if (ret) {
-                ALOGE("%s: Failed to open output stream for bus device", __func__);
-                ret = -EINVAL;
-                goto error_open;
-            }
      }else if ((out->flags & AUDIO_OUTPUT_FLAG_COMPRESS_OFFLOAD) ||
                (out->flags == AUDIO_OUTPUT_FLAG_DIRECT)) {
         pthread_mutex_lock(&adev->lock);
@@ -8937,7 +8930,14 @@ int adev_open_output_stream(struct audio_hw_device *dev,
                 adev->haptics_config.channels = 1;
             } else
                 adev->haptics_config.channels = audio_channel_count_from_out_mask(out->channel_mask & AUDIO_CHANNEL_HAPTIC_ALL);
-        }  else {
+        } else if (compare_device_type(&out->device_list, AUDIO_DEVICE_OUT_BUS)) {
+            ret = audio_extn_auto_hal_open_output_stream(out);
+            if (ret) {
+                ALOGE("%s: Failed to open output stream for bus device", __func__);
+                ret = -EINVAL;
+                goto error_open;
+            }
+        } else {
             /* primary path is the default path selected if no other outputs are available/suitable */
             out->usecase = GET_USECASE_AUDIO_PLAYBACK_PRIMARY(use_db_as_primary);
             out->config = GET_PCM_CONFIG_AUDIO_PLAYBACK_PRIMARY(use_db_as_primary);

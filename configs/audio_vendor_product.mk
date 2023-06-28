@@ -133,6 +133,11 @@ MM_AUDIO += Headset_cal.acdb
 MM_AUDIO += Speaker_cal.acdb
 
 MM_AUDIO += libaudiohalplugin
+ifeq ($(call is-board-platform-in-list,gen4),true)
+MM_AUDIO += libaudio_dac
+MM_AUDIO += libaudio_expander
+MM_AUDIO += exp_dac_test
+endif #gen4
 MM_AUDIO += libcdcdriver
 MM_AUDIO += libvad
 MM_AUDIO += capi_v2_bmt
@@ -171,7 +176,7 @@ MM_AUDIO += audcalparam_commands_elite.cfg
 MM_AUDIO += libsynth
 MM_AUDIO += libicc
 
-ifneq ( ,$(filter T Tiramisu 13, $(PLATFORM_VERSION)))
+ifneq ( ,$(filter T Tiramisu 13 U UpsideDownCake 14, $(PLATFORM_VERSION)))
 MM_AUDIO += vendor.qti.hardware.automotive.audiocontrol-service
 else
 MM_AUDIO += android.hardware.automotive.audiocontrol-service.example
@@ -228,4 +233,10 @@ else ifeq ($(TARGET_BOARD_PLATFORM)$(TARGET_BOARD_SUFFIX)$(TARGET_BOARD_DERIVATI
 -include $(TOPDIR)vendor/qcom/opensource/audio-hal/primary-hal/configs/msmnile_au/msmnile_au.mk
 else ifeq ($(TARGET_BOARD_PLATFORM)$(TARGET_BOARD_SUFFIX),sm6150_au)
 -include $(TOPDIR)vendor/qcom/opensource/audio-hal/primary-hal/configs/msmsteppe_au/msmsteppe_au.mk
+endif
+
+ifeq ($(TARGET_BOARD_AUTO),true)
+ifeq ($(TARGET_USES_RRO),true)
+PRODUCT_PACKAGES += CarServiceResAutoTarget_Vendor
+endif
 endif
