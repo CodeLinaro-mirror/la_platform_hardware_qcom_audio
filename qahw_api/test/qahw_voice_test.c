@@ -374,6 +374,11 @@ static void* usb_rec_func(void * thread_param)
         pthread_exit(0);
     }
     usb_rec_pcm_hndl = get_rec_pcm_hndl();
+    if (usb_rec_pcm_hndl == NULL) {
+        fprintf(stderr, " null returned for usb_rec_pcm_hndl\n");
+        pthread_exit(0);
+        return NULL;
+    }
     usb_data_ptr = (char *)malloc(out_bytes_wanted);
     if (usb_data_ptr == NULL) {
         fprintf(stderr, "failed to allocate usb_data_ptr\n");
@@ -389,6 +394,8 @@ static void* usb_rec_func(void * thread_param)
     }
     if (params->usb_rec_file == NULL) {
         fprintf(stderr, "no record stream provided\n");
+        pthread_exit(0);
+        return NULL;
     }
     FILE *fd = fopen(params->usb_rec_file, "w");
     if (fd == NULL) {
@@ -582,6 +589,7 @@ void *rec_start(void *thread_param) {
             isVoiceOverUsb = false;
             free(buffer);
             pcm_close(usb_plbk_pcm_hndl);
+            return NULL;
         }
     }
 
