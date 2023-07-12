@@ -1,6 +1,13 @@
 #BOARD_USES_GENERIC_AUDIO := true
 #
 #AUDIO_FEATURE_FLAGS
+ifeq ($(TARGET_USES_QMAA_OVERRIDE_AUDIO), false)
+ifeq ($(TARGET_USES_QMAA),true)
+AUDIO_USE_STUB_HAL := true
+endif
+endif
+
+ifneq ($(AUDIO_USE_STUB_HAL), true)
 BOARD_USES_ALSA_AUDIO := true
 TARGET_USES_AOSP_FOR_AUDIO := false
 
@@ -40,6 +47,7 @@ endif
 
 USE_XML_AUDIO_POLICY_CONF := 1
 AUDIO_FEATURE_ENABLED_DLKM := true
+BOARD_SUPPORTS_GCS := false
 BOARD_SUPPORTS_SOUND_TRIGGER := true
 AUDIO_FEATURE_ENABLED_INSTANCE_ID := true
 AUDIO_USE_DEEP_AS_PRIMARY_OUTPUT := false
@@ -72,6 +80,29 @@ AUDIO_FEATURE_ENABLED_SVA_MULTI_STAGE := true
 AUDIO_FEATURE_ENABLED_BATTERY_LISTENER := true
 AUDIO_FEATURE_ENABLED_USB_BURST_MODE := true
 ##AUDIO_FEATURE_FLAGS
+
+BOARD_SUPPORTS_OPENSOURCE_STHAL := true
+
+AUDIO_HARDWARE := audio.a2dp.default
+AUDIO_HARDWARE += audio.usb.default
+AUDIO_HARDWARE += audio.r_submix.default
+AUDIO_HARDWARE += audio.primary.trinket
+
+#HAL Wrapper
+AUDIO_WRAPPER := libqahw
+AUDIO_WRAPPER += libqahwwrapper
+
+#HAL Test app
+AUDIO_HAL_TEST_APPS := hal_play_test
+AUDIO_HAL_TEST_APPS += hal_rec_test
+
+#STT Meta Test app
+AUDIO_STT_META := stt_meta_extract
+
+PRODUCT_PACKAGES += $(AUDIO_HARDWARE)
+PRODUCT_PACKAGES += $(AUDIO_WRAPPER)
+PRODUCT_PACKAGES += $(AUDIO_HAL_TEST_APPS)
+PRODUCT_PACKAGES += $(AUDIO_STT_META)
 
 #Audio Specific device overlays
 DEVICE_PACKAGE_OVERLAYS += vendor/qcom/opensource/audio-hal/primary-hal/configs/common/overlay
@@ -259,6 +290,8 @@ vendor.audio.volume.headset.gain.depcal=true
 PRODUCT_PROPERTY_OVERRIDES += \
 persist.vendor.audio.fluence.voicecomm=true
 
+endif
+
 #add dynamic feature flags here
 PRODUCT_PROPERTY_OVERRIDES += \
 vendor.audio.feature.a2dp_offload.enable=true \
@@ -341,3 +374,5 @@ PRODUCT_PACKAGES_ENG += \
 
 PRODUCT_PACKAGES_DEBUG += \
     AudioSettings
+
+AUDIO_FEATURE_ENABLED_GKI := true
