@@ -1,6 +1,6 @@
 /* Copyright (c) 2013-2014, 2016-2019 The Linux Foundation. All rights reserved.
  *
- * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2022-2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -309,11 +309,16 @@ void* audio_extn_sound_trigger_check_and_get_session(StreamInPrimary *in_stream)
     struct sound_trigger_info *st_ses_info = nullptr;
     struct listnode *node = nullptr;
     void *handle = nullptr;
+
+    if (!in_stream) {
+        ALOGE("%s: in_stream is null", __func__);
+        goto exit;
+    }
     in_stream->is_st_session = false;
 
     ALOGV("%s: Enter", __func__);
-    if (!st_dev || !in_stream) {
-        ALOGE("%s: st_dev %d, in_stream %d", __func__, !st_dev, !in_stream);
+    if (!st_dev) {
+        ALOGE("%s: st_dev %d", __func__, !st_dev);
         goto exit;
     }
 
