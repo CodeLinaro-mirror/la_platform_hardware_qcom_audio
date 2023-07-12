@@ -164,6 +164,8 @@ AUDIO_DLKM += audio_snd_event.ko
 
 PRODUCT_PACKAGES += $(AUDIO_DLKM)
 
+AUDIO_FEATURE_ENABLED_AUTO_AUDIOD := true
+
 ifneq ($(strip $(TARGET_USES_RRO)), true)
 #Audio Specific device overlays
 DEVICE_PACKAGE_OVERLAYS += vendor/qcom/opensource/audio-hal/primary-hal/configs/common/overlay
@@ -471,3 +473,6 @@ PRODUCT_PACKAGES_ENG += \
 
 PRODUCT_PACKAGES_DEBUG += \
     AudioSettings
+
+PRODUCT_PACKAGES += libaudiopowerpolicy
+PRODUCT_PACKAGES += vendor.qti.hardware.automotive.audiocontrol-service
