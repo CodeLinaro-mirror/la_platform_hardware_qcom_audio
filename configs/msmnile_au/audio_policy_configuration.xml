@@ -69,7 +69,6 @@
                 <item>Primary In Bus</item>
                 <item>Front Passenger In Bus</item>
                 <item>Rear Seat In Bus</item>
-                <item>FM Tuner</item>
                 <item>Echo Reference</item>
             </attachedDevices>
             <defaultOutputDevice>Media Bus</defaultOutputDevice>
@@ -352,11 +351,6 @@
                     <profile name="" format="AUDIO_FORMAT_PCM_16_BIT"
                              samplingRates="16000,48000" channelMasks="AUDIO_CHANNEL_IN_MONO,AUDIO_CHANNEL_IN_STEREO"/>
                 </mixPort>
-		<mixPort name="mixport_tuner0" role="sink">
-                    <profile name="" format="AUDIO_FORMAT_PCM_16_BIT"
-                             samplingRates="48000"
-                             channelMasks="AUDIO_CHANNEL_IN_STEREO"/>
-                </mixPort>
             </mixPorts>
 
             <devicePorts>
@@ -501,11 +495,6 @@
                              samplingRates="8000,11025,12000,16000,22050,24000,32000,44100,48000"
                              channelMasks="AUDIO_CHANNEL_IN_MONO,AUDIO_CHANNEL_IN_STEREO,AUDIO_CHANNEL_IN_FRONT_BACK"/>
                 </devicePort>
-                <devicePort tagName="FM Tuner" type="AUDIO_DEVICE_IN_FM_TUNER" role="source">
-                    <profile name="" format="AUDIO_FORMAT_PCM_16_BIT"
-                             samplingRates="48000"
-                             channelMasks="AUDIO_CHANNEL_IN_MONO,AUDIO_CHANNEL_IN_STEREO"/>
-                </devicePort>
                 <devicePort tagName="Wired Headset Mic" type="AUDIO_DEVICE_IN_WIRED_HEADSET" role="source">
                     <profile name="" format="AUDIO_FORMAT_PCM_16_BIT"
                              samplingRates="8000,11025,12000,16000,22050,24000,32000,44100,48000"
@@ -602,7 +591,7 @@
                 <route type="mix" sink="mmap_no_irq_in"
                        sources="Built-In Mic,Built-In Back Mic,Wired Headset Mic"/>
                 <route type="mix" sink="primary input"
-                       sources="Built-In Mic,Built-In Back Mic,Wired Headset Mic,BT SCO Headset Mic,FM Tuner,Telephony Rx"/>
+                       sources="Built-In Mic,Built-In Back Mic,Wired Headset Mic,BT SCO Headset Mic,Telephony Rx"/>
                 <route type="mix" sink="voip_tx"
                        sources="Built-In Mic,Built-In Back Mic,BT SCO Headset Mic"/>
                 <route type="mix" sink="record_24"
@@ -615,8 +604,6 @@
                        sources="primary output,deep_buffer,direct_pcm,compressed_offload,voip_rx"/>
                 <route type="mix" sink="BT A2DP Speaker"
                        sources="primary output,deep_buffer,direct_pcm,compressed_offload,voip_rx"/>
-		<route type="mix" sink="mixport_tuner0"
-                       sources="FM Tuner"/>
             </routes>
 
         </module>
