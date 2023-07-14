@@ -105,6 +105,7 @@ int AudioVoice::VoiceSetParameters(const char *kvpairs) {
     int ret = 0, err;
     struct str_parms *parms;
     pal_param_payload *params = nullptr;
+    pal_device_mute_t *muteParam = nullptr;
     uint32_t tty_mode;
     bool volume_boost;
     bool slow_talk;
@@ -114,6 +115,64 @@ int AudioVoice::VoiceSetParameters(const char *kvpairs) {
     parms = str_parms_create_str(kvpairs);
     if (!parms)
        return  -EINVAL;
+
+    err = str_parms_get_str(parms, AUDIO_PARAMETER_KEY_DEVICE_MUTE, c_value,
+                            sizeof(c_value));
+    if (err >= 0) {
+        str_parms_del(parms, AUDIO_PARAMETER_KEY_DEVICE_MUTE);
+        bool mute = false;
+        uint8_t *payload = nullptr;
+        pal_param_payload *palParam = nullptr;
+
+        payload = (uint8_t *) calloc(1, sizeof(pal_param_payload) + sizeof(pal_device_mute_t));
+        if (!payload) {
+            ALOGE("%s: allocate pal_param_payload", __func__);
+            ret = -EINVAL;
+            goto done;
+        }
+
+        if (!strncmp("true", c_value, sizeof("true"))) {
+            mute = true;
+        }
+
+        err = str_parms_get_str(parms, AUDIO_PARAMETER_KEY_DIRECTION, c_value,
+                                sizeof(c_value));
+        if (err >= 0) {
+            str_parms_del(parms, AUDIO_PARAMETER_KEY_DIRECTION);
+        } else {
+            ALOGE("%s: direction key not found", __func__);
+            ret = -EINVAL;
+            goto done;
+        }
+
+        palParam = (pal_param_payload *) payload;
+        muteParam = (pal_device_mute_t *)(payload + sizeof(pal_param_payload));
+        palParam->payload_size = sizeof(pal_device_mute_t);
+
+        if (!strncmp("rx", c_value, sizeof("rx"))) {
+            muteParam->dir = PAL_AUDIO_OUTPUT;
+        } else if (!strncmp("tx", c_value, sizeof("tx"))) {
+            muteParam->dir = PAL_AUDIO_INPUT;
+        } else {
+            ALOGE("%s: invalid direction", __func__);
+            ret = -EINVAL;
+            goto done;
+        }
+
+        muteParam->mute = mute;
+
+        for ( i = 0; i < max_voice_sessions_; i++) {
+            ALOGD("%s: calling pal set param for mute ", __func__);
+            if (IsCallActive(&voice_.session[i])) {
+                ret = pal_stream_set_param(voice_.session[i].pal_voice_handle,
+                                PAL_PARAM_ID_DEVICE_MUTE, palParam);
+                if (ret < 0) {
+                    ALOGE("%s: pal set param for mute failed", __func__);
+                }
+            }
+        }
+        free(payload);
+    }
 
     err = str_parms_get_int(parms, AUDIO_PARAMETER_KEY_VSID, &value);
     if (err >= 0) {
