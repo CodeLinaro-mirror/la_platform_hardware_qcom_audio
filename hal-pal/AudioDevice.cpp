@@ -37,7 +37,7 @@
 
 /*
 ** Changes from Qualcomm Innovation Center are provided under the following license:
-** Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
+** Copyright (c) 2022-2023 Qualcomm Innovation Center, Inc. All rights reserved.
 **
 ** Redistribution and use in source and binary forms, with or without
 ** modification, are permitted (subject to the limitations in the
@@ -1098,6 +1098,10 @@ char* AudioDevice::GetParameters(const char *keys) {
 
         ret = pal_get_param(PAL_PARAM_ID_BT_A2DP_RECONFIG_SUPPORTED,
                             (void **)&param_bt_a2dp, &size, nullptr);
+	if (!param_bt_a2dp) {
+		ALOGE("null returned for param_bt_a2dp\n");
+		return NULL;
+	}
         if (!ret) {
             if (size < sizeof(pal_param_bta2dp_t)) {
                 ALOGE("Size returned is smaller for BT_A2DP_RECONFIG_SUPPORTED");
@@ -1267,6 +1271,7 @@ static int adev_open(const hw_module_t *module, const char *name __unused,
 
     if (!adevice) {
         ALOGE("%s: error, GetInstance failed", __func__);
+        return -EINVAL;
     }
 
     adevice->adev_init_mutex.lock();
