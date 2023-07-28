@@ -5729,11 +5729,13 @@ static int out_set_parameters(struct audio_stream *stream, const char *kvpairs)
     struct stream_out *out = (struct stream_out *)stream;
     struct audio_device *adev = out->dev;
     struct str_parms *parms;
+    struct listnode devices;
     char value[32];
     uint32_t val = 0;
     int ret = 0, err;
     int ext_controller = -1;
     int ext_stream = -1;
+    int base = 10;
 
     ALOGD("%s: enter: usecase(%d: %s) kvpairs: %s",
           __func__, out->usecase, use_case_table[out->usecase], kvpairs);
@@ -5792,6 +5794,20 @@ static int out_set_parameters(struct audio_stream *stream, const char *kvpairs)
                                                           out->channel_mask, out->profile,
                                                           &out->app_type_cfg);
         pthread_mutex_unlock(&out->lock);
+    }
+
+    err = str_parms_get_str(parms, AUDIO_PARAMETER_STREAM_ROUTING, value, sizeof(value));
+    if (err >= 0) {
+        val = strtoul(value, NULL, base);
+
+        list_init(&devices);
+
+        update_device_list(&devices, val, "", true);
+        ret = route_output_stream((struct stream_out *) stream, &devices);
+        if (ret < 0)
+            ALOGW("%s: Stream routing failed ", __func__);
+
+        clear_devices(&devices);
     }
 
     //suspend, resume handling block

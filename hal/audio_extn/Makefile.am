@@ -14,15 +14,48 @@ h_sources = audio_defs.h \
             ../audio_hw.h \
             ../voice.h
 
-################################## A2DP OFFLOAD LIB ####################################
-c_sources = a2dp.c \
-            device_utils.c
-
 library_include_HEADERS = $(h_sources)
 library_includedir = $(includedir)
 
-lib_LTLIBRARIES = audio.a2dp.offload.la
-audio_a2dp_offload_la_SOURCES = $(c_sources)
+################################## SND MONITOR LIB ####################################
+audio_snd_monitor_la_SOURCES = sndmonitor.c
+
+lib_LTLIBRARIES = audio.snd.monitor.la
+audio_snd_monitor_la_LIBADD = $(GLIB_LIBS) -llog -lcutils -ltinyalsa
+audio_snd_monitor_la_LIBADD += -ltinycompress -laudioroute -ldl -lexpat -laudioutils
+audio_snd_monitor_la_CFLAGS = $(AM_CFLAGS) $(GLIB_CFLAGS)
+audio_snd_monitor_la_CFLAGS += -Dstrlcat=g_strlcat
+audio_snd_monitor_la_CFLAGS += -DINT_MAX=0x7fffffff
+audio_snd_monitor_la_CFLAGS += -D__unused=__attribute__\(\(__unused__\)\)
+audio_snd_monitor_la_CFLAGS += -DLINUX_ENABLED $(TARGET_CFLAGS) -DAUDIO_EXTN_FORMATS_ENABLED
+audio_snd_monitor_la_CFLAGS += -DNDEBUG
+audio_snd_monitor_la_LDFLAGS = -module -shared -avoid-version
+
+################################## SSR LIB ####################################
+if SSR
+AM_CFLAGS += -DSSR_ENABLED
+AM_CFLAGS +=  -I ${WORKSPACE}/audio/mm-audio-noship/surround_sound_3mic/libsurround_3mic_proc/surround_rec_interface/inc/
+
+audio_ssrec_la_SOURCES = ssr.c \
+                         device_utils.c
+
+lib_LTLIBRARIES += audio.ssrec.la
+audio_ssrec_la_LIBADD = $(GLIB_LIBS) -llog -lcutils -ltinyalsa
+audio_ssrec_la_LIBADD += -ltinycompress -laudioroute -ldl -lexpat -laudioutils
+audio_ssrec_la_CFLAGS = $(AM_CFLAGS) $(GLIB_CFLAGS)
+audio_ssrec_la_CFLAGS += -Dstrlcat=g_strlcat
+audio_ssrec_la_CFLAGS += -DINT_MAX=0x7fffffff
+audio_ssrec_la_CFLAGS += -D__unused=__attribute__\(\(__unused__\)\)
+audio_ssrec_la_CFLAGS += -DLINUX_ENABLED $(TARGET_CFLAGS) -DAUDIO_EXTN_FORMATS_ENABLED
+audio_ssrec_la_CFLAGS += -DNDEBUG
+audio_ssrec_la_LDFLAGS = -module -shared -avoid-version
+endif
+
+################################## A2DP OFFLOAD LIB ####################################
+audio_a2dp_offload_la_SOURCES = a2dp.c \
+                                device_utils.c
+
+lib_LTLIBRARIES += audio.a2dp.offload.la
 audio_a2dp_offload_la_LIBADD = $(GLIB_LIBS) -llog -lcutils -ltinyalsa
 audio_a2dp_offload_la_LIBADD += -ltinycompress -laudioroute -ldl -lexpat -laudioutils
 audio_a2dp_offload_la_CFLAGS = $(AM_CFLAGS) $(GLIB_CFLAGS)
@@ -33,21 +66,7 @@ audio_a2dp_offload_la_CFLAGS += -DLINUX_ENABLED $(TARGET_CFLAGS) -DAUDIO_EXTN_FO
 audio_a2dp_offload_la_CFLAGS += -DNDEBUG
 audio_a2dp_offload_la_LDFLAGS = -module -shared -avoid-version
 
-################################## A2DP OFFLOAD LIB ####################################
-
-
-if SSR
-AM_CFLAGS += -DSSR_ENABLED
-c_sources += ssr.c
-endif
-
-if COMPRESS_CAPTURE
-AM_CFLAGS += -DCOMPRESS_CAPTURE_ENABLED
-c_sources += compress_capture.c
-endif
-
 ################################## HFP LIB ####################################
-
 if HFP
 AM_CFLAGS += -DHFP_ENABLED
 
@@ -78,10 +97,10 @@ endif
 libhfp_la_LDFLAGS = -module -shared -avoid-version
 endif
 
+################################## SPEAKER PROTECTION LIB ####################################
 if SPKR_PROT
 AM_CFLAGS += -DSPKR_PROT_ENABLED
-library_include_HEADERS = $(h_sources)
-library_includedir = $(includedir)
+
 lib_LTLIBRARIES += audio.spkr.prot.la
 audio_spkr_prot_la_SOURCES = spkr_protection.c
 audio_spkr_prot_la_LIBADD = $(GLIB_LIBS) -llog -lcutils -ltinyalsa
@@ -93,4 +112,25 @@ audio_spkr_prot_la_CFLAGS += -D__unused=__attribute__\(\(__unused__\)\)
 audio_spkr_prot_la_CFLAGS += -DLINUX_ENABLED $(TARGET_CFLAGS) -DAUDIO_EXTN_FORMATS_ENABLED
 audio_spkr_prot_la_CFLAGS += -DNDEBUG
 audio_spkr_prot_la_LDFLAGS = -module -shared -avoid-version
+endif
+
+################################## EDID LIB ####################################
+if HDMI_EDID
+lib_LTLIBRARIES += audio.hdmi.edid.la
+audio_hdmi_edid_la_SOURCES = edid.c
+audio_hdmi_edid_la_LIBADD = $(GLIB_LIBS) -llog -lcutils -ltinyalsa
+audio_hdmi_edid_la_LIBADD += -ltinycompress -laudioroute -ldl -lexpat -laudioutils
+audio_hdmi_edid_la_CFLAGS = $(AM_CFLAGS) $(GLIB_CFLAGS)
+audio_hdmi_edid_la_CFLAGS += -Dstrlcat=g_strlcat
+audio_hdmi_edid_la_CFLAGS += -DINT_MAX=0x7fffffff
+audio_hdmi_edid_la_CFLAGS += -D__unused=__attribute__\(\(__unused__\)\)
+audio_hdmi_edid_la_CFLAGS += -DLINUX_ENABLED $(TARGET_CFLAGS) -DAUDIO_EXTN_FORMATS_ENABLED
+audio_hdmi_edid_la_CFLAGS += -DNDEBUG
+audio_hdmi_edid_la_LDFLAGS = -module -shared -avoid-version
+endif
+
+################################## COMPRESS_CAPTURE LIB ####################################
+if COMPRESS_CAPTURE
+AM_CFLAGS += -DCOMPRESS_CAPTURE_ENABLED
+audio_compress_capture_la_SOURCES = compress_capture.c
 endif
