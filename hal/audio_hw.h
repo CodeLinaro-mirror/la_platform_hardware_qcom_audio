@@ -159,9 +159,15 @@ typedef int error_log_t;
 #define ADM_LIBRARY_PATH "/usr/lib/libadm.so"
 #endif
 #else
+#if defined(__LP64__)
+#define VISUALIZER_LIBRARY_PATH "/vendor/lib64/soundfx/libqcomvisualizer.so"
+#define OFFLOAD_EFFECTS_BUNDLE_LIBRARY_PATH "/vendor/lib64/soundfx/libqcompostprocbundle.so"
+#define ADM_LIBRARY_PATH "/vendor/lib64/libadm.so"
+#else
 #define VISUALIZER_LIBRARY_PATH "/vendor/lib/soundfx/libqcomvisualizer.so"
 #define OFFLOAD_EFFECTS_BUNDLE_LIBRARY_PATH "/vendor/lib/soundfx/libqcompostprocbundle.so"
 #define ADM_LIBRARY_PATH "/vendor/lib/libadm.so"
+#endif
 #endif
 
 #ifdef LINUX_ENABLED
