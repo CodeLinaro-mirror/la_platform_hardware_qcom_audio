@@ -9127,9 +9127,11 @@ int adev_open_output_stream(struct audio_hw_device *dev,
 
     out->out_ctxt.output = out;
 
+    pthread_mutex_lock(&adev->active_outputs_list_lock);
     pthread_mutex_lock(&adev->lock);
     list_add_tail(&adev->active_outputs_list, &out->out_ctxt.list);
     pthread_mutex_unlock(&adev->lock);
+    pthread_mutex_unlock(&adev->active_outputs_list_lock);
 
     ALOGV("%s: exit", __func__);
     return 0;
@@ -9153,12 +9155,13 @@ void adev_close_output_stream(struct audio_hw_device *dev __unused,
     ALOGD("%s: enter:stream_handle(%s)",__func__, use_case_table[out->usecase]);
 
     io_streams_map_remove(adev, out->handle);
-
+    pthread_mutex_lock(&adev->active_outputs_list_lock);
     // remove out_ctxt early to prevent the stream
     // being opened in a race condition
     pthread_mutex_lock(&adev->lock);
     list_remove(&out->out_ctxt.list);
     pthread_mutex_unlock(&adev->lock);
+    pthread_mutex_unlock(&adev->active_outputs_list_lock);
 
     // must deregister from sndmonitor first to prevent races
     // between the callback and close_stream
@@ -9240,6 +9243,7 @@ void in_set_power_policy(uint8_t enable)
     pthread_mutex_unlock(&adev->lock);
 
     if (!enable) {
+        pthread_mutex_lock(&adev->active_inputs_list_lock);
         list_for_each(node, &adev->active_inputs_list) {
             streams_input_ctxt_t *in_ctxt = node_to_item(node,
                                                          streams_input_ctxt_t,
@@ -9247,6 +9251,7 @@ void in_set_power_policy(uint8_t enable)
             struct stream_in *in = in_ctxt->input;
             in_standby(&in->stream.common);
         }
+        pthread_mutex_unlock(&adev->active_inputs_list_lock);
     }
 
     ALOGD("%s: Exit", __func__);
@@ -9263,6 +9268,7 @@ void out_set_power_policy(uint8_t enable)
     pthread_mutex_unlock(&adev->lock);
 
     if (!enable) {
+        pthread_mutex_lock(&adev->active_outputs_list_lock);
         list_for_each(node, &adev->active_outputs_list) {
             streams_output_ctxt_t *out_ctxt = node_to_item(node,
                                                            streams_output_ctxt_t,
@@ -9270,6 +9276,7 @@ void out_set_power_policy(uint8_t enable)
             struct stream_out *out = out_ctxt->output;
             out_on_error(&out->stream.common);
         }
+        pthread_mutex_unlock(&adev->active_outputs_list_lock);
     }
 
     ALOGD("%s: Exit", __func__);
@@ -10401,9 +10408,11 @@ static int adev_open_input_stream(struct audio_hw_device *dev,
 
     in->in_ctxt.input = in;
 
+    pthread_mutex_lock(&adev->active_inputs_list_lock);
     pthread_mutex_lock(&adev->lock);
     list_add_tail(&adev->active_inputs_list, &in->in_ctxt.list);
     pthread_mutex_unlock(&adev->lock);
+    pthread_mutex_unlock(&adev->active_inputs_list_lock);
 
     ALOGV("%s: exit", __func__);
     return ret;
@@ -10443,11 +10452,13 @@ static void adev_close_input_stream(struct audio_hw_device *dev,
     }
     io_streams_map_remove(adev, in->capture_handle);
 
+    pthread_mutex_lock(&adev->active_inputs_list_lock);
     // remove out_ctxt early to prevent the stream
     // being opened in a race condition
     pthread_mutex_lock(&adev->lock);
     list_remove(&in->in_ctxt.list);
     pthread_mutex_unlock(&adev->lock);
+    pthread_mutex_unlock(&adev->active_inputs_list_lock);
 
     /* must deregister from sndmonitor first to prevent races
      * between the callback and close_stream
@@ -11052,6 +11063,8 @@ static int adev_close(hw_device_t *device)
         audio_extn_auto_hal_deinit();
         free_map(adev->patch_map);
         free_map(adev->io_streams_map);
+        pthread_mutex_destroy(&adev->active_inputs_list_lock);
+        pthread_mutex_destroy(&adev->active_outputs_list_lock);
         free(device);
         adev = NULL;
     }
@@ -11255,6 +11268,8 @@ static int adev_open(const hw_module_t *module, const char *name,
     }
 
     pthread_mutex_init(&adev->lock, (const pthread_mutexattr_t *) NULL);
+    pthread_mutex_init(&adev->active_inputs_list_lock, (const pthread_mutexattr_t *) NULL);
+    pthread_mutex_init(&adev->active_outputs_list_lock, (const pthread_mutexattr_t *) NULL);
 
     // register audio ext hidl at the earliest
     audio_extn_hidl_init();
@@ -11580,6 +11595,8 @@ adev_open_err:
     free_map(adev->io_streams_map);
     free(adev->snd_dev_ref_cnt);
     pthread_mutex_destroy(&adev->lock);
+    pthread_mutex_destroy(&adev->active_inputs_list_lock);
+    pthread_mutex_destroy(&adev->active_outputs_list_lock);
     free(adev);
     adev = NULL;
     *device = NULL;
