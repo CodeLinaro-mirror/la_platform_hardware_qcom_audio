@@ -3284,10 +3284,16 @@ int select_devices(struct audio_device *adev, audio_usecase_t uc_id)
                     /* get the input with the highest priority source*/
                     priority_in = get_priority_input(adev);
 
-                    if (!priority_in ||
-                            audio_extn_auto_hal_overwrite_priority_for_auto(usecase->stream.in))
+                   /* prefer current input if its source is equally the highest
+                    *  or if it is auto usecase.
+                    */
+                if (!priority_in ||
+                            audio_extn_auto_hal_overwrite_priority_for_auto(usecase->stream.in) ||
+                            (priority_in->source == usecase->stream.in->source)
+                    )
                         priority_in = usecase->stream.in;
                 }
+
                 if (compare_device_type(&usecase->device_list, AUDIO_DEVICE_IN_BUS)){
                     in_snd_device = audio_extn_auto_hal_get_snd_device_for_car_audio_stream(priority_in->car_audio_stream);
                 }
@@ -3296,16 +3302,7 @@ int select_devices(struct audio_device *adev, audio_usecase_t uc_id)
                                                                   priority_in,
                                                                   &out_devices,
                                                                   usecase->type);
-                clear_devices(&out_devices);
-                    /* prefer current input if its source is equally the highest */
-                if (!priority_in ||
-                   (priority_in->source == usecase->stream.in->source))
-                        priority_in = usecase->stream.in;
 
-                in_snd_device = platform_get_input_snd_device(adev->platform,
-                                                              priority_in,
-                                                              &out_devices,
-                                                              usecase->type);
                 /*
                  * if current input different from priority input check if
                  * current input snd device and priority input snd device
@@ -3325,6 +3322,7 @@ int select_devices(struct audio_device *adev, audio_usecase_t uc_id)
                         in_snd_device = tmp_in_snd_device;
                     }
                 }
+                clear_devices(&out_devices);
            }
        }
     }
