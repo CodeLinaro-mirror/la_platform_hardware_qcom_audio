@@ -822,13 +822,19 @@ static int parse_snd_card_status(struct str_parms *parms, int *card,
 
 bool is_combo_audio_input_device(struct listnode *devices){
 
-    if ((devices == NULL) || (!list_empty(devices)))
+    if ((devices == NULL) || (list_empty(devices)))
+    {
         return false;
+    }
 
     if(compare_device_type(devices, AUDIO_DEVICE_IN_BUILTIN_MIC|AUDIO_DEVICE_IN_SPEAKER_MIC2))
+    {
         return true;
+    }
     else
+    {
         return false;
+    }
 }
 
 static inline void adjust_frames_for_device_delay(struct stream_out *out,
@@ -1485,6 +1491,7 @@ int enable_audio_route(struct audio_device *adev,
             audio_extn_set_custom_mtmx_params_v1(adev, usecase, true);
         }
     } else {
+        ALOGD("%s: set custom mtmx params v2", __func__);
         audio_extn_set_custom_mtmx_params_v2(adev, usecase, true);
     }
 
@@ -1584,6 +1591,7 @@ int disable_audio_route(struct audio_device *adev,
             audio_extn_set_custom_mtmx_params_v1(adev, usecase, false);
         }
     } else {
+        ALOGD("%s: reset custom mtmx params v2", __func__);
         audio_extn_set_custom_mtmx_params_v2(adev, usecase, false);
     }
 

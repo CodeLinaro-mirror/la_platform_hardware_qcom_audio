@@ -4166,6 +4166,13 @@ acdb_init_fail:
     my_data->current_backend_cfg[TERT_MI2S_TX_BACKEND].channels_mixer_ctl =
         strdup("TERT_MI2S_TX Channels");
 
+    my_data->current_backend_cfg[TERT_TDM_TX_BACKEND].bitwidth_mixer_ctl =
+        strdup("TERT_TDM_TX_0 Format");
+    my_data->current_backend_cfg[TERT_TDM_TX_BACKEND].samplerate_mixer_ctl =
+        strdup("TERT_TDM_TX_0 SampleRate");
+    my_data->current_backend_cfg[TERT_TDM_TX_BACKEND].channels_mixer_ctl =
+        strdup("TERT_TDM_TX_0 Channels");
+
     my_data->current_backend_cfg[QUAT_MI2S_RX_BACKEND].bitwidth_mixer_ctl =
         strdup("QUAT_MI2S_RX Format");
     my_data->current_backend_cfg[QUAT_MI2S_RX_BACKEND].samplerate_mixer_ctl =
@@ -4243,7 +4250,9 @@ acdb_init_fail:
             if (id_string) {
                 cfg_value = audio_extn_utils_get_channels_from_string(id_string);
                 if (cfg_value > 0)
+                {
                     my_data->current_backend_cfg[idx].channels = cfg_value;
+                }
             }
         }
     }
@@ -4308,6 +4317,7 @@ struct audio_custom_mtmx_params *
 
     list_for_each(node, &my_data->custom_mtmx_params_list) {
         params = node_to_item(node, struct audio_custom_mtmx_params, list);
+
         if (params &&
             params->info.id == info->id &&
             params->info.ip_channels == info->ip_channels &&
@@ -5624,6 +5634,9 @@ int platform_get_backend_index(snd_device_t snd_device)
                 else if (!strncmp(platform_get_snd_device_backend_interface(snd_device),
                          "QUAT_TDM_TX_0", sizeof("QUAT_TDM_TX_0")))
                          port = QUAT_TDM_TX_BACKEND;
+                else if (!strncmp(platform_get_snd_device_backend_interface(snd_device),
+                         "TERT_TDM_TX_0", sizeof("TERT_TDM_TX_0")))
+                         port = TERT_TDM_TX_BACKEND;
                 else if (!strncmp(platform_get_snd_device_backend_interface(snd_device),
                          "SEN_TDM_TX_0", sizeof("SEN_TDM_TX_0")))
                         port = SEN_TDM_TX_BACKEND;
@@ -9961,7 +9974,9 @@ static int platform_set_codec_backend_cfg(struct audio_device* adev,
                     if (id_string) {
                         cfg_value = audio_extn_utils_get_channels_from_string(id_string);
                         if (cfg_value > 0)
+                        {
                             my_data->current_backend_cfg[idx].channels = cfg_value;
+                        }
                     }
                 }
             }
@@ -10717,8 +10732,8 @@ static bool platform_check_capture_codec_backend_cfg(struct audio_device* adev,
     format = backend_cfg->format;
 
     ALOGI("%s:txbecf: afe: Codec selected backend: %d current bit width: %d and "
-          "sample rate: %d, channels %d format %d",__func__,backend_idx, bit_width,
-          sample_rate, channels,format);
+          "sample rate: %d, channels %d format %d snd_device = %d",__func__,backend_idx, bit_width,
+          sample_rate, channels,format,snd_device);
 
     // For voice calls use default configuration i.e. 16b/48K, only applicable to
     // default backend
@@ -10868,11 +10883,12 @@ bool platform_check_and_set_capture_codec_backend_cfg(struct audio_device* adev,
                     backend_cfg.channels = in_params->i2s_ch;
                     ALOGD("%s txbecf: set channels to %d from mtmx in params",__func__,in_params->i2s_ch);
                 } else {
-                    ALOGD("%s: txbecf: set channels to %d from mtmx in params",
+                    ALOGD("%s txbecf: set channels to %d from mtmx in params",
                        __func__, in_params->mic_ch);
                     backend_cfg.channels = in_params->mic_ch;
                 }
             }
+
             if (platform_check_capture_codec_backend_cfg(adev, platform_get_backend_index(new_snd_devices[i]),
                                                  &backend_cfg, new_snd_devices[i])) {
                 ret = platform_set_codec_backend_cfg(adev, usecase, new_snd_devices[i],
@@ -10886,6 +10902,7 @@ bool platform_check_and_set_capture_codec_backend_cfg(struct audio_device* adev,
        return ret;
 
     } else {
+
         if (platform_check_capture_codec_backend_cfg(adev, backend_idx,
                                                  &backend_cfg, snd_device)) {
             ret = platform_set_codec_backend_cfg(adev, usecase, snd_device,
