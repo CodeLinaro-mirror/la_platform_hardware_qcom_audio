@@ -24,6 +24,10 @@
 <!-- BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,  -->
 <!-- OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN -->
 <!-- IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.                          -->
+<!--                                                                        -->
+<!-- Changes from Qualcomm Innovation Center are provided under the following license: -->
+<!-- Copyright (c) 2023 Qualcomm Innovation Center, Inc. All rights reserved. -->
+<!-- SPDX-License-Identifier: BSD-3-Clause-Clear -->
 <audio_platform_info>
     <bit_width_configs>
         <device name="SND_DEVICE_OUT_SPEAKER" bit_width="24"/>
@@ -71,6 +75,8 @@
         <usecase name="USECASE_AUDIO_RECORD_COMPRESS5" type="in" id="44"/>
         <usecase name="USECASE_AUDIO_RECORD_COMPRESS6" type="in" id="45"/>
         <usecase name="USECASE_AUDIO_A2DP_ABR_FEEDBACK" type="in" id="12"/>
+        <usecase name="USECASE_AUDIO_TRANSCODE_LOOPBACK_RX" type="out" id="46"/>
+        <usecase name="USECASE_AUDIO_TRANSCODE_LOOPBACK_TX" type="in" id="47"/>
     </pcm_ids>
     <config_params>
         <!-- In the below value string, the value indicates default mono -->
