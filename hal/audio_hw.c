@@ -4767,7 +4767,7 @@ int start_output_stream(struct stream_out *out)
     if (ret == 0) {
         if (out->flags & (AUDIO_OUTPUT_FLAG_FAST | AUDIO_OUTPUT_FLAG_RAW))
             register_out_stream(out);
-        if (out->realtime) {
+        if (out->realtime && !(out->flags & AUDIO_OUTPUT_FLAG_RAW)) {
             if (out->pcm == NULL || !pcm_is_ready(out->pcm)) {
                 ALOGE("%s: pcm stream not ready", __func__);
                 goto error_open;
