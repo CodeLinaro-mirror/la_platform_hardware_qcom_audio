@@ -26,7 +26,7 @@ OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
 IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  * Changes from Qualcomm Innovation Center are provided under the following license:
- * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2022-2023, Qualcomm Innovation Center, Inc. All rights reserved.
  * SPDX-License-Identifier: BSD-3-Clause-Clear
 */
 
@@ -230,7 +230,7 @@ static int32_t hfp_set_volume(struct audio_device *adev, float value, int hfp_nu
 {
     int32_t vol, ret = 0;
     struct mixer_ctl *ctl;
-    char mixer_ctl_name[64];
+    const char *mixer_ctl_name = HFP_RX_VOLUME;
     struct hfp_module *hfpmod;
     int pcm_device_id;
 
@@ -581,7 +581,6 @@ static int32_t stop_hfp(struct audio_device *adev, int hfp_num)
     hfpmod = get_hfp_module(hfp_num);
     if (!hfpmod)
         return -EINVAL;
-    hfpmod->is_hfp_running = false;
 
     hfpmod->is_hfp_running = false;
     route_spkr = false;
@@ -798,23 +797,6 @@ void hfp_set_parameters(struct audio_device *adev, struct str_parms *parms)
     ret = str_parms_get_str(parms, AUDIO_PARAMETER_HFP_SET_SAMPLING_RATE, value,
                             sizeof(value));
     if (ret >= 0) {
-           rate = atoi(value);
-           if (rate == 8000){
-               hfpmod->ucid = USECASE_AUDIO_HFP_SCO;
-               pcm_config_hfp.rate = rate;
-           } else if (rate == 16000){
-               hfpmod->ucid = USECASE_AUDIO_HFP_SCO_WB;
-               pcm_config_hfp.rate = rate;
-           } else
-               ALOGE("Unsupported rate..");
-    }
-
-    memset(value, 0, sizeof(value));
-    ret = str_parms_get_str(parms, AUDIO_PARAMETER_HFP_FORCE_ROUTE_SPEAKER, value,
-                            sizeof(value));
-    if(ret >= 0){
-        route_spkr = true;
-        ALOGD("%s: Set force route to speaker", __func__);
         rate = atoi(value);
         if (rate == HFP_NB_SAMPLE_RATE) {
             switch (current_hfp_num) {
