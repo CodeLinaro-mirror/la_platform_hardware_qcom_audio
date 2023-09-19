@@ -1,6 +1,6 @@
 /*
 * Copyright (c) 2017-2019, The Linux Foundation. All rights reserved.
-* Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
+* Copyright (c) 2022-2023 Qualcomm Innovation Center, Inc. All rights reserved.
 *
 * Redistribution and use in source and binary forms, with or without
 * modification, are permitted provided that the following conditions are
@@ -521,7 +521,7 @@ int create_loopback_session(loopback_patch_t *active_loopback_patch)
     loopback_source_stream.sample_rate = inout->in_config.sample_rate;
     loopback_source_stream.format = inout->in_config.format;
 
-    memcpy(&loopback_source_stream.usecase, uc_info_rx,
+    memcpy(&loopback_source_stream.usecase, uc_info_tx,
            sizeof(struct audio_usecase));
     select_devices(adev, uc_info_rx->id);
     select_devices(adev, uc_info_tx->id);
