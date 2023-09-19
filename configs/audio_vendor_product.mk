@@ -133,6 +133,15 @@ MM_AUDIO += IOT_Hdmi_cal.acdb
 MM_AUDIO += IOT_Headset_cal.acdb
 MM_AUDIO += IOT_Speaker_cal.acdb
 MM_AUDIO += IOT_workspaceFile.qwsp
+MM_AUDIO += IDP_Bluetooth_cal.acdb
+MM_AUDIO += IDP_Codec_cal.acdb
+MM_AUDIO += IDP_General_cal.acdb
+MM_AUDIO += IDP_Global_cal.acdb
+MM_AUDIO += IDP_Handset_cal.acdb
+MM_AUDIO += IDP_Hdmi_cal.acdb
+MM_AUDIO += IDP_Headset_cal.acdb
+MM_AUDIO += IDP_Speaker_cal.acdb
+MM_AUDIO += IDP_workspaceFile.qwsp
 ifeq ($(TARGET_BOARD_PLATFORM),kona)
 MM_AUDIO += fai__4.7.2_0.0__3.0.0_0.0__3.1.2_0.0__3.2.0_0.1__eai_1.10.pmd
 MM_AUDIO += fai__4.8.4_0.0__3.0.0_0.0__3.1.1_0.0__3.2.0_0.1__eai_1.10.pmd
