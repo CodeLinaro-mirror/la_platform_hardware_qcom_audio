@@ -5935,6 +5935,23 @@ int platform_get_backend_index(snd_device_t snd_device)
                 else if (strcmp(backend_tag_table[snd_device], "optical") == 0)
                         port = OPTICAL_RX_BACKEND;
         }
+
+        /*
+         * For few interfaces, need to update port based on snd device
+         * backend interface. Check for such instances here.
+         */
+        if (port == DEFAULT_CODEC_BACKEND) {
+            if (!strncmp(platform_get_snd_device_backend_interface(snd_device),
+                "PRI_META_MI2S_RX", sizeof("PRI_META_MI2S_RX")))
+                port = PRIM_META_MI2S_RX_BACKEND;
+            else if (!strncmp(platform_get_snd_device_backend_interface(snd_device),
+                     "SEC_META_MI2S_RX", sizeof("SEC_META_MI2S_RX")))
+                port = SEC_META_MI2S_RX_BACKEND;
+            else if (!strncmp(platform_get_snd_device_backend_interface(snd_device),
+                     "PRI_MI2S_RX", sizeof("PRI_MI2S_RX")))
+                port = PRIM_MI2S_RX_BACKEND;
+        }
+
     } else if (snd_device >= SND_DEVICE_IN_BEGIN && snd_device < SND_DEVICE_IN_END) {
         port = DEFAULT_CODEC_TX_BACKEND;
         if (backend_tag_table[snd_device] != NULL) {
@@ -5972,7 +5989,7 @@ int platform_get_backend_index(snd_device_t snd_device)
         ALOGW("%s:napb: Invalid device - %d ", __func__, snd_device);
     }
 
-    ALOGV("%s:napb: backend port - %d device - %d ", __func__, port, snd_device);
+    ALOGD("%s:napb: backend port - %d device - %d ", __func__, port, snd_device);
     return port;
 }
 
@@ -11127,7 +11144,6 @@ static bool platform_check_codec_backend_cfg(struct audio_device* adev,
 
         /* Reset channels for speaker as its fixed and independent of active streams */
         channels = my_data->current_backend_cfg[backend_idx].channels;
-
         if (!my_data->voice_speaker_stereo) {
             if ((adev->mode == AUDIO_MODE_IN_COMMUNICATION) &&
                 (snd_device == SND_DEVICE_OUT_VOICE_SPEAKER ||
