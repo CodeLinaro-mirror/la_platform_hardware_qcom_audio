@@ -971,12 +971,67 @@ typedef struct {
 
 /*********** END of DSP configurable structures ********************/
 
+/* API to identify DSP encoder captabilities */
+static void a2dp_offload_codec_cap_parser(char *value)
+{
+    char *tok = NULL,*saveptr;
+
+    tok = strtok_r(value, "-", &saveptr);
+    while (tok != NULL) {
+        if (strcmp(tok, "sbc") == 0) {
+            ALOGD("%s: SBC offload supported\n",__func__);
+            a2dp.is_a2dp_offload_supported = true;
+            break;
+        } else if (strcmp(tok, "aptx") == 0) {
+            ALOGD("%s: aptx offload supported\n",__func__);
+            a2dp.is_a2dp_offload_supported = true;
+            break;
+        } else if (strcmp(tok, "aptxtws") == 0) {
+            ALOGD("%s: aptx dual mono offload supported\n",__func__);
+            a2dp.is_a2dp_offload_supported = true;
+            break;
+        } else if (strcmp(tok, "aptxhd") == 0) {
+            ALOGD("%s: aptx HD offload supported\n",__func__);
+            a2dp.is_a2dp_offload_supported = true;
+            break;
+        } else if (strcmp(tok, "aac") == 0) {
+            ALOGD("%s: aac offload supported\n",__func__);
+            a2dp.is_a2dp_offload_supported = true;
+            break;
+        } else if (strcmp(tok, "celt") == 0) {
+            ALOGD("%s: celt offload supported\n",__func__);
+            a2dp.is_a2dp_offload_supported = true;
+            break;
+        } else if (strcmp(tok, "ldac") == 0) {
+            ALOGD("%s: ldac offload supported\n",__func__);
+            a2dp.is_a2dp_offload_supported = true;
+            break;
+        } else if (strcmp(tok, "aptxadaptive") == 0) {
+            ALOGD("%s: aptx adaptive offload supported\n",__func__);
+            a2dp.is_a2dp_offload_supported = true;
+        }
+        tok = strtok_r(NULL, "-", &saveptr);
+    };
+}
+
 static void update_offload_codec_capabilities()
 {
 
     a2dp.is_a2dp_offload_supported =
             property_get_bool(SYSPROP_A2DP_OFFLOAD_SUPPORTED, false) &&
             !property_get_bool(SYSPROP_A2DP_OFFLOAD_DISABLED, false);
+
+    // Fall back if above property is not defined
+    if (!a2dp.is_a2dp_offload_supported) {
+        char value[PROPERTY_VALUE_MAX] = {'\0'};
+
+        property_get("persist.vendor.bt.a2dp_offload_cap", value, "false");
+        ALOGD("get_offload_codec_capabilities = %s",value);
+        a2dp.is_a2dp_offload_supported =
+            property_get_bool("persist.vendor.bt.a2dp_offload_cap", false);
+        if (strcmp(value, "false") != 0)
+            a2dp_offload_codec_cap_parser(value);
+    }
 
     ALOGD("%s: A2DP offload supported = %d",__func__,
           a2dp.is_a2dp_offload_supported);
@@ -1183,6 +1238,7 @@ static void open_a2dp_source() {
             ret = a2dp.audio_source_open();
             if(ret != 0) {
                 ALOGE("Failed to open source stream for a2dp: status %d", ret);
+                goto init_fail;
             }
             a2dp.bt_state_source = A2DP_STATE_CONNECTED;
             if (!a2dp.adev->bt_sco_on)
@@ -1193,6 +1249,12 @@ static void open_a2dp_source() {
     } else {
         ALOGE("a2dp handle is not identified, Ignoring open request");
         a2dp.bt_state_source = A2DP_STATE_DISCONNECTED;
+    }
+
+init_fail:
+    if (ret != 0 && (a2dp.bt_lib_source_handle != NULL)) {
+        dlclose(a2dp.bt_lib_source_handle);
+        a2dp.bt_lib_source_handle = NULL;
     }
 }
 /* API to open BT IPC library to start IPC communication for BT Source*/
