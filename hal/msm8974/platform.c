@@ -871,6 +871,7 @@ static const char * const device_table[SND_DEVICE_MAX] = {
     [SND_DEVICE_IN_SPEAKER_TMIC_NS] = "speaker-tmic",
     [SND_DEVICE_IN_SPEAKER_TMIC_AEC_NS] = "speaker-tmic",
     [SND_DEVICE_IN_SPEAKER_TMIC_NN] = "three-mic-nn",
+    [SND_DEVICE_IN_SPEAKER_TMIC_NN_VC] = "three-mic-nn",
     [SND_DEVICE_IN_VOICE_REC_TMIC] = "three-mic",
     [SND_DEVICE_IN_UNPROCESSED_MIC] = "unprocessed-mic",
     [SND_DEVICE_IN_UNPROCESSED_STEREO_MIC] = "unprocessed-stereo-mic",
@@ -959,6 +960,8 @@ static struct audio_effect_config effect_config_table[GET_IN_DEVICE_INDEX(SND_DE
     [GET_IN_DEVICE_INDEX(SND_DEVICE_IN_SPEAKER_DMIC_NN)][EFFECT_NS] = {TX_VOICE_FLUENCE_NN, 0x8000, 0x10EAF, 0x02},
     [GET_IN_DEVICE_INDEX(SND_DEVICE_IN_SPEAKER_TMIC_NN)][EFFECT_AEC] = {TX_VOICE_FLUENCE_NN, 0x8000, 0x10EAF, 0x01},
     [GET_IN_DEVICE_INDEX(SND_DEVICE_IN_SPEAKER_TMIC_NN)][EFFECT_NS] = {TX_VOICE_FLUENCE_NN, 0x8000, 0x10EAF, 0x02},
+    [GET_IN_DEVICE_INDEX(SND_DEVICE_IN_SPEAKER_TMIC_NN_VC)][EFFECT_AEC] = {TX_VOICE_FLUENCE_NN, 0x8000, 0x10EAF, 0x01},
+    [GET_IN_DEVICE_INDEX(SND_DEVICE_IN_SPEAKER_TMIC_NN_VC)][EFFECT_NS] = {TX_VOICE_FLUENCE_NN, 0x8000, 0x10EAF, 0x02},
     [GET_IN_DEVICE_INDEX(SND_DEVICE_IN_HANDSET_MIC_NN)][EFFECT_AEC] = {TX_VOICE_FLUENCE_SM_NN, 0x8000, 0x10EAF, 0x01},
     [GET_IN_DEVICE_INDEX(SND_DEVICE_IN_HANDSET_MIC_NN)][EFFECT_NS] = {TX_VOICE_FLUENCE_SM_NN, 0x8000, 0x10EAF, 0x02},
     [GET_IN_DEVICE_INDEX(SND_DEVICE_IN_HANDSET_DMIC_NN)][EFFECT_AEC] = {TX_VOICE_FLUENCE_NN, 0x8000, 0x10EAF, 0x01},
@@ -1225,6 +1228,7 @@ static int acdb_device_table[SND_DEVICE_MAX] = {
     [SND_DEVICE_IN_SPEAKER_TMIC_NS] = 159,
     [SND_DEVICE_IN_SPEAKER_TMIC_AEC_NS] = 160,
     [SND_DEVICE_IN_SPEAKER_TMIC_NN] = 199,
+    [SND_DEVICE_IN_SPEAKER_TMIC_NN_VC] = 206,
     [SND_DEVICE_IN_VOICE_REC_TMIC] = 125,
     [SND_DEVICE_IN_UNPROCESSED_MIC] = 143,
     [SND_DEVICE_IN_UNPROCESSED_STEREO_MIC] = 144,
@@ -1512,6 +1516,7 @@ static struct name_to_index snd_device_name_index[SND_DEVICE_MAX] = {
     {TO_NAME_INDEX(SND_DEVICE_IN_SPEAKER_TMIC_NS)},
     {TO_NAME_INDEX(SND_DEVICE_IN_SPEAKER_TMIC_AEC_NS)},
     {TO_NAME_INDEX(SND_DEVICE_IN_SPEAKER_TMIC_NN)},
+    {TO_NAME_INDEX(SND_DEVICE_IN_SPEAKER_TMIC_NN_VC)},
     {TO_NAME_INDEX(SND_DEVICE_IN_VOICE_REC_TMIC)},
     {TO_NAME_INDEX(SND_DEVICE_IN_UNPROCESSED_MIC)},
     {TO_NAME_INDEX(SND_DEVICE_IN_UNPROCESSED_STEREO_MIC)},
@@ -2933,6 +2938,7 @@ static void set_platform_defaults(struct platform_data * my_data)
     hw_interface_table[SND_DEVICE_IN_SPEAKER_TMIC_NS] = strdup("SLIMBUS_0_TX");
     hw_interface_table[SND_DEVICE_IN_SPEAKER_TMIC_AEC_NS] = strdup("SLIMBUS_0_TX");
     hw_interface_table[SND_DEVICE_IN_SPEAKER_TMIC_NN] = strdup("SLIMBUS_0_TX");
+    hw_interface_table[SND_DEVICE_IN_SPEAKER_TMIC_NN_VC] = strdup("SLIMBUS_0_TX");
     hw_interface_table[SND_DEVICE_IN_VOICE_REC_TMIC] = strdup("SLIMBUS_0_TX");
     hw_interface_table[SND_DEVICE_IN_UNPROCESSED_MIC] = strdup("SLIMBUS_0_TX");
     hw_interface_table[SND_DEVICE_IN_UNPROCESSED_STEREO_MIC] = strdup("SLIMBUS_0_TX");
@@ -5935,6 +5941,23 @@ int platform_get_backend_index(snd_device_t snd_device)
                 else if (strcmp(backend_tag_table[snd_device], "optical") == 0)
                         port = OPTICAL_RX_BACKEND;
         }
+
+        /*
+         * For few interfaces, need to update port based on snd device
+         * backend interface. Check for such instances here.
+         */
+        if (port == DEFAULT_CODEC_BACKEND) {
+            if (!strncmp(platform_get_snd_device_backend_interface(snd_device),
+                "PRI_META_MI2S_RX", sizeof("PRI_META_MI2S_RX")))
+                port = PRIM_META_MI2S_RX_BACKEND;
+            else if (!strncmp(platform_get_snd_device_backend_interface(snd_device),
+                     "SEC_META_MI2S_RX", sizeof("SEC_META_MI2S_RX")))
+                port = SEC_META_MI2S_RX_BACKEND;
+            else if (!strncmp(platform_get_snd_device_backend_interface(snd_device),
+                     "PRI_MI2S_RX", sizeof("PRI_MI2S_RX")))
+                port = PRIM_MI2S_RX_BACKEND;
+        }
+
     } else if (snd_device >= SND_DEVICE_IN_BEGIN && snd_device < SND_DEVICE_IN_END) {
         port = DEFAULT_CODEC_TX_BACKEND;
         if (backend_tag_table[snd_device] != NULL) {
@@ -5972,7 +5995,7 @@ int platform_get_backend_index(snd_device_t snd_device)
         ALOGW("%s:napb: Invalid device - %d ", __func__, snd_device);
     }
 
-    ALOGV("%s:napb: backend port - %d device - %d ", __func__, port, snd_device);
+    ALOGD("%s:napb: backend port - %d device - %d ", __func__, port, snd_device);
     return port;
 }
 
@@ -7499,9 +7522,14 @@ static snd_device_t get_snd_device_for_voice_comm_ecns_enabled(struct platform_d
                                  : SND_DEVICE_IN_SPEAKER_QMIC_AEC_NS;
             } else if ((my_data->fluence_type & FLUENCE_TRI_MIC) &&
                        (my_data->source_mic_type & SOURCE_THREE_MIC)) {
-                    snd_device = my_data->fluence_nn_enabled ?
-                                     SND_DEVICE_IN_SPEAKER_TMIC_NN
-                                     : SND_DEVICE_IN_SPEAKER_TMIC_AEC_NS;
+                    if (property_get_bool("persist.vendor.audio.msteams.acdb.enabled", false) &&
+                              my_data->fluence_nn_enabled) {
+                        snd_device = SND_DEVICE_IN_SPEAKER_TMIC_NN;
+                    } else {
+                        snd_device = my_data->fluence_nn_enabled ?
+                                    SND_DEVICE_IN_SPEAKER_TMIC_NN_VC
+                                    : SND_DEVICE_IN_SPEAKER_TMIC_AEC_NS;
+                    }
             } else if ((my_data->fluence_type & FLUENCE_DUAL_MIC) &&
                        (my_data->source_mic_type & SOURCE_DUAL_MIC)) {
                 if (my_data->fluence_mode == FLUENCE_BROADSIDE)
@@ -7572,9 +7600,14 @@ static snd_device_t get_snd_device_for_voice_comm_ecns_disabled(struct platform_
                                      : SND_DEVICE_IN_SPEAKER_QMIC_AEC_NS;
                 } else if ((my_data->fluence_type & FLUENCE_TRI_MIC) &&
                            (my_data->source_mic_type & SOURCE_THREE_MIC)) {
+                    if (property_get_bool("persist.vendor.audio.msteams.acdb.enabled", false) &&
+                              my_data->fluence_nn_enabled) {
+                        snd_device = SND_DEVICE_IN_SPEAKER_TMIC_NN;
+                    } else {
                         snd_device = my_data->fluence_nn_enabled ?
-                                         SND_DEVICE_IN_SPEAKER_TMIC_NN
-                                         : SND_DEVICE_IN_SPEAKER_TMIC_AEC_NS;
+                                    SND_DEVICE_IN_SPEAKER_TMIC_NN_VC
+                                    : SND_DEVICE_IN_SPEAKER_TMIC_AEC_NS;
+                    }
                 } else if ((my_data->fluence_type & FLUENCE_DUAL_MIC) &&
                            (my_data->source_mic_type & SOURCE_DUAL_MIC) &&
                            my_data->fluence_in_voice_comm) {
@@ -11127,7 +11160,6 @@ static bool platform_check_codec_backend_cfg(struct audio_device* adev,
 
         /* Reset channels for speaker as its fixed and independent of active streams */
         channels = my_data->current_backend_cfg[backend_idx].channels;
-
         if (!my_data->voice_speaker_stereo) {
             if ((adev->mode == AUDIO_MODE_IN_COMMUNICATION) &&
                 (snd_device == SND_DEVICE_OUT_VOICE_SPEAKER ||
