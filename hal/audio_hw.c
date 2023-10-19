@@ -9643,6 +9643,16 @@ static int adev_set_parameters(struct audio_hw_device *dev, const char *kvpairs)
             adev->bluetooth_nrec = false;
     }
 
+    ret = str_parms_get_str(parms, "msteams_cert_calibration", value, sizeof(value));
+    if (ret >= 0) {
+        /* When set to false, HAL should disable EC and NS */
+        if (strcmp(value, AUDIO_PARAMETER_VALUE_ON) == 0){
+            adev->msteams_cert_cal_on = true;
+        } else {
+            adev->msteams_cert_cal_on = false;
+        }
+    }
+
     ret = str_parms_get_str(parms, "screen_state", value, sizeof(value));
     if (ret >= 0) {
         if (strcmp(value, AUDIO_PARAMETER_VALUE_ON) == 0)
@@ -11556,6 +11566,7 @@ static int adev_open(const hw_module_t *module, const char *name,
     adev->acdb_settings = TTY_MODE_OFF;
     adev->allow_afe_proxy_usage = true;
     adev->bt_sco_on = false;
+    adev->msteams_cert_cal_on = true;
     /* adev->cur_hdmi_channels = 0;  by calloc() */
     adev->snd_dev_ref_cnt = calloc(SND_DEVICE_MAX, sizeof(int));
     /* Init audio and voice feature */
