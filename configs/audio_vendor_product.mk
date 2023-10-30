@@ -126,6 +126,9 @@ MM_AUDIO += QRD_Hdmi_cal.acdb
 MM_AUDIO += QRD_Headset_cal.acdb
 MM_AUDIO += QRD_Speaker_cal.acdb
 MM_AUDIO += QRD_workspaceFile.qwsp
+ifeq ($(TARGET_BOARD_PLATFORM),lahaina)
+MM_AUDIO += fai__4.8.8_0.0__3.0.0_0.0__3.1.2_0.0__3.2.0_0.1__eai_1.10.pmd
+endif
 ifeq ($(TARGET_BOARD_AUTO),true)
 MM_AUDIO += adsp_avs_config.acdb
 MM_AUDIO += Bluetooth_cal.acdb
@@ -237,6 +240,8 @@ else
 ifeq ($(TARGET_GVMGH_SPECIFIC), false)
 -include $(TOPDIR)vendor/qcom/opensource/audio-hal/primary-hal/configs/msmnile_au/msmnile_au.mk
 else ifeq ($(TARGET_BOARD_PLATFORM)$(TARGET_BOARD_SUFFIX)$(TARGET_BOARD_DERIVATIVE_SUFFIX),msmnile_au_km4)
+-include $(TOPDIR)vendor/qcom/opensource/audio-hal/primary-hal/configs/msmnile_au/msmnile_au.mk
+else ifeq ($(TARGET_BOARD_PLATFORM)$(TARGET_BOARD_SUFFIX)$(TARGET_BOARD_DERIVATIVE_SUFFIX),msmnile_tb)
 -include $(TOPDIR)vendor/qcom/opensource/audio-hal/primary-hal/configs/msmnile_au/msmnile_au.mk
 else ifeq ($(TARGET_BOARD_PLATFORM)$(TARGET_BOARD_SUFFIX)$(TARGET_BOARD_DERIVATIVE_SUFFIX),msmnile_au_ar)
 -include $(TOPDIR)vendor/qcom/opensource/audio-hal/primary-hal/configs/msmnile_au/msmnile_au.mk
