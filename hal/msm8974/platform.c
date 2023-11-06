@@ -10869,7 +10869,7 @@ bool platform_check_and_set_capture_codec_backend_cfg(struct audio_device* adev,
           backend_idx, usecase->id,
           platform_get_snd_device_name(snd_device));
 
-    if (is_combo_audio_input_device(&usecase->stream.in->device_list) &&
+    if ((usecase->type == PCM_CAPTURE) && is_combo_audio_input_device(&usecase->stream.in->device_list) &&
         platform_split_snd_device(my_data, snd_device, &num_devices,
         new_snd_devices) == 0){
 
