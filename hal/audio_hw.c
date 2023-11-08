@@ -4,7 +4,7 @@
  *
  * Copyright (C) 2013 The Android Open Source Project
  *
- * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2022-2023 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -2465,6 +2465,7 @@ int select_devices(struct audio_device *adev, audio_usecase_t uc_id)
     struct audio_usecase *hfp_usecase = NULL;
     struct audio_usecase *pb_usecase = NULL;
     struct stream_out stream_out;
+    struct stream_in stream_in;
     audio_usecase_t hfp_ucid;
     int status = 0;
 
@@ -2501,6 +2502,20 @@ int select_devices(struct audio_device *adev, audio_usecase_t uc_id)
         out_snd_device = platform_get_output_snd_device(adev->platform,
                                                         &stream_out);
         usecase->devices = out_snd_device;
+    } else if (usecase->type == TRANSCODE_LOOPBACK_TX) {
+         if (usecase->stream.inout == NULL) {
+             ALOGE("%s: stream.inout is NULL", __func__);
+             return -EINVAL;
+         }
+         stream_in.device = usecase->stream.inout->in_config.devices;
+         stream_in.sample_rate = usecase->stream.inout->in_config.sample_rate;
+         stream_in.format = usecase->stream.inout->in_config.format;
+         stream_in.channel_mask = usecase->stream.inout->in_config.channel_mask;
+         stream_in.usecase = USECASE_AUDIO_TRANSCODE_LOOPBACK_TX;
+         stream_in.source = AUDIO_SOURCE_UNPROCESSED;
+         in_snd_device = platform_get_input_snd_device(adev->platform, &stream_in,
+                                                       AUDIO_DEVICE_NONE);
+         usecase->devices = in_snd_device;
     } else {
         /*
          * If the voice call is active, use the sound devices of voice call usecase
@@ -2590,8 +2605,7 @@ int select_devices(struct audio_device *adev, audio_usecase_t uc_id)
                 if (usecase->stream.out == voip_out && voip_in != NULL)
                     select_devices(adev, voip_in->usecase);
             }
-        } else if ((usecase->type == PCM_CAPTURE) ||
-                (usecase->type == TRANSCODE_LOOPBACK_TX)) {
+        } else if (usecase->type == PCM_CAPTURE) {
             if (usecase->stream.in == NULL) {
                 ALOGE("%s: stream.in is NULL", __func__);
                 return -EINVAL;
