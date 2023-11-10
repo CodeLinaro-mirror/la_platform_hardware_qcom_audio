@@ -2348,7 +2348,8 @@ void platform_set_echo_reference(struct audio_device *adev, bool enable,
             strlcat(ec_ref_mixer_path, " handset",
                     MIXER_PATH_MAX_LENGTH);
         else if (compare_device_type(out_devices, AUDIO_DEVICE_OUT_WIRED_HEADPHONE) ||
-                 compare_device_type(out_devices, AUDIO_DEVICE_OUT_WIRED_HEADSET))
+                 compare_device_type(out_devices, AUDIO_DEVICE_OUT_WIRED_HEADSET) ||
+                 compare_device_type(out_devices, AUDIO_DEVICE_OUT_LINE))
             strlcat(ec_ref_mixer_path, " headphones",
                     MIXER_PATH_MAX_LENGTH);
         else if (compare_device_type(out_devices, AUDIO_DEVICE_OUT_USB_HEADSET))
