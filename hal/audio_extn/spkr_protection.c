@@ -1370,7 +1370,7 @@ static void* spkr_calibration_thread()
                         }
                        thermal_fd = open(wsa_path, O_RDONLY);
                        if (thermal_fd > 0) {
-                           if ((ret = read(thermal_fd, buf, sizeof(buf))) >= 0) {
+                           if ((ret = read(thermal_fd, buf, sizeof(buf))) > 0) {
                                buf[ret-1] = '\0';
                                t0_spk_1 = atoi(buf);
                            }
@@ -1406,7 +1406,7 @@ static void* spkr_calibration_thread()
                         }
                         thermal_fd = open(wsa_path, O_RDONLY);
                         if (thermal_fd > 0) {
-                           if ((ret = read(thermal_fd, buf, sizeof(buf))) >= 0) {
+                           if ((ret = read(thermal_fd, buf, sizeof(buf))) > 0) {
                                buf[ret-1] = '\0';
                                t0_spk_2 = atoi(buf);
                            }
