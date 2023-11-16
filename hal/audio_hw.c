@@ -9279,6 +9279,10 @@ static int adev_set_parameters(struct audio_hw_device *dev, const char *kvpairs)
     int controller = -1, stream = -1;
 
     ALOGD("%s: enter: %s", __func__, kvpairs);
+    if(strcmp(kvpairs, "connect=1024") ==0 ){
+	    const char  *new_kvpairs = "connect=1024;controller=1;stream=0";
+	    kvpairs = new_kvpairs;
+    }
     parms = str_parms_create_str(kvpairs);
 
     if (!parms)
