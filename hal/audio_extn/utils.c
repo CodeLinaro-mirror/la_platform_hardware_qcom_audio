@@ -1193,7 +1193,7 @@ static int audio_extn_utils_send_app_type_cfg_hfp(struct audio_device *adev,
                                                 PCM_PLAYBACK,
                                                 snd_device);
             if (rc < 0)
-                goto exit_send_app_type_cfg;
+                ALOGE("%s: config HFP session:1 playback path Failed", __func__);
 
             /* config HFP session:1 capture path */
             if (is_bus_dev_usecase) {
@@ -1216,10 +1216,12 @@ static int audio_extn_utils_send_app_type_cfg_hfp(struct audio_device *adev,
                                                 PCM_CAPTURE,
                                                 snd_device);
             if (rc < 0)
-                goto exit_send_app_type_cfg;
+                ALOGE("%s: config HFP session:1 capture path Failed", __func__);
 
-            if (is_bus_dev_usecase)
+            if (is_bus_dev_usecase) {
+                ALOGD("%s: config HFP session:1 Bus Dev Usecase", __func__);
                 goto exit_send_app_type_cfg;
+            }
         }
         /* config HFP session:2 capture path */
         pcm_device_id = audio_extn_hfp_get_pcm_device_id();
@@ -1243,7 +1245,7 @@ static int audio_extn_utils_send_app_type_cfg_hfp(struct audio_device *adev,
                                             acdb_dev_id, sample_rate,
                                             PCM_PLAYBACK, usecase->out_snd_device);
         if (rc < 0)
-            goto exit_send_app_type_cfg;
+            ALOGE("%s: config HFP session:2 playback path Failed", __func__);
     }
 
     rc = 0;
