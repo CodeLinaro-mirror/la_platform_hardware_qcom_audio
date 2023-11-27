@@ -4597,12 +4597,13 @@ int start_output_stream(struct stream_out *out)
             ALOGE("%s: pcm stream not ready", __func__);
             goto error_open;
         }
+
+        out_set_mmap_volume(&out->stream, out->volume_l, out->volume_r);
         ret = pcm_start(out->pcm);
         if (ret < 0) {
             ALOGE("%s: MMAP pcm_start failed ret %d", __func__, ret);
             goto error_open;
         }
-        out_set_mmap_volume(&out->stream, out->volume_l, out->volume_r);
     } else if (!is_offload_usecase(out->usecase)) {
         unsigned int flags = PCM_OUT;
         unsigned int pcm_open_retry_count = 0;
@@ -9642,6 +9643,16 @@ static int adev_set_parameters(struct audio_hw_device *dev, const char *kvpairs)
             adev->bluetooth_nrec = false;
     }
 
+    ret = str_parms_get_str(parms, "msteams_cert_calibration", value, sizeof(value));
+    if (ret >= 0) {
+        /* When set to false, HAL should disable EC and NS */
+        if (strcmp(value, AUDIO_PARAMETER_VALUE_ON) == 0){
+            adev->msteams_cert_cal_on = true;
+        } else {
+            adev->msteams_cert_cal_on = false;
+        }
+    }
+
     ret = str_parms_get_str(parms, "screen_state", value, sizeof(value));
     if (ret >= 0) {
         if (strcmp(value, AUDIO_PARAMETER_VALUE_ON) == 0)
@@ -11555,6 +11566,7 @@ static int adev_open(const hw_module_t *module, const char *name,
     adev->acdb_settings = TTY_MODE_OFF;
     adev->allow_afe_proxy_usage = true;
     adev->bt_sco_on = false;
+    adev->msteams_cert_cal_on = true;
     /* adev->cur_hdmi_channels = 0;  by calloc() */
     adev->snd_dev_ref_cnt = calloc(SND_DEVICE_MAX, sizeof(int));
     /* Init audio and voice feature */

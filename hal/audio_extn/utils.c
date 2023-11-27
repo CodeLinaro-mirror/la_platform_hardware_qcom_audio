@@ -805,7 +805,9 @@ void audio_extn_utils_update_stream_output_app_type_cfg(void *platform,
     struct stream_format *sf_info;
     char value[PROPERTY_VALUE_MAX] = {0};
 
-    if (compare_device_type(devices, AUDIO_DEVICE_OUT_SPEAKER)) {
+    if ((compare_device_type(devices, AUDIO_DEVICE_OUT_SPEAKER))  &&
+         (format != AUDIO_FORMAT_DSD) &&
+        platform_spkr_use_default_sample_rate(platform)) {
         int bw = platform_get_snd_device_bit_width(SND_DEVICE_OUT_SPEAKER);
         if ((-ENOSYS != bw) && (bit_width > (uint32_t)bw))
             bit_width = (uint32_t)bw;
@@ -1191,7 +1193,7 @@ static int audio_extn_utils_send_app_type_cfg_hfp(struct audio_device *adev,
                                                 PCM_PLAYBACK,
                                                 snd_device);
             if (rc < 0)
-                goto exit_send_app_type_cfg;
+                ALOGE("%s: config HFP session:1 playback path Failed", __func__);
 
             /* config HFP session:1 capture path */
             if (is_bus_dev_usecase) {
@@ -1214,10 +1216,12 @@ static int audio_extn_utils_send_app_type_cfg_hfp(struct audio_device *adev,
                                                 PCM_CAPTURE,
                                                 snd_device);
             if (rc < 0)
-                goto exit_send_app_type_cfg;
+                ALOGE("%s: config HFP session:1 capture path Failed", __func__);
 
-            if (is_bus_dev_usecase)
+            if (is_bus_dev_usecase) {
+                ALOGD("%s: config HFP session:1 Bus Dev Usecase", __func__);
                 goto exit_send_app_type_cfg;
+            }
         }
         /* config HFP session:2 capture path */
         pcm_device_id = audio_extn_hfp_get_pcm_device_id();
@@ -1241,7 +1245,7 @@ static int audio_extn_utils_send_app_type_cfg_hfp(struct audio_device *adev,
                                             acdb_dev_id, sample_rate,
                                             PCM_PLAYBACK, usecase->out_snd_device);
         if (rc < 0)
-            goto exit_send_app_type_cfg;
+            ALOGE("%s: config HFP session:2 playback path Failed", __func__);
     }
 
     rc = 0;
@@ -1427,7 +1431,10 @@ int audio_extn_utils_get_app_sample_rate_for_device(
                     (audio_output_flags_t)AUDIO_OUTPUT_FLAG_SYS_NOTIFICATION) || (usecase->stream.out->flags &
                     (audio_output_flags_t)AUDIO_OUTPUT_FLAG_PHONE)))) {
                     /* Reset to default if no native stream is active or default device is speaker*/
-                    usecase->stream.out->app_type_cfg.sample_rate = DEFAULT_OUTPUT_SAMPLING_RATE;
+                    if (platform_spkr_use_default_sample_rate(adev->platform))
+                        usecase->stream.out->app_type_cfg.sample_rate = DEFAULT_OUTPUT_SAMPLING_RATE;
+                    else
+                        usecase->stream.out->app_type_cfg.sample_rate = usecase->stream.out->sample_rate;
                 }
         }
         audio_extn_btsco_get_sample_rate(snd_device, &usecase->stream.out->app_type_cfg.sample_rate);
