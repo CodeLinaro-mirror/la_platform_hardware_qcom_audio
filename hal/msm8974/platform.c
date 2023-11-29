@@ -3968,11 +3968,21 @@ void *platform_init(struct audio_device *adev)
          }
 #endif
 
-    /* CSRA devices support multiple sample rates via I2S at spkr out */
-    if (!strncmp(snd_card_name, "qcs405-csra", strlen("qcs405-csra")))
+    if (!strncmp(snd_card_name, "qcs405-csra", strlen("qcs405-csra"))) {
+        /* CSRA devices support default bit width via I2S at spkr out */
+        my_data->use_spkr_default_bit_width = true;
+        ALOGI("%s: soundcard: %s supports only default bit width", __func__, snd_card_name);
+
+        /* CSRA devices support multiple sample rates via I2S at spkr out */
         my_data->use_sprk_default_sample_rate = false;
-    else
+        ALOGI("%s: soundcard: %s supports multiple sample rates", __func__, snd_card_name);
+    } else {
+        my_data->use_spkr_default_bit_width = false;
+        ALOGI("%s: soundcard: %s supports multiple bit width", __func__, snd_card_name);
+
         my_data->use_sprk_default_sample_rate = true;
+        ALOGI("%s: soundcard: %s supports only default sample rate", __func__, snd_card_name);
+    }
 
     my_data->voice_feature_set = VOICE_FEATURE_SET_DEFAULT;
     my_data->acdb_handle = dlopen(LIB_ACDB_LOADER, RTLD_NOW);
@@ -8963,7 +8973,7 @@ static void set_audiocal(void *platform, struct str_parms *parms, char *value, i
           }
         }
         cal.acdb_dev_id = platform_get_snd_device_acdb_id(cal.snd_dev_id);
-        ALOGV("Setting audio calibration for snd_device(%d) acdb_id(%d)",
+        ALOGD("Setting audio calibration for snd_device(%d) acdb_id(%d)",
                 cal.snd_dev_id, cal.acdb_dev_id);
         if(cal.acdb_dev_id == -EINVAL) {
             ALOGE("[%s] Invalid acdb_device id %d for snd device id %d",
@@ -11166,7 +11176,7 @@ static bool platform_check_codec_backend_cfg(struct audio_device* adev,
          */
         if (platform_spkr_use_default_sample_rate(adev->platform)) {
             sample_rate = CODEC_BACKEND_DEFAULT_SAMPLE_RATE;
-            ALOGV("%s:becf: afe: playback on codec device not supporting native playback set "
+            ALOGD("%s:becf: afe: playback on codec device not supporting native playback set "
             "default Sample Rate(48k)", __func__);
         }
 
@@ -11625,7 +11635,7 @@ int platform_set_snd_device_backend(snd_device_t device, const char *backend_tag
         goto done;
     }
 
-    ALOGV("%s: backend_tag_table[%s]: old = %s new = %s", __func__,
+    ALOGD("%s: backend_tag_table[%s]: old = %s new = %s", __func__,
           platform_get_snd_device_name(device),
           backend_tag_table[device] != NULL ? backend_tag_table[device]: "null",
           backend_tag);
@@ -11641,7 +11651,7 @@ int platform_set_snd_device_backend(snd_device_t device, const char *backend_tag
         if (hw_interface_table[device])
             free(hw_interface_table[device]);
 
-        ALOGV("%s: hw_interface_table[%d] = %s", __func__, device, hw_interface);
+        ALOGD("%s: hw_interface_table[%d] = %s", __func__, device, hw_interface);
         hw_interface_table[device] = strdup(hw_interface);
     }
 done:
@@ -12431,6 +12441,13 @@ void platform_check_and_update_copp_sample_rate(void* platform, snd_device_t snd
                   (snd_device == SND_DEVICE_OUT_SPDIF) ||
                   (snd_device == SND_DEVICE_OUT_OPTICAL))
         *sample_rate = platform_get_supported_copp_sampling_rate(stream_sr);
+
+    /*
+     * Use device sr as copp sr for CSRA targets
+     * to avoid mismatch between ADM and AFE sample rates.
+     */
+    if (!platform_spkr_use_default_sample_rate(platform))
+        *sample_rate = device_sr;
 
      ALOGI("sn_device %d device sr %d stream sr %d copp sr %d", snd_device, device_sr, stream_sr, *sample_rate);
 
