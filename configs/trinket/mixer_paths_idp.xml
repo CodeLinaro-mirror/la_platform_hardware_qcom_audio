@@ -2705,7 +2705,7 @@
     </path>
 
     <path name="voice-speaker-2">
-        <path name="speaker-mono-2" />
+        <path name="speaker-mono" />
     </path>
 
     <path name="voice-speaker-vbat">
