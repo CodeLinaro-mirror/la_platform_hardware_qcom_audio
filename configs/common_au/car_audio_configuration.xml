@@ -30,7 +30,7 @@
 -->
 <carAudioConfiguration version="2">
     <zones>
-        <zone name="primary zone" isPrimary="true">
+        <zone name="primary zone" isPrimary="true" occupantZoneId="0">
             <volumeGroups>
                 <group>
                     <device address="BUS00_MEDIA">
@@ -130,86 +130,6 @@
             <displays>
                 <display port="2"/>
             </displays>
-        </zone>
-        <zone name="bt headphone 1 zone" audioZoneId="3">
-            <volumeGroups>
-                <group>
-                    <device address="BUS18_BT_HEADPHONE_1">
-                        <context context="music"/>
-                        <context context="navigation"/>
-                        <context context="voice_command"/>
-                        <context context="call_ring"/>
-                        <context context="call"/>
-                        <context context="alarm"/>
-                        <context context="notification"/>
-                        <context context="system_sound"/>
-                        <context context="emergency"/>
-                        <context context="safety"/>
-                        <context context="vehicle_status"/>
-                        <context context="announcement"/>
-                    </device>
-                </group>
-            </volumeGroups>
-        </zone>
-        <zone name="bt headphone 2 zone" audioZoneId="4">
-            <volumeGroups>
-                <group>
-                    <device address="BUS20_BT_HEADPHONE_1">
-                        <context context="music"/>
-                        <context context="navigation"/>
-                        <context context="voice_command"/>
-                        <context context="call_ring"/>
-                        <context context="call"/>
-                        <context context="alarm"/>
-                        <context context="notification"/>
-                        <context context="system_sound"/>
-                        <context context="emergency"/>
-                        <context context="safety"/>
-                        <context context="vehicle_status"/>
-                        <context context="announcement"/>
-                    </device>
-                </group>
-            </volumeGroups>
-        </zone>
-	<zone name="bt headphone 3 zone" audioZoneId="5">
-            <volumeGroups>
-                <group>
-                    <device address="BUS22_BT_HEADPHONE_1">
-                        <context context="music"/>
-                        <context context="navigation"/>
-                        <context context="voice_command"/>
-                        <context context="call_ring"/>
-                        <context context="call"/>
-                        <context context="alarm"/>
-                        <context context="notification"/>
-                        <context context="system_sound"/>
-                        <context context="emergency"/>
-                        <context context="safety"/>
-                        <context context="vehicle_status"/>
-                        <context context="announcement"/>
-                    </device>
-                </group>
-            </volumeGroups>
-        </zone>
-	<zone name="bt headphone 4 zone" audioZoneId="6">
-            <volumeGroups>
-                <group>
-                    <device address="BUS24_BT_HEADPHONE_1">
-                        <context context="music"/>
-                        <context context="navigation"/>
-                        <context context="voice_command"/>
-                        <context context="call_ring"/>
-                        <context context="call"/>
-                        <context context="alarm"/>
-                        <context context="notification"/>
-                        <context context="system_sound"/>
-                        <context context="emergency"/>
-                        <context context="safety"/>
-                        <context context="vehicle_status"/>
-                        <context context="announcement"/>
-                    </device>
-                </group>
-            </volumeGroups>
         </zone>
     </zones>
 </carAudioConfiguration>
