@@ -449,15 +449,21 @@ static void audio_extn_ext_disp_set_parameters(const struct audio_device *adev,
 
 static int update_custom_mtmx_coefficients_v2(struct audio_device *adev,
                                               struct audio_custom_mtmx_params *params,
+                                              struct audio_usecase *usecase,
                                               int pcm_device_id)
 {
     struct mixer_ctl *ctl = NULL;
-    char *mixer_name_prefix = "AudStr";
+    char *mixer_name_prefix = NULL;
     char *mixer_name_suffix = "ChMixer Weight Ch";
     char mixer_ctl_name[128] = {0};
     struct audio_custom_mtmx_params_info *pinfo = &params->info;
     int i = 0, err = 0;
     int cust_ch_mixer_cfg[128], len = 0;
+
+    if (usecase->type == PCM_PLAYBACK)
+        mixer_name_prefix = "AudStr";
+    else
+        mixer_name_prefix = "AudStr Capture";
 
     ALOGI("%s: ip_channels %d, op_channels %d, pcm_device_id %d",
           __func__, pinfo->ip_channels, pinfo->op_channels, pcm_device_id);
@@ -513,14 +519,20 @@ static int update_custom_mtmx_coefficients_v2(struct audio_device *adev,
 
 static void set_custom_mtmx_params_v2(struct audio_device *adev,
                                       struct audio_custom_mtmx_params_info *pinfo,
+                                      struct audio_usecase *usecase,
                                       int pcm_device_id, bool enable)
 {
     struct mixer_ctl *ctl = NULL;
-    char *mixer_name_prefix = "AudStr";
+    char *mixer_name_prefix = NULL;
     char *mixer_name_suffix = "ChMixer Cfg";
     char mixer_ctl_name[128] = {0};
     int chmixer_cfg[5] = {0}, len = 0;
     int be_id = -1, err = 0;
+
+    if (usecase->type == PCM_PLAYBACK)
+        mixer_name_prefix = "AudStr";
+    else
+        mixer_name_prefix = "AudStr Capture";
 
     be_id = platform_get_snd_device_backend_index(pinfo->snd_device);
 
@@ -616,13 +628,15 @@ void audio_extn_set_custom_mtmx_params_v2(struct audio_device *adev,
         params = platform_get_custom_mtmx_params(adev->platform, &info, &idx);
         if (params) {
             if (enable)
-                ret = update_custom_mtmx_coefficients_v2(adev, params,
+                ret = update_custom_mtmx_coefficients_v2(adev, params,usecase,
                                                       pcm_device_id);
             if (ret < 0)
                 ALOGE("%s: error updating mtmx coeffs err:%d", __func__, ret);
             else
-                set_custom_mtmx_params_v2(adev, &info, pcm_device_id, enable);
+                set_custom_mtmx_params_v2(adev, &info, usecase, pcm_device_id, enable);
         }
+        else
+            ALOGV("%s: no matching mtmx configuration", __func__);
     }
 }
 
