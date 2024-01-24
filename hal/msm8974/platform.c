@@ -17,7 +17,7 @@
  * limitations under the License.
  *
  * Changes from Qualcomm Innovation Center are provided under the following license:
- * Copyright (c) 2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2023-2024 Qualcomm Innovation Center, Inc. All rights reserved.
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
@@ -80,6 +80,7 @@
 #define PLATFORM_INFO_XML_PATH_SHIMA_QRD "audio_platform_info_shimaqrd.xml"
 #define PLATFORM_INFO_XML_PATH_YUPIK_QRD "audio_platform_info_yupikqrd.xml"
 #define PLATFORM_INFO_XML_PATH_YUPIK_IDP "audio_platform_info_yupikidp.xml"
+#define PLATFORM_INFO_XML_PATH_YUPIK_IDPRB3 "audio_platform_info_yupikidprb3.xml"
 #define PLATFORM_INFO_XML_PATH_SCUBA_IDP "audio_platform_info_scubaidp.xml"
 #define PLATFORM_INFO_XML_PATH_SCUBA_QRD "audio_platform_info_scubaqrd.xml"
 #define PLATFORM_INFO_XML_PATH_SA8295_ADP "audio_platform_info_sa8295.xml"
@@ -3673,7 +3674,7 @@ void *platform_init(struct audio_device *adev)
             my_data, PLATFORM);
     } else if (!strncmp(snd_card_name, "lahaina-yupikidprb3-snd-card",
                sizeof("lahaina-yupikidprb3-snd-card"))) {
-        platform_info_init(get_xml_file_path(PLATFORM_INFO_XML_PATH_YUPIK_IDP),
+        platform_info_init(get_xml_file_path(PLATFORM_INFO_XML_PATH_YUPIK_IDPRB3),
             my_data, PLATFORM);
     } else if (!strncmp(snd_card_name, "lahaina-yupikqrd-snd-card",
                sizeof("lahaina-yupikqrd-snd-card"))) {
@@ -7042,6 +7043,9 @@ snd_device_t platform_get_output_snd_device(void *platform, struct stream_out *o
                     snd_device = SND_DEVICE_OUT_DISPLAY_PORT +
                         ((controller * MAX_STREAMS_PER_CONTROLLER) + stream);
                     break;
+                case EXT_DISPLAY_TYPE_HDMI:
+                    snd_device = SND_DEVICE_OUT_HDMI;
+                    break;
                 default:
                     ALOGE("%s: Invalid disp_type %d", __func__,
                            my_data->ext_disp[controller][stream].type);
@@ -9250,7 +9254,8 @@ void platform_get_parameters(void *platform,
         if (adev->dp_allowed_for_voice) {
             for (i = 0; i < MAX_CONTROLLERS; ++i) {
                 for (j = 0; j < MAX_STREAMS_PER_CONTROLLER; ++j) {
-                    if (my_data->ext_disp[i][j].type == EXT_DISPLAY_TYPE_DP) {
+                    if (my_data->ext_disp[i][j].type == EXT_DISPLAY_TYPE_DP
+                         ||  my_data->ext_disp[i][j].type == EXT_DISPLAY_TYPE_HDMI) {
                         enabled = true;
                         break;
                     }
