@@ -16,9 +16,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * Changes from Qualcomm Innovation Center are provided under the following license:
- * Copyright (c) 2023 Qualcomm Innovation Center, Inc. All rights reserved.
- * SPDX-License-Identifier: BSD-3-Clause-Clear
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
  */
 
 #define LOG_TAG "audio_hw_utils"
@@ -2112,6 +2110,12 @@ void audio_extn_utils_send_audio_calibration(struct audio_device *adev,
         if ((type != VOICE_CALL) && (type != VOIP_CALL))
             ALOGW("%s: No audio calibration for usecase type = %d",  __func__, type);
     }
+}
+
+void audio_extn_utils_deallocate_cal(struct audio_device *adev,
+                                             struct audio_usecase *usecase)
+{
+    platform_deallocate_cal(adev->platform, usecase);
 }
 
 // Base64 Encode and Decode

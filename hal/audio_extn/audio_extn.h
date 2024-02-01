@@ -34,10 +34,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * Changes from Qualcomm Innovation Center are provided under the following license:
- * Copyright (c) 2023 Qualcomm Innovation Center, Inc. All rights reserved.
- * SPDX-License-Identifier: BSD-3-Clause-Clear
- *
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
  */
 
 #ifndef AUDIO_EXTN_H
@@ -858,6 +855,8 @@ void audio_extn_utils_update_stream_input_app_type_cfg(void *platform,
 int audio_extn_utils_send_app_type_cfg(struct audio_device *adev,
                                        struct audio_usecase *usecase);
 void audio_extn_utils_send_audio_calibration(struct audio_device *adev,
+                                             struct audio_usecase *usecase);
+void audio_extn_utils_deallocate_cal(struct audio_device *adev,
                                              struct audio_usecase *usecase);
 void audio_extn_utils_update_stream_app_type_cfg_for_usecase(
                                   struct audio_device *adev,

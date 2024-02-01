@@ -1625,6 +1625,8 @@ int disable_audio_route(struct audio_device *adev,
     audio_extn_sound_trigger_update_stream_status(usecase, ST_EVENT_STREAM_FREE);
     audio_extn_listen_update_stream_status(usecase, LISTEN_EVENT_STREAM_FREE);
 
+    audio_extn_utils_deallocate_cal(adev, usecase);
+
     if (usecase->type == PCM_CAPTURE) {
         in = usecase->stream.in;
         if ((in && is_loopback_input_device(get_device_types(&in->device_list))) ||
