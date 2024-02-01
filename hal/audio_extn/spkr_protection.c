@@ -25,6 +25,11 @@
  * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
  * OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
  * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ *
+ * Changes from Qualcomm Innovation Center are provided under the following license:
+ * Copyright (c) 2024 Qualcomm Innovation Center, Inc. All rights reserved.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
+ *
  */
 
 #define LOG_TAG "audio_hw_spkr_prot"
@@ -1076,12 +1081,13 @@ exit:
             if (handle.cancel_spkr_calib)
                 pthread_cond_signal(&handle.spkr_calibcancel_ack);
             handle.cancel_spkr_calib = 0;
-            pthread_mutex_unlock(&handle.spkr_calib_cancelack_mutex);
-            pthread_mutex_unlock(&handle.mutex_spkr_prot);
         }
     }
-    if (acquire_device)
+    if (acquire_device) {
         pthread_mutex_lock(&adev->lock);
+        pthread_mutex_unlock(&handle.spkr_calib_cancelack_mutex);
+        pthread_mutex_unlock(&handle.mutex_spkr_prot);
+    }
     return status.status;
 }
 
@@ -1252,8 +1258,10 @@ static void* spkr_calibration_thread()
 
                    thermal_fd = open(wsa_path, O_RDONLY);
                    if (thermal_fd > 0) {
-                       if ((ret = read(thermal_fd, buf, sizeof(buf))) >= 0)
+                       if ((ret = read(thermal_fd, buf, sizeof(buf) -1)) >= 0) {
+                            buf[ret] = '\0';
                             t0_spk_1 = atoi(buf);
+                       }
                        else
                            ALOGE("%s: read fail for %s err:%d\n", __func__, wsa_path, ret);
                        close(thermal_fd);
@@ -1285,8 +1293,10 @@ static void* spkr_calibration_thread()
                    }
                    thermal_fd = open(wsa_path, O_RDONLY);
                    if (thermal_fd > 0) {
-                       if ((ret = read(thermal_fd, buf, sizeof(buf))) >= 0)
+                       if ((ret = read(thermal_fd, buf, sizeof(buf) -1)) >= 0) {
+                           buf[ret] = '\0';
                            t0_spk_2 = atoi(buf);
+                       }
                        else
                            ALOGE("%s: read fail for %s err:%d\n", __func__, wsa_path, ret);
                        close(thermal_fd);
