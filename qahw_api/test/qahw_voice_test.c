@@ -78,6 +78,7 @@
 #define FORMAT_DESCRIPTOR_SIZE 12
 #define SUBCHUNK1_SIZE(x) ((8) + (x))
 #define SUBCHUNK2_SIZE 8
+#define MAX_BUFFER_SIZE 7680
 
 int first_usb_read_done = 0;
 int first_usb_write_done = 0;
@@ -106,6 +107,7 @@ typedef struct {
 } thread_event_type;
 typedef struct Node {
     void* data;
+    int buffer_size;
     struct Node* next;
 } Node;
 
@@ -210,6 +212,7 @@ void addToTail(LinkedList* list, void* data, int dataLength){
     fprintf(stderr, "%s: inputData: %s \n", __func__, inputData);
     newNode= (Node*)calloc(1, sizeof(Node));
     newNode->data = inputData;
+    newNode->buffer_size = dataLength;
     newNode->next = NULL;
 
     if(list->tail == NULL) {
@@ -459,19 +462,18 @@ static void *usb_play_start(void* thread_param)
     int total_bytes_write_on_usb = 0;
     voice_stream_config *params = (voice_stream_config *)thread_param;
     unsigned int cap_time = params->call_length;
-    size_t in_buffer_size;
 
     usb_plbk_pcm_hndl = get_plbk_pcm_hndl();
     if (usb_plbk_pcm_hndl != NULL) {
         isVoiceOverUsb = true;
     }
 
-    headBuffer = calloc(1, in_buffer_size);
+    headBuffer = calloc(1, MAX_BUFFER_SIZE);
     if (headBuffer == NULL){
         fprintf(stderr, "%s:calloc failed\n",__func__);
         goto exit;
     }
-    memset(headBuffer, 0, in_buffer_size);
+    memset(headBuffer, 0, MAX_BUFFER_SIZE);
     clock_gettime(CLOCK_MONOTONIC, &now);
     end.tv_sec = now.tv_sec + cap_time;
     end.tv_nsec = now.tv_nsec;
@@ -481,13 +483,16 @@ static void *usb_play_start(void* thread_param)
             fprintf(stderr, "No node To Remove\n");
             continue;
         }
-        memcpy(headBuffer, nodeToRemove->data, in_buffer_size);
+        if(MAX_BUFFER_SIZE < nodeToRemove->buffer_size) {
+            fprintf(stderr, "Buffer size exceeds max buffer size\n");
             goto exit;
         }
-        if (pcm_write(usb_plbk_pcm_hndl, headBuffer, in_buffer_size)){
+
+        memcpy(headBuffer, nodeToRemove->data, nodeToRemove->buffer_size);
+        if (pcm_write(usb_plbk_pcm_hndl, headBuffer, nodeToRemove->buffer_size)){
             fprintf(stderr, "Error playing sample on usb device node\n");
         }
-        memset(headBuffer, 0, in_buffer_size);
+        memset(headBuffer, 0, nodeToRemove->buffer_size);
         total_bytes_write_on_usb += total_bytes_write_on_usb;
         free(nodeToRemove->data);
         free(nodeToRemove);
@@ -498,7 +503,7 @@ static void *usb_play_start(void* thread_param)
                 goto exit;
             }
         }
-
+    }
 exit:
     fprintf(stderr, "%s: exiting usb play thread\n", __func__);
     free(headBuffer);
@@ -507,7 +512,7 @@ exit:
 }
 
 
-void *usb_rec_start(void * thread_param) {
+void *usb_incall_rec_start(void * thread_param) {
     uint32_t rc = 0;
     voice_stream_config *params = (voice_stream_config *)thread_param;
     qahw_module_handle_t *qahw_mod_handle = params->qahw_mod_handle;
@@ -562,6 +567,7 @@ void *usb_rec_start(void * thread_param) {
 
     attr.direction = QAHW_STREAM_INPUT;
     attr.attr.audio.config.format = AUDIO_FORMAT_PCM_16_BIT;
+    attr.attr.audio.config.channel_mask = 0xC;
 
     rc = qahw_stream_open(qahw_mod_handle,
                           attr,
@@ -625,7 +631,7 @@ void *usb_rec_start(void * thread_param) {
     hdr.fmt_id = ID_FMT;
     hdr.fmt_sz = 16;
     hdr.audio_format = FORMAT_PCM;
-    hdr.num_channels = 1;
+    hdr.num_channels = 2;
     hdr.sample_rate = attr.attr.audio.config.sample_rate;
     hdr.byte_rate = hdr.sample_rate * hdr.num_channels * (bps / 8);
     hdr.block_align = hdr.num_channels * (bps / 8);
@@ -676,18 +682,7 @@ void *usb_rec_start(void * thread_param) {
     if (rc) {
         fprintf(stderr, "could not close input stream %d, handle(%d)\n", rc, in_handle);
     }
-
-    /* Print instructions to access the file.
-     * Caution: Below ADL log shouldnt be altered without notifying automation APT since it used for
-     * automation testing
-     */
-    fprintf(stderr, "\n\n ADL: The audio recording has been saved to %s. Please use adb pull to get "
-            "the file and play it using audacity. The audio data has the "
-            "following characteristics:\n Sample rate: %i\n Format: %d\n "
-            "Num channels: %i\n\n",
-            params->rec_file, attr.attr.audio.config.sample_rate, attr.attr.audio.config.format, 1);
     pthread_exit(0);
-
     return NULL;
 }
 
@@ -1166,7 +1161,7 @@ void *rec_start(void *thread_param) {
             while ((buffer_pointer != NULL) && (input_buf_size > 0)) {
                 read_usb_size = (usb_buf_size < input_buf_size ) ? usb_buf_size : input_buf_size;
                 snprintf(usb_buffer,read_usb_size, "%s\n", buffer_pointer);
-                if (pcm_write(usb_plbk_pcm_hndl, usb_buffer, read_usb_size)) {
+                if (pcm_write(usb_plbk_pcm_hndl, in_buf.buffer, in_buf.size)) {
                     fprintf(stderr, "Error playing sample on usb device node\n");
                     break;
                 } else {
@@ -1961,9 +1956,9 @@ int main(int argc, char *argv[]) {
         if (stream_params.in_call_rec) {
             fprintf(stderr, "\n Create in call record thread \n");
             if (isVoiceOverUsb) {
-                rc = pthread_create(&usb_reader, NULL, (void*)&usb_rec_start, (void *)&stream_params);
+                rc = pthread_create(&usb_reader, NULL, (void*)&usb_incall_rec_start, (void *)&stream_params);
                 if (rc) {
-                    fprintf(stderr, "usb_rec_start thread creation failed %d\n");
+                    fprintf(stderr, "usb_incall_rec_start thread creation failed %d\n");
                 }
                 usleep(50000);
                 rc = pthread_create(&usb_writer, NULL, (void*)&usb_play_start, (void *)&stream_params);
