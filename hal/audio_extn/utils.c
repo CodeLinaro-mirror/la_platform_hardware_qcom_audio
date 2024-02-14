@@ -1434,7 +1434,9 @@ int audio_extn_utils_get_app_sample_rate_for_device(
                     if (platform_spkr_use_default_sample_rate(adev->platform))
                         usecase->stream.out->app_type_cfg.sample_rate = DEFAULT_OUTPUT_SAMPLING_RATE;
                     else
-                        usecase->stream.out->app_type_cfg.sample_rate = usecase->stream.out->sample_rate;
+                        platform_check_and_update_copp_sample_rate(adev->platform, snd_device,
+                                      usecase->stream.out->sample_rate,
+                                      &usecase->stream.out->app_type_cfg.sample_rate);
                 }
         }
         audio_extn_btsco_get_sample_rate(snd_device, &usecase->stream.out->app_type_cfg.sample_rate);
