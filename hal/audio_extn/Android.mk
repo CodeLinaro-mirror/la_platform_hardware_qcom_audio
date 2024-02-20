@@ -620,6 +620,10 @@ ifeq ($(TARGET_BOARD_AUTO),true)
   LOCAL_CFLAGS += -DPLATFORM_AUTO
 endif
 
+ifneq ($(filter bengal,$(TARGET_BOARD_PLATFORM)),)
+  LOCAL_CFLAGS += -DPLATFORM_BENGAL
+endif
+
 LOCAL_SRC_FILES:= \
         hfp.c \
         device_utils.c
