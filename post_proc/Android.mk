@@ -26,6 +26,10 @@ ifeq ($(strip $(AUDIO_FEATURE_ENABLED_AUDIOSPHERE)),true)
     LOCAL_SRC_FILES += asphere.c
 endif
 
+ifeq ($(strip $(AUDIO_FEATURE_ENABLED_INSTANCE_ID)), true)
+    LOCAL_CFLAGS += -DINSTANCE_ID_ENABLED
+endif
+
 LOCAL_CFLAGS+= -O2 -fvisibility=hidden
 
 ifneq ($(strip $(AUDIO_FEATURE_DISABLED_DTS_EAGLE)),true)
