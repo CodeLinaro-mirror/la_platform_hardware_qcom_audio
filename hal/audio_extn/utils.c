@@ -17,7 +17,7 @@
  * limitations under the License.
  *
  * Changes from Qualcomm Innovation Center are provided under the following license:
- * Copyright (c) 2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2023-2024 Qualcomm Innovation Center, Inc. All rights reserved.
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
@@ -38,6 +38,7 @@
 
 
 #include "audio_hw.h"
+#include "auto_audio_hw.h"
 #include "platform.h"
 #include "platform_api.h"
 #include "audio_extn.h"
@@ -1069,6 +1070,7 @@ static int set_stream_app_type_mixer_ctrl(struct audio_device *adev,
         rc = -EINVAL;
         goto exit;
     }
+    ALOGV("%s: Got mixer control %s", __func__, mixer_ctl_name);
     app_type_cfg[len++] = app_type;
     app_type_cfg[len++] = acdb_dev_id;
     app_type_cfg[len++] = sample_rate;
@@ -1564,7 +1566,10 @@ static int send_app_type_cfg_for_device(struct audio_device *adev,
     }
 
     if(ctl)
+    {
+        ALOGD("%s: Do mixer_ctl_set_array", __func__);
         mixer_ctl_set_array(ctl, app_type_cfg, len);
+    }
 
     /* send app type cfg for haptics */
     if (usecase->id == USECASE_AUDIO_PLAYBACK_WITH_HAPTICS) {
@@ -1599,10 +1604,7 @@ static int audio_extn_utils_check_input_parameters(uint32_t sample_rate,
 
     if (((format != AUDIO_FORMAT_PCM_16_BIT) && (format != AUDIO_FORMAT_PCM_8_24_BIT) &&
         (format != AUDIO_FORMAT_PCM_24_BIT_PACKED) && (format != AUDIO_FORMAT_PCM_32_BIT) &&
-        (format != AUDIO_FORMAT_PCM_FLOAT)) &&
-        !voice_extn_compress_voip_is_format_supported(format) &&
-        !audio_extn_compr_cap_format_supported(format) &&
-        !audio_extn_cin_format_supported(format))
+        (format != AUDIO_FORMAT_PCM_FLOAT)))
             ret = -EINVAL;
 
     switch (channel_count) {
@@ -1731,6 +1733,7 @@ int audio_extn_utils_send_app_type_cfg(struct audio_device *adev,
             break;
     }
 
+    ALOGV("Returning from %s", __func__);
     return rc;
 }
 

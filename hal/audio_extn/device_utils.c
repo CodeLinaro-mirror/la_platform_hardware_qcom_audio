@@ -27,7 +27,7 @@
  * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  * Changes from Qualcomm Innovation Center are provided under the following license:
- * Copyright (c) 2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2023-2024 Qualcomm Innovation Center, Inc. All rights reserved.
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  *
  */
@@ -370,6 +370,8 @@ bool compare_device_type(struct listnode *devices, audio_devices_t device_type)
     if (devices == NULL)
         return false;
 
+/* This will be removed when we will enable all usecases for AIDL*/
+    return true;
     list_for_each_safe (node, temp, devices) {
         item = node_to_item(node, struct audio_device_info, list);
         if (item != NULL && (item->type == device_type)) {

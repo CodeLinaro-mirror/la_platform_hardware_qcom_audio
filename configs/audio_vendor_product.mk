@@ -1,14 +1,3 @@
-AUDIO_USE_STUB_HAL := false
-ifeq ($(TARGET_USES_QMAA),true)
-ifeq ($(TARGET_USES_QMAA_OVERRIDE_AUDIO), false)
-AUDIO_USE_STUB_HAL := true
-endif # TARGET_USES_QMAA_OVERRIDE_AUDIO
-endif # TARGET_USES_QMAA
-
-ifeq ($(TARGET_USES_AUDIOLITE),true)
-AUDIO_USE_STUB_HAL := true
-endif #ends TARGET_USES_AUDIOLITE
-
 #MM_AUDIO product packages
 MM_AUDIO += audiod
 MM_AUDIO += libacdbloader
@@ -130,9 +119,6 @@ MM_AUDIO += QRD_Hdmi_cal.acdb
 MM_AUDIO += QRD_Headset_cal.acdb
 MM_AUDIO += QRD_Speaker_cal.acdb
 MM_AUDIO += QRD_workspaceFile.qwsp
-ifeq ($(TARGET_BOARD_PLATFORM),lahaina)
-MM_AUDIO += fai__4.8.8_0.0__3.0.0_0.0__3.1.2_0.0__3.2.0_0.1__eai_1.10.pmd
-endif
 ifeq ($(TARGET_BOARD_AUTO),true)
 MM_AUDIO += adsp_avs_config.acdb
 MM_AUDIO += Bluetooth_cal.acdb
@@ -196,6 +182,8 @@ endif
 MM_AUDIO += libaudiopowerpolicy
 endif
 
+MM_AUDIO += libaudioarch-elite
+MM_AUDIO += audiohalservice.qti
 ifeq ($(ENABLE_HYP), true)
 MM_AUDIO += amfsservice
 endif
@@ -237,22 +225,15 @@ TARGET_USES_AOSP_FOR_AUDIO := false
 endif
 
 # Audio configuration file
-ifeq ($(AUDIO_USE_STUB_HAL),true)
-TARGET_USES_AOSP_FOR_AUDIO := true
--include $(TOPDIR)vendor/qcom/opensource/audio-hal/primary-hal/configs/common/default.mk
-else
 ifeq ($(TARGET_GVMGH_SPECIFIC), false)
 -include $(TOPDIR)vendor/qcom/opensource/audio-hal/primary-hal/configs/msmnile_au/msmnile_au.mk
 else ifeq ($(TARGET_BOARD_PLATFORM)$(TARGET_BOARD_SUFFIX)$(TARGET_BOARD_DERIVATIVE_SUFFIX),msmnile_au_km4)
--include $(TOPDIR)vendor/qcom/opensource/audio-hal/primary-hal/configs/msmnile_au/msmnile_au.mk
-else ifeq ($(TARGET_BOARD_PLATFORM)$(TARGET_BOARD_SUFFIX)$(TARGET_BOARD_DERIVATIVE_SUFFIX),msmnile_tb)
 -include $(TOPDIR)vendor/qcom/opensource/audio-hal/primary-hal/configs/msmnile_au/msmnile_au.mk
 else ifeq ($(TARGET_BOARD_PLATFORM)$(TARGET_BOARD_SUFFIX)$(TARGET_BOARD_DERIVATIVE_SUFFIX),msmnile_au_ar)
 -include $(TOPDIR)vendor/qcom/opensource/audio-hal/primary-hal/configs/msmnile_au/msmnile_au.mk
 else ifeq ($(TARGET_BOARD_PLATFORM)$(TARGET_BOARD_SUFFIX),sm6150_au)
 -include $(TOPDIR)vendor/qcom/opensource/audio-hal/primary-hal/configs/msmsteppe_au/msmsteppe_au.mk
 endif
-endif # AUDIO_USE_STUB_HAL
 
 ifeq ($(TARGET_BOARD_AUTO),true)
 ifeq ($(TARGET_USES_RRO),true)

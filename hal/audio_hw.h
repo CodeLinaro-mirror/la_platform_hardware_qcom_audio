@@ -36,7 +36,7 @@
 
  *  Changes from Qualcomm Innovation Center are provided under the following license:
 
- * Copyright (c) 2022-2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2022-2024 Qualcomm Innovation Center, Inc. All rights reserved.
 
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted (subject to the limitations in the
@@ -97,6 +97,10 @@ typedef int error_log_t;
 #include "voice.h"
 #include "audio_hw_extn_api.h"
 #include "device_utils.h"
+#include <auto_audio_hw.h>
+
+#define PROXY_OPEN_RETRY_COUNT           100
+#define PROXY_OPEN_WAIT_TIME             20
 
 #if LINUX_ENABLED
 typedef struct {
@@ -202,137 +206,10 @@ typedef enum power_policy_status_t {
     POWER_POLICY_STATUS_OFFLINE,
     POWER_POLICY_STATUS_ONLINE
 } power_policy_status_t;
-/* These are the supported use cases by the hardware.
- * Each usecase is mapped to a specific PCM device.
- * Refer to pcm_device_table[].
- */
-enum {
-    USECASE_INVALID = -1,
-    /* Playback usecases */
-    USECASE_AUDIO_PLAYBACK_DEEP_BUFFER = 0,
-    USECASE_AUDIO_PLAYBACK_LOW_LATENCY,
-    USECASE_AUDIO_PLAYBACK_MULTI_CH,
-    USECASE_AUDIO_PLAYBACK_OFFLOAD,
-    USECASE_AUDIO_PLAYBACK_OFFLOAD2,
-    USECASE_AUDIO_PLAYBACK_OFFLOAD3,
-    USECASE_AUDIO_PLAYBACK_OFFLOAD4,
-    USECASE_AUDIO_PLAYBACK_OFFLOAD5,
-    USECASE_AUDIO_PLAYBACK_OFFLOAD6,
-    USECASE_AUDIO_PLAYBACK_OFFLOAD7,
-    USECASE_AUDIO_PLAYBACK_OFFLOAD8,
-    USECASE_AUDIO_PLAYBACK_OFFLOAD9,
-    USECASE_AUDIO_PLAYBACK_ULL,
-    USECASE_AUDIO_PLAYBACK_MMAP,
-    USECASE_AUDIO_PLAYBACK_WITH_HAPTICS,
-    USECASE_AUDIO_PLAYBACK_HAPTICS,
-    USECASE_AUDIO_PLAYBACK_HIFI,
-    USECASE_AUDIO_PLAYBACK_TTS,
 
-    /* FM usecase */
-    USECASE_AUDIO_PLAYBACK_FM,
+typedef int snd_device_t;
+typedef int audio_usecase_t;
 
-    /* HFP Use case*/
-    USECASE_AUDIO_HFP_SCO,
-    USECASE_AUDIO_HFP_SCO_WB,
-    USECASE_AUDIO_HFP_SCO_DOWNLINK,
-    USECASE_AUDIO_HFP_SCO_WB_DOWNLINK,
-
-    /* Capture usecases */
-    USECASE_AUDIO_RECORD,
-    USECASE_AUDIO_RECORD2,
-    USECASE_AUDIO_RECORD3,
-    USECASE_AUDIO_RECORD_COMPRESS,
-    USECASE_AUDIO_RECORD_COMPRESS2,
-    USECASE_AUDIO_RECORD_COMPRESS3,
-    USECASE_AUDIO_RECORD_COMPRESS4,
-    USECASE_AUDIO_RECORD_COMPRESS5,
-    USECASE_AUDIO_RECORD_COMPRESS6,
-    USECASE_AUDIO_RECORD_LOW_LATENCY,
-    USECASE_AUDIO_RECORD_LOW_LATENCY2,
-    USECASE_AUDIO_RECORD_FM_VIRTUAL,
-    USECASE_AUDIO_RECORD_HIFI,
-
-    USECASE_AUDIO_PLAYBACK_VOIP,
-    USECASE_AUDIO_RECORD_VOIP,
-    /* Voice usecase */
-    USECASE_VOICE_CALL,
-    USECASE_AUDIO_RECORD_MMAP,
-
-    /* Voice extension usecases */
-    USECASE_VOICE2_CALL,
-    USECASE_VOLTE_CALL,
-    USECASE_QCHAT_CALL,
-    USECASE_VOWLAN_CALL,
-    USECASE_VOICEMMODE1_CALL,
-    USECASE_VOICEMMODE2_CALL,
-    USECASE_COMPRESS_VOIP_CALL,
-
-    USECASE_INCALL_REC_UPLINK,
-    USECASE_INCALL_REC_DOWNLINK,
-    USECASE_INCALL_REC_UPLINK_AND_DOWNLINK,
-    USECASE_INCALL_REC_UPLINK_COMPRESS,
-    USECASE_INCALL_REC_DOWNLINK_COMPRESS,
-    USECASE_INCALL_REC_UPLINK_AND_DOWNLINK_COMPRESS,
-
-    USECASE_INCALL_MUSIC_UPLINK,
-    USECASE_INCALL_MUSIC_UPLINK2,
-
-    USECASE_AUDIO_SPKR_CALIB_RX,
-    USECASE_AUDIO_SPKR_CALIB_TX,
-
-    USECASE_AUDIO_PLAYBACK_AFE_PROXY,
-    USECASE_AUDIO_RECORD_AFE_PROXY,
-    USECASE_AUDIO_RECORD_AFE_PROXY2,
-    USECASE_AUDIO_DSM_FEEDBACK,
-
-    USECASE_AUDIO_PLAYBACK_SILENCE,
-
-    USECASE_AUDIO_TRANSCODE_LOOPBACK_RX,
-    USECASE_AUDIO_TRANSCODE_LOOPBACK_TX,
-
-    USECASE_AUDIO_PLAYBACK_INTERACTIVE_STREAM1,
-    USECASE_AUDIO_PLAYBACK_INTERACTIVE_STREAM2,
-    USECASE_AUDIO_PLAYBACK_INTERACTIVE_STREAM3,
-    USECASE_AUDIO_PLAYBACK_INTERACTIVE_STREAM4,
-    USECASE_AUDIO_PLAYBACK_INTERACTIVE_STREAM5,
-    USECASE_AUDIO_PLAYBACK_INTERACTIVE_STREAM6,
-    USECASE_AUDIO_PLAYBACK_INTERACTIVE_STREAM7,
-    USECASE_AUDIO_PLAYBACK_INTERACTIVE_STREAM8,
-
-    USECASE_AUDIO_EC_REF_LOOPBACK,
-
-    USECASE_AUDIO_A2DP_ABR_FEEDBACK,
-
-    /* car streams usecases */
-    USECASE_AUDIO_PLAYBACK_MEDIA,
-    USECASE_AUDIO_PLAYBACK_MEDIA_LL,
-    USECASE_AUDIO_PLAYBACK_SYS_NOTIFICATION,
-    USECASE_AUDIO_PLAYBACK_NAV_GUIDANCE,
-    USECASE_AUDIO_PLAYBACK_NAV_GUIDANCE_LL,
-    USECASE_AUDIO_PLAYBACK_PHONE,
-    USECASE_AUDIO_PLAYBACK_PHONE_LL,
-    USECASE_AUDIO_PLAYBACK_ALERTS,
-    USECASE_AUDIO_PLAYBACK_ALERTS_LL,
-    USECASE_AUDIO_PLAYBACK_FRONT_PASSENGER,
-    USECASE_AUDIO_PLAYBACK_REAR_SEAT,
-    USECASE_AUDIO_RECORD_BUS,
-    USECASE_AUDIO_RECORD_BUS_FRONT_PASSENGER,
-    USECASE_AUDIO_RECORD_BUS_REAR_SEAT,
-
-    USECASE_AUDIO_PLAYBACK_SYNTHESIZER,
-
-    /* Echo reference capture usecases */
-    USECASE_AUDIO_RECORD_ECHO_REF_EXT,
-
-    /*Audio FM Tuner usecase*/
-    USECASE_AUDIO_FM_TUNER_EXT,
-    /*voip usecase with low latency path*/
-    USECASE_AUDIO_RECORD_VOIP_LOW_LATENCY,
-
-    /*In Car Communication Usecase*/
-    USECASE_ICC_CALL,
-    AUDIO_USECASE_MAX
-};
 
 const char * const use_case_table[AUDIO_USECASE_MAX];
 
@@ -677,7 +554,7 @@ union stream_ptr {
     struct stream_inout *inout;
 };
 
-struct audio_usecase {
+typedef struct audio_usecase {
     struct listnode list;
     audio_usecase_t id;
     usecase_type_t  type;
@@ -687,7 +564,8 @@ struct audio_usecase {
     struct stream_app_type_cfg out_app_type_cfg;
     struct stream_app_type_cfg in_app_type_cfg;
     union stream_ptr stream;
-};
+    int32_t stream_type;
+}usecase_info_t;
 
 struct stream_format {
     struct listnode list;

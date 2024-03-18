@@ -35,7 +35,7 @@
  * limitations under the License.
  *
  * Changes from Qualcomm Innovation Center are provided under the following license:
- * Copyright (c) 2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2023-2024 Qualcomm Innovation Center, Inc. All rights reserved.
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  *
  */
@@ -1396,7 +1396,7 @@ int audio_extn_auto_hal_create_audio_patch(struct audio_hw_device *dev,
 int audio_extn_auto_hal_release_audio_patch(struct audio_hw_device *dev,
                                 audio_patch_handle_t handle);
 int audio_extn_auto_hal_get_car_audio_stream_from_address(const char *address);
-int audio_extn_auto_hal_open_output_stream(struct stream_out *out);
+int audio_extn_auto_hal_open_output_stream(struct stream_out *out, int car_audio_stream);
 int audio_extn_auto_hal_open_input_stream(struct stream_in *in);
 int audio_extn_auto_hal_open_echo_reference_stream(struct stream_in *in);
 bool audio_extn_auto_hal_overwrite_priority_for_auto(struct stream_in *in);
@@ -1420,6 +1420,7 @@ snd_device_t audio_extn_auto_hal_get_input_snd_device(struct audio_device *adev,
                                 audio_usecase_t uc_id);
 snd_device_t audio_extn_auto_hal_get_output_snd_device(struct audio_device *adev,
                                 audio_usecase_t uc_id);
+snd_device_t aidl_audio_extn_auto_hal_get_output_snd_device(audio_usecase_t uc_id);
 snd_device_t audio_extn_auto_hal_get_snd_device_for_car_audio_stream(int car_audio_stream);
 
 typedef size_t (*fp_get_output_period_size_t)(uint32_t, audio_format_t, int, int);

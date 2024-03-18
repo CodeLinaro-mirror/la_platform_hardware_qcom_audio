@@ -27,7 +27,7 @@
  * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  * Changes from Qualcomm Innovation Center are provided under the following license:
- * Copyright (c) 2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2023-2024 Qualcomm Innovation Center, Inc. All rights reserved.
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 #define LOG_TAG "auto_hal_extn"
@@ -372,12 +372,12 @@ int auto_hal_open_echo_reference_stream(struct stream_in *in)
     return 0;
 }
 
-int auto_hal_open_output_stream(struct stream_out *out)
+int auto_hal_open_output_stream(struct stream_out *out, int car_audio_stream)
 {
     int ret = 0;
     unsigned int channels = audio_channel_count_from_out_mask(out->channel_mask);
 
-    switch(out->car_audio_stream) {
+    switch(car_audio_stream) {
     case CAR_AUDIO_STREAM_MEDIA:
         if (out->flags == AUDIO_OUTPUT_FLAG_PRIMARY ||
          out->flags == AUDIO_OUTPUT_FLAG_NONE) {
@@ -443,7 +443,7 @@ int auto_hal_open_output_stream(struct stream_out *out)
         out->volume_l = out->volume_r = MAX_VOLUME_GAIN;
         break;
     case CAR_AUDIO_STREAM_NAV_GUIDANCE:
-        if (out->flags == AUDIO_OUTPUT_FLAG_NONE) {
+        if (out->flags == AUDIO_OUTPUT_FLAG_NONE || out->flags == AUDIO_OUTPUT_FLAG_PRIMARY) {
             out->usecase = USECASE_AUDIO_PLAYBACK_NAV_GUIDANCE;
             out->config = pcm_config_media;
             out->config.period_size = fp_get_output_period_size(out->sample_rate, out->format,
@@ -496,7 +496,7 @@ int auto_hal_open_output_stream(struct stream_out *out)
         out->volume_l = out->volume_r = MAX_VOLUME_GAIN;
         break;
     case CAR_AUDIO_STREAM_PHONE:
-        if (out->flags == AUDIO_OUTPUT_FLAG_NONE) {
+        if (out->flags == AUDIO_OUTPUT_FLAG_NONE || out->flags == AUDIO_OUTPUT_FLAG_PRIMARY) {
             out->usecase = USECASE_AUDIO_PLAYBACK_PHONE;
             out->flags = AUDIO_OUTPUT_FLAG_PHONE;
         }
@@ -534,7 +534,7 @@ int auto_hal_open_output_stream(struct stream_out *out)
         out->volume_l = out->volume_r = MAX_VOLUME_GAIN;
         break;
     case CAR_AUDIO_STREAM_ALERTS:
-        if (out->flags == AUDIO_OUTPUT_FLAG_NONE) {
+        if (out->flags == AUDIO_OUTPUT_FLAG_NONE || out->flags == AUDIO_OUTPUT_FLAG_PRIMARY) {
             out->usecase = USECASE_AUDIO_PLAYBACK_ALERTS;
             out->flags = AUDIO_OUTPUT_FLAG_ALERTS;
         }
@@ -1254,6 +1254,80 @@ snd_device_t auto_hal_get_output_snd_device(struct audio_device *adev,
         }
     } else {
         ALOGE("%s: Output devices (%#x) not supported", __func__, get_device_types(&devices));
+        return -EINVAL;
+    }
+
+    return snd_device;
+}
+
+snd_device_t aidl_auto_hal_get_output_snd_device(audio_usecase_t uc_id)
+{
+    snd_device_t snd_device = SND_DEVICE_NONE;
+
+    ALOGD("%s: Entered with usecase(%d)", __func__, uc_id);
+
+    /* usecase->id is token as judgement for HFP calls */
+    switch (uc_id) {
+    case USECASE_AUDIO_HFP_SCO:
+        snd_device = SND_DEVICE_OUT_BT_SCO;
+        break;
+    case USECASE_AUDIO_HFP_SCO_WB:
+        snd_device = SND_DEVICE_OUT_BT_SCO_WB;
+        break;
+    case USECASE_AUDIO_HFP_SCO_DOWNLINK:
+    case USECASE_AUDIO_HFP_SCO_WB_DOWNLINK:
+        snd_device = SND_DEVICE_OUT_VOICE_SPEAKER_HFP;
+        break;
+    case USECASE_VOICE_CALL:
+        snd_device = SND_DEVICE_OUT_VOICE_SPEAKER;
+        break;
+    case USECASE_AUDIO_PLAYBACK_MEDIA:
+    case USECASE_AUDIO_PLAYBACK_MEDIA_LL:
+        snd_device = SND_DEVICE_OUT_BUS_MEDIA;
+        break;
+    case USECASE_AUDIO_PLAYBACK_OFFLOAD:
+    case USECASE_AUDIO_PLAYBACK_OFFLOAD2:
+    case USECASE_AUDIO_PLAYBACK_OFFLOAD3:
+    case USECASE_AUDIO_PLAYBACK_OFFLOAD4:
+    case USECASE_AUDIO_PLAYBACK_OFFLOAD5:
+    case USECASE_AUDIO_PLAYBACK_OFFLOAD6:
+    case USECASE_AUDIO_PLAYBACK_OFFLOAD7:
+    case USECASE_AUDIO_PLAYBACK_OFFLOAD8:
+    case USECASE_AUDIO_PLAYBACK_OFFLOAD9:
+    case USECASE_AUDIO_PLAYBACK_ULL:
+    case USECASE_AUDIO_PLAYBACK_MMAP:
+    case USECASE_AUDIO_PLAYBACK_VOIP:
+        snd_device = SND_DEVICE_OUT_BUS_MEDIA;
+        break;
+    case USECASE_AUDIO_PLAYBACK_SYS_NOTIFICATION:
+        snd_device = SND_DEVICE_OUT_BUS_SYS;
+        break;
+    case USECASE_AUDIO_PLAYBACK_NAV_GUIDANCE:
+    case USECASE_AUDIO_PLAYBACK_NAV_GUIDANCE_LL:
+        snd_device = SND_DEVICE_OUT_BUS_NAV;
+        break;
+    case USECASE_AUDIO_PLAYBACK_PHONE:
+    case USECASE_AUDIO_PLAYBACK_PHONE_LL:
+        snd_device = SND_DEVICE_OUT_BUS_PHN;
+        break;
+    case USECASE_AUDIO_PLAYBACK_ALERTS:
+    case USECASE_AUDIO_PLAYBACK_ALERTS_LL:
+        snd_device = SND_DEVICE_OUT_BUS_ALR;
+        break;
+    case USECASE_AUDIO_PLAYBACK_FRONT_PASSENGER:
+        snd_device = SND_DEVICE_OUT_BUS_PAX;
+        break;
+    case USECASE_AUDIO_PLAYBACK_REAR_SEAT:
+        snd_device = SND_DEVICE_OUT_BUS_RSE;
+        break;
+    case USECASE_ICC_CALL:
+        snd_device = SND_DEVICE_OUT_ICC;
+        break;
+    case USECASE_AUDIO_PLAYBACK_SYNTHESIZER:
+        snd_device = SND_DEVICE_OUT_SYNTH_SPKR;
+        break;
+    default:
+        ALOGE("%s: Usecase (%d) not supported", __func__, uc_id);
         return -EINVAL;
     }
 

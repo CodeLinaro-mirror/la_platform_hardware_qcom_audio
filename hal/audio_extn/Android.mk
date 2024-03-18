@@ -51,19 +51,19 @@ LOCAL_SHARED_LIBRARIES := \
     libaudioutils \
     libcutils \
     liblog \
-    libtinyalsa \
+    libtinyalsav2 \
     $(LIBRARY_TINYCOMPRESS) \
     libaudioroute \
     libdl \
     libexpat
 
 LOCAL_C_INCLUDES := \
-    external/tinyalsa/include \
     $(LIBRARY_TINYCOMPRESS_INC) \
     system/media/audio_utils/include \
     external/expat/lib \
     $(call include-path-for, audio-route) \
     $(PRIMARY_HAL_PATH) \
+    $(PRIMARY_HAL_PATH)/inc \
     $(call include-path-for, audio-effects)
 
 LOCAL_C_INCLUDES += $(TARGET_OUT_INTERMEDIATES)/KERNEL_OBJ/usr/include
@@ -73,6 +73,9 @@ LOCAL_C_INCLUDES += $(TARGET_OUT_INTERMEDIATES)/KERNEL_OBJ/usr/techpack/audio/in
 ifeq ($(ENABLE_AUDIO_LEGACY_TECHPACK),true)
 LOCAL_HEADER_LIBRARIES += qti_legacy_audio_kernel_uapi
 endif
+
+LOCAL_HEADER_LIBRARIES += \
+    libtinyalsav2_headers
 
 LOCAL_ADDITIONAL_DEPENDENCIES += $(TARGET_OUT_INTERMEDIATES)/KERNEL_OBJ/usr
 
@@ -124,20 +127,20 @@ LOCAL_SHARED_LIBRARIES := \
     libaudioutils \
     libcutils \
     liblog \
-    libtinyalsa \
+    libtinyalsav2 \
     $(LIBRARY_TINYCOMPRESS) \
     libaudioroute \
     libdl \
     libexpat
 
 LOCAL_C_INCLUDES := \
-    external/tinyalsa/include \
     $(LIBRARY_TINYCOMPRESS_INC) \
     system/media/audio_utils/include \
     external/expat/lib \
     $(call include-path-for, audio-route) \
     $(PRIMARY_HAL_PATH) \
     $(PRIMARY_HAL_PATH)/$(AUDIO_PLATFORM) \
+    $(PRIMARY_HAL_PATH)/inc \
     $(call include-path-for, audio-effects)
 
 LOCAL_C_INCLUDES += $(TARGET_OUT_INTERMEDIATES)/KERNEL_OBJ/usr/include
@@ -149,6 +152,9 @@ ifeq ($(strip $(AUDIO_FEATURE_ENABLED_DLKM)),true)
   LOCAL_HEADER_LIBRARIES += audio_kernel_headers
   LOCAL_C_INCLUDES += $(AUDIO_KERNEL_INC)
 endif
+
+LOCAL_HEADER_LIBRARIES += \
+    libtinyalsav2_headers
 
 ifeq ($(strip $(AUDIO_FEATURE_ENABLED_DYNAMIC_LOG)), true)
     LOCAL_CFLAGS += -DDYNAMIC_LOG_ENABLED
@@ -193,7 +199,7 @@ LOCAL_SHARED_LIBRARIES := \
     libaudioutils \
     libcutils \
     liblog \
-    libtinyalsa \
+    libtinyalsav2 \
     $(LIBRARY_TINYCOMPRESS) \
     libaudioroute \
     libdl \
@@ -203,7 +209,7 @@ LOCAL_SHARED_LIBRARIES := \
 LOCAL_C_INCLUDES := \
     $(PRIMARY_HAL_PATH) \
     $(PRIMARY_HAL_PATH)/$(AUDIO_PLATFORM) \
-    external/tinyalsa/include \
+    $(PRIMARY_HAL_PATH)/inc \
     $(LIBRARY_TINYCOMPRESS_INC) \
     external/expat/lib \
     system/media/audio_utils/include \
@@ -225,6 +231,9 @@ ifeq ($(strip $(AUDIO_FEATURE_ENABLED_DLKM)),true)
   LOCAL_HEADER_LIBRARIES += audio_kernel_headers
   LOCAL_C_INCLUDES += $(PRIMARY_HAL_PATH)
 endif
+
+LOCAL_HEADER_LIBRARIES += \
+    libtinyalsav2_headers
 
 ifeq ($(strip $(AUDIO_FEATURE_ENABLED_DYNAMIC_LOG)), true)
     LOCAL_CFLAGS += -DDYNAMIC_LOG_ENABLED
@@ -268,20 +277,20 @@ LOCAL_SHARED_LIBRARIES := \
     libaudioutils \
     libcutils \
     liblog \
-    libtinyalsa \
+    libtinyalsav2 \
     $(LIBRARY_TINYCOMPRESS) \
     libaudioroute \
     libdl \
     libexpat
 
 LOCAL_C_INCLUDES := \
-    external/tinyalsa/include \
     $(LIBRARY_TINYCOMPRESS_INC) \
     system/media/audio_utils/include \
     external/expat/lib \
     $(call include-path-for, audio-route) \
     $(PRIMARY_HAL_PATH) \
     $(PRIMARY_HAL_PATH)/$(AUDIO_PLATFORM) \
+    $(PRIMARY_HAL_PATH)/inc \
     $(call include-path-for, audio-effects)
 
 LOCAL_C_INCLUDES += $(TARGET_OUT_INTERMEDIATES)/KERNEL_OBJ/usr/include
@@ -291,6 +300,9 @@ LOCAL_C_INCLUDES += $(TARGET_OUT_INTERMEDIATES)/KERNEL_OBJ/usr/techpack/audio/in
 ifeq ($(ENABLE_AUDIO_LEGACY_TECHPACK),true)
 LOCAL_HEADER_LIBRARIES += qti_legacy_audio_kernel_uapi
 endif
+
+LOCAL_HEADER_LIBRARIES += \
+    libtinyalsav2_headers
 
 LOCAL_ADDITIONAL_DEPENDENCIES += $(TARGET_OUT_INTERMEDIATES)/KERNEL_OBJ/usr
 
@@ -341,19 +353,19 @@ LOCAL_SHARED_LIBRARIES := \
     libaudioutils \
     libcutils \
     liblog \
-    libtinyalsa \
+    libtinyalsav2 \
     $(LIBRARY_TINYCOMPRESS) \
     libaudioroute \
     libdl \
     libexpat
 
 LOCAL_C_INCLUDES := \
-    external/tinyalsa/include \
     $(LIBRARY_TINYCOMPRESS_INC) \
     system/media/audio_utils/include \
     external/expat/lib \
     $(call include-path-for, audio-route) \
     $(PRIMARY_HAL_PATH) \
+    $(PRIMARY_HAL_PATH)/inc \
     $(PRIMARY_HAL_PATH)/audio_extn \
     $(PRIMARY_HAL_PATH)/$(AUDIO_PLATFORM) \
     $(call include-path-for, audio-effects)
@@ -370,6 +382,9 @@ LOCAL_C_INCLUDES += $(TARGET_OUT_INTERMEDIATES)/KERNEL_OBJ/usr/techpack/audio/in
 ifeq ($(ENABLE_AUDIO_LEGACY_TECHPACK),true)
 LOCAL_HEADER_LIBRARIES += qti_legacy_audio_kernel_uapi
 endif
+
+LOCAL_HEADER_LIBRARIES += \
+    libtinyalsav2_headers
 
 LOCAL_ADDITIONAL_DEPENDENCIES += $(TARGET_OUT_INTERMEDIATES)/KERNEL_OBJ/usr
 
@@ -416,18 +431,18 @@ LOCAL_SHARED_LIBRARIES := \
     libaudioutils \
     libcutils \
     liblog \
-    libtinyalsa \
+    libtinyalsav2 \
     libaudioroute \
     libdl \
     libexpat
 
 LOCAL_C_INCLUDES := \
-    external/tinyalsa/include \
     $(LIBRARY_TINYCOMPRESS_INC) \
     system/media/audio_utils/include \
     external/expat/lib \
     $(call include-path-for, audio-route) \
     $(PRIMARY_HAL_PATH) \
+    $(PRIMARY_HAL_PATH)/inc \
     $(PRIMARY_HAL_PATH)/audio_extn \
     $(PRIMARY_HAL_PATH)/$(AUDIO_PLATFORM) \
     $(call include-path-for, audio-effects)
@@ -445,6 +460,9 @@ LOCAL_C_INCLUDES += $(TARGET_OUT_INTERMEDIATES)/KERNEL_OBJ/usr/techpack/audio/in
 ifeq ($(ENABLE_AUDIO_LEGACY_TECHPACK),true)
 LOCAL_HEADER_LIBRARIES += qti_legacy_audio_kernel_uapi
 endif
+
+LOCAL_HEADER_LIBRARIES += \
+    libtinyalsav2_headers
 
 LOCAL_ADDITIONAL_DEPENDENCIES += $(TARGET_OUT_INTERMEDIATES)/KERNEL_OBJ/usr
 
@@ -485,7 +503,7 @@ LOCAL_SHARED_LIBRARIES := \
     libaudioutils \
     libcutils \
     liblog \
-    libtinyalsa \
+    libtinyalsav2 \
     $(LIBRARY_TINYCOMPRESS) \
     libaudioroute \
     libdl \
@@ -494,7 +512,7 @@ LOCAL_SHARED_LIBRARIES := \
 LOCAL_C_INCLUDES := \
     $(PRIMARY_HAL_PATH) \
     $(PRIMARY_HAL_PATH)/$(AUDIO_PLATFORM) \
-    external/tinyalsa/include \
+    $(PRIMARY_HAL_PATH)/inc \
     $(LIBRARY_TINYCOMPRESS_INC) \
     external/expat/lib \
     system/media/audio_utils/include \
@@ -514,6 +532,9 @@ ifeq ($(strip $(AUDIO_FEATURE_ENABLED_DLKM)),true)
   LOCAL_HEADER_LIBRARIES += audio_kernel_headers
   LOCAL_C_INCLUDES += $(AUDIO_KERNEL_INC)
 endif
+
+LOCAL_HEADER_LIBRARIES += \
+    libtinyalsav2_headers
 
 ifeq ($(strip $(AUDIO_FEATURE_ENABLED_DYNAMIC_LOG)), true)
     LOCAL_CFLAGS += -DDYNAMIC_LOG_ENABLED
@@ -566,13 +587,13 @@ LOCAL_SHARED_LIBRARIES := \
     libdl \
     libexpat \
     liblog \
-    libtinyalsa \
+    libtinyalsav2 \
     $(LIBRARY_TINYCOMPRESS)
 
 LOCAL_C_INCLUDES := \
     $(PRIMARY_HAL_PATH) \
     $(PRIMARY_HAL_PATH)/$(AUDIO_PLATFORM) \
-    external/tinyalsa/include \
+    $(PRIMARY_HAL_PATH)/inc \
     $(LIBRARY_TINYCOMPRESS_INC) \
     external/expat/lib \
     system/media/audio_utils/include \
@@ -585,6 +606,9 @@ LOCAL_C_INCLUDES += $(TARGET_OUT_INTERMEDIATES)/KERNEL_OBJ/usr/techpack/audio/in
 ifeq ($(ENABLE_AUDIO_LEGACY_TECHPACK),true)
 LOCAL_HEADER_LIBRARIES += qti_legacy_audio_kernel_uapi
 endif
+
+LOCAL_HEADER_LIBRARIES += \
+    libtinyalsav2_headers
 
 LOCAL_ADDITIONAL_DEPENDENCIES += $(TARGET_OUT_INTERMEDIATES)/KERNEL_OBJ/usr
 
@@ -637,13 +661,13 @@ LOCAL_SHARED_LIBRARIES := \
     libdl \
     libexpat \
     liblog \
-    libtinyalsa \
+    libtinyalsav2 \
     $(LIBRARY_TINYCOMPRESS)
 
 LOCAL_C_INCLUDES := \
     $(PRIMARY_HAL_PATH) \
     $(PRIMARY_HAL_PATH)/$(AUDIO_PLATFORM) \
-    external/tinyalsa/include \
+    $(PRIMARY_HAL_PATH)/inc \
     $(LIBRARY_TINYCOMPRESS_INC) \
     external/expat/lib \
     system/media/audio_utils/include \
@@ -656,6 +680,9 @@ LOCAL_C_INCLUDES += $(TARGET_OUT_INTERMEDIATES)/KERNEL_OBJ/usr/techpack/audio/in
 ifeq ($(ENABLE_AUDIO_LEGACY_TECHPACK),true)
 LOCAL_HEADER_LIBRARIES += qti_legacy_audio_kernel_uapi
 endif
+
+LOCAL_HEADER_LIBRARIES += \
+    libtinyalsav2_headers
 
 LOCAL_ADDITIONAL_DEPENDENCIES += $(TARGET_OUT_INTERMEDIATES)/KERNEL_OBJ/usr
 
@@ -714,13 +741,13 @@ LOCAL_SHARED_LIBRARIES := \
     libdl \
     libexpat \
     liblog \
-    libtinyalsa \
+    libtinyalsav2 \
     $(LIBRARY_TINYCOMPRESS)
 
 LOCAL_C_INCLUDES := \
     $(PRIMARY_HAL_PATH) \
     $(PRIMARY_HAL_PATH)/$(AUDIO_PLATFORM) \
-    external/tinyalsa/include \
+    $(PRIMARY_HAL_PATH)/inc \
     $(LIBRARY_TINYCOMPRESS_INC) \
     external/expat/lib \
     system/media/audio_utils/include \
@@ -733,6 +760,9 @@ LOCAL_C_INCLUDES += $(TARGET_OUT_INTERMEDIATES)/KERNEL_OBJ/usr/techpack/audio/in
 ifeq ($(ENABLE_AUDIO_LEGACY_TECHPACK),true)
 LOCAL_HEADER_LIBRARIES += qti_legacy_audio_kernel_uapi
 endif
+
+LOCAL_HEADER_LIBRARIES += \
+    libtinyalsav2_headers
 
 LOCAL_ADDITIONAL_DEPENDENCIES += $(TARGET_OUT_INTERMEDIATES)/KERNEL_OBJ/usr
 
@@ -785,13 +815,13 @@ LOCAL_SHARED_LIBRARIES := \
     libdl \
     libexpat \
     liblog \
-    libtinyalsa \
+    libtinyalsav2 \
     $(LIBRARY_TINYCOMPRESS)
 
 LOCAL_C_INCLUDES := \
     $(PRIMARY_HAL_PATH) \
     $(PRIMARY_HAL_PATH)/$(AUDIO_PLATFORM) \
-    external/tinyalsa/include \
+    $(PRIMARY_HAL_PATH)/inc \
     $(LIBRARY_TINYCOMPRESS_INC) \
     external/expat/lib \
     system/media/audio_utils/include \
@@ -811,6 +841,9 @@ ifeq ($(strip $(AUDIO_FEATURE_ENABLED_DLKM)),true)
   LOCAL_HEADER_LIBRARIES += audio_kernel_headers
   LOCAL_C_INCLUDES += $(AUDIO_KERNEL_INC)
 endif
+
+LOCAL_HEADER_LIBRARIES += \
+    libtinyalsav2_headers
 
 LOCAL_HEADER_LIBRARIES += libhardware_headers
 LOCAL_HEADER_LIBRARIES += libsystem_headers
@@ -854,13 +887,13 @@ LOCAL_SHARED_LIBRARIES := \
     libdl \
     libexpat \
     liblog \
-    libtinyalsa \
+    libtinyalsav2 \
     $(LIBRARY_TINYCOMPRESS)
 
 LOCAL_C_INCLUDES := \
     $(PRIMARY_HAL_PATH) \
     $(PRIMARY_HAL_PATH)/$(AUDIO_PLATFORM) \
-    external/tinyalsa/include \
+    $(PRIMARY_HAL_PATH)/inc \
     $(LIBRARY_TINYCOMPRESS_INC) \
     external/expat/lib \
     system/media/audio_utils/include \
@@ -874,6 +907,9 @@ LOCAL_C_INCLUDES += $(TARGET_OUT_INTERMEDIATES)/KERNEL_OBJ/usr/techpack/audio/in
 ifeq ($(ENABLE_AUDIO_LEGACY_TECHPACK),true)
 LOCAL_HEADER_LIBRARIES += qti_legacy_audio_kernel_uapi
 endif
+
+LOCAL_HEADER_LIBRARIES += \
+    libtinyalsav2_headers
 
 LOCAL_ADDITIONAL_DEPENDENCIES += $(TARGET_OUT_INTERMEDIATES)/KERNEL_OBJ/usr
 
@@ -938,7 +974,7 @@ LOCAL_SHARED_LIBRARIES := \
     libexpat \
     libhidlbase \
     liblog \
-    libtinyalsa \
+    libtinyalsav2 \
     $(LIBRARY_TINYCOMPRESS) \
     libutils \
 
@@ -948,7 +984,7 @@ LOCAL_STATIC_LIBRARIES := \
 LOCAL_C_INCLUDES := \
     $(PRIMARY_HAL_PATH) \
     $(PRIMARY_HAL_PATH)/$(AUDIO_PLATFORM) \
-    external/tinyalsa/include \
+    $(PRIMARY_HAL_PATH)/inc \
     $(LIBRARY_TINYCOMPRESS_INC) \
     external/expat/lib \
     system/media/audio_utils/include \
@@ -963,6 +999,9 @@ ifeq ($(strip $(AUDIO_FEATURE_ENABLED_DLKM)),true)
   LOCAL_HEADER_LIBRARIES += audio_kernel_headers
   LOCAL_C_INCLUDES += $(AUDIO_KERNEL_INC)
 endif
+
+LOCAL_HEADER_LIBRARIES += \
+    libtinyalsav2_headers
 
 LOCAL_HEADER_LIBRARIES += libhardware_headers
 LOCAL_HEADER_LIBRARIES += libsystem_headers
@@ -1003,13 +1042,13 @@ LOCAL_SHARED_LIBRARIES := \
     libdl \
     libexpat \
     liblog \
-    libtinyalsa \
+    libtinyalsav2 \
     $(LIBRARY_TINYCOMPRESS)
 
 LOCAL_C_INCLUDES := \
     $(PRIMARY_HAL_PATH) \
     $(PRIMARY_HAL_PATH)/$(AUDIO_PLATFORM) \
-    external/tinyalsa/include \
+    $(PRIMARY_HAL_PATH)/inc \
     $(LIBRARY_TINYCOMPRESS_INC) \
     external/expat/lib \
     system/media/audio_utils/include \
@@ -1024,6 +1063,9 @@ ifeq ($(strip $(AUDIO_FEATURE_ENABLED_DLKM)),true)
   LOCAL_HEADER_LIBRARIES += audio_kernel_headers
   LOCAL_C_INCLUDES += $(AUDIO_KERNEL_INC)
 endif
+
+LOCAL_HEADER_LIBRARIES += \
+    libtinyalsav2_headers
 
 LOCAL_HEADER_LIBRARIES += libhardware_headers
 LOCAL_HEADER_LIBRARIES += libsystem_headers
@@ -1062,7 +1104,7 @@ LOCAL_SHARED_LIBRARIES := \
     libaudioutils \
     libcutils \
     liblog \
-    libtinyalsa \
+    libtinyalsav2 \
     $(LIBRARY_TINYCOMPRESS) \
     libaudioroute \
     libdl \
@@ -1071,7 +1113,7 @@ LOCAL_SHARED_LIBRARIES := \
 LOCAL_C_INCLUDES := \
     $(PRIMARY_HAL_PATH) \
     $(PRIMARY_HAL_PATH)/$(AUDIO_PLATFORM) \
-    external/tinyalsa/include \
+    $(PRIMARY_HAL_PATH)/inc \
     $(LIBRARY_TINYCOMPRESS_INC) \
     external/expat/lib \
     system/media/audio_utils/include \
@@ -1084,6 +1126,9 @@ LOCAL_C_INCLUDES += $(TARGET_OUT_INTERMEDIATES)/KERNEL_OBJ/usr/techpack/audio/in
 ifeq ($(ENABLE_AUDIO_LEGACY_TECHPACK),true)
 LOCAL_HEADER_LIBRARIES += qti_legacy_audio_kernel_uapi
 endif
+
+LOCAL_HEADER_LIBRARIES += \
+    libtinyalsav2_headers
 
 LOCAL_ADDITIONAL_DEPENDENCIES += $(TARGET_OUT_INTERMEDIATES)/KERNEL_OBJ/usr
 
@@ -1128,7 +1173,7 @@ LOCAL_SHARED_LIBRARIES := \
     libaudioutils \
     libcutils \
     liblog \
-    libtinyalsa \
+    libtinyalsav2 \
     $(LIBRARY_TINYCOMPRESS) \
     libaudioroute \
     libdl \
@@ -1137,7 +1182,7 @@ LOCAL_SHARED_LIBRARIES := \
 LOCAL_C_INCLUDES := \
     $(PRIMARY_HAL_PATH) \
     $(PRIMARY_HAL_PATH)/$(AUDIO_PLATFORM) \
-    external/tinyalsa/include \
+    $(PRIMARY_HAL_PATH)/inc \
     $(LIBRARY_TINYCOMPRESS_INC) \
     external/expat/lib \
     system/media/audio_utils/include \
@@ -1150,6 +1195,9 @@ LOCAL_C_INCLUDES += $(TARGET_OUT_INTERMEDIATES)/KERNEL_OBJ/usr/techpack/audio/in
 ifeq ($(ENABLE_AUDIO_LEGACY_TECHPACK),true)
 LOCAL_HEADER_LIBRARIES += qti_legacy_audio_kernel_uapi
 endif
+
+LOCAL_HEADER_LIBRARIES += \
+    libtinyalsav2_headers
 
 LOCAL_ADDITIONAL_DEPENDENCIES += $(TARGET_OUT_INTERMEDIATES)/KERNEL_OBJ/usr
 
@@ -1200,12 +1248,12 @@ LOCAL_SHARED_LIBRARIES := \
     libdl \
     libexpat \
     liblog \
-    libtinyalsa
+    libtinyalsav2
 
 LOCAL_C_INCLUDES := \
     $(PRIMARY_HAL_PATH) \
     $(PRIMARY_HAL_PATH)/$(AUDIO_PLATFORM) \
-    external/tinyalsa/include \
+    $(PRIMARY_HAL_PATH)/inc \
     $(LIBRARY_TINYCOMPRESS_INC) \
     external/expat/lib \
     system/media/audio_utils/include \
@@ -1219,15 +1267,15 @@ ifeq ($(ENABLE_AUDIO_LEGACY_TECHPACK),true)
 LOCAL_HEADER_LIBRARIES += qti_legacy_audio_kernel_uapi
 endif
 
+LOCAL_HEADER_LIBRARIES += \
+    libtinyalsav2_headers
+
 LOCAL_ADDITIONAL_DEPENDENCIES += $(TARGET_OUT_INTERMEDIATES)/KERNEL_OBJ/usr
 
 ifeq ($(strip $(AUDIO_FEATURE_ENABLED_DLKM)),true)
   LOCAL_HEADER_LIBRARIES += audio_kernel_headers
   LOCAL_C_INCLUDES += $(AUDIO_KERNEL_INC)
-endif
 
-ifeq ($(AUDIO_FEATURE_ENABLED_HAL_V7), true)
-LOCAL_CFLAGS += -DANDROID_U_HAL7
 endif
 
 LOCAL_HEADER_LIBRARIES += libhardware_headers
@@ -1255,6 +1303,7 @@ LOCAL_SRC_FILES:= \
 
 LOCAL_C_INCLUDES:= \
         $(PRIMARY_HAL_PATH) \
+        $(PRIMARY_HAL_PATH)/inc \
         system/media/audio/include
 
 LOCAL_SHARED_LIBRARIES:= \

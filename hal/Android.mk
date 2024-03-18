@@ -161,11 +161,8 @@ ifeq ($(ENABLE_AUDIO_LEGACY_TECHPACK),true)
   LOCAL_HEADER_LIBRARIES += qti_legacy_audio_kernel_uapi
 endif
 
-ifeq ($(AUDIO_FEATURE_ENABLED_HAL_V7), true)
-  LOCAL_CFLAGS += -DANDROID_U_HAL7
-endif
-
 LOCAL_SRC_FILES := \
+    platform_arch_elite.c \
     audio_hw.c \
     acdb.c \
     platform_info.c \
@@ -188,7 +185,7 @@ LOCAL_SHARED_LIBRARIES := \
     libbase \
     liblog \
     libcutils \
-    libtinyalsa \
+    libtinyalsav2 \
     $(LIBRARY_TINYCOMPRESS) \
     libaudioroute \
     libdl \
@@ -199,15 +196,20 @@ LOCAL_SHARED_LIBRARIES := \
     libutils
 
 LOCAL_C_INCLUDES += \
-    external/tinyalsa/include \
     $(LIBRARY_TINYCOMPRESS_INC) \
     system/media/audio_utils/include \
     external/expat/lib \
     $(call include-path-for, audio-route) \
     $(call include-path-for, audio-effects) \
     $(LOCAL_PATH)/$(AUDIO_PLATFORM) \
+    $(LOCAL_PATH)/inc \
     $(LOCAL_PATH)/audio_extn \
     $(LOCAL_PATH)/voice_extn
+
+LOCAL_HEADER_LIBRARIES += \
+    libtinyalsav2_headers
+
+
 ifneq ($(BOARD_OPENSOURCE_DIR), )
   LOCAL_C_INCLUDES += $(BOARD_OPENSOURCE_DIR)/core-utils/fwk-detect
 else
@@ -417,11 +419,6 @@ ifeq ($(strip $(AUDIO_FEATURE_ENABLED_AHAL_EXT)),true)
     LOCAL_SHARED_LIBRARIES += vendor.qti.hardware.audiohalext@1.0
 endif
 
-# Memory optimization specific feature
-ifeq ($(strip $(TARGET_1G_DDR_RAM)), true)
-    LOCAL_CFLAGS += -DPURGE_UNUSED_MEM
-endif
-
 LOCAL_CFLAGS += -D_GNU_SOURCE
 LOCAL_CFLAGS += -Wall -Werror
 
@@ -441,7 +438,7 @@ ifeq ($(strip $(AUDIO_FEATURE_ENABLED_FM_TUNER_EXT)),true)
     LOCAL_CFLAGS += -DFM_TUNER_EXT_ENABLED
 endif
 
-LOCAL_MODULE := audio.primary.$(TARGET_BOARD_PLATFORM)
+LOCAL_MODULE := libaudioarch-elite
 
 LOCAL_MODULE_RELATIVE_PATH := hw
 
@@ -466,6 +463,8 @@ LOCAL_CFLAGS += -Wno-shorten-64-to-32
 LOCAL_CFLAGS += -Wno-tautological-compare
 LOCAL_CFLAGS += -Wno-unused-function
 LOCAL_CFLAGS += -Wno-unused-local-typedef
+
+include $(LOCAL_PATH)/inc/Android.mk
 
 endif
 endif

@@ -38,7 +38,7 @@
 /*
 * Changes from Qualcomm Innovation Center are provided under the following license:
 *
-* Copyright (c) 2022-2023 Qualcomm Innovation Center, Inc. All rights reserved.
+* Copyright (c) 2022-2024 Qualcomm Innovation Center, Inc. All rights reserved.
 *
 * Redistribution and use in source and binary forms, with or without
 * modification, are permitted (subject to the limitations in the
@@ -6216,7 +6216,7 @@ static auto_hal_release_audio_patch_t auto_hal_release_audio_patch;
 typedef int (*auto_hal_get_car_audio_stream_from_address_t)(const char*);
 static auto_hal_get_car_audio_stream_from_address_t auto_hal_get_car_audio_stream_from_address;
 
-typedef int (*auto_hal_open_output_stream_t)(struct stream_out*);
+typedef int (*auto_hal_open_output_stream_t)(struct stream_out *, int car_audio_stream);
 static auto_hal_open_output_stream_t auto_hal_open_output_stream;
 
 typedef int (*auto_hal_open_input_stream_t)(struct stream_in*);
@@ -6262,6 +6262,9 @@ typedef snd_device_t (*auto_hal_get_output_snd_device_t)(struct audio_device*,
                                 audio_usecase_t);
 static auto_hal_get_output_snd_device_t auto_hal_get_output_snd_device;
 
+typedef snd_device_t (*aidl_auto_hal_get_output_snd_device_t)(audio_usecase_t);
+static aidl_auto_hal_get_output_snd_device_t aidl_auto_hal_get_output_snd_device;
+
 typedef snd_device_t (*auto_hal_get_snd_device_for_car_audio_stream_t)(int
                                 car_audio_stream);
 static auto_hal_get_snd_device_for_car_audio_stream_t auto_hal_get_snd_device_for_car_audio_stream;
@@ -6286,6 +6289,9 @@ int auto_hal_feature_init(bool is_feature_enabled)
             ALOGE("%s: dlopen failed", __func__);
             goto feature_disabled;
         }
+    else {
+        ALOGE("%s: dlopen for %s SUCCEEDED", __func__, AUTO_HAL_LIB_PATH);
+    }
         if (!(auto_hal_init = (auto_hal_init_t)dlsym(
                             auto_hal_lib_handle, "auto_hal_init")) ||
             !(auto_hal_deinit =
@@ -6339,6 +6345,9 @@ int auto_hal_feature_init(bool is_feature_enabled)
             !(auto_hal_get_output_snd_device =
                  (auto_hal_get_output_snd_device_t)dlsym(
                             auto_hal_lib_handle, "auto_hal_get_output_snd_device")) ||
+            !(aidl_auto_hal_get_output_snd_device =
+                 (aidl_auto_hal_get_output_snd_device_t)dlsym(
+                            auto_hal_lib_handle, "aidl_auto_hal_get_output_snd_device")) ||
             !(auto_hal_get_snd_device_for_car_audio_stream =
                  (auto_hal_get_snd_device_for_car_audio_stream_t)dlsym(
                             auto_hal_lib_handle, "auto_hal_get_snd_device_for_car_audio_stream")) ||
@@ -6378,6 +6387,7 @@ feature_disabled:
     auto_hal_stop_hfp_downlink = NULL;
     auto_hal_get_input_snd_device = NULL;
     auto_hal_get_output_snd_device = NULL;
+    aidl_auto_hal_get_output_snd_device = NULL;
     auto_hal_get_snd_device_for_car_audio_stream = NULL;
     auto_hal_overwrite_priority_for_auto = NULL;
 
@@ -6439,14 +6449,16 @@ int audio_extn_auto_hal_release_audio_patch(struct audio_hw_device *dev,
 
 int audio_extn_auto_hal_get_car_audio_stream_from_address(const char *address)
 {
+    ALOGD("auto hal funcptr for addr checking= %s", (auto_hal_get_car_audio_stream_from_address) ?
+	                                                 "VALID": "IN VALID");
     return ((auto_hal_get_car_audio_stream_from_address) ?
                             auto_hal_get_car_audio_stream_from_address(address): -ENOSYS);
 }
 
-int audio_extn_auto_hal_open_output_stream(struct stream_out *out)
+int audio_extn_auto_hal_open_output_stream(struct stream_out *out, int car_audio_stream)
 {
     return ((auto_hal_open_output_stream) ?
-                            auto_hal_open_output_stream(out): -ENOSYS);
+                            auto_hal_open_output_stream(out, car_audio_stream): -ENOSYS);
 }
 
 int audio_extn_auto_hal_open_input_stream(struct stream_in *in)
@@ -6522,6 +6534,12 @@ snd_device_t audio_extn_auto_hal_get_output_snd_device(struct audio_device *adev
 {
     return ((auto_hal_get_output_snd_device) ?
                             auto_hal_get_output_snd_device(adev, uc_id): SND_DEVICE_NONE);
+}
+
+snd_device_t aidl_audio_extn_auto_hal_get_output_snd_device(audio_usecase_t uc_id)
+{
+    return ((aidl_auto_hal_get_output_snd_device) ?
+                            aidl_auto_hal_get_output_snd_device(uc_id): SND_DEVICE_NONE);
 }
 
 snd_device_t audio_extn_auto_hal_get_snd_device_for_car_audio_stream(int car_audio_stream)
@@ -6824,9 +6842,11 @@ void audio_extn_feature_init()
     synth_feature_init(
         property_get_bool("vendor.audio.feature.synth.enable",
                        false));
+#ifdef AIDL_HAL_POWER
     power_policy_feature_init(
         property_get_bool("vendor.audio.feature.powerpolicy.enable",
                        false));
+#endif
     concurrent_pcm_record_feature_init(
         property_get_bool("vendor.audio.feature.concurrent_pcm_record.enable",
                            false));

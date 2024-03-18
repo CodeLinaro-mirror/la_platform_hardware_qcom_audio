@@ -173,6 +173,13 @@ PRODUCT_PACKAGES += \
     android.hardware.audio.common@6.0-util \
     android.hardware.audio.effect@6.0 \
 
+PRODUCT_PACKAGES += \
+    audiohalservice.qti \
+    libaudiocorehal.qti \
+    libaudiocore.extension \
+    libaudioplatform.qti \
+    libaudioeffecthal.qti
+
 PRODUCT_PACKAGES_ENG += \
     VoicePrintTest \
     VoicePrintDemo

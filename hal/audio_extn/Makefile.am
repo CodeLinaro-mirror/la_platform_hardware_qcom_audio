@@ -244,6 +244,7 @@ if SPKR_PROTECTION
 h_sources = audio_defs.h \
             audio_extn.h \
             ../audio_hw.h \
+            ../auto_audio_hw.h \
             ../voice.h
 
 AM_CFLAGS += -DSPKR_PROT_ENABLED

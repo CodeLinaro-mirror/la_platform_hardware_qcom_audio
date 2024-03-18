@@ -198,6 +198,7 @@ endif
 h_sources = audio_extn/audio_defs.h \
             audio_extn/audio_extn.h \
             audio_hw.h \
+            auto_audio_hw.h \
             voice.h
 
 library_include_HEADERS = $(h_sources)
