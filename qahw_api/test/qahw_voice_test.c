@@ -209,7 +209,6 @@ void addToTail(LinkedList* list, void* data, int dataLength){
     }
 
     memcpy(inputData, data, dataLength);
-    fprintf(stderr, "%s: inputData: %s \n", __func__, inputData);
     newNode= (Node*)calloc(1, sizeof(Node));
     newNode->data = inputData;
     newNode->buffer_size = dataLength;
@@ -612,33 +611,6 @@ void *usb_incall_rec_start(void * thread_param) {
         }
     }
 
-    if (params->rec_file == NULL) {
-        fprintf(stderr, "no record stream provided\n", in_handle);
-        pthread_exit(0);
-        return NULL;
-    }
-
-    FILE *fd = fopen(params->rec_file, "w");
-    if (fd == NULL) {
-        fprintf(stderr, "File open failed \n");
-        free(buffer);
-        pthread_exit(0);
-    }
-    struct wav_header hdr;
-    hdr.riff_id = ID_RIFF;
-    hdr.riff_sz = 0;
-    hdr.riff_fmt = ID_WAVE;
-    hdr.fmt_id = ID_FMT;
-    hdr.fmt_sz = 16;
-    hdr.audio_format = FORMAT_PCM;
-    hdr.num_channels = 2;
-    hdr.sample_rate = attr.attr.audio.config.sample_rate;
-    hdr.byte_rate = hdr.sample_rate * hdr.num_channels * (bps / 8);
-    hdr.block_align = hdr.num_channels * (bps / 8);
-    hdr.bits_per_sample = bps;
-    hdr.data_id = ID_DATA;
-    hdr.data_sz = 0;
-    fwrite(&hdr, 1, sizeof(hdr), fd);
 
     memset(&in_buf, 0, sizeof(qahw_buffer_t));
 
@@ -650,24 +622,10 @@ void *usb_incall_rec_start(void * thread_param) {
         input_buf_size = in_buf.size;
 
 	if (isVoiceOverUsb){
-            total_bytes_written = in_buffer_size;
-            written_size = fwrite(in_buf.buffer, 1, in_buffer_size, fd);
-            if (written_size < in_buffer_size) {
-                fprintf(stderr, "Error in fwrite\n");
-                break;
-            }
             addToTail (&recLinkedList, in_buf.buffer, in_buffer_size);
-            data_sz += in_buffer_size;
         }
     }
-    /* update lengths in header */
-    hdr.data_sz = data_sz;
-    hdr.riff_sz = data_sz+44 - 8;
-    fseek(fd, 0, SEEK_SET);
-    fwrite(&hdr, 1, sizeof(hdr), fd);
     free(buffer);
-    fclose(fd);
-    fd = NULL;
     free(usb_buffer);
     usb_buffer = NULL;
     pcm_close(usb_plbk_pcm_hndl);
@@ -790,13 +748,14 @@ static void* usb_rec_func(void * thread_param)
 
 static void* usb_host_rec_func(void * thread_param) {
     voice_stream_config *params = (voice_stream_config *)thread_param;
-    int out_bytes_wanted = 4400;
     struct pcm *usb_rec_pcm_hndl;
     thread_event_type *t_event_type = NULL;
     int total_bytes_read_from_usb = 0;
     struct timespec end;
     struct timespec now;
     unsigned int cap_time = params->call_length;
+    void * usb_buffer = NULL;
+    unsigned int usb_incall_rec_buf_size = 0;
     t_event_type = (thread_event_type *)malloc(sizeof(thread_event_type));
 
     usb_rec_pcm_hndl = get_rec_pcm_hndl();
@@ -805,16 +764,11 @@ static void* usb_host_rec_func(void * thread_param) {
         pthread_exit(0);
         return NULL;
     }
-    usb_data_ptr = (char *)calloc(1, out_bytes_wanted);
-    if (usb_data_ptr == NULL) {
-        fprintf(stderr, "failed to allocate usb_data_ptr\n");
-        pthread_exit(0);
-    }
-    usb_rec_buf_size = pcm_frames_to_bytes(usb_rec_pcm_hndl,  pcm_get_buffer_size(usb_rec_pcm_hndl));
-    usb_rec_buffer = (char *)calloc(1, 2*usb_rec_buf_size);
-    if (usb_rec_buffer == NULL) {
+    usb_incall_rec_buf_size = pcm_frames_to_bytes(usb_rec_pcm_hndl,  pcm_get_buffer_size(usb_rec_pcm_hndl));
+    usb_buffer = calloc(1, usb_incall_rec_buf_size);
+    if (usb_buffer == NULL) {
         fprintf(stderr, " usb_rec_buffer calloc failed\n");
-        free(usb_rec_buffer);
+        free(usb_buffer);
         pcm_close(usb_rec_pcm_hndl);
         return NULL;
     }
@@ -823,22 +777,23 @@ static void* usb_host_rec_func(void * thread_param) {
     end.tv_sec = now.tv_sec + cap_time;
     end.tv_nsec = now.tv_nsec;
 
-    while (capturing && !pcm_read(usb_rec_pcm_hndl, usb_rec_buffer, usb_rec_buf_size)) {
-        total_bytes_read_from_usb += usb_rec_buf_size;
-        addToTail (&playLinkedlist, usb_rec_buffer, usb_rec_buf_size);
+    while (capturing && !pcm_read(usb_rec_pcm_hndl, usb_buffer, usb_incall_rec_buf_size)) {
+        total_bytes_read_from_usb += usb_incall_rec_buf_size;
+        addToTail (&playLinkedlist, usb_buffer, usb_incall_rec_buf_size);
         if (cap_time) {
             clock_gettime(CLOCK_MONOTONIC, &now);
             if (now.tv_sec > end.tv_sec ||
                (now.tv_sec == end.tv_sec && now.tv_nsec >= end.tv_nsec)) {
                 cap_time = 0;
-                break;
+                goto exit;
             }
        }
     }
+exit:
     free(t_event_type);
     t_event_type = NULL;
-    free(usb_rec_buffer);
-    usb_rec_buffer = NULL;
+    free(usb_buffer);
+    usb_buffer = NULL;
     pthread_exit(0);
 }
 
@@ -860,9 +815,11 @@ static void* usb_incall_play_func(void * thread_param) {
     size_t in_bytes_wanted = 0;
     size_t out_bytes_wanted = 0;
     Node *nodeToRemove = NULL;
-    char  *data_ptr = NULL;
+    void  *data_ptr = NULL;
     unsigned int total_bytes_read_from_usb = 0;
     int bytes_written_to_hal = 0;
+    int usb_incall_play_buf_size  = 0;
+    void *usb_incall_rec_buffer = NULL;
 
     if (qahw_mod_handle == NULL) {
         fprintf(stderr, " qahw_load_module failed");
@@ -871,34 +828,17 @@ static void* usb_incall_play_func(void * thread_param) {
 
     out_device[0] = stream_params.output_device[0];
     attr.direction = QAHW_STREAM_OUTPUT;
-
-    if(params->in_call_playback) {
-        if (params->file_type == FILE_WAV ) {
-            attr.attr.audio.config.sample_rate = 48000;
-            attr.type = QAHW_AUDIO_PLAYBACK_VOICE_CALL_MUSIC;
-            attr.attr.audio.config.format = AUDIO_FORMAT_PCM_16_BIT;
-            attr.attr.audio.config.channel_mask = 0x3;
-        } else if ( params->file_type == FILE_AMR_WB_PLUS ) {
-            /* Currently the requirement is for AMRWB+ so hardcoding the values,
-             * can be changed if more formats supported for
-             * incall delivery */
-            attr.attr.audio.config.format = AUDIO_FORMAT_AMR_WB_PLUS;
-            attr.attr.audio.config.offload_info.sample_rate = 48000;
-            attr.attr.audio.config.offload_info.format = AUDIO_FORMAT_AMR_WB_PLUS;
-            attr.attr.audio.config.channel_mask = 0x3;
-            attr.type = QAHW_AUDIO_COMPRESSED_PLAYBACK_VOICE_CALL_MUSIC;
-            attr.attr.audio.config.offload_info.version = AUDIO_OFFLOAD_INFO_VERSION_CURRENT;
-            attr.attr.audio.config.offload_info.size = sizeof(audio_offload_info_t);
-            modifier.key = "music_offload_amrwbplus_bitstream_fmt";
-            modifier.value = 1;
-            is_offload = true;
-        }
-    }
-
     usb_rec_pcm_hndl = get_rec_pcm_hndl();
     if (usb_rec_pcm_hndl != NULL) {
         isVoiceOverUsb = true;
         fprintf(stderr, " isVoiceOverUsb usecase\n");
+        attr.attr.audio.config.sample_rate = 48000;
+        attr.type = QAHW_AUDIO_PLAYBACK_VOICE_CALL_MUSIC;
+        attr.attr.audio.config.format = AUDIO_FORMAT_PCM_16_BIT;
+        attr.attr.audio.config.channel_mask = 0x3;
+    } else {
+        fprintf(stderr, " usb_rec_pcm_hndl == NULL\n");
+        goto exit;
     }
 
     if (is_offload) {
@@ -928,43 +868,51 @@ static void* usb_incall_play_func(void * thread_param) {
             pthread_exit(0);
         }
     }
-
     rc = qahw_stream_get_buffer_size(out_handle ,&in_bytes_wanted, &out_bytes_wanted);
-    data_ptr = (char *)calloc(1, out_bytes_wanted);
+    data_ptr = calloc(1, out_bytes_wanted);
     if (data_ptr == NULL) {
         fprintf(stderr, "failed to allocate data buffer\n");
         pthread_exit(0);
     }
-    usb_rec_buf_size = pcm_frames_to_bytes(usb_rec_pcm_hndl,  pcm_get_buffer_size(usb_rec_pcm_hndl));
-    usb_rec_buffer = (char *)calloc(1, 2*usb_rec_buf_size);
-    if (usb_rec_buffer == NULL) {
-        fprintf(stderr, " usb_rec_buffer calloc failed\n");
-        free(usb_rec_buffer);
+    usb_incall_play_buf_size = pcm_frames_to_bytes(usb_rec_pcm_hndl,  pcm_get_buffer_size(usb_rec_pcm_hndl));
+    usb_incall_rec_buffer = calloc(1, usb_incall_play_buf_size);
+    if (usb_incall_rec_buffer == NULL) {
+        fprintf(stderr, " usb_incall_rec_buffer calloc failed\n");
+        free(usb_incall_rec_buffer);
         pcm_close(usb_rec_pcm_hndl);
         return NULL;
     }
+    clock_gettime(CLOCK_MONOTONIC, &now);
+    end.tv_sec = now.tv_sec + play_time;
+    end.tv_nsec = now.tv_nsec;
     while(true && !stop){
         nodeToRemove = removeFromHead(&playLinkedlist);
         if (nodeToRemove == NULL) {
             fprintf(stderr, "No node To Remove\n");
             continue;
         }
-        memcpy(usb_rec_buffer, nodeToRemove->data, usb_rec_buf_size);
-        bytes_written_to_hal = write_to_hal(out_handle, usb_rec_buffer, usb_rec_buf_size, params);
-        memset(usb_rec_buffer, 0, usb_rec_buf_size);
-        total_bytes_read_from_usb += usb_rec_buf_size;
+        if (out_bytes_wanted < nodeToRemove->buffer_size) {
+            fprintf(stderr, "Insufficient Buffer\n");
+            goto exit;
+        }
+        memcpy(data_ptr, nodeToRemove->data, nodeToRemove->buffer_size);
+        bytes_written_to_hal = write_to_hal(out_handle, data_ptr, nodeToRemove->buffer_size, params);
+        memset(data_ptr, 0, nodeToRemove->buffer_size);
+        total_bytes_read_from_usb += nodeToRemove->buffer_size;
 
         if (play_time) {
             clock_gettime(CLOCK_MONOTONIC, &now);
             if (now.tv_sec > end.tv_sec ||
                (now.tv_sec == end.tv_sec && now.tv_nsec >= end.tv_nsec)) {
                 play_time = 0;
-                break;
+                goto exit;
             }
        }
         free(nodeToRemove->data);
         free(nodeToRemove);
     }
+
+exit:
     free(usb_rec_buffer);
     usb_rec_buffer = NULL;
     pthread_exit(0);
@@ -1845,11 +1793,11 @@ int main(int argc, char *argv[]) {
     /*making dummy voice Over USB run, */
     /*to be cleaned */
     if (isVoiceOverUsb) {
-        stream_params.in_call_playback = true;
         initLinkedList(&recLinkedList);
         initLinkedList(&playLinkedlist);
         stream_params.in_call_rec = true;
         stream_params.usb_rec_file = "/data/audio/usb_rec2.wav";
+        stream_params.in_call_playback = true;
         rc = usb_init(period_size, period_count);
         if (rc) {
             fprintf(stderr, "USB init failed\n");
