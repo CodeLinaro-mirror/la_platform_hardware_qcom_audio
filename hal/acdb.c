@@ -5,7 +5,7 @@
  * Copyright (C) 2013 The Android Open Source Project
  *
  * Changes from Qualcomm Innovation Center are provided under the following license:
- * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2022, 2024 Qualcomm Innovation Center, Inc. All rights reserved.
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -34,6 +34,7 @@
 #include "platform_api.h"
 #include "audio_extn.h"
 #include <platform.h>
+#include <string.h>
 
 #ifdef INSTANCE_ID_ENABLED
 int check_and_set_instance_id_support(struct mixer* mixer, bool acdb_support)
@@ -121,6 +122,7 @@ int acdb_init_v2(struct mixer *mixer)
         ALOGE("failed to allocate acdb platform data");
         goto cleanup;
     }
+    memset(my_data, 0, sizeof(struct acdb_platform_data));
 
     list_init(&my_data->acdb_meta_key_list);
     audio_get_vendor_config_path(vendor_config_path, sizeof(vendor_config_path));
