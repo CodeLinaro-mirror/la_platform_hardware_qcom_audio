@@ -120,6 +120,7 @@ typedef struct {
 
 LinkedList recLinkedList;
 LinkedList playLinkedlist;
+pthread_t  usb_writer, usb_reader, usb_host_reader, usb_incall_writer;
 
 void initLinkedList(LinkedList* list) {
     list->head = NULL;
@@ -159,6 +160,7 @@ Node* removeFromHead(LinkedList* list){
     t_type = (thread_event_type*) (malloc(sizeof( thread_event_type)));
     if (!t_type){
         fprintf(stderr, "%s:thread event malloc failed %s \n", __func__, strerror(errno));
+        pthread_mutex_unlock(&list->mutex);
         return NULL;
     }
 
@@ -197,6 +199,7 @@ void addToTail(LinkedList* list, void* data, int dataLength){
     t_type = (thread_event_type*) (malloc(sizeof( thread_event_type)));
     if (!t_type){
         fprintf(stderr, "%s:thread event malloc failed %s \n", __func__, strerror(errno));
+        pthread_mutex_unlock(&list->mutex);
         return;
     }
 
@@ -205,11 +208,20 @@ void addToTail(LinkedList* list, void* data, int dataLength){
         fprintf(stderr, "%s:inputdata calloc failed\n",__func__);
         free(t_type);
         t_type = NULL;
+        pthread_mutex_unlock(&list->mutex);
         return;
     }
 
     memcpy(inputData, data, dataLength);
     newNode= (Node*)calloc(1, sizeof(Node));
+    if (!newNode) {
+        fprintf(stderr, "%s:newNode calloc failed\n",__func__);
+        free(inputData);
+        inputData = NULL;
+        free(t_type);
+        t_type = NULL;
+        pthread_mutex_unlock(&list->mutex);
+    }
     newNode->data = inputData;
     newNode->buffer_size = dataLength;
     newNode->next = NULL;
@@ -296,6 +308,10 @@ static void deinit_streams(void)
     pthread_mutex_destroy(&stream_params.drain_lock_dl);
     pthread_mutex_destroy(&recLinkedList.mutex);
     pthread_mutex_destroy(&playLinkedlist.mutex);
+    pthread_join(usb_reader, NULL);
+    pthread_join(usb_writer, NULL);
+    pthread_join(usb_host_reader, NULL);
+    pthread_join(usb_incall_writer, NULL);
 }
 
 
@@ -463,8 +479,9 @@ static void *usb_play_start(void* thread_param)
     unsigned int cap_time = params->call_length;
 
     usb_plbk_pcm_hndl = get_plbk_pcm_hndl();
-    if (usb_plbk_pcm_hndl != NULL) {
-        isVoiceOverUsb = true;
+    if (usb_plbk_pcm_hndl == NULL) {
+        fprintf(stderr, "%s: usb_plbk_pcm_hndl is NULL\n" ,__func__);
+        pthread_exit(0);
     }
 
     headBuffer = calloc(1, MAX_BUFFER_SIZE);
@@ -543,6 +560,9 @@ void *usb_incall_rec_start(void * thread_param) {
     usb_plbk_pcm_hndl = get_plbk_pcm_hndl();
     if (usb_plbk_pcm_hndl != NULL) {
         isVoiceOverUsb = true;
+    } else {
+        fprintf(stderr, "%s: usb_plbk_pcm_hndl is NULL\n" ,__func__);
+        pthread_exit(0);
     }
 
     if(params->in_call_rec) {
@@ -1666,7 +1686,6 @@ int main(int argc, char *argv[]) {
     pthread_t tid_rec;
     pthread_t tid_pb;
     pthread_t tid_dl_pb;
-    pthread_t  usb_writer, usb_reader, usb_host_reader, usb_incall_writer;
     char kv[QAHW_KV_PAIR_LENGTH];
 
     init_stream();
@@ -2025,10 +2044,6 @@ skip_dtmf_gen:
         fprintf(stderr, "stoping call %d\n", call_count);
         rc = qahw_stream_stop(stream_params.out_voice_handle);
         stream_params.multi_call--;
-        pthread_join(usb_reader, NULL);
-        pthread_join(usb_writer, NULL);
-        pthread_join(usb_host_reader, NULL);
-        pthread_join(usb_host_reader, NULL);
         /*let session stop*/
         usleep(100000);
     }
