@@ -5,6 +5,11 @@ AUDIO_USE_STUB_HAL := true
 endif # TARGET_USES_QMAA_OVERRIDE_AUDIO
 endif # TARGET_USES_QMAA
 
+ifeq ($(TARGET_USES_AUDIOLITE),true)
+AUDIO_USE_STUB_HAL := true
+MM_AUDIO += audiolite
+endif #ends TARGET_USES_AUDIOLITE
+
 #MM_AUDIO product packages
 MM_AUDIO += audiod
 MM_AUDIO += libacdbloader

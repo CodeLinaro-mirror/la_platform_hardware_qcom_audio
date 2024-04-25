@@ -17,7 +17,7 @@
  * limitations under the License.
  *
  * Changes from Qualcomm Innovation Center are provided under the following license:
- * Copyright (c) 2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2023-2024 Qualcomm Innovation Center, Inc. All rights reserved.
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 /*
@@ -85,6 +85,7 @@
 #define PLATFORM_INFO_XML_PATH_SHIMA_QRD "audio_platform_info_shimaqrd.xml"
 #define PLATFORM_INFO_XML_PATH_YUPIK_QRD "audio_platform_info_yupikqrd.xml"
 #define PLATFORM_INFO_XML_PATH_YUPIK_IDP "audio_platform_info_yupikidp.xml"
+#define PLATFORM_INFO_XML_PATH_YUPIK_IDPRB3 "audio_platform_info_yupikidprb3.xml"
 #define PLATFORM_INFO_XML_PATH_SCUBA_IDP "audio_platform_info_scubaidp.xml"
 #define PLATFORM_INFO_XML_PATH_SCUBA_QRD "audio_platform_info_scubaqrd.xml"
 #define PLATFORM_INFO_XML_PATH_SA8295_ADP "audio_platform_info_sa8295.xml"
@@ -3678,7 +3679,7 @@ void *platform_init(struct audio_device *adev)
             my_data, PLATFORM);
     } else if (!strncmp(snd_card_name, "lahaina-yupikidprb3-snd-card",
                sizeof("lahaina-yupikidprb3-snd-card"))) {
-        platform_info_init(get_xml_file_path(PLATFORM_INFO_XML_PATH_YUPIK_IDP),
+        platform_info_init(get_xml_file_path(PLATFORM_INFO_XML_PATH_YUPIK_IDPRB3),
             my_data, PLATFORM);
     } else if (!strncmp(snd_card_name, "lahaina-yupikqrd-snd-card",
                sizeof("lahaina-yupikqrd-snd-card"))) {
@@ -6587,7 +6588,7 @@ int platform_split_snd_device(void *platform,
  */
 int platform_get_display_port_ctl_index(int controller, int stream) {
 
-    if (controller < 0 || controller >= MAX_CONTROLLERS ||
+    if (controller < 0 || controller > MAX_CONTROLLERS ||
             stream < 0 || stream >= MAX_STREAMS_PER_CONTROLLER) {
         ALOGE("%s: Invalid controller/stream - %d/%d",
               __func__, controller, stream);
@@ -6605,9 +6606,10 @@ int platform_set_ext_display_device_v2(void *platform, int controller, int strea
     struct mixer_ctl *ctl = NULL;
     int ctl_index = 0;
     const char *ctl_name_prefix = "External Display";
+    const char *ctl_name_prefix2 = "External HDMI";
     const char *ctl_name_suffix = "Audio Device";
     char mixer_ctl_name[MIXER_PATH_MAX_LENGTH] = {0};
-    int device_values[2] = {-1, -1};
+    long int device_values[2] = {-1, -1};
 
     if (!audio_extn_is_display_port_enabled()) {
         ALOGE("%s: display port is not supported", __func__);
@@ -6621,9 +6623,12 @@ int platform_set_ext_display_device_v2(void *platform, int controller, int strea
         return -EINVAL;
     }
 
-    if (0 == ctl_index)
+    if (ctl_index < 2)
         snprintf(mixer_ctl_name, sizeof(mixer_ctl_name),
                  "%s %s", ctl_name_prefix, ctl_name_suffix);
+    else if (ctl_index < 4)
+        snprintf(mixer_ctl_name, sizeof(mixer_ctl_name),
+                 "%s %s", ctl_name_prefix2, ctl_name_suffix);
     else
         snprintf(mixer_ctl_name, sizeof(mixer_ctl_name),
                  "%s%d %s", ctl_name_prefix, ctl_index, ctl_name_suffix);
@@ -6640,7 +6645,7 @@ int platform_set_ext_display_device_v2(void *platform, int controller, int strea
         return -EINVAL;
     }
 
-    ALOGV("%s: controller/stream: %d/%d", __func__, device_values[0],
+    ALOGV("%s: controller/stream: %ld/%ld", __func__, device_values[0],
           device_values[1]);
 
     return mixer_ctl_set_array(ctl, device_values, ARRAY_SIZE(device_values));
@@ -6675,12 +6680,16 @@ int platform_get_ext_disp_type_v2(void *platform, int controller, int stream)
         struct audio_device *adev = my_data->adev;
         struct mixer_ctl *ctl = NULL;
         const char *ctl_name_prefix = "External Display";
+        const char *ctl_name_prefix2 = "External HDMI";
         const char *ctl_name_suffix = "Type";
         char mixer_ctl_name[MIXER_PATH_MAX_LENGTH] = {0};
 
-        if (0 == ctl_index)
+        if (ctl_index < 2)
             snprintf(mixer_ctl_name, sizeof(mixer_ctl_name),
                      "%s %s", ctl_name_prefix, ctl_name_suffix);
+        else if (ctl_index < 4)
+            snprintf(mixer_ctl_name, sizeof(mixer_ctl_name),
+                     "%s %s", ctl_name_prefix2, ctl_name_suffix);
         else
             snprintf(mixer_ctl_name, sizeof(mixer_ctl_name),
                      "%s%d %s", ctl_name_prefix, ctl_index, ctl_name_suffix);
@@ -6743,7 +6752,7 @@ snd_device_t platform_get_output_snd_device(void *platform, struct stream_out *o
         controller = out->extconn.cs.controller;
         stream = out->extconn.cs.stream;
 
-        if (controller < 0 || controller >= MAX_CONTROLLERS ||
+        if (controller < 0 || controller > MAX_CONTROLLERS ||
                 stream < 0 || stream >= MAX_STREAMS_PER_CONTROLLER) {
             ALOGE("%s: Invalid controller/stream - %d/%d",
                   __func__, controller, stream);
@@ -7038,6 +7047,9 @@ snd_device_t platform_get_output_snd_device(void *platform, struct stream_out *o
                 case EXT_DISPLAY_TYPE_DP:
                     snd_device = SND_DEVICE_OUT_DISPLAY_PORT +
                         ((controller * MAX_STREAMS_PER_CONTROLLER) + stream);
+                    break;
+                case EXT_DISPLAY_TYPE_HDMI:
+                    snd_device = SND_DEVICE_OUT_HDMI;
                     break;
                 default:
                     ALOGE("%s: Invalid disp_type %d", __func__,
@@ -9247,7 +9259,8 @@ void platform_get_parameters(void *platform,
         if (adev->dp_allowed_for_voice) {
             for (i = 0; i < MAX_CONTROLLERS; ++i) {
                 for (j = 0; j < MAX_STREAMS_PER_CONTROLLER; ++j) {
-                    if (my_data->ext_disp[i][j].type == EXT_DISPLAY_TYPE_DP) {
+                    if (my_data->ext_disp[i][j].type == EXT_DISPLAY_TYPE_DP
+                         ||  my_data->ext_disp[i][j].type == EXT_DISPLAY_TYPE_HDMI) {
                         enabled = true;
                         break;
                     }
@@ -10221,7 +10234,7 @@ static void platform_check_hdmi_backend_cfg(struct audio_device* adev,
     controller = usecase->stream.out->extconn.cs.controller;
     stream = usecase->stream.out->extconn.cs.stream;
 
-    if (controller < 0 || controller >= MAX_CONTROLLERS ||
+    if (controller < 0 || controller > MAX_CONTROLLERS ||
             stream < 0 || stream >= MAX_STREAMS_PER_CONTROLLER) {
         controller = 0;
         stream = 0;
@@ -11930,7 +11943,7 @@ int platform_set_edid_channels_configuration_v2(void *platform, int channels,
         return -EINVAL;
     }
 
-    if (controller < 0 || controller >= MAX_CONTROLLERS ||
+    if (controller < 0 || controller > MAX_CONTROLLERS ||
             stream < 0 || stream >= MAX_STREAMS_PER_CONTROLLER) {
         ALOGE("%s: Invalid controller/stream - %d/%d",
               __func__, controller, stream);
@@ -12047,7 +12060,7 @@ void platform_invalidate_hdmi_config_v2(void * platform, int controller, int str
     int backend_idx;
     snd_device_t snd_device;
 
-    if (controller < 0 || controller >= MAX_CONTROLLERS ||
+    if (controller < 0 || controller > MAX_CONTROLLERS ||
             stream < 0 || stream >= MAX_STREAMS_PER_CONTROLLER) {
         ALOGE("%s: Invalid controller/stream - %d/%d",
               __func__, controller, stream);
@@ -13005,7 +13018,7 @@ int platform_get_controller_stream_from_params(struct str_parms *parms,
                                                int *controller, int *stream) {
     str_parms_get_int(parms, "controller", controller);
     str_parms_get_int(parms, "stream", stream);
-    if (*controller < 0 || *controller >= MAX_CONTROLLERS ||
+    if (*controller < 0 || *controller > MAX_CONTROLLERS ||
             *stream < 0 || *stream >= MAX_STREAMS_PER_CONTROLLER) {
         *controller = 0;
         *stream = 0;

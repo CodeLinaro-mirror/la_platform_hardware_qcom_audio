@@ -947,7 +947,8 @@ int effect_command(effect_handle_t self, uint32_t cmdCode, uint32_t cmdSize,
               cmdSize, pCmdData, *replySize, pReplyData);
         if (cmdSize != sizeof(uint32_t) || pCmdData == NULL
                 || pReplyData == NULL || *replySize != sizeof(int)) {
-            return -EINVAL;
+            status = -EINVAL;
+            goto exit;
         }
         uint32_t value = *(uint32_t *)pCmdData;
         if (context->ops.set_hw_acc_mode)
