@@ -24,6 +24,9 @@
 <!-- BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,  -->
 <!-- OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN -->
 <!-- IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.                          -->
+<!-- Changes from Qualcomm Innovation Center, Inc. are provided under the following license:-->
+<!-- Copyright (c) 2024 Qualcomm Innovation Center, Inc. All rights reserved.-->
+<!-- SPDX-License-Identifier: BSD-3-Clause-Clear-->
 <mixer>
     <!-- These are the initial mixer settings -->
     <ctl name="Voice Rx Device Mute" id="0" value="0" />
@@ -134,10 +137,10 @@
     <ctl name="RX_CDC_DMA_RX_0 Channels" value="One" />
     <ctl name="VI_FEED_TX Channels" value="One" />
     <ctl name="WSA_AIF_VI Mixer WSA_SPKR_VI_1" value="0" />
-    <ctl name="WSA_CDC_DMA_RX_0 Format" value="UNPACKED" />
-    <ctl name="WSA_CDC_DMA_TX_0 Format" value="UNPACKED" />
-    <ctl name="RX_CDC_DMA_RX_0 Format" value="UNPACKED" />
-    <ctl name="TX_CDC_DMA_TX_3 Format" value="UNPACKED" />
+    <ctl name="WSA_CDC_DMA_RX_0 Format" value="S16_LE" />
+    <ctl name="WSA_CDC_DMA_TX_0 Format" value="S16_LE" />
+    <ctl name="RX_CDC_DMA_RX_0 Format" value="S16_LE" />
+    <ctl name="TX_CDC_DMA_TX_3 Format" value="S16_LE" />
     <!-- HFP start -->
     <ctl name="HFP_SLIM7_UL_HL Switch" value="0" />
     <ctl name="WSA_CDC_DMA_RX_0 Port Mixer SLIM_7_TX" value="0" />
@@ -2290,7 +2293,7 @@
     </path>
 
     <path name="mmap-playback bt-sco-wb">
-        <ctl name="BT SampleRate" value="16000" />
+        <ctl name="BT SampleRate" value="KHZ_16" />
         <path name="mmap-playback bt-sco" />
     </path>
 
@@ -2315,12 +2318,12 @@
     </path>
 
     <path name="mmap-playback speaker-and-hdmi">
-        <path name="mmap-playback hdmi" />
+        <path name="mmap-buffer-playback hdmi" />
         <path name="mmap-playback" />
     </path>
 
     <path name="mmap-playback speaker-safe-and-hdmi">
-        <path name="mmap-playback hdmi" />
+        <path name="mmap-buffer-playback hdmi" />
         <path name="mmap-playback" />
     </path>
 
