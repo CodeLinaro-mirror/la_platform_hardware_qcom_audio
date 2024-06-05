@@ -108,7 +108,6 @@
 #include <cutils/atomic.h>
 #include "audio_utils/primitives.h"
 #include "audio_hw.h"
-#include "auto_audio_hw.h"
 #include "platform_api.h"
 #include <platform.h>
 #include <system/thread_defs.h>

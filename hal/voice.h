@@ -20,6 +20,11 @@
 #ifndef VOICE_H
 #define VOICE_H
 
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
 #define BASE_SESS_IDX       0
 #define VOICE_SESS_IDX     (BASE_SESS_IDX)
 
@@ -43,7 +48,7 @@ typedef int snd_device_t;
 
 struct call_state {
     int current;
-    int new;
+    int next;
 };
 
 struct voice_session {
@@ -118,4 +123,9 @@ bool voice_is_call_state_active_in_call(struct audio_device *adev);
 void voice_set_device_mute_flag (struct audio_device *adev, bool state);
 snd_device_t voice_get_incall_rec_backend_device(struct stream_in *in);
 bool voice_check_voicecall_usecases_active(struct audio_device *adev);
+
+#ifdef __cplusplus
+}
+#endif
+
 #endif //VOICE_H

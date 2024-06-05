@@ -849,7 +849,7 @@ void voice_init(struct audio_device *adev)
         adev->voice.session[i].pcm_rx = NULL;
         adev->voice.session[i].pcm_tx = NULL;
         adev->voice.session[i].state.current = CALL_INACTIVE;
-        adev->voice.session[i].state.new = CALL_INACTIVE;
+        adev->voice.session[i].state.next = CALL_INACTIVE;
         adev->voice.session[i].vsid = VOICE_VSID;
     }
 

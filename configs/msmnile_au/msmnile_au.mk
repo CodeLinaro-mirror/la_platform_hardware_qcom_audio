@@ -114,15 +114,6 @@ PRODUCT_PACKAGES += $(AUDIO_HARDWARE)
 PRODUCT_PACKAGES += $(AUDIO_WRAPPER)
 PRODUCT_PACKAGES += $(AUDIO_HAL_TEST_APPS)
 
-AUDIO_HARDWARE += \
-    audiohalservice.qti \
-    libaudiocorehal.qti \
-    libaudiocore.extension \
-    libaudioplatform.qti \
-    libaudioeffecthal.qti \
-    libaudioarch-elite
-
-
 AUDIO_FEATURE_ENABLED_AUTO_HAL := true
 AUDIO_FEATURE_ENABLED_EXT_HW_PLUGIN := true
 AUDIO_FEATURE_ENABLED_AUDIO_CONTROL_HAL := true
@@ -211,10 +202,9 @@ PRODUCT_COPY_FILES += \
 
 
 PRODUCT_COPY_FILES += \
-    $(TOPDIR)vendor/qcom/opensource/audio-hal/primary-hal/hal-aidl/configs/msmnile_au/audio_module_config_primary.xml:$(TARGET_COPY_OUT_VENDOR)/etc/audio/audio_module_config_primary.xml \
-    $(TOPDIR)vendor/qcom/opensource/audio-hal/primary-hal/hal-aidl/configs/msmnile_au/vendor_audio_interfaces.xml:$(TARGET_COPY_OUT_VENDOR)/etc/vendor_audio_interfaces.xml \
-    $(TOPDIR)vendor/qcom/opensource/audio-hal/primary-hal/hal-aidl/configs/msmnile_au/audio_effects_config.xml:$(TARGET_COPY_OUT_VENDOR)/etc/audio_effects_config.xml
-
+    $(TOPDIR)vendor/qcom/opensource/audio-hal/primary-hal/hal_aidl/audio_effects_config.xml:$(TARGET_COPY_OUT_VENDOR)/etc/audio_effects_config.xml
+#    $(TOPDIR)vendor/qcom/opensource/audio-hal/primary-hal/hal_aidl/configs/msmnile_au/audio_module_config_primary.xml:$(TARGET_COPY_OUT_VENDOR)/etc/audio/audio_module_config_primary.xml \
+#    $(TOPDIR)vendor/qcom/opensource/audio-hal/primary-hal/hal_aidl/configs/msmnile_au/vendor_audio_interfaces.xml:$(TARGET_COPY_OUT_VENDOR)/etc/vendor_audio_interfaces.xml \
 
 #Audio HAL version
 PRODUCT_PROPERTY_OVERRIDES += \
@@ -591,6 +581,10 @@ PRODUCT_PACKAGES += \
     android.hardware.automotive.audiocontrol@2.0-service \
     android.hardware.automotive.audiocontrol@2.0
 endif
+
+PRODUCT_PACKAGES += \
+    android.hardware.audio.effect.service-aidl.qti \
+    android.hardware.audio.service-aidl.qti
 
 ifeq ($(ENABLE_HYP),true)
 PRODUCT_PROPERTY_OVERRIDES += \

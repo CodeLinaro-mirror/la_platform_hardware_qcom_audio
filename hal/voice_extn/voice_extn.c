@@ -219,9 +219,9 @@ static int update_calls(struct audio_device *adev)
         usecase_id = voice_extn_get_usecase_for_session_idx(i);
         session = &adev->voice.session[i];
         ALOGD("%s: cur_state=%d new_state=%d vsid=%x",
-              __func__, session->state.current, session->state.new, session->vsid);
+              __func__, session->state.current, session->state.next, session->vsid);
 
-        switch(session->state.new)
+        switch(session->state.next)
         {
         case CALL_ACTIVE:
             switch(session->state.current)
@@ -233,13 +233,13 @@ static int update_calls(struct audio_device *adev)
                     ALOGE("%s: voice_start_usecase() failed for usecase: %d\n",
                           __func__, usecase_id);
                 } else {
-                    session->state.current = session->state.new;
+                    session->state.current = session->state.next;
                 }
                 break;
 
             case CALL_HOLD:
                 ALOGD("%s: HOLD -> ACTIVE vsid:%x", __func__, session->vsid);
-                session->state.current = session->state.new;
+                session->state.current = session->state.next;
                 break;
 
             case CALL_LOCAL_HOLD:
@@ -249,7 +249,7 @@ static int update_calls(struct audio_device *adev)
                 if (ret < 0)
                     ALOGE("%s: lch mode update failed, ret = %d", __func__, ret);
                 else
-                    session->state.current = session->state.new;
+                    session->state.current = session->state.next;
                 break;
 
             default:
@@ -271,7 +271,7 @@ static int update_calls(struct audio_device *adev)
                     ALOGE("%s: voice_stop_usecase() failed for usecase: %d\n",
                           __func__, usecase_id);
                 } else {
-                    session->state.current = session->state.new;
+                    session->state.current = session->state.next;
                 }
                 break;
 
@@ -287,7 +287,7 @@ static int update_calls(struct audio_device *adev)
             {
             case CALL_ACTIVE:
                 ALOGD("%s: CALL_ACTIVE -> HOLD vsid:%x", __func__, session->vsid);
-                session->state.current = session->state.new;
+                session->state.current = session->state.next;
                 break;
 
             case CALL_LOCAL_HOLD:
@@ -297,7 +297,7 @@ static int update_calls(struct audio_device *adev)
                 if (ret < 0)
                     ALOGE("%s: lch mode update failed, ret = %d", __func__, ret);
                 else
-                    session->state.current = session->state.new;
+                    session->state.current = session->state.next;
                 break;
 
             default:
@@ -319,7 +319,7 @@ static int update_calls(struct audio_device *adev)
                 if (ret < 0)
                     ALOGE("%s: lch mode update failed, ret = %d", __func__, ret);
                 else
-                    session->state.current = session->state.new;
+                    session->state.current = session->state.next;
                 break;
 
             default:
@@ -356,7 +356,7 @@ static int update_call_states(struct audio_device *adev,
     }
 
     if (session) {
-        session->state.new = call_state;
+        session->state.next = call_state;
         voice_extn_is_call_state_active(adev, &is_call_active);
         ALOGD("%s is_call_active:%d in_call:%d, mode:%d\n",
               __func__, is_call_active, adev->voice.in_call, adev->mode);
@@ -580,7 +580,7 @@ int voice_extn_stop_call(struct audio_device *adev)
     if (adev->mode == AUDIO_MODE_NORMAL) {
         ALOGD("%s: end all calls", __func__);
         for (i = 0; i < MAX_VOICE_SESSIONS; i++) {
-            adev->voice.session[i].state.new = CALL_INACTIVE;
+            adev->voice.session[i].state.next = CALL_INACTIVE;
         }
 
         ret = update_calls(adev);

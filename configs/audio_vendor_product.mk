@@ -183,7 +183,11 @@ MM_AUDIO += libaudiopowerpolicy
 endif
 
 MM_AUDIO += libaudioarch-elite
-MM_AUDIO += audiohalservice.qti
+MM_AUDIO += libaidlaudioservice_qti
+MM_AUDIO += android.hardware.audio.service-aidl.qti
+MM_AUDIO += android.hardware.audio.effect.service-aidl.qti
+
+
 ifeq ($(ENABLE_HYP), true)
 MM_AUDIO += amfsservice
 endif

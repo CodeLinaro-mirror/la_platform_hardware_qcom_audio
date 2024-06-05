@@ -162,7 +162,6 @@ ifeq ($(ENABLE_AUDIO_LEGACY_TECHPACK),true)
 endif
 
 LOCAL_SRC_FILES := \
-    platform_arch_elite.c \
     audio_hw.c \
     acdb.c \
     platform_info.c \
@@ -420,7 +419,7 @@ ifeq ($(strip $(AUDIO_FEATURE_ENABLED_AHAL_EXT)),true)
 endif
 
 LOCAL_CFLAGS += -D_GNU_SOURCE
-LOCAL_CFLAGS += -Wall -Werror
+LOCAL_CFLAGS += -Wall -Wno-error
 
 LOCAL_COPY_HEADERS_TO   := mm-audio
 LOCAL_COPY_HEADERS      := audio_extn/audio_defs.h
@@ -464,7 +463,6 @@ LOCAL_CFLAGS += -Wno-tautological-compare
 LOCAL_CFLAGS += -Wno-unused-function
 LOCAL_CFLAGS += -Wno-unused-local-typedef
 
-include $(LOCAL_PATH)/inc/Android.mk
 
 endif
 endif

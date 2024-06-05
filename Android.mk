@@ -31,4 +31,3 @@ endif
 endif
 endif
 
-include $(MY_LOCAL_PATH)/hal-aidl/Android.mk

@@ -38,7 +38,7 @@
 
 
 #include "audio_hw.h"
-#include "auto_audio_hw.h"
+
 #include "platform.h"
 #include "platform_api.h"
 #include "audio_extn.h"

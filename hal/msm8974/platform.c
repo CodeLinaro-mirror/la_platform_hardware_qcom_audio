@@ -39,7 +39,6 @@
 #include <cutils/properties.h>
 #include <cutils/str_parms.h>
 #include <audio_hw.h>
-#include <auto_audio_hw.h>
 #include <platform_api.h>
 #include <pthread.h>
 #include <unistd.h>
