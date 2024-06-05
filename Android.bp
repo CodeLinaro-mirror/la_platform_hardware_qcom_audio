@@ -1,0 +1,6 @@
+cc_library_headers {
+    name: "libaudioarch-elite_headers",
+    export_include_dirs: ["hal"],
+    vendor_available: true,
+    host_supported: true,
+}
