@@ -221,6 +221,7 @@ void addToTail(LinkedList* list, void* data, int dataLength){
         free(t_type);
         t_type = NULL;
         pthread_mutex_unlock(&list->mutex);
+        return;
     }
     newNode->data = inputData;
     newNode->buffer_size = dataLength;
