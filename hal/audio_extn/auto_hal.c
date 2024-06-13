@@ -372,12 +372,12 @@ int auto_hal_open_echo_reference_stream(struct stream_in *in)
     return 0;
 }
 
-int auto_hal_open_output_stream(struct stream_out *out, int car_audio_stream)
+int auto_hal_open_output_stream(struct stream_out *out)
 {
     int ret = 0;
     unsigned int channels = audio_channel_count_from_out_mask(out->channel_mask);
 
-    switch(car_audio_stream) {
+    switch(out->car_audio_stream) {
     case CAR_AUDIO_STREAM_MEDIA:
         if (out->flags == AUDIO_OUTPUT_FLAG_PRIMARY ||
          out->flags == AUDIO_OUTPUT_FLAG_NONE) {

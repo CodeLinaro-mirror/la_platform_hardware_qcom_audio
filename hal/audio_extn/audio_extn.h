@@ -1396,7 +1396,7 @@ int audio_extn_auto_hal_create_audio_patch(struct audio_hw_device *dev,
 int audio_extn_auto_hal_release_audio_patch(struct audio_hw_device *dev,
                                 audio_patch_handle_t handle);
 int audio_extn_auto_hal_get_car_audio_stream_from_address(const char *address);
-int audio_extn_auto_hal_open_output_stream(struct stream_out *out, int car_audio_stream);
+int audio_extn_auto_hal_open_output_stream(struct stream_out *out);
 int audio_extn_auto_hal_open_input_stream(struct stream_in *in);
 int audio_extn_auto_hal_open_echo_reference_stream(struct stream_in *in);
 bool audio_extn_auto_hal_overwrite_priority_for_auto(struct stream_in *in);

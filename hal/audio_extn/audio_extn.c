@@ -6216,7 +6216,7 @@ static auto_hal_release_audio_patch_t auto_hal_release_audio_patch;
 typedef int (*auto_hal_get_car_audio_stream_from_address_t)(const char*);
 static auto_hal_get_car_audio_stream_from_address_t auto_hal_get_car_audio_stream_from_address;
 
-typedef int (*auto_hal_open_output_stream_t)(struct stream_out *, int car_audio_stream);
+typedef int (*auto_hal_open_output_stream_t)(struct stream_out *);
 static auto_hal_open_output_stream_t auto_hal_open_output_stream;
 
 typedef int (*auto_hal_open_input_stream_t)(struct stream_in*);
@@ -6455,10 +6455,10 @@ int audio_extn_auto_hal_get_car_audio_stream_from_address(const char *address)
                             auto_hal_get_car_audio_stream_from_address(address): -ENOSYS);
 }
 
-int audio_extn_auto_hal_open_output_stream(struct stream_out *out, int car_audio_stream)
+int audio_extn_auto_hal_open_output_stream(struct stream_out *out)
 {
     return ((auto_hal_open_output_stream) ?
-                            auto_hal_open_output_stream(out, car_audio_stream): -ENOSYS);
+                            auto_hal_open_output_stream(out): -ENOSYS);
 }
 
 int audio_extn_auto_hal_open_input_stream(struct stream_in *in)

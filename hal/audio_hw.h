@@ -686,7 +686,7 @@ struct audio_stream_info {
     audio_patch_handle_t patch_handle;
 };
 
-struct stream_ptr {
+union stream_ptr {
     struct stream_in *in;
     struct stream_out *out;
     struct stream_inout *inout;
@@ -701,7 +701,7 @@ typedef struct audio_usecase {
     snd_device_t in_snd_device;
     struct stream_app_type_cfg out_app_type_cfg;
     struct stream_app_type_cfg in_app_type_cfg;
-    struct stream_ptr stream;
+    union stream_ptr stream;
     int32_t stream_type;
 }usecase_info_t;
 
@@ -921,7 +921,7 @@ int adev_open_output_stream(struct audio_hw_device *dev,
                             audio_devices_t devices,
                             audio_output_flags_t flags,
                             struct audio_config *config,
-                            struct audio_stream_out **stream_out,
+                            struct stream_out **stream_out,
                             const char *address);
 void adev_close_output_stream(struct audio_hw_device *dev __unused,
                               struct audio_stream_out *stream);
@@ -1002,7 +1002,6 @@ static inline audio_format_t pcm_format_to_audio_format(const enum pcm_format fo
 }
 
 #include <system/audio-hal-enums.h>
-//#include <tinyalsa/pcm.h>
 
 typedef struct platform_stream
 {
@@ -1013,6 +1012,8 @@ typedef struct platform_stream
 	audio_input_flags_t in_flags;
 	audio_source_t source;
 	const char *bus_address;
+	audio_devices_t device_type;
+	int32_t iohandle;
 	int32_t type;
 }platform_stream_t;
 

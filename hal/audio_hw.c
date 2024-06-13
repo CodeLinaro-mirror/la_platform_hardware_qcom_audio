@@ -7469,7 +7469,7 @@ int adev_open_output_stream(struct audio_hw_device *dev,
                             audio_devices_t devices,
                             audio_output_flags_t flags,
                             struct audio_config *config,
-                            struct audio_stream_out **stream_out,
+                            struct stream_out **stream_out,
                             const char *address)
 {
     struct audio_device *adev = (struct audio_device *)dev;
@@ -8141,10 +8141,23 @@ int adev_open_output_stream(struct audio_hw_device *dev,
             if (!out->dynamic_pm_qos_config_supported) {
                 ALOGI("%s: dynamic qos voting not enabled for platform", __func__);
             } else {
+                ALOGI("%s: dynamic qos voting enabled for platform", __func__);
+                //the mixer path will be a string similar to "low-latency-playback resume"
+                strlcpy(out->pm_qos_mixer_path, use_case_table[out->usecase], MAX_MIXER_PATH_LEN);
+                strlcat(out->pm_qos_mixer_path,
+                            " resume", MAX_MIXER_PATH_LEN);
                 ALOGI("%s: created %s pm_qos_mixer_path" , __func__,
                         out->pm_qos_mixer_path);
             }
             out->config = pcm_config_low_latency;
+            if (compare_device_type(&out->device_list, AUDIO_DEVICE_OUT_BUS)) {
+                ret = audio_extn_auto_hal_open_output_stream(out);
+                if (ret) {
+                    ALOGE("%s: Failed to open output stream for bus device", __func__);
+                    ret = -EINVAL;
+                    goto error_open;
+                }
+            }
         } else if (out->flags & AUDIO_OUTPUT_FLAG_DEEP_BUFFER) {
             out->usecase = USECASE_AUDIO_PLAYBACK_DEEP_BUFFER;
             out->config = pcm_config_deep_buffer;
@@ -8175,7 +8188,7 @@ int adev_open_output_stream(struct audio_hw_device *dev,
             } else
                 adev->haptics_config.channels = audio_channel_count_from_out_mask(out->channel_mask & AUDIO_CHANNEL_HAPTIC_ALL);
         } else if (compare_device_type(&out->device_list, AUDIO_DEVICE_OUT_BUS)) {
-            ret = audio_extn_auto_hal_open_output_stream(out, out->car_audio_stream);
+            ret = audio_extn_auto_hal_open_output_stream(out);
             if (ret) {
                 ALOGE("%s: Failed to open output stream for bus device", __func__);
                 ret = -EINVAL;
@@ -8208,8 +8221,9 @@ int adev_open_output_stream(struct audio_hw_device *dev,
         }
     }
 
-    ALOGV("%s devices:%d, format:%x, out->sample_rate:%d,out->bit_width:%d out->format:%d out->flags:%x, flags: %x usecase %d",
-          __func__, devices, format, out->sample_rate, out->bit_width, out->format, out->flags, flags, out->usecase);
+    ALOGV("%s devices:%d, format:%x, out->sample_rate:%d,out->bit_width:%d out->format:%d out->flags:%x,"
+       "flags: %x usecase %d",__func__, devices, format, out->sample_rate, out->bit_width, out->format,
+        out->flags, flags, out->usecase);
 
     /* TODO remove this hardcoding and check why width is zero*/
     if (out->bit_width == 0)
@@ -8306,7 +8320,8 @@ int adev_open_output_stream(struct audio_hw_device *dev,
 
     stream_app_type_cfg_init(&out->app_type_cfg);
 
-    *stream_out = &out->stream;
+    *stream_out = out;
+    ALOGD("%s: Stream (%p) picks up usecase (%s)", __func__, &out->stream,use_case_table[out->usecase]);
 
     if (out->flags & AUDIO_OUTPUT_FLAG_COMPRESS_OFFLOAD)
         audio_extn_dts_notify_playback_state(out->usecase, 0, out->sample_rate,
@@ -9817,7 +9832,7 @@ static int adev_verify_devices(struct audio_device *adev)
             struct audio_usecase uc_info;
             int retval;
 
-            pparams = NULL; //Check AIDL
+            pparams = &adev->use_case_table[audio_usecase];
             pcm_params_free(*pparams); /* can accept null input */
             *pparams = NULL;
 
@@ -10250,6 +10265,9 @@ static int adev_close(hw_device_t *device)
         audio_extn_gef_deinit(adev);
         free(adev->snd_dev_ref_cnt);
         platform_deinit(adev->platform);
+        for (i = 0; i < ARRAY_SIZE(adev->use_case_table); ++i) {
+            pcm_params_free(adev->use_case_table[i]);
+        }
         if (adev->adm_deinit)
             adev->adm_deinit(adev->adm_data);
         qahwi_deinit(device);
@@ -10427,8 +10445,7 @@ void adev_on_battery_status_changed(bool charging)
     pthread_mutex_unlock(&adev->lock);
 }
 
-static int adev_open(const hw_module_t *module, const char *name,
-                     hw_device_t **device)
+int adev_open(const hw_module_t *module,hw_device_t **device,struct audio_device *_adev)
 {
     int ret;
     char value[PROPERTY_VALUE_MAX] = {0};
@@ -10436,7 +10453,7 @@ static int adev_open(const hw_module_t *module, const char *name,
     struct mixer_ctl *ctl = NULL;
 
     ALOGD("%s: enter", __func__);
-    if (strcmp(name, AUDIO_HARDWARE_INTERFACE) != 0) return -EINVAL;
+    //if (strcmp(name, AUDIO_HARDWARE_INTERFACE) != 0) return -EINVAL;
 
     pthread_mutex_lock(&adev_init_lock);
     if (audio_device_ref_count != 0){
@@ -10447,8 +10464,7 @@ static int adev_open(const hw_module_t *module, const char *name,
             pthread_mutex_unlock(&adev_init_lock);
             return 0;
     }
-
-    adev = calloc(1, sizeof(struct audio_device));
+    adev = _adev;
 
     if (!adev) {
         pthread_mutex_unlock(&adev_init_lock);
@@ -10585,7 +10601,7 @@ static int adev_open(const hw_module_t *module, const char *name,
     }
 
     audio_extn_auto_hal_init(adev);
-    adev->ext_hw_plugin = audio_extn_ext_hw_plugin_init(adev);
+    adev->ext_hw_plugin = NULL;//audio_extn_ext_hw_plugin_init(adev);
 
     if (access(VISUALIZER_LIBRARY_PATH, R_OK) == 0) {
         adev->visualizer_lib = dlopen(VISUALIZER_LIBRARY_PATH, RTLD_NOW);
@@ -12824,79 +12840,26 @@ static void adev_snd_mon_cb_1(void *cookie, struct str_parms *parms)
 
 
 /*------------- Functions called by external code-----------------------------*/
+
 void platform_arch_init(int inp __unused)
 {
+    struct hw_module_t* dummy_module = calloc(1, sizeof(struct hw_module_t));
+    struct hw_device_t* dummy_device = calloc(1, sizeof(struct hw_device_t));
     struct audio_device *adev = platform_get_adev();
-    adev->platform = platform_init(adev);
-    list_init(&adev->usecase_list);
-    audio_extn_feature_init();
-    audio_extn_auto_hal_init(adev);
-    adev->ext_hw_plugin = audio_extn_ext_hw_plugin_init(adev);
-    ALOGD("VSS: %s: call update_streams_cfg_lists", __func__);
-    audio_extn_utils_update_streams_cfg_lists(adev->platform, adev->mixer,
-            &adev->streams_output_cfg_list,
-            &adev->streams_input_cfg_list);
-
-    /* Allocate memory for Device config params */
-    adev->device_cfg_params = (struct audio_device_config_param*)
-                                calloc(platform_get_max_codec_backend(),
-                                    sizeof(struct audio_device_config_param));
-    if (adev->device_cfg_params == NULL)
-        ALOGE("%s: Memory allocation failed for Device config params", __func__);
-
-    adev->snd_dev_ref_cnt = calloc(SND_DEVICE_MAX, sizeof(int));
-
-    audio_extn_ds2_enable(adev);
-
-    if (access(ADM_LIBRARY_PATH, R_OK) == 0) {
-        adev->adm_lib = dlopen(ADM_LIBRARY_PATH, RTLD_NOW);
-        if (adev->adm_lib == NULL)
-            ALOGE("%s: DLOPEN failed for %s", __func__, ADM_LIBRARY_PATH);
-
-            adev->adm_init = (adm_init_t)
-                                    dlsym(adev->adm_lib, "adm_init");
-            adev->adm_deinit = (adm_deinit_t)
-                                    dlsym(adev->adm_lib, "adm_deinit");
-            adev->adm_register_input_stream = (adm_register_input_stream_t)
-                                    dlsym(adev->adm_lib, "adm_register_input_stream");
-            adev->adm_register_output_stream = (adm_register_output_stream_t)
-                                    dlsym(adev->adm_lib, "adm_register_output_stream");
-            adev->adm_deregister_stream = (adm_deregister_stream_t)
-                                    dlsym(adev->adm_lib, "adm_deregister_stream");
-            adev->adm_request_focus = (adm_request_focus_t)
-                                    dlsym(adev->adm_lib, "adm_request_focus");
-            adev->adm_abandon_focus = (adm_abandon_focus_t)
-                                    dlsym(adev->adm_lib, "adm_abandon_focus");
-            adev->adm_set_config = (adm_set_config_t)
-                                    dlsym(adev->adm_lib, "adm_set_config");
-            adev->adm_request_focus_v2 = (adm_request_focus_v2_t)
-                                    dlsym(adev->adm_lib, "adm_request_focus_v2");
-            adev->adm_is_noirq_avail = (adm_is_noirq_avail_t)
-                                    dlsym(adev->adm_lib, "adm_is_noirq_avail");
-            adev->adm_on_routing_change = (adm_on_routing_change_t)
-                                    dlsym(adev->adm_lib, "adm_on_routing_change");
-            adev->adm_request_focus_v2_1 = (adm_request_focus_v2_1_t)
-                                    dlsym(adev->adm_lib, "adm_request_focus_v2_1");
-        }
-
-    if (adev->adm_init)
-        adev->adm_data = adev->adm_init();
-
-    audio_extn_adsp_hdlr_init(adev->mixer);
-    audio_extn_snd_mon_init();
-    audio_extn_snd_mon_register_listener(adev, adev_snd_mon_cb_1);
-    adev->card_status = CARD_STATUS_ONLINE;
-
+    int _res = adev_open(dummy_module,dummy_device,adev);
+    //prasanna: handle result here
     return;
 }
 
+
 int platform_get_usecase(platform_stream_t stream_info, void **handle, bool is_input, int32_t stream_type)
 {
-    usecase_info_t *uc_info = (usecase_info_t *)calloc(1, sizeof(usecase_info_t));
-    // populate usecase structure with basic info
-    *((usecase_info_t **)handle) = uc_info;
 
     if (is_input) {
+        usecase_info_t *uc_info = (usecase_info_t *)calloc(1, sizeof(usecase_info_t));
+        // populate usecase structure with basic info
+        *((usecase_info_t **)handle) = uc_info;
+
         uc_info->stream_type = stream_type;
         uc_info->type = PCM_CAPTURE;
         struct stream_in *in;
@@ -12984,54 +12947,29 @@ int platform_get_usecase(platform_stream_t stream_info, void **handle, bool is_i
         return in->usecase;
     }
     else {
-        struct stream_out *out;
-        struct audio_device *adev = platform_get_adev();
-        out = (struct stream_out *)calloc(1, sizeof(struct stream_out)); //struct stream_out is defined in audio_hw.h
-        if (!uc_info || !out)
-        {
-            ALOGE("MEM allocation failed");
-            return -ENOMEM;
-        }
 
-        out->stream.common.get_sample_rate = out_get_sample_rate_1;
-        out->stream.common.get_buffer_size = out_get_buffer_size_1;
-        out->stream.common.get_channels = out_get_channels;
-        out->stream.common.get_format = out_get_format;
+        struct audio_device* dev = platform_get_adev();
+        //audio_devices_t deviceType = stream_info.device_type;
+        audio_devices_t deviceType = AUDIO_DEVICE_OUT_BUS ;//prasanna: hardcoding correct this
+        ALOGD("prasanna: %s: device_type hex: %x, %d", __func__, deviceType,deviceType);
+        audio_output_flags_t flags = stream_info.out_flags;
+        struct audio_config config;
+        config.format = stream_info.format;
+        config.sample_rate = stream_info.sample_rate;
+        config.channel_mask = stream_info.channel_mask;
+        const char* address = stream_info.bus_address;
+        audio_io_handle_t IOhandle = stream_info.iohandle;
+        struct stream_out* out = NULL;
+        int ret = adev_open_output_stream((struct audio_hw_device *)dev,IOhandle,deviceType,flags,&config,&out,address);
 
-        out->sample_rate = stream_info.sample_rate;
-        out->channel_mask = stream_info.channel_mask;
-        out->format = stream_info.format;
-        out->car_audio_stream = audio_extn_auto_hal_get_car_audio_stream_from_address(stream_info.bus_address);
-        out->flags = stream_info.out_flags;
-        if (!out)
-        {
-            ALOGE("Out is NULL");
-            return -1;
-        }
-        ALOGD("%s : out->sample_rate:%d, out->hal_op_format:%d, out->bit_width:%d out->format:%d out->flags:%x, usecase %d",
-                __func__, out->sample_rate, out->hal_op_format, out->bit_width, out->format, out->flags, out->usecase);
-        audio_extn_auto_hal_open_output_stream(out, out->car_audio_stream);
-
-        out->hal_ip_format = out->format;
-        out->config.format = hal_format_to_pcm(out->hal_ip_format);
-        out->hal_op_format = pcm_format_to_hal(out->config.format);
-        out->bit_width = format_to_bitwidth_table[out->hal_op_format] << 3;
-
-        ALOGD("%s : out->sample_rate:%d, out->hal_op_format:%d, out->bit_width:%d out->format:%d out->flags:%x, usecase %d",
-                __func__, out->sample_rate, out->hal_op_format, out->bit_width, out->format, out->flags, out->usecase);
-
-        audio_extn_utils_update_stream_output_app_type_cfg(adev->platform,
-                &adev->streams_output_cfg_list,
-                NULL, out->flags,
-                out->format, out->sample_rate,
-                out->bit_width, out->channel_mask,"",
-                &out->app_type_cfg);
-        ALOGD("%s: app_type selected is %d", __func__, out->app_type_cfg.app_type);
-        uc_info->id = out->usecase;
-        out->dev = adev;
-        uc_info->stream.out = out;
-        ALOGD("VSS: %s: Attaching uc_info->stream.out to %p", __func__, out);
-        uc_info->type = PCM_PLAYBACK;
+        usecase_info_t *uc_info_new = (usecase_info_t *)calloc(1, sizeof(usecase_info_t));
+        // populate usecase structure with basic info
+        *((usecase_info_t **)handle) = uc_info_new;
+        uc_info_new->id = out->usecase;
+        out->dev = dev;
+        uc_info_new->stream.out = out;
+        ALOGD("prasanna: %s: Attaching uc_info->stream.out to %p", __func__, out);
+        uc_info_new->type = PCM_PLAYBACK;
         return out->usecase;
     }
 }
