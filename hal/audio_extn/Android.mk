@@ -233,7 +233,8 @@ ifeq ($(strip $(AUDIO_FEATURE_ENABLED_DLKM)),true)
 endif
 
 LOCAL_HEADER_LIBRARIES += \
-    libtinyalsav2_headers
+    libtinyalsav2_headers \
+    libsurround_3mic_proc_headers
 
 ifeq ($(strip $(AUDIO_FEATURE_ENABLED_DYNAMIC_LOG)), true)
     LOCAL_CFLAGS += -DDYNAMIC_LOG_ENABLED
