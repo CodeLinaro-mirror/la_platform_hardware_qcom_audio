@@ -1421,6 +1421,8 @@ snd_device_t audio_extn_auto_hal_get_input_snd_device(struct audio_device *adev,
 snd_device_t audio_extn_auto_hal_get_output_snd_device(struct audio_device *adev,
                                 audio_usecase_t uc_id);
 snd_device_t aidl_audio_extn_auto_hal_get_output_snd_device(audio_usecase_t uc_id);
+snd_device_t aidl_audio_extn_auto_hal_get_input_snd_device(struct audio_device *adev,
+                                audio_usecase_t uc_id);
 snd_device_t audio_extn_auto_hal_get_snd_device_for_car_audio_stream(int car_audio_stream);
 
 typedef size_t (*fp_get_output_period_size_t)(uint32_t, audio_format_t, int, int);

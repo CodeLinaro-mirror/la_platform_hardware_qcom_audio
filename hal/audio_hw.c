@@ -2415,8 +2415,15 @@ int select_devices(struct audio_device *adev, audio_usecase_t uc_id)
         if (compare_device_type(&usecase->device_list, AUDIO_DEVICE_OUT_BUS)) {
             out_snd_device = audio_extn_auto_hal_get_output_snd_device(adev,
                                                                        uc_id);
+            if(out_snd_device < 0 ) {
+                out_snd_device = aidl_audio_extn_auto_hal_get_output_snd_device(uc_id);
+            }
             in_snd_device = audio_extn_auto_hal_get_input_snd_device(adev,
                                                                      uc_id);
+            if(in_snd_device < 0) {
+                in_snd_device = aidl_audio_extn_auto_hal_get_input_snd_device(adev,
+                                                                     uc_id);
+            }
         } else {
             out_snd_device = platform_get_output_snd_device(adev->platform,
                                                             usecase->stream.out, usecase->type);
@@ -13027,6 +13034,7 @@ int platform_set_params(const char *kvpairs)
     }
 
     pthread_mutex_lock(&adev->lock);
+    platform_set_parameters(adev->platform, parms);
     audio_extn_auto_hal_set_parameters(adev, parms);
     str_parms_destroy(parms);
     pthread_mutex_unlock(&adev->lock);

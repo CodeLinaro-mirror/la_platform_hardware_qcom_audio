@@ -6265,6 +6265,10 @@ static auto_hal_get_output_snd_device_t auto_hal_get_output_snd_device;
 typedef snd_device_t (*aidl_auto_hal_get_output_snd_device_t)(audio_usecase_t);
 static aidl_auto_hal_get_output_snd_device_t aidl_auto_hal_get_output_snd_device;
 
+typedef snd_device_t (*aidl_auto_hal_get_input_snd_device_t)(struct audio_device*,
+                                audio_usecase_t);
+static aidl_auto_hal_get_input_snd_device_t aidl_auto_hal_get_input_snd_device;
+
 typedef snd_device_t (*auto_hal_get_snd_device_for_car_audio_stream_t)(int
                                 car_audio_stream);
 static auto_hal_get_snd_device_for_car_audio_stream_t auto_hal_get_snd_device_for_car_audio_stream;
@@ -6348,6 +6352,9 @@ int auto_hal_feature_init(bool is_feature_enabled)
             !(aidl_auto_hal_get_output_snd_device =
                  (aidl_auto_hal_get_output_snd_device_t)dlsym(
                             auto_hal_lib_handle, "aidl_auto_hal_get_output_snd_device")) ||
+            !(aidl_auto_hal_get_input_snd_device =
+                 (aidl_auto_hal_get_input_snd_device_t)dlsym(
+                            auto_hal_lib_handle, "aidl_auto_hal_get_input_snd_device")) ||
             !(auto_hal_get_snd_device_for_car_audio_stream =
                  (auto_hal_get_snd_device_for_car_audio_stream_t)dlsym(
                             auto_hal_lib_handle, "auto_hal_get_snd_device_for_car_audio_stream")) ||
@@ -6388,6 +6395,7 @@ feature_disabled:
     auto_hal_get_input_snd_device = NULL;
     auto_hal_get_output_snd_device = NULL;
     aidl_auto_hal_get_output_snd_device = NULL;
+    aidl_auto_hal_get_input_snd_device = NULL;
     auto_hal_get_snd_device_for_car_audio_stream = NULL;
     auto_hal_overwrite_priority_for_auto = NULL;
 
@@ -6540,6 +6548,13 @@ snd_device_t aidl_audio_extn_auto_hal_get_output_snd_device(audio_usecase_t uc_i
 {
     return ((aidl_auto_hal_get_output_snd_device) ?
                             aidl_auto_hal_get_output_snd_device(uc_id): SND_DEVICE_NONE);
+}
+
+snd_device_t aidl_audio_extn_auto_hal_get_input_snd_device(struct audio_device *adev,
+                                audio_usecase_t uc_id)
+{
+    return ((aidl_auto_hal_get_input_snd_device) ?
+                            aidl_auto_hal_get_input_snd_device(adev, uc_id): SND_DEVICE_NONE);
 }
 
 snd_device_t audio_extn_auto_hal_get_snd_device_for_car_audio_stream(int car_audio_stream)

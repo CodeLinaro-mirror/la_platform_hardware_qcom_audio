@@ -1334,6 +1334,44 @@ snd_device_t aidl_auto_hal_get_output_snd_device(audio_usecase_t uc_id)
     return snd_device;
 }
 
+
+snd_device_t aidl_auto_hal_get_input_snd_device(struct audio_device *adev,
+                                audio_usecase_t uc_id)
+{
+    snd_device_t snd_device = SND_DEVICE_NONE;
+    /* usecase->id is token as judgement for HFP calls */
+    ALOGD("%s: Usecase (%d) ", __func__, uc_id);
+    switch (uc_id) {
+    case USECASE_AUDIO_HFP_SCO:
+    case USECASE_AUDIO_HFP_SCO_WB:
+        if (fp_platform_get_eccarstate((void *) adev->platform)) {
+            snd_device = SND_DEVICE_IN_VOICE_SPEAKER_MIC_HFP_MMSECNS;
+        } else {
+            snd_device = SND_DEVICE_IN_VOICE_SPEAKER_MIC_HFP;
+        }
+        break;
+    case USECASE_AUDIO_HFP_SCO_DOWNLINK:
+        snd_device = SND_DEVICE_IN_BT_SCO_MIC;
+        break;
+    case USECASE_AUDIO_HFP_SCO_WB_DOWNLINK:
+        snd_device = SND_DEVICE_IN_BT_SCO_MIC_WB;
+        break;
+    case USECASE_VOICE_CALL:
+        snd_device = SND_DEVICE_IN_VOICE_SPEAKER_MIC;
+        break;
+    case USECASE_ICC_CALL:
+        snd_device = SND_DEVICE_IN_ICC;
+        break;
+    case USECASE_AUDIO_PLAYBACK_SYNTHESIZER:
+        snd_device = SND_DEVICE_IN_SYNTH_MIC;
+        break;
+    default:
+        ALOGE("%s: Usecase (%d) not supported", __func__, uc_id);
+        return -EINVAL;
+    }
+    return snd_device;
+}
+
 int auto_hal_init(struct audio_device *adev, auto_hal_init_config_t init_config)
 {
     int ret = 0;
