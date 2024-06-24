@@ -370,8 +370,6 @@ bool compare_device_type(struct listnode *devices, audio_devices_t device_type)
     if (devices == NULL)
         return false;
 
-/* This will be removed when we will enable all usecases for AIDL*/
-    return true;
     list_for_each_safe (node, temp, devices) {
         item = node_to_item(node, struct audio_device_info, list);
         if (item != NULL && (item->type == device_type)) {

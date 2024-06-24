@@ -12982,8 +12982,9 @@ int platform_start_stream(void *handle, bool is_input)
 
     if (is_input)
         ret = platform_start_input_stream(uc_info);
-    else
-        ret = platform_start_output_stream(uc_info);
+    else{
+        //TODO decouple start and write
+    }
 
     return ret;
 }
@@ -12999,7 +13000,8 @@ int platform_stream_read(void *handle, void* dataPtr, size_t frameCount)
 int platform_stream_write(void *handle, void* dataPtr, size_t frameCount)
 {
     usecase_info_t *uc_info = (usecase_info_t *)handle;
-    out_write_1(uc_info->stream.out, (uint8_t*)dataPtr, frameCount);
+    out_write(uc_info->stream.out, (uint8_t*)dataPtr,
+                    frameCount*audio_stream_out_frame_size(uc_info->stream.out));
     return 0;
 }
 
@@ -13007,8 +13009,9 @@ int platform_out_standby(void *handle)
 {
     usecase_info_t *uc_info = (usecase_info_t *)handle;
 
-    ALOGD("%s: call out_standby_1 for stream ptr 0x%x", __func__, uc_info->stream.out);
-    return out_standby_1(uc_info);
+    ALOGD("%s: call out_standby for stream ptr 0x%x", __func__, uc_info->stream.out);
+    return out_standby(uc_info->stream.out);
+
 }
 
 int platform_in_standby(void *handle)
