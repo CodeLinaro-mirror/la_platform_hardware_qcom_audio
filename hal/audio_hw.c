@@ -13078,3 +13078,20 @@ exit_1:
     return rc;
 }
 
+int platform_set_params(const char *kvpairs)
+{
+    struct str_parms *parms;
+    struct audio_device *adev = platform_get_adev();
+    parms = str_parms_create_str(kvpairs);
+    if(!parms)
+    {
+        return -1;
+    }
+
+    pthread_mutex_lock(&adev->lock);
+    audio_extn_auto_hal_set_parameters(adev, parms);
+    str_parms_destroy(parms);
+    pthread_mutex_unlock(&adev->lock);
+
+    return 0;
+}
