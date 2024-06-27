@@ -1036,21 +1036,23 @@ size_t platform_in_framesize(audio_format_t format, uint32_t ch_mask,
         uint32_t sample_rate);
 int platform_get_param(void *handle, platform_param_id_t param_id, void *data);
 int platform_set_params(const char *kvpairs);
+void platform_close_input_stream(void *handle);
 
 typedef struct platform_elite_api
 {
-	void (*platform_arch_init)(int inp);
-	int (*platform_get_usecase)(platform_stream_t stream_info, void **handle, bool is_input,
-			int32_t stream_type);
-	int (*platform_start_stream)(void *handle, bool is_input);
-	int (*platform_stream_write)(void *handle, void* dataPtr, size_t frameCount);
-	int (*platform_stream_read)(void *handle, void* dataPtr, size_t frameCount);
-	int (*platform_out_standby)(void *handle);
-	int (*platform_in_standby)(void *handle);
-	size_t (*platform_in_framesize)(audio_format_t format, uint32_t ch_mask,
-			uint32_t sample_rate);
-	int (*platform_get_param)(void *handle, platform_param_id_t param_id, void *data);
-        int (*platform_set_params)(const char *kvpairs);
+    void (*platform_arch_init)(int inp);
+    int (*platform_get_usecase)(platform_stream_t stream_info, void **handle, bool is_input,
+            int32_t stream_type);
+    int (*platform_start_stream)(void *handle, bool is_input);
+    int (*platform_stream_write)(void *handle, void* dataPtr, size_t frameCount);
+    int (*platform_stream_read)(void *handle, void* dataPtr, size_t frameCount);
+    int (*platform_out_standby)(void *handle);
+    int (*platform_in_standby)(void *handle);
+    size_t (*platform_in_framesize)(audio_format_t format, uint32_t ch_mask,
+            uint32_t sample_rate);
+    int (*platform_get_param)(void *handle, platform_param_id_t param_id, void *data);
+    int (*platform_set_params)(const char *kvpairs);
+    void (*platform_close_input_stream)(void *handle);
 } platform_elite_api_t;
 
 extern platform_elite_api_t platform_elite_apis;

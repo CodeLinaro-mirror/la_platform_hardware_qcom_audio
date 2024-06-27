@@ -9624,7 +9624,9 @@ static int adev_open_input_stream(struct audio_hw_device *dev,
 
     stream_app_type_cfg_init(&in->app_type_cfg);
 
-    *stream_in = &in->stream;
+    *stream_in = in;
+    ALOGD("%s: Stream (%p) picks up usecase (%s)",
+                       __func__, &in->stream,use_case_table[in->usecase]);
 
     ret = io_streams_map_insert(adev, &in->stream.common,
                             handle, AUDIO_PATCH_HANDLE_NONE);
@@ -12847,101 +12849,35 @@ void platform_arch_init(int inp __unused)
     struct hw_device_t* dummy_device = calloc(1, sizeof(struct hw_device_t));
     struct audio_device *adev = platform_get_adev();
     int _res = adev_open(dummy_module,dummy_device,adev);
-    //prasanna: handle result here
+    //TODO handle result here
     return;
 }
 
 
-int platform_get_usecase(platform_stream_t stream_info, void **handle, bool is_input, int32_t stream_type)
+int platform_get_usecase(platform_stream_t stream_info, void **handle,
+                                        bool is_input, int32_t stream_type)
 {
 
     if (is_input) {
+        struct audio_device* dev = platform_get_adev();
+        audio_devices_t deviceType = stream_info.device_type;
+        ALOGD(" %s: capture: device_type hex: %x, %d", __func__, deviceType,deviceType);
+        audio_input_flags_t flags = stream_info.in_flags;
+        struct audio_config config;
+        config.format = stream_info.format;
+        config.sample_rate = stream_info.sample_rate;
+        config.channel_mask = stream_info.channel_mask;
+        const char* address = stream_info.bus_address;
+        audio_io_handle_t IOhandle = stream_info.iohandle;
+        struct stream_in* in = NULL;
+        adev_open_input_stream((struct audio_hw_device *)dev,IOhandle,deviceType,
+                                                    &config,&in,flags,address,stream_info.source);
         usecase_info_t *uc_info = (usecase_info_t *)calloc(1, sizeof(usecase_info_t));
         // populate usecase structure with basic info
         *((usecase_info_t **)handle) = uc_info;
 
         uc_info->stream_type = stream_type;
         uc_info->type = PCM_CAPTURE;
-        struct stream_in *in;
-        struct audio_device *adev = platform_get_adev();
-        int ret = 0, buffer_size, frame_size;
-        int channel_count = audio_channel_count_from_in_mask(stream_info.channel_mask);
-        ALOGE("AG: No. of channels used are : %d, rate = %d", channel_count, stream_info.sample_rate);
-        in = (struct stream_in *)calloc(1, sizeof(struct stream_in));
-
-        if (!in) {
-            ALOGE("failed to allocate input stream");
-            return -ENOMEM;
-        }
-
-        in->stream.common.get_sample_rate = in_get_sample_rate;
-        in->stream.common.set_sample_rate = in_set_sample_rate;
-        in->stream.common.get_buffer_size = in_get_buffer_size_1;
-        in->stream.common.get_channels = in_get_channels;
-        in->stream.common.get_format = in_get_format;
-        in->source = stream_info.source;
-        in->dev = adev;
-        in->standby = 1;
-        in->flags = stream_info.in_flags;
-        in->bit_width = 16;
-        in->af_period_multiplier = 1;
-        in->direction = MIC_DIRECTION_UNSPECIFIED;
-        in->zoom = 0;
-        in->mmap_shared_memory_fd = -1; // not open
-
-        in->channel_mask = stream_info.channel_mask;
-        in->format = stream_info.format;
-        in->sample_rate =  stream_info.sample_rate;
-        list_init(&in->device_list);
-
-        if(stream_type == 0)
-        {
-            in->car_audio_stream =
-                audio_extn_auto_hal_get_car_audio_stream_from_address(stream_info.bus_address);
-            if (in->car_audio_stream < 0)
-            {
-                ALOGE("%s: invalid car audio stream %x",
-                      __func__, in->car_audio_stream);
-                ret = -EINVAL;
-            }
-            ALOGD("%s: car_audio_stream 0x%x", __func__, in->car_audio_stream);
-            ret = audio_extn_auto_hal_open_input_stream(in);
-            if (ret)
-            {
-                ALOGE("%s: Failed to open input stream for bus device", __func__);
-                ret = -EINVAL;
-            }
-        }
-        else
-        {
-            in->usecase = USECASE_AUDIO_RECORD;
-        }
-        in->config = pcm_config_audio_capture;
-        in->config.rate = stream_info.sample_rate;
-        in->config.format = pcm_format_from_audio_format(stream_info.format);
-        in->format = stream_info.format;
-        in->config.channels = channel_count;
-        frame_size = audio_stream_in_frame_size(&in->stream);
-        buffer_size = get_input_buffer_size_1(in->config.rate,
-                in->format,
-                channel_count,
-                0);
-        /* prevent division-by-zero */
-        if (frame_size == 0) {
-            ALOGE("%s: Error frame_size==0", __func__);
-            ret = -EINVAL;
-        }
-
-        in->config.period_size = buffer_size / frame_size;
-        in->af_period_multiplier = 1;
-        ALOGD("%s: usecase detected as (%d: %s)", __func__,
-                in->usecase, use_case_table[in->usecase]);
-
-        audio_extn_utils_update_stream_input_app_type_cfg(adev->platform,
-                &adev->streams_input_cfg_list,
-                &in->device_list, in->flags, in->format,
-                in->sample_rate, in->bit_width,
-                in->profile, &in->app_type_cfg);
         uc_info->id = in->usecase;
         uc_info->stream.in = in;
         return in->usecase;
@@ -12950,8 +12886,8 @@ int platform_get_usecase(platform_stream_t stream_info, void **handle, bool is_i
 
         struct audio_device* dev = platform_get_adev();
         //audio_devices_t deviceType = stream_info.device_type;
-        audio_devices_t deviceType = AUDIO_DEVICE_OUT_BUS ;//prasanna: hardcoding correct this
-        ALOGD("prasanna: %s: device_type hex: %x, %d", __func__, deviceType,deviceType);
+        audio_devices_t deviceType = AUDIO_DEVICE_OUT_BUS ;// hardcoding correct this
+        ALOGD(" %s: device_type hex: %x, %d", __func__, deviceType,deviceType);
         audio_output_flags_t flags = stream_info.out_flags;
         struct audio_config config;
         config.format = stream_info.format;
@@ -12960,7 +12896,8 @@ int platform_get_usecase(platform_stream_t stream_info, void **handle, bool is_i
         const char* address = stream_info.bus_address;
         audio_io_handle_t IOhandle = stream_info.iohandle;
         struct stream_out* out = NULL;
-        int ret = adev_open_output_stream((struct audio_hw_device *)dev,IOhandle,deviceType,flags,&config,&out,address);
+        int ret = adev_open_output_stream((struct audio_hw_device *)dev,
+                                    IOhandle,deviceType,flags,&config,&out,address);
 
         usecase_info_t *uc_info_new = (usecase_info_t *)calloc(1, sizeof(usecase_info_t));
         // populate usecase structure with basic info
@@ -12968,7 +12905,7 @@ int platform_get_usecase(platform_stream_t stream_info, void **handle, bool is_i
         uc_info_new->id = out->usecase;
         out->dev = dev;
         uc_info_new->stream.out = out;
-        ALOGD("prasanna: %s: Attaching uc_info->stream.out to %p", __func__, out);
+        ALOGD(" %s: Attaching uc_info->stream.out to %p", __func__, out);
         uc_info_new->type = PCM_PLAYBACK;
         return out->usecase;
     }
@@ -12980,8 +12917,9 @@ int platform_start_stream(void *handle, bool is_input)
     int ret = 0;
     usecase_info_t *uc_info = (usecase_info_t *)handle;
 
-    if (is_input)
-        ret = platform_start_input_stream(uc_info);
+    if (is_input){
+        //TODO decouple start and read
+    }
     else{
         //TODO decouple start and write
     }
@@ -12993,7 +12931,8 @@ int platform_stream_read(void *handle, void* dataPtr, size_t frameCount)
 {
     int ret = 0;
     usecase_info_t *uc_info = (usecase_info_t *)handle;
-    ret = in_read_1(uc_info->stream.in, (uint8_t*)dataPtr, frameCount);
+    ret = in_read(uc_info->stream.in, (uint8_t*)dataPtr,
+                        frameCount*audio_stream_in_frame_size(uc_info->stream.in));
     return ret;
 }
 
@@ -13019,7 +12958,7 @@ int platform_in_standby(void *handle)
     usecase_info_t *uc_info = (usecase_info_t *)handle;
 
     ALOGD("%s: call in_standby_1 for stream ptr 0x%x", __func__, uc_info->stream.in);
-    return in_standby_1(uc_info);
+    return in_standby(uc_info->stream.in);
 }
 
 size_t platform_in_framesize(audio_format_t format, uint32_t ch_mask,
@@ -13077,7 +13016,6 @@ int platform_get_param(void *handle, platform_param_id_t param_id, void *data)
 exit_1:
     return rc;
 }
-
 int platform_set_params(const char *kvpairs)
 {
     struct str_parms *parms;
@@ -13094,4 +13032,12 @@ int platform_set_params(const char *kvpairs)
     pthread_mutex_unlock(&adev->lock);
 
     return 0;
+}
+
+void platform_close_input_stream(void *handle){
+    ALOGD("%s: closing input stream", __func__);
+    usecase_info_t *uc_info = (usecase_info_t *)handle;
+    struct stream_in *in = uc_info->stream.in;
+    struct audio_device *dev = platform_get_adev();
+    adev_close_input_stream(dev,in);
 }
