@@ -8461,10 +8461,24 @@ void adev_close_output_stream(struct audio_hw_device *dev __unused,
     ALOGV("%s: exit", __func__);
 }
 
+
+struct audio_device *platform_get_adev()
+{
+    static struct audio_device *primary_adev = NULL;
+    if (!primary_adev) {
+        primary_adev = calloc(1, sizeof(struct audio_device));
+        if (!primary_adev) {
+            ALOGD("Primary adev allocation failed");
+            return NULL;
+        }
+    }
+    return primary_adev;
+}
+
 void in_set_power_policy(uint8_t enable)
 {
     struct listnode *node;
-
+    struct audio_device *adev = platform_get_adev();
     ALOGD("%s: Enter, state %d", __func__, enable);
 
     pthread_mutex_lock(&adev->lock);
@@ -8487,7 +8501,7 @@ void in_set_power_policy(uint8_t enable)
 void out_set_power_policy(uint8_t enable)
 {
     struct listnode *node;
-
+    struct audio_device *adev = platform_get_adev();
     ALOGD("%s: Enter, state %d", __func__, enable);
 
     pthread_mutex_lock(&adev->lock);
@@ -11205,19 +11219,6 @@ size_t get_input_buffer_size_1(uint32_t sample_rate,
                                   format,
                                   channel_count,
                                   is_low_latency);
-}
-
-struct audio_device *platform_get_adev()
-{
-    static struct audio_device *primary_adev = NULL;
-    if (!primary_adev) {
-	    primary_adev = calloc(1, sizeof(struct audio_device));
-        if (!primary_adev) {
-            ALOGD("Primary adev allocation failed");
-            return NULL;
-        }
-    }
-    return primary_adev;
 }
 
 static uint32_t out_get_sample_rate_1(const struct audio_stream *stream)
