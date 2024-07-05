@@ -161,6 +161,10 @@ ifeq ($(ENABLE_AUDIO_LEGACY_TECHPACK),true)
   LOCAL_HEADER_LIBRARIES += qti_legacy_audio_kernel_uapi
 endif
 
+ifneq ( ,$(filter V VanillaIceCream 15, $(PLATFORM_VERSION)))
+LOCAL_CFLAGS += -DAIDL_HAL_POWER
+endif
+
 LOCAL_SRC_FILES := \
     audio_hw.c \
     acdb.c \
