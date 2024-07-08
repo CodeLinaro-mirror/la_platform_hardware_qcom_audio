@@ -123,7 +123,7 @@ endif
 ifneq ($(ENABLE_HYP),true)
 AUDIO_FEATURE_ENABLED_AUTO_AUDIOD := true
 
-ifneq ( ,$(filter msmnile_au gen4_au msmnile_au_km4 msmnile_au_ar msmnile_tb, $(TARGET_BOARD_PLATFORM)))
+ifneq ( ,$(filter msmnile_au gen4_au msmnile_au_km4 msmnile_au_ar msmnile_tb, $(TARGET_BOARD_PLATFORM)$(TARGET_BOARD_SUFFIX)$(TARGET_BOARD_DERIVATIVE_SUFFIX)))
 AUDIO_FEATURE_ENABLED_DAEMON_SUPPORT := true
 else
 AUDIO_FEATURE_ENABLED_DAEMON_SUPPORT := false
@@ -143,7 +143,7 @@ endif
 ifneq ( ,$(filter msmnile_gvmq msmnile_au gen4_au msmnile_au_km4 msmnile_au_ar msmnile_gvmq_vcu msmnile_gvmq_s_u, $(TARGET_BOARD_PLATFORM)$(TARGET_BOARD_SUFFIX)$(TARGET_BOARD_DERIVATIVE_SUFFIX)))
 AUDIO_FEATURE_ENABLED_AUDIO_PARSERS := true
 endif
-ifneq ( ,$(filter msmnile_tb, $(TARGET_BOARD_PLATFORM)))
+ifneq ( ,$(filter msmnile_tb, $(TARGET_BOARD_PLATFORM)$(TARGET_BOARD_SUFFIX)$(TARGET_BOARD_DERIVATIVE_SUFFIX)))
 AUDIO_FEATURE_ENABLED_AUDIO_PARSERS := true
 endif
 ##AUTOMOTIVE_AUDIO_FEATURE_FLAGS
@@ -223,6 +223,7 @@ PRODUCT_COPY_FILES += \
     $(TOPDIR)frameworks/av/services/audiopolicy/config/r_submix_audio_policy_configuration.xml:$(TARGET_COPY_OUT_VENDOR)/etc/r_submix_audio_policy_configuration.xml \
     $(TOPDIR)frameworks/av/services/audiopolicy/config/usb_audio_policy_configuration.xml:$(TARGET_COPY_OUT_VENDOR)/etc/usb_audio_policy_configuration.xml \
     $(TOPDIR)vendor/qcom/opensource/audio-hal/primary-hal/configs/common/bluetooth_qti_audio_policy_configuration.xml:$(TARGET_COPY_OUT_VENDOR)/etc/bluetooth_qti_audio_policy_configuration.xml \
+    $(TOPDIR)frameworks/av/services/audiopolicy/config/bluetooth_with_le_audio_policy_configuration_7_0.xml:$(TARGET_COPY_OUT_VENDOR)/etc/bluetooth_audio_policy_configuration.xml \
     $(TOPDIR)vendor/qcom/opensource/audio-hal/primary-hal/configs/common_au/car_audio_configuration.xml:$(TARGET_COPY_OUT_VENDOR)/etc/car_audio_configuration.xml
 
 
