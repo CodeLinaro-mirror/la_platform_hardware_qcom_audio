@@ -24,6 +24,10 @@
 <!-- BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,  -->
 <!-- OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN -->
 <!-- IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.                          -->
+
+<!--Changes from Qualcomm Innovation Center are provided under the following license:-->
+<!--Copyright (c) 2024 Qualcomm Innovation Center, Inc. All rights reserved.-->
+<!--SPDX-License-Identifier: BSD-3-Clause-Clear-->
 <mixer>
     <!-- These are the initial mixer settings -->
     <ctl name="Voice Rx Device Mute" id="0" value="0" />
@@ -2203,17 +2207,43 @@
     </path>
 
     <path name="hfp-sco">
+        <ctl name="RX_CDC_DMA_RX_1 Port Mixer SLIM_7_TX" value="1" />
+        <ctl name="SLIMBUS_7_RX Audio Mixer MultiMedia6" value="1" />
+        <ctl name="MultiMedia6 Mixer TX_CDC_DMA_TX_3" value="1" />
+        <ctl name="RX_CDC_DMA_RX_1_DL_HL Switch" value="1" />
+    </path>
+
+    <path name="hfp-sco handset">
+        <path name="hfp-sco" />
+    </path>
+
+    <path name="hfp-sco-wb handset">
+        <ctl name="BT SampleRate" value="KHZ_16" />
+        <path name="hfp-sco" />
     </path>
 
     <path name="hfp-sco headphones">
     </path>
 
    <path name="hfp-sco-wb">
+        <ctl name="BT SampleRate" value="KHZ_16" />
         <path name="hfp-sco" />
    </path>
 
     <path name="hfp-sco-wb headphones">
         <path name="hfp-sco headphones" />
+    </path>
+
+    <path name="hfp-sco usb-headset">
+        <ctl name="USB_AUDIO_RX Port Mixer SLIM_7_TX" value="1"/>
+        <ctl name="SLIMBUS_7_RX Audio Mixer MultiMedia6" value="1"/>
+        <ctl name="MultiMedia6 Mixer USB_AUDIO_TX" value="1"/>
+        <ctl name="USB_DL_HL Switch" value="1" />
+    </path>
+
+    <path name="hfp-sco-wb usb-headset">
+        <ctl name="BT SampleRate" value="KHZ_16" />
+        <path name="hfp-sco usb-headset" />
     </path>
 
     <path name="compress-voip-call">
@@ -2539,6 +2569,10 @@
         <ctl name="SpkrMono WSA_RDAC" value="Switch" />
     </path>
 
+    <path name="voice-speaker-hfp">
+        <path name="speaker" />
+    </path>
+
     <path name="speaker-mono">
         <path name="speaker" />
     </path>
@@ -2593,6 +2627,10 @@
 
     <path name="speaker-mic">
         <path name="dmic1" />
+    </path>
+
+    <path name="voice-speaker-mic-hfp">
+        <path name="speaker-mic" />
     </path>
 
     <path name="speaker-mic-liquid">
