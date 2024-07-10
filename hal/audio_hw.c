@@ -13024,23 +13024,49 @@ int platform_get_param(void *handle, platform_param_id_t param_id, void *data)
 exit_1:
     return rc;
 }
-int platform_set_params(const char *kvpairs)
+
+int platform_set_params(platform_param_id_t param_id, void *data)
 {
-    struct str_parms *parms;
-    struct audio_device *adev = platform_get_adev();
-    parms = str_parms_create_str(kvpairs);
-    if(!parms)
-    {
-        return -1;
+    int rc = 0;
+    if(data == NULL){
+        ALOGE("%s: data ptr is NULL", __func__);
+        rc = -EINVAL;
+        goto exit_2;
     }
+    struct audio_device *adev = platform_get_adev();
+    switch(param_id) {
+        case PARAM_ID_AUD_CNTRL_CONFIG:
+        case PARAM_ID_HFP_CONFIG:
+        {
+            struct str_parms *parms;
+            const char *kvpairs = (const char *)data;
+            parms = str_parms_create_str(kvpairs);
+            if(!parms)
+            {
+                ALOGE("%s: parms is NULL", __func__);
+                rc = -EINVAL;
+                break;
+            }
 
-    pthread_mutex_lock(&adev->lock);
-    platform_set_parameters(adev->platform, parms);
-    audio_extn_auto_hal_set_parameters(adev, parms);
-    str_parms_destroy(parms);
-    pthread_mutex_unlock(&adev->lock);
-
-    return 0;
+            pthread_mutex_lock(&adev->lock);
+            platform_set_parameters(adev->platform, parms);
+            audio_extn_auto_hal_set_parameters(adev, parms);
+            str_parms_destroy(parms);
+            pthread_mutex_unlock(&adev->lock);
+            break;
+        }
+        case PARAM_ID_GAIN_CONFIG:
+        {
+            struct audio_hw_device *dev = &adev->device;
+            struct audio_port_config *config = (struct audio_port_config *)data;
+            rc = adev_set_audio_port_config(dev,config);
+            break;
+        }
+        default:
+            ALOGE("%s: Invalid param ID: %d", __func__, param_id);
+    }
+exit_2:
+    return rc;
 }
 
 void platform_close_input_stream(void *handle){
