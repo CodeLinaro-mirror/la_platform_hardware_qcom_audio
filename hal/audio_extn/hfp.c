@@ -57,6 +57,8 @@ SPDX-License-Identifier: BSD-3-Clause-Clear */
 #define AUDIO_PARAMETER_HFP_VOL_MIXER_CTL "hfp_vol_mixer_ctl"
 #define AUDIO_PARAMETER_HFP_VALUE_MAX   128
 #define AUDIO_PARAMETER_HFP_FORCE_ROUTE_SPEAKER "hfp_route_spkr"
+#define AUDIO_PARAMETER_HFP_USB_HEADSET_ON "hfp_usb_hs_on"
+#define AUDIO_PARAMETER_HFP_SPEAKER_ON "hfp_spkr_on"
 
 #define AUDIO_PARAMETER_KEY_HFP_MIC_VOLUME "hfp_mic_volume"
 #define PLAYBACK_VOLUME_MAX 0x2000
@@ -127,6 +129,8 @@ static struct pcm_config pcm_config_hfp = {
 static bool route_spkr = false;
 static bool cache_usb_connect;
 static audio_devices_t  cache_usb_device;
+static bool hfp_spkr_on = true; //Default routing
+static bool hfp_usb_hs_on = false;
 
 //external feature dependency
 static fp_platform_set_mic_mute_t                   fp_platform_set_mic_mute;
@@ -329,12 +333,13 @@ static int32_t start_hfp(struct audio_device *adev,
     uc_info->in_snd_device = SND_DEVICE_NONE;
     uc_info->out_snd_device = SND_DEVICE_NONE;
 
-    if(cache_usb_connect) {
+    if(hfp_usb_hs_on && cache_usb_connect) {
        ALOGD("%s Use cached device selection, device: %#x", __func__, cache_usb_device);
        reassign_device_list(&uc_info->device_list, cache_usb_device, "");
        reassign_device_list(&uc_info->stream.out->device_list, cache_usb_device, "");
     }
-    if (route_spkr) {
+
+    if (hfp_spkr_on || route_spkr) {
         reassign_device_list(&uc_info->device_list, AUDIO_DEVICE_OUT_SPEAKER, "");
         reassign_device_list(&uc_info->stream.out->device_list, AUDIO_DEVICE_OUT_SPEAKER, "");
     }
@@ -688,21 +693,9 @@ void hfp_set_parameters(struct audio_device *adev, struct str_parms *parms)
         val = atoi(value);
         audio_devices_t device = (audio_devices_t) val;
         if (audio_is_usb_out_device(device)) {
-            if (!hfpmod.is_hfp_running) {
-                cache_usb_connect = true;
-                cache_usb_device = device;
-                ALOGD("%s Cache USB connected device: %#x", __func__, cache_usb_device);
-            } else {
-                uc_info = fp_get_usecase_from_list(adev, hfpmod.ucid);
-
-                if (uc_info != NULL) {
-                    ALOGD("%s HFP running, USB device connected. Switch device to %#x",
-                        __func__, val);
-                    reassign_device_list(&uc_info->device_list, val, "");
-                    reassign_device_list(&uc_info->stream.out->device_list, val, "");
-                    fp_select_devices(adev, hfpmod.ucid);
-                }
-            }
+            ALOGD("%s USB connected. Cache USB devce.", __func__);
+            cache_usb_connect = true;
+            cache_usb_device = device;
         }
     }
 
@@ -711,21 +704,55 @@ void hfp_set_parameters(struct audio_device *adev, struct str_parms *parms)
     if (ret >= 0) {
         val = atoi(value);
         audio_devices_t device = (audio_devices_t) val;
-        if (audio_is_usb_out_device(device)) {
+        if (audio_is_usb_out_device(device))
             cache_usb_connect = false;
-            ALOGD("%s usb disconnected.", __func__);
-            if (hfpmod.is_hfp_running) {
+    }
+
+    memset(value, 0, sizeof(value));
+    ret = str_parms_get_str(parms,AUDIO_PARAMETER_HFP_SPEAKER_ON, value,
+                            sizeof(value));
+    if (ret >= 0) {
+        val = atoi(value);
+        if (hfp_spkr_on && val) {
+            ALOGD("%s hfp_spkr_on is already true", __func__);
+            goto exit;
+        }
+
+        hfp_spkr_on = val;
+        if (hfp_spkr_on && hfpmod.is_hfp_running) {
+            uc_info = fp_get_usecase_from_list(adev, hfpmod.ucid);
+            if (uc_info != NULL) {
+                ALOGD("%s speaker on, switch device to speaker", __func__);
+                stop_hfp(adev);
+                reassign_device_list(&adev->primary_output->device_list, AUDIO_DEVICE_OUT_SPEAKER, "");
+                start_hfp(adev, parms);
+            }
+        }
+    }
+
+    memset(value, 0, sizeof(value));
+    ret = str_parms_get_str(parms,AUDIO_PARAMETER_HFP_USB_HEADSET_ON, value,
+                            sizeof(value));
+    if (ret >= 0) {
+        val = atoi(value);
+        if (hfp_usb_hs_on && val) {
+            ALOGD("%s hfp_usb_hs_on is already true", __func__);
+            goto exit;
+        }
+
+        hfp_usb_hs_on = val;
+        if (val) {
+            if (hfpmod.is_hfp_running && cache_usb_connect) {
                 uc_info = fp_get_usecase_from_list(adev, hfpmod.ucid);
                 if (uc_info != NULL) {
-                    ALOGD("%s HFP running, USB device disconnected. Switch device to speaker",
-                        __func__);
-                    reassign_device_list(&uc_info->device_list, AUDIO_DEVICE_OUT_SPEAKER, "");
-                    reassign_device_list(&uc_info->stream.out->device_list, AUDIO_DEVICE_OUT_SPEAKER, "");
-                    fp_select_devices(adev, hfpmod.ucid);
+                    ALOGD("%s USB device on, switch device to USB", __func__);
+                    stop_hfp(adev);
+                    start_hfp(adev, parms);
                 }
             }
         }
     }
+
 exit:
     ALOGV("%s Exit",__func__);
 }
