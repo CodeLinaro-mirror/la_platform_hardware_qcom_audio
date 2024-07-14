@@ -8329,7 +8329,8 @@ int adev_open_output_stream(struct audio_hw_device *dev,
 
     if (direct_dev &&
         (audio_is_linear_pcm(out->format) ||
-         config->format == AUDIO_FORMAT_DEFAULT)) {
+         config->format == AUDIO_FORMAT_DEFAULT) &&
+        out->flags == AUDIO_OUTPUT_FLAG_NONE) {
         audio_format_t req_format = config->format;
         audio_channel_mask_t req_channel_mask = config->channel_mask;
         uint32_t req_sample_rate = config->sample_rate;
@@ -11075,6 +11076,16 @@ static int period_size_is_plausible_for_low_latency(int period_size)
     default:
         return 0;
     }
+}
+
+card_status_t snd_card_status()
+{
+    card_status_t card_status = CARD_STATUS_ONLINE;
+    pthread_mutex_lock(&adev->lock);
+    card_status = adev->card_status;
+    pthread_mutex_unlock(&adev->lock);
+    ALOGD("%s: card_status %d:",__func__,card_status);
+    return card_status;
 }
 
 static void adev_snd_mon_cb(void *cookie, struct str_parms *parms)
