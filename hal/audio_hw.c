@@ -3771,12 +3771,26 @@ int start_output_stream(struct stream_out *out)
             goto error_open;
         }
 
+        ret = pcm_prepare(out->pcm);
+        if (ret < 0) {
+            ALOGE("%s: pcm_prepare returned %d", __func__, ret);
+            pcm_close(out->pcm);
+            out->pcm = NULL;
+        }
+
+        ret = pcm_mmap_commit(out->pcm, 0, MMAP_PERIOD_SIZE);
+        if (ret < 0) {
+            ALOGE("%s: MMAP pcm_mmap_commit failed ret %d", __func__, ret);
+            goto error_open;
+        }
+
         out_set_mmap_volume(&out->stream, out->volume_l, out->volume_r);
         ret = pcm_start(out->pcm);
         if (ret < 0) {
             ALOGE("%s: MMAP pcm_start failed ret %d", __func__, ret);
             goto error_open;
         }
+
     } else if (!is_offload_usecase(out->usecase)) {
         unsigned int flags = PCM_OUT;
         unsigned int pcm_open_retry_count = 0;
@@ -6529,6 +6543,19 @@ static int out_get_mmap_position(const struct audio_stream_out *stream,
     return 0;
 }
 
+int platform_out_get_mmap_position(void* handle,int64_t *frames, int64_t *ts){
+    int res = 0;
+    usecase_info_t *uc_info = (usecase_info_t *)handle;
+    struct stream_out *out = uc_info->stream.out;
+    if(out->usecase!=USECASE_AUDIO_PLAYBACK_MMAP)
+        return 0;
+    struct audio_mmap_position _mmap_position;
+
+    res = out_get_mmap_position(out,&_mmap_position);
+    *frames = (int64_t)_mmap_position.position_frames;
+    *ts = (int64_t)_mmap_position.time_nanoseconds;
+    return res;
+}
 
 /** audio_stream_in implementation **/
 static uint32_t in_get_sample_rate(const struct audio_stream *stream);
@@ -7388,6 +7415,20 @@ static int in_get_mmap_position(const struct audio_stream_in *stream,
             + in->mmap_time_offset_nanos;
     pthread_mutex_unlock(&in->lock);
     return 0;
+}
+
+int platform_in_get_mmap_position(void* handle,int64_t *frames, int64_t *ts){
+    int res = 0;
+    usecase_info_t *uc_info = (usecase_info_t *)handle;
+    struct stream_in *in = uc_info->stream.in;
+    if(in->usecase!=USECASE_AUDIO_RECORD_MMAP)
+        return 0;
+    struct audio_mmap_position _mmap_position;
+
+    res = in_get_mmap_position(in,&_mmap_position);
+    *frames = (int64_t)_mmap_position.position_frames;
+    *ts = (int64_t)_mmap_position.time_nanoseconds;
+    return res;
 }
 
 static int in_get_active_microphones(const struct audio_stream_in *stream,
@@ -12939,16 +12980,24 @@ int platform_stream_read(void *handle, void* dataPtr, size_t frameCount)
 {
     int ret = 0;
     usecase_info_t *uc_info = (usecase_info_t *)handle;
-    ret = in_read(uc_info->stream.in, (uint8_t*)dataPtr,
-                        frameCount*audio_stream_in_frame_size(uc_info->stream.in));
+    struct stream_in *in = uc_info->stream.in;
+
+    if(in->usecase == USECASE_AUDIO_RECORD_MMAP)
+        in_start(in);
+    else
+        ret = in_read(uc_info->stream.in, (uint8_t*)dataPtr,
+                            frameCount*audio_stream_in_frame_size(uc_info->stream.in));
     return ret;
 }
 
 int platform_stream_write(void *handle, void* dataPtr, size_t frameCount)
 {
     usecase_info_t *uc_info = (usecase_info_t *)handle;
-    out_write(uc_info->stream.out, (uint8_t*)dataPtr,
-                    frameCount*audio_stream_out_frame_size(uc_info->stream.out));
+    struct stream_out *out = uc_info->stream.out;
+    if(out->usecase == USECASE_AUDIO_PLAYBACK_MMAP)
+        out_start(out);
+    else
+        out_write(out, (uint8_t*)dataPtr, frameCount*audio_stream_out_frame_size(out));
     return 0;
 }
 
@@ -13075,4 +13124,47 @@ void platform_close_input_stream(void *handle){
     struct stream_in *in = uc_info->stream.in;
     struct audio_device *dev = platform_get_adev();
     adev_close_input_stream(dev,in);
+}
+
+
+int platform_configure_mmap_playback(void *handle, int32_t* fd, int64_t* burstSizeFrames,
+                                                 int32_t* flags, int32_t* bufferSizeFrames){
+    if(!handle){
+        ALOGE("%s: null handle", __func__);
+        return -1;
+    }
+    struct audio_mmap_buffer_info info;
+    usecase_info_t *uc_info_new = (usecase_info_t *)(handle);
+    struct stream_out* out = uc_info_new->stream.out;
+    int _ret = out->stream.create_mmap_buffer(out,1,&info);
+    *flags = info.flags;
+    *bufferSizeFrames = info.buffer_size_frames;
+    *fd = info.shared_memory_fd;
+    *burstSizeFrames = info.burst_size_frames;
+    return _ret;
+}
+
+int platform_configure_mmap_record(void *handle, int32_t* fd, int64_t* burstSizeFrames,
+                            int32_t* flags, int32_t* bufferSizeFrames){
+    if(!handle){
+        ALOGE("%s: null handle", __func__);
+        return -1;
+    }
+    struct audio_mmap_buffer_info info;
+    usecase_info_t *uc_info_new = (usecase_info_t *)(handle);
+    struct stream_in* in = uc_info_new->stream.in;
+    int _ret = in->stream.create_mmap_buffer(in,1,&info);
+    *flags = info.flags;
+    *bufferSizeFrames = info.buffer_size_frames;
+    *fd = info.shared_memory_fd;
+    *burstSizeFrames = info.burst_size_frames;
+    return _ret;
+}
+
+void platform_close_output_stream(void *handle){
+    ALOGD("%s: closing output stream", __func__);
+    usecase_info_t *uc_info = (usecase_info_t *)handle;
+    struct stream_out *out = uc_info->stream.out;
+    struct audio_device *dev = platform_get_adev();
+    adev_close_output_stream(dev,out);
 }
