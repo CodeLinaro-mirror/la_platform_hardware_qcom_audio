@@ -34,7 +34,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * Copyright (c) 2022-2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2022-2023, 2024 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted (subject to the limitations in the disclaimer
@@ -8554,6 +8554,7 @@ int adev_open_output_stream(struct audio_hw_device *dev,
     out->flags = flags;
     list_init(&out->device_list);
     update_device_list(&out->device_list, devices, address, true /* add devices */);
+    out->devices = devices;
     out->dev = adev;
     out->hal_op_format = out->hal_ip_format = format = out->format = config->format;
     out->sample_rate = config->sample_rate;

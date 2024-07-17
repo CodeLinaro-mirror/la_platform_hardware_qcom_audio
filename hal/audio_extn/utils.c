@@ -17,7 +17,7 @@
  * limitations under the License.
  *
  * Changes from Qualcomm Innovation Center are provided under the following license:
- * Copyright (c) 2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2023, 2024 Qualcomm Innovation Center, Inc. All rights reserved.
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
@@ -3261,7 +3261,8 @@ exit:
     return ret;
 }
 #else
-int audio_extn_utils_set_external_sink_latency(struct stream_out *out __unused)
+int audio_extn_utils_set_external_sink_latency(struct stream_out *out __unused,
+			struct audio_out_external_sink_latency_param *latency_param __unused)
 {
     ALOGD("%s:: configuring external sink latency not supported", __func__);
     return 0;
