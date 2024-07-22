@@ -1148,12 +1148,13 @@ exit:
             if (handle.cancel_spkr_calib)
                 pthread_cond_signal(&handle.spkr_calibcancel_ack);
             handle.cancel_spkr_calib = 0;
-            pthread_mutex_unlock(&handle.spkr_calib_cancelack_mutex);
-            pthread_mutex_unlock(&handle.mutex_spkr_prot);
         }
     }
     if (acquire_device)
         pthread_mutex_lock(&adev->lock);
+
+    pthread_mutex_unlock(&handle.spkr_calib_cancelack_mutex);
+    pthread_mutex_unlock(&handle.mutex_spkr_prot);
     return status.status;
 }
 
