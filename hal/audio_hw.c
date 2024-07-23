@@ -10624,7 +10624,7 @@ int adev_open(const hw_module_t *module,hw_device_t **device,struct audio_device
     }
 
     audio_extn_auto_hal_init(adev);
-    adev->ext_hw_plugin = NULL;//audio_extn_ext_hw_plugin_init(adev);
+    adev->ext_hw_plugin = audio_extn_ext_hw_plugin_init(adev);
 
     if (access(VISUALIZER_LIBRARY_PATH, R_OK) == 0) {
         adev->visualizer_lib = dlopen(VISUALIZER_LIBRARY_PATH, RTLD_NOW);
