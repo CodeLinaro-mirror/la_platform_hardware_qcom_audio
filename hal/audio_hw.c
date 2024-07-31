@@ -12181,7 +12181,8 @@ static ssize_t in_read_1(struct stream_in *stream, void *buffer,
             if (ret < 0)
                 ALOGE("********* pcm_read returned %d %d", ret, EIO);
             if (-EIO == ret) {
-                ALOGD("%s: read failed status %d aravind EIO Error bytes_read = %d - exit & retry", __func__, bytes_read, ret);
+                ALOGD("%s: read failed status %d IO Error bytes_read = %d - exit & retry",
+                    __func__, bytes_read, ret);
                 bytes_read = ret;
             } /* data from DSP comes in 24_8 format, convert it to 8_24 */
             else if (!ret && bytes > 0 && (in->format == AUDIO_FORMAT_PCM_8_24_BIT)) {
@@ -13025,6 +13026,41 @@ exit_1:
     return rc;
 }
 
+static void platform_status_monitor(struct audio_device *adev, struct str_parms *parms)
+{
+    char value[32];
+    struct listnode *node;
+    int ret;
+
+    ALOGV("%s: enter: ", __func__);
+
+    if ((!parms) || (!adev)) {
+        goto error;
+    }
+
+    /* notify adev and input/output streams on the snd card status */
+    adev_snd_mon_cb((void *)adev, parms);
+
+    ret = str_parms_get_str(parms, "SND_CARD_STATUS", value, sizeof(value));
+    if (ret >= 0) {
+        list_for_each(node, &adev->active_outputs_list) {
+            streams_output_ctxt_t *out_ctxt = node_to_item(node,
+                                                streams_output_ctxt_t,
+                                                list);
+            out_snd_mon_cb((void *)out_ctxt->output, parms);
+        }
+
+        list_for_each(node, &adev->active_inputs_list) {
+            streams_input_ctxt_t *in_ctxt = node_to_item(node,
+                                                streams_input_ctxt_t,
+                                                list);
+            in_snd_mon_cb((void *)in_ctxt->input, parms);
+        }
+    }
+error:
+    return;
+}
+
 int platform_set_params(platform_param_id_t param_id, void *data)
 {
     int rc = 0;
@@ -13048,6 +13084,7 @@ int platform_set_params(platform_param_id_t param_id, void *data)
                 break;
             }
 
+            platform_status_monitor(adev, parms);
             pthread_mutex_lock(&adev->lock);
             platform_set_parameters(adev->platform, parms);
             audio_extn_auto_hal_set_parameters(adev, parms);
