@@ -209,8 +209,11 @@ LOCAL_C_INCLUDES := \
     system/media/audio_utils/include \
     $(call include-path-for, audio-route) \
     $(call include-path-for, audio-effects) \
-    $(TARGET_OUT_HEADERS)/mm-audio/surround_sound_3mic/ \
     $(TARGET_OUT_HEADERS)/common/inc/
+
+ifeq ($(TARGET_BOARD_AUTO),true)
+LOCAL_HEADER_LIBRARIES += libsurround_3mic_proc_headers
+endif
 
 ifeq ($(ENABLE_AUDIO_LEGACY_TECHPACK),true)
 LOCAL_HEADER_LIBRARIES += qti_legacy_audio_kernel_uapi
