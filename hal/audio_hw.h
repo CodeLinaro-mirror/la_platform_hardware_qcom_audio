@@ -1073,6 +1073,10 @@ typedef struct platform_elite_api
     int (*platform_in_get_mmap_position)(void* handle,int64_t *frames, int64_t *ts);
     void (*platform_close_output_stream)(void *handle);
     void (*platform_close_input_stream)(void *handle);
+    int (*platform_out_get_latency)(int flags,audio_format_t format, uint ch_mask,
+        uint sample_rate);
+    int (*platform_in_get_latency)(int flags,audio_format_t format, uint ch_mask,
+        uint sample_rate, bool is_low_latency);
 } platform_elite_api_t;
 
 extern platform_elite_api_t platform_elite_apis;

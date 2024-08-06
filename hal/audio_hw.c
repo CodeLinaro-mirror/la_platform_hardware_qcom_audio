@@ -75,6 +75,7 @@
 #include <audio_effects/effect_ns.h>
 #include <audio_utils/format.h>
 #include "audio_hw.h"
+#include "auto_hal.h"
 #include "audio_perf.h"
 #include "platform_api.h"
 #include <platform.h>
@@ -134,6 +135,15 @@
 #define DEFAULT_VOIP_BUF_DURATION_MS 20
 #define DEFAULT_VOIP_BIT_DEPTH_BYTE sizeof(int16_t)
 #define DEFAULT_VOIP_SAMP_RATE 48000
+
+//review if these are needed here
+//delay in ms
+#define DEEP_BUFFER_PLATFORM_DELAY (29)
+#define PCM_OFFLOAD_PLATFORM_DELAY (30)
+#define LOW_LATENCY_PLATFORM_DELAY (13)
+#define ULL_PLATFORM_DELAY         (3)
+#define MMAP_PLATFORM_DELAY        (3)
+
 
 #define VOIP_IO_BUF_SIZE(SR, DURATION_MS, BIT_DEPTH) (SR)/1000 * DURATION_MS * BIT_DEPTH
 
@@ -13126,7 +13136,6 @@ void platform_close_input_stream(void *handle){
     adev_close_input_stream(dev,in);
 }
 
-
 int platform_configure_mmap_playback(void *handle, int32_t* fd, int64_t* burstSizeFrames,
                                                  int32_t* flags, int32_t* bufferSizeFrames){
     if(!handle){
@@ -13167,4 +13176,87 @@ void platform_close_output_stream(void *handle){
     struct stream_out *out = uc_info->stream.out;
     struct audio_device *dev = platform_get_adev();
     adev_close_output_stream(dev,out);
+}
+
+int32_t platform_out_get_latency(int32_t flags,audio_format_t format, uint32_t ch_mask,
+        uint32_t sample_rate)
+{
+    struct pcm_config config = {.period_count = 0,
+                                .period_size = 0,
+                                .rate = 0 };
+    int32_t platform_latency = 0;
+    if (!flags || flags & AUDIO_OUTPUT_FLAG_PRIMARY
+                || flags & AUDIO_OUTPUT_FLAG_DIRECT
+                 || flags & AUDIO_OUTPUT_FLAG_DEEP_BUFFER){
+        config =  pcm_config_deep_buffer;
+        config.period_size = get_output_period_size(sample_rate, format,
+            audio_channel_count_from_out_mask(ch_mask), DEEP_BUFFER_OUTPUT_PERIOD_DURATION);
+        //platform_latency = DEEP_BUFFER_PLATFORM_DELAY;
+    }
+    else if(flags & AUDIO_OUTPUT_FLAG_FAST){
+        config = pcm_config_low_latency;
+        //platform_latency = LOW_LATENCY_PLATFORM_DELAY;
+        switch(sample_rate){
+            case 48000:
+                config=pcm_config_system_48KHz;
+                break;
+            case 32000:
+                config=pcm_config_system_32KHz;
+                break;
+            case 24000:
+                config=pcm_config_system_24KHz;
+                break;
+            case 16000:
+                config=pcm_config_system_16KHz;
+                break;
+            case 8000:
+                config=pcm_config_system_8KHz;
+                break;
+            default:
+                config=pcm_config_system_48KHz;
+        }
+    }
+    else if(flags & AUDIO_OUTPUT_FLAG_MMAP_NOIRQ)
+        config = pcm_config_mmap_playback;
+
+    return config.rate ? platform_latency +
+        ((config.period_size*1000)/config.rate) : 0;
+}
+
+int32_t platform_in_get_latency(int32_t flags, audio_format_t format, uint32_t ch_mask,
+        uint32_t sample_rate, bool is_low_latency)
+{
+    struct pcm_config config = {.period_count = 0,
+                                .period_size = 0,
+                                .rate = 0 };
+
+    int32_t platform_latency = 0, frame_size = 0, buffer_size = 0;
+
+    if (flags & AUDIO_INPUT_FLAG_FAST || flags & AUDIO_INPUT_FLAG_RAW){
+            config = pcm_config_audio_capture_dis;
+            config.rate = sample_rate;
+
+            size_t chan_samp_sz = 0, frame_size = 0, buffer_size = 0;
+            if (audio_has_proportional_frames(format)) {
+                chan_samp_sz = audio_bytes_per_sample(format);
+                frame_size =  audio_channel_count_from_in_mask(ch_mask) * chan_samp_sz;
+                ALOGE("AG: %s, frame_size is %d and audio_bytes_per_sample is %d",
+                                                __func__, frame_size, chan_samp_sz);
+            }
+            else
+                frame_size = sizeof(int8_t);
+            buffer_size = get_input_buffer_size(sample_rate, format,
+                    audio_channel_count_from_in_mask(ch_mask), is_low_latency);
+            /* prevent division-by-zero */
+            if (frame_size == 0) {
+                ALOGE("%s: Error frame_size==0", __func__);
+                return 0;
+            }
+            config.period_size = buffer_size / frame_size;
+    }
+    else if(flags & AUDIO_INPUT_FLAG_MMAP_NOIRQ)
+        config = pcm_config_mmap_capture;
+
+    return config.rate ? platform_latency +
+        ((config.period_size*1000)/config.rate) : 0;
 }
