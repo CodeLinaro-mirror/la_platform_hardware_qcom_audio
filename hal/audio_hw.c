@@ -10579,7 +10579,6 @@ int adev_open(const hw_module_t *module,hw_device_t **device,struct audio_device
     adev->device.set_parameters = adev_set_parameters;
     adev->device.get_parameters = adev_get_parameters;
     adev->device.get_input_buffer_size = adev_get_input_buffer_size;
-    adev->device.open_output_stream = adev_open_output_stream;
     adev->device.close_output_stream = adev_close_output_stream;
     adev->device.open_input_stream = adev_open_input_stream;
     adev->device.close_input_stream = adev_close_input_stream;
@@ -10659,7 +10658,6 @@ int adev_open(const hw_module_t *module,hw_device_t **device,struct audio_device
             ALOGE("%s: Failed to init platform data, aborting.", __func__);
             goto adev_open_err;
         }
-        adev->device.open_output_stream = audio_extn_qap_open_output_stream;
         adev->device.close_output_stream = audio_extn_qap_close_output_stream;
     }
 
@@ -10670,7 +10668,6 @@ int adev_open(const hw_module_t *module,hw_device_t **device,struct audio_device
             goto adev_open_err;
         }
 
-        adev->device.open_output_stream = audio_extn_qaf_open_output_stream;
         adev->device.close_output_stream = audio_extn_qaf_close_output_stream;
     }
 
@@ -10879,7 +10876,6 @@ adev_open_err:
 }
 
 static struct hw_module_methods_t hal_module_methods = {
-    .open = adev_open,
 };
 
 struct audio_module HAL_MODULE_INFO_SYM = {
