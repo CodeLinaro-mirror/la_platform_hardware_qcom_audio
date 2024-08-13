@@ -1005,16 +1005,16 @@ static inline audio_format_t pcm_format_to_audio_format(const enum pcm_format fo
 
 typedef struct platform_stream
 {
-	unsigned int sample_rate;
-	audio_channel_mask_t channel_mask;
-	audio_format_t format;
-	audio_output_flags_t out_flags;
-	audio_input_flags_t in_flags;
-	audio_source_t source;
-	const char *bus_address;
-	audio_devices_t device_type;
-	int32_t iohandle;
-	int32_t type;
+    unsigned int sample_rate;
+    audio_channel_mask_t channel_mask;
+    audio_format_t format;
+    audio_output_flags_t out_flags;
+    audio_input_flags_t in_flags;
+    audio_source_t source;
+    const char *bus_address;
+    audio_devices_t device_type;
+    int32_t iohandle;
+    int32_t type;
 }platform_stream_t;
 
 typedef enum platform_param_id
@@ -1039,6 +1039,16 @@ size_t platform_in_framesize(audio_format_t format, uint32_t ch_mask,
         uint32_t sample_rate);
 int platform_get_param(void *handle, platform_param_id_t param_id, void *data);
 int platform_set_params(platform_param_id_t param_id, void *data);
+int platform_configure_mmap_playback(void *handle,int32_t* fd, int64_t* burstSizeFrames,
+                                                    int32_t* flags, int32_t* bufferSizeFrames);
+int platform_out_get_mmap_position(void* handle,int64_t *frames, int64_t *ts);
+
+int platform_configure_mmap_record(void *handle,int32_t* fd, int64_t* burstSizeFrames,
+                                                    int32_t* flags, int32_t* bufferSizeFrames);
+int platform_in_get_mmap_position(void* handle,int64_t *frames, int64_t *ts);
+
+
+void platform_close_output_stream(void *handle);
 void platform_close_input_stream(void *handle);
 
 typedef struct platform_elite_api
@@ -1055,7 +1065,18 @@ typedef struct platform_elite_api
             uint32_t sample_rate);
     int (*platform_get_param)(void *handle, platform_param_id_t param_id, void *data);
     int (*platform_set_params)(platform_param_id_t param_id, void *data);
+    int (*platform_configure_mmap_playback)(void *handle, int32_t* fd,
+            int64_t* burstSizeFrames, int32_t* flags, int32_t* bufferSizeFrames);
+    int (*platform_out_get_mmap_position)(void* handle,int64_t *frames, int64_t *ts);
+    int (*platform_configure_mmap_record)(void *handle, int32_t* fd, int64_t* burstSizeFrames,
+            int32_t* flags, int32_t* bufferSizeFrames);
+    int (*platform_in_get_mmap_position)(void* handle,int64_t *frames, int64_t *ts);
+    void (*platform_close_output_stream)(void *handle);
     void (*platform_close_input_stream)(void *handle);
+    int (*platform_out_get_latency)(int flags,audio_format_t format, uint ch_mask,
+        uint sample_rate);
+    int (*platform_in_get_latency)(int flags,audio_format_t format, uint ch_mask,
+        uint sample_rate, bool is_low_latency);
 } platform_elite_api_t;
 
 extern platform_elite_api_t platform_elite_apis;

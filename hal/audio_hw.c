@@ -75,6 +75,7 @@
 #include <audio_effects/effect_ns.h>
 #include <audio_utils/format.h>
 #include "audio_hw.h"
+#include "auto_hal.h"
 #include "audio_perf.h"
 #include "platform_api.h"
 #include <platform.h>
@@ -134,6 +135,15 @@
 #define DEFAULT_VOIP_BUF_DURATION_MS 20
 #define DEFAULT_VOIP_BIT_DEPTH_BYTE sizeof(int16_t)
 #define DEFAULT_VOIP_SAMP_RATE 48000
+
+//review if these are needed here
+//delay in ms
+#define DEEP_BUFFER_PLATFORM_DELAY (29)
+#define PCM_OFFLOAD_PLATFORM_DELAY (30)
+#define LOW_LATENCY_PLATFORM_DELAY (13)
+#define ULL_PLATFORM_DELAY         (3)
+#define MMAP_PLATFORM_DELAY        (3)
+
 
 #define VOIP_IO_BUF_SIZE(SR, DURATION_MS, BIT_DEPTH) (SR)/1000 * DURATION_MS * BIT_DEPTH
 
@@ -3771,12 +3781,26 @@ int start_output_stream(struct stream_out *out)
             goto error_open;
         }
 
+        ret = pcm_prepare(out->pcm);
+        if (ret < 0) {
+            ALOGE("%s: pcm_prepare returned %d", __func__, ret);
+            pcm_close(out->pcm);
+            out->pcm = NULL;
+        }
+
+        ret = pcm_mmap_commit(out->pcm, 0, MMAP_PERIOD_SIZE);
+        if (ret < 0) {
+            ALOGE("%s: MMAP pcm_mmap_commit failed ret %d", __func__, ret);
+            goto error_open;
+        }
+
         out_set_mmap_volume(&out->stream, out->volume_l, out->volume_r);
         ret = pcm_start(out->pcm);
         if (ret < 0) {
             ALOGE("%s: MMAP pcm_start failed ret %d", __func__, ret);
             goto error_open;
         }
+
     } else if (!is_offload_usecase(out->usecase)) {
         unsigned int flags = PCM_OUT;
         unsigned int pcm_open_retry_count = 0;
@@ -6529,6 +6553,19 @@ static int out_get_mmap_position(const struct audio_stream_out *stream,
     return 0;
 }
 
+int platform_out_get_mmap_position(void* handle,int64_t *frames, int64_t *ts){
+    int res = 0;
+    usecase_info_t *uc_info = (usecase_info_t *)handle;
+    struct stream_out *out = uc_info->stream.out;
+    if(out->usecase!=USECASE_AUDIO_PLAYBACK_MMAP)
+        return 0;
+    struct audio_mmap_position _mmap_position;
+
+    res = out_get_mmap_position(out,&_mmap_position);
+    *frames = (int64_t)_mmap_position.position_frames;
+    *ts = (int64_t)_mmap_position.time_nanoseconds;
+    return res;
+}
 
 /** audio_stream_in implementation **/
 static uint32_t in_get_sample_rate(const struct audio_stream *stream);
@@ -7388,6 +7425,20 @@ static int in_get_mmap_position(const struct audio_stream_in *stream,
             + in->mmap_time_offset_nanos;
     pthread_mutex_unlock(&in->lock);
     return 0;
+}
+
+int platform_in_get_mmap_position(void* handle,int64_t *frames, int64_t *ts){
+    int res = 0;
+    usecase_info_t *uc_info = (usecase_info_t *)handle;
+    struct stream_in *in = uc_info->stream.in;
+    if(in->usecase!=USECASE_AUDIO_RECORD_MMAP)
+        return 0;
+    struct audio_mmap_position _mmap_position;
+
+    res = in_get_mmap_position(in,&_mmap_position);
+    *frames = (int64_t)_mmap_position.position_frames;
+    *ts = (int64_t)_mmap_position.time_nanoseconds;
+    return res;
 }
 
 static int in_get_active_microphones(const struct audio_stream_in *stream,
@@ -12940,16 +12991,24 @@ int platform_stream_read(void *handle, void* dataPtr, size_t frameCount)
 {
     int ret = 0;
     usecase_info_t *uc_info = (usecase_info_t *)handle;
-    ret = in_read(uc_info->stream.in, (uint8_t*)dataPtr,
-                        frameCount*audio_stream_in_frame_size(uc_info->stream.in));
+    struct stream_in *in = uc_info->stream.in;
+
+    if(in->usecase == USECASE_AUDIO_RECORD_MMAP)
+        in_start(in);
+    else
+        ret = in_read(uc_info->stream.in, (uint8_t*)dataPtr,
+                            frameCount*audio_stream_in_frame_size(uc_info->stream.in));
     return ret;
 }
 
 int platform_stream_write(void *handle, void* dataPtr, size_t frameCount)
 {
     usecase_info_t *uc_info = (usecase_info_t *)handle;
-    out_write(uc_info->stream.out, (uint8_t*)dataPtr,
-                    frameCount*audio_stream_out_frame_size(uc_info->stream.out));
+    struct stream_out *out = uc_info->stream.out;
+    if(out->usecase == USECASE_AUDIO_PLAYBACK_MMAP)
+        out_start(out);
+    else
+        out_write(out, (uint8_t*)dataPtr, frameCount*audio_stream_out_frame_size(out));
     return 0;
 }
 
@@ -13112,4 +13171,129 @@ void platform_close_input_stream(void *handle){
     struct stream_in *in = uc_info->stream.in;
     struct audio_device *dev = platform_get_adev();
     adev_close_input_stream(dev,in);
+}
+
+int platform_configure_mmap_playback(void *handle, int32_t* fd, int64_t* burstSizeFrames,
+                                                 int32_t* flags, int32_t* bufferSizeFrames){
+    if(!handle){
+        ALOGE("%s: null handle", __func__);
+        return -1;
+    }
+    struct audio_mmap_buffer_info info;
+    usecase_info_t *uc_info_new = (usecase_info_t *)(handle);
+    struct stream_out* out = uc_info_new->stream.out;
+    int _ret = out->stream.create_mmap_buffer(out,1,&info);
+    *flags = info.flags;
+    *bufferSizeFrames = info.buffer_size_frames;
+    *fd = info.shared_memory_fd;
+    *burstSizeFrames = info.burst_size_frames;
+    return _ret;
+}
+
+int platform_configure_mmap_record(void *handle, int32_t* fd, int64_t* burstSizeFrames,
+                            int32_t* flags, int32_t* bufferSizeFrames){
+    if(!handle){
+        ALOGE("%s: null handle", __func__);
+        return -1;
+    }
+    struct audio_mmap_buffer_info info;
+    usecase_info_t *uc_info_new = (usecase_info_t *)(handle);
+    struct stream_in* in = uc_info_new->stream.in;
+    int _ret = in->stream.create_mmap_buffer(in,1,&info);
+    *flags = info.flags;
+    *bufferSizeFrames = info.buffer_size_frames;
+    *fd = info.shared_memory_fd;
+    *burstSizeFrames = info.burst_size_frames;
+    return _ret;
+}
+
+void platform_close_output_stream(void *handle){
+    ALOGD("%s: closing output stream", __func__);
+    usecase_info_t *uc_info = (usecase_info_t *)handle;
+    struct stream_out *out = uc_info->stream.out;
+    struct audio_device *dev = platform_get_adev();
+    adev_close_output_stream(dev,out);
+}
+
+int32_t platform_out_get_latency(int32_t flags,audio_format_t format, uint32_t ch_mask,
+        uint32_t sample_rate)
+{
+    struct pcm_config config = {.period_count = 0,
+                                .period_size = 0,
+                                .rate = 0 };
+    int32_t platform_latency = 0;
+    if (!flags || flags & AUDIO_OUTPUT_FLAG_PRIMARY
+                || flags & AUDIO_OUTPUT_FLAG_DIRECT
+                 || flags & AUDIO_OUTPUT_FLAG_DEEP_BUFFER){
+        config =  pcm_config_deep_buffer;
+        config.period_size = get_output_period_size(sample_rate, format,
+            audio_channel_count_from_out_mask(ch_mask), DEEP_BUFFER_OUTPUT_PERIOD_DURATION);
+        //platform_latency = DEEP_BUFFER_PLATFORM_DELAY;
+    }
+    else if(flags & AUDIO_OUTPUT_FLAG_FAST){
+        config = pcm_config_low_latency;
+        //platform_latency = LOW_LATENCY_PLATFORM_DELAY;
+        switch(sample_rate){
+            case 48000:
+                config=pcm_config_system_48KHz;
+                break;
+            case 32000:
+                config=pcm_config_system_32KHz;
+                break;
+            case 24000:
+                config=pcm_config_system_24KHz;
+                break;
+            case 16000:
+                config=pcm_config_system_16KHz;
+                break;
+            case 8000:
+                config=pcm_config_system_8KHz;
+                break;
+            default:
+                config=pcm_config_system_48KHz;
+        }
+    }
+    else if(flags & AUDIO_OUTPUT_FLAG_MMAP_NOIRQ)
+        config = pcm_config_mmap_playback;
+
+    return config.rate ? platform_latency +
+        ((config.period_size*1000)/config.rate) : 0;
+}
+
+int32_t platform_in_get_latency(int32_t flags, audio_format_t format, uint32_t ch_mask,
+        uint32_t sample_rate, bool is_low_latency)
+{
+    struct pcm_config config = {.period_count = 0,
+                                .period_size = 0,
+                                .rate = 0 };
+
+    int32_t platform_latency = 0, frame_size = 0, buffer_size = 0;
+
+    if (flags & AUDIO_INPUT_FLAG_FAST || flags & AUDIO_INPUT_FLAG_RAW){
+            config = pcm_config_audio_capture_dis;
+            config.rate = sample_rate;
+
+            size_t chan_samp_sz = 0, frame_size = 0, buffer_size = 0;
+            if (audio_has_proportional_frames(format)) {
+                chan_samp_sz = audio_bytes_per_sample(format);
+                frame_size =  audio_channel_count_from_in_mask(ch_mask) * chan_samp_sz;
+                ALOGE("AG: %s, frame_size is %d and audio_bytes_per_sample is %d",
+                                                __func__, frame_size, chan_samp_sz);
+            }
+            else
+                frame_size = sizeof(int8_t);
+            buffer_size = get_input_buffer_size(sample_rate, format,
+                    audio_channel_count_from_in_mask(ch_mask), is_low_latency);
+            /* prevent division-by-zero */
+            if (frame_size == 0) {
+                ALOGE("%s: Error frame_size==0", __func__);
+                return 0;
+            }
+            config.period_size = buffer_size / frame_size;
+    }
+    else if(flags & AUDIO_INPUT_FLAG_MMAP_NOIRQ)
+        config = pcm_config_mmap_capture;
+
+    return config.rate ? platform_latency +
+        ((config.period_size*1000)/config.rate) : 0;
 }
