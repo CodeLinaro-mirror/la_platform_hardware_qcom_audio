@@ -8537,6 +8537,9 @@ void in_set_power_policy(uint8_t enable)
 {
     struct listnode *node;
     struct audio_device *adev = platform_get_adev();
+
+    if (!adev)
+        return;
     ALOGD("%s: Enter, state %d", __func__, enable);
 
     pthread_mutex_lock(&adev->lock);
@@ -8560,6 +8563,9 @@ void out_set_power_policy(uint8_t enable)
 {
     struct listnode *node;
     struct audio_device *adev = platform_get_adev();
+
+    if (!adev)
+        return;
     ALOGD("%s: Enter, state %d", __func__, enable);
 
     pthread_mutex_lock(&adev->lock);
@@ -11402,8 +11408,10 @@ int aidl_enable_snd_device(struct audio_device *adev,
         return -EINVAL;
     }
 
-    if (!adev)
+    if (!adev) {
         ALOGE("%s; adev is NULL", __func__);
+        return -EINVAL;
+    }
 
     ALOGD("Entered %s with snd_device %d", __func__, (int)snd_device);
     if (platform_get_snd_device_name_extn(adev->platform, snd_device, device_name) < 0) {
@@ -12472,16 +12480,19 @@ exit:
 static int platform_stop_output_stream(usecase_info_t *uc_info)
 {
     int ret = 0;
-    struct stream_out *out = (struct stream_out *)uc_info->stream.out;
-    struct audio_device *adev = out->dev;
+    struct stream_out *out;
+    struct audio_device *adev;
+
+    if (uc_info == NULL) {
+        ALOGE("%s: Could not find usecase in the list", __func__);
+        return -EINVAL;
+    }
+
+    out = (struct stream_out *)uc_info->stream.out;
+    adev = out->dev;
 
     ALOGD("%s: enter: usecase(%d: %s)", __func__,
           out->usecase, use_case_table[out->usecase]);
-    if (uc_info == NULL) {
-        ALOGE("%s: Could not find the usecase (%d) in the list",
-              __func__, out->usecase);
-        return -EINVAL;
-    }
 
     out->a2dp_muted = false;
 
@@ -12652,7 +12663,10 @@ int platform_start_input_stream(usecase_info_t *uc_info)
                                  adev->perf_lock_opts_size);
 
     priority_in = get_priority_input_1(uc_info);
-    if(uc_info->stream_type == 0)
+    if (!priority_in)
+        ALOGV("%s Could not find a priority input", __func__);
+
+    if(uc_info->stream_type == 0 && priority_in)
         in_snd_device = audio_extn_auto_hal_get_snd_device_for_car_audio_stream(priority_in->car_audio_stream);
     else
         in_snd_device = SND_DEVICE_IN_HANDSET_MIC;
@@ -12796,6 +12810,9 @@ int platform_start_output_stream(usecase_info_t *uc_info)
     struct stream_out *out = uc_info->stream.out;
     struct audio_device *adev = platform_get_adev();
 
+    if (!adev)
+        return -EINVAL;
+
     ALOGD("%s: Enter: stream(%p), usecase (%d: %s)", __func__, out, out->usecase, use_case_table[out->usecase]);
 
     out->pcm_device_id = platform_get_pcm_device_id(out->usecase, PCM_PLAYBACK);
@@ -12869,7 +12886,7 @@ static void adev_snd_mon_cb_1(void *cookie, struct str_parms *parms)
     card_status_t status;
     struct audio_device *adev = platform_get_adev();
 
-    if (cookie != adev || !parms)
+    if (!adev || cookie != adev || !parms)
         return;
 
     if (!parse_snd_card_status_1(parms, &card, &status)) {
@@ -12903,6 +12920,10 @@ void platform_arch_init(int inp __unused)
 {
     struct hw_module_t* dummy_module = calloc(1, sizeof(struct hw_module_t));
     struct hw_device_t* dummy_device = calloc(1, sizeof(struct hw_device_t));
+    if (!dummy_module || !dummy_device) {
+        ALOGE("%s failed to allocate memory", __func__);
+        return;
+    }
     struct audio_device *adev = platform_get_adev();
     int _res = adev_open(dummy_module,dummy_device,adev);
     //TODO handle result here
@@ -12929,6 +12950,10 @@ int platform_get_usecase(platform_stream_t stream_info, void **handle,
         adev_open_input_stream((struct audio_hw_device *)dev,IOhandle,deviceType,
                                                     &config,&in,flags,address,stream_info.source);
         usecase_info_t *uc_info = (usecase_info_t *)calloc(1, sizeof(usecase_info_t));
+        if (!uc_info) {
+            ALOGE("%s failed to allocate memory for uc_info", __func__);
+            return -ENOMEM;
+        }
         // populate usecase structure with basic info
         *((usecase_info_t **)handle) = uc_info;
 
@@ -12956,6 +12981,10 @@ int platform_get_usecase(platform_stream_t stream_info, void **handle,
                                     IOhandle,deviceType,flags,&config,&out,address);
 
         usecase_info_t *uc_info_new = (usecase_info_t *)calloc(1, sizeof(usecase_info_t));
+        if (!uc_info_new) {
+            ALOGE("%s failed to allocate memory for uc_info_new", __func__);
+            return -ENOMEM;
+        }
         // populate usecase structure with basic info
         *((usecase_info_t **)handle) = uc_info_new;
         uc_info_new->id = out->usecase;
@@ -13125,6 +13154,9 @@ int platform_set_params(platform_param_id_t param_id, void *data)
         goto exit_2;
     }
     struct audio_device *adev = platform_get_adev();
+    if (!adev)
+        return -EINVAL;
+
     switch(param_id) {
         case PARAM_ID_AUD_CNTRL_CONFIG:
         case PARAM_ID_HFP_CONFIG:
@@ -13166,6 +13198,8 @@ void platform_close_input_stream(void *handle){
     usecase_info_t *uc_info = (usecase_info_t *)handle;
     struct stream_in *in = uc_info->stream.in;
     struct audio_device *dev = platform_get_adev();
+    if (!dev)
+        return;
     adev_close_input_stream(dev,in);
 }
 
