@@ -70,7 +70,7 @@
  * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
  * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * Copyright (c) 2022-2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2022-2023, 2024 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted (subject to the limitations in the disclaimer
@@ -215,6 +215,9 @@ typedef int error_log_t;
 #define MAX_PERF_LOCK_OPTS 20
 
 #define MAX_STREAM_PROFILE_STR_LEN 32
+#define SNDRV_COMPRESS_RENDER_MODE_TTP_PASS_THROUGH 3
+#define SNDRV_COMPRESS_RENDER_MODE_ABSOLUTETIME 4
+
 typedef enum {
     EFFECT_NONE = 0,
     EFFECT_AEC,
