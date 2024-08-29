@@ -576,10 +576,6 @@ PRODUCT_PACKAGES += \
     libaudioplatform.qti \
     libaudioeffecthal.qti
 
-# enable sound trigger hidl hal 2.3
-PRODUCT_PACKAGES += \
-    android.hardware.soundtrigger@2.3-impl
-
 PRODUCT_PACKAGES_ENG += \
     VoicePrintTest \
     VoicePrintDemo
