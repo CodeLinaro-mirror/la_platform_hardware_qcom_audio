@@ -13175,6 +13175,7 @@ int platform_set_params(platform_param_id_t param_id, void *data)
             pthread_mutex_lock(&adev->lock);
             platform_set_parameters(adev->platform, parms);
             audio_extn_auto_hal_set_parameters(adev, parms);
+            audio_extn_set_parameters(adev, parms);
             str_parms_destroy(parms);
             pthread_mutex_unlock(&adev->lock);
             break;
