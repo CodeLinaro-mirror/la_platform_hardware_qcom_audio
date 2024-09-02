@@ -13186,6 +13186,12 @@ int platform_set_params(platform_param_id_t param_id, void *data)
             rc = adev_set_audio_port_config(dev,config);
             break;
         }
+        case PARAM_ID_HFP_MICMUTE_CONFIG:
+        {
+            bool mute_state = *((bool*)data);
+            rc = adev_set_mic_mute(adev, mute_state);
+            break;
+        }
         default:
             ALOGE("%s: Invalid param ID: %d", __func__, param_id);
     }

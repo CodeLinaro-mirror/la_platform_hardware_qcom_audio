@@ -1024,6 +1024,7 @@ typedef enum platform_param_id
     PARAM_ID_AUD_CNTRL_CONFIG = 2,
     PARAM_ID_HFP_CONFIG = 3,
     PARAM_ID_GAIN_CONFIG = 4,
+    PARAM_ID_HFP_MICMUTE_CONFIG = 5,
     PARAM_ID_MAX = PARAM_ID_GAIN_CONFIG,
 } platform_param_id_t;
 
