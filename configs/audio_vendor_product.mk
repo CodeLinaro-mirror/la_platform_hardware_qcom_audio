@@ -182,6 +182,17 @@ endif
 MM_AUDIO += libaudiopowerpolicy
 endif
 
+ifneq ( ,$(filter V VanillaIceCream 15, $(PLATFORM_VERSION)))
+MM_AUDIO += libbundleaidl
+MM_AUDIO += libdownmixaidl
+MM_AUDIO += libdynamicsprocessingaidl
+MM_AUDIO += libhapticgeneratoraidl
+MM_AUDIO += libloudnessenhanceraidl
+MM_AUDIO += libpreprocessingaidl
+MM_AUDIO += libreverbaidl
+MM_AUDIO += libvisualizeraidl
+endif
+
 MM_AUDIO += libaudioarch-elite
 MM_AUDIO += libaidlaudioservice_qti
 MM_AUDIO += android.hardware.audio.service-aidl.qti
