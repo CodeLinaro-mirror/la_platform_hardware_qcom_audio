@@ -44,6 +44,7 @@ AUDIO_FEATURE_ENABLED_KPI_OPTIMIZE := true
 AUDIO_FEATURE_ENABLED_SPKR_PROTECTION := true
 AUDIO_FEATURE_ENABLED_ACDB_LICENSE := false
 AUDIO_FEATURE_ENABLED_DEV_ARBI := false
+AUDIO_FEATURE_ENABLED_MORA_I2S := true
 MM_AUDIO_ENABLED_FTM := true
 TARGET_USES_QCOM_MM_AUDIO := true
 BOARD_SUPPORTS_QAHW := false
@@ -217,18 +218,26 @@ PRODUCT_COPY_FILES += \
     vendor/qcom/opensource/audio-hal/primary-hal/configs/bengal/audio_platform_info.xml:$(TARGET_COPY_OUT_VENDOR)/etc/audio_platform_info.xml \
     vendor/qcom/opensource/audio-hal/primary-hal/configs/bengal/audio_platform_info_qrd.xml:$(TARGET_COPY_OUT_VENDOR)/etc/audio_platform_info_qrd.xml \
     vendor/qcom/opensource/audio-hal/primary-hal/configs/bengal/audio_platform_info_intcodec.xml:$(TARGET_COPY_OUT_VENDOR)/etc/audio_platform_info_intcodec.xml \
-    vendor/qcom/opensource/audio-hal/primary-hal/configs/bengal/audio_platform_info_scubaidp.xml:$(TARGET_COPY_OUT_VENDOR)/etc/audio_platform_info_scubaidp.xml \
     vendor/qcom/opensource/audio-hal/primary-hal/configs/bengal/audio_platform_info_scubaqrd.xml:$(TARGET_COPY_OUT_VENDOR)/etc/audio_platform_info_scubaqrd.xml \
     vendor/qcom/opensource/audio-hal/primary-hal/configs/bengal/sound_trigger_mixer_paths.xml:$(TARGET_COPY_OUT_VENDOR)/etc/sound_trigger_mixer_paths.xml \
     vendor/qcom/opensource/audio-hal/primary-hal/configs/bengal/sound_trigger_mixer_paths_scubaidp.xml:$(TARGET_COPY_OUT_VENDOR)/etc/sound_trigger_mixer_paths_scubaidp.xml \
     vendor/qcom/opensource/audio-hal/primary-hal/configs/bengal/sound_trigger_mixer_paths_scubaqrd.xml:$(TARGET_COPY_OUT_VENDOR)/etc/sound_trigger_mixer_paths_scubaqrd.xml \
     vendor/qcom/opensource/audio-hal/primary-hal/configs/bengal/sound_trigger_mixer_paths_qrd.xml:$(TARGET_COPY_OUT_VENDOR)/etc/sound_trigger_mixer_paths_qrd.xml \
     vendor/qcom/opensource/audio-hal/primary-hal/configs/bengal/mixer_paths.xml:$(TARGET_COPY_OUT_VENDOR)/etc/mixer_paths.xml \
-    vendor/qcom/opensource/audio-hal/primary-hal/configs/bengal/mixer_paths_scubaidp.xml:$(TARGET_COPY_OUT_VENDOR)/etc/mixer_paths_scubaidp.xml \
     vendor/qcom/opensource/audio-hal/primary-hal/configs/bengal/mixer_paths_scubaqrd.xml:$(TARGET_COPY_OUT_VENDOR)/etc/mixer_paths_scubaqrd.xml \
     vendor/qcom/opensource/audio-hal/primary-hal/configs/bengal/mixer_paths_qrd.xml:$(TARGET_COPY_OUT_VENDOR)/etc/mixer_paths_qrd.xml \
     frameworks/native/data/etc/android.hardware.audio.pro.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/android.hardware.audio.pro.xml \
     frameworks/native/data/etc/android.hardware.audio.low_latency.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/android.hardware.audio.low_latency.xml
+
+ifeq ($(strip $(TARGET_PRODUCT))$(strip $(AUDIO_FEATURE_ENABLED_MORA_I2S)),bengal_2w_v2true)
+PRODUCT_COPY_FILES += \
+    vendor/qcom/opensource/audio-hal/primary-hal/configs/bengal/mixer_paths_scubaidp-v2.xml:$(TARGET_COPY_OUT_VENDOR)/etc/mixer_paths_scubaidp.xml \
+    vendor/qcom/opensource/audio-hal/primary-hal/configs/bengal/audio_platform_info_scubaidp-v2.xml:$(TARGET_COPY_OUT_VENDOR)/etc/audio_platform_info_scubaidp.xml
+else
+PRODUCT_COPY_FILES += \
+    vendor/qcom/opensource/audio-hal/primary-hal/configs/bengal/mixer_paths_scubaidp.xml:$(TARGET_COPY_OUT_VENDOR)/etc/mixer_paths_scubaidp.xml \
+    vendor/qcom/opensource/audio-hal/primary-hal/configs/bengal/audio_platform_info_scubaidp.xml:$(TARGET_COPY_OUT_VENDOR)/etc/audio_platform_info_scubaidp.xml
+endif
 
 #XML Audio configuration files
 ifneq ($(TARGET_USES_AOSP_FOR_AUDIO), true)

@@ -17,14 +17,9 @@
  * limitations under the License.
  *
  * Changes from Qualcomm Innovation Center are provided under the following license:
- * Copyright (c) 2023-2024 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2022-2025 Qualcomm Innovation Center, Inc. All rights reserved.
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
-/*
- * Changes from Qualcomm Innovation Center are provided under the following license:
- * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
- * SPDX-License-Identifier: BSD-3-Clause-Clear
-*/
 
 #define LOG_TAG "msm8974_platform"
 //#define LOG_NDEBUG 0
@@ -4070,6 +4065,16 @@ acdb_init_fail:
                 strdup("WSA_CDC_DMA_RX_0 Format");
             my_data->current_backend_cfg[DEFAULT_CODEC_BACKEND].samplerate_mixer_ctl =
                 strdup("WSA_CDC_DMA_RX_0 SampleRate");
+#ifdef MORA_I2S
+            my_data->current_backend_cfg[DEFAULT_CODEC_TX_BACKEND].bitwidth_mixer_ctl =
+                strdup("TX_CDC_DMA_TX_3 Format");
+            my_data->current_backend_cfg[DEFAULT_CODEC_TX_BACKEND].samplerate_mixer_ctl =
+                strdup("TX_CDC_DMA_TX_3 SampleRate");
+            my_data->current_backend_cfg[HEADPHONE_BACKEND].bitwidth_mixer_ctl =
+                strdup("PRIM_MI2S_RX Format");
+            my_data->current_backend_cfg[HEADPHONE_BACKEND].samplerate_mixer_ctl =
+                strdup("PRIM_MI2S_RX SampleRate");
+#else
             my_data->current_backend_cfg[DEFAULT_CODEC_TX_BACKEND].bitwidth_mixer_ctl =
                 strdup("TX_CDC_DMA_TX_4 Format");
             my_data->current_backend_cfg[DEFAULT_CODEC_TX_BACKEND].samplerate_mixer_ctl =
@@ -4078,16 +4083,24 @@ acdb_init_fail:
                 strdup("SEC_MI2S_RX Format");
             my_data->current_backend_cfg[HEADPHONE_BACKEND].samplerate_mixer_ctl =
                 strdup("SEC_MI2S_RX SampleRate");
+#endif
             /*
              * TODO: enable CONCURRENT_CAPTURE_ENABLED flag only if separate backend
              * is defined for headset-mic. This is to capture separate data from
              * headset-mic and handset-mic.
              */
             if(audio_extn_is_concurrent_capture_enabled()) {
+#ifdef MORA_I2S
+                my_data->current_backend_cfg[HEADSET_TX_BACKEND].bitwidth_mixer_ctl =
+                                                    strdup("TX_CDC_DMA_TX_3 Format");
+                my_data->current_backend_cfg[HEADSET_TX_BACKEND].samplerate_mixer_ctl =
+                                                    strdup("TX_CDC_DMA_TX_3 SampleRate");
+#else
                 my_data->current_backend_cfg[HEADSET_TX_BACKEND].bitwidth_mixer_ctl =
                                                     strdup("TX_CDC_DMA_TX_4 Format");
                 my_data->current_backend_cfg[HEADSET_TX_BACKEND].samplerate_mixer_ctl =
                                                     strdup("TX_CDC_DMA_TX_4 SampleRate");
+#endif
             }
 
             if (default_rx_backend)
@@ -4103,11 +4116,19 @@ acdb_init_fail:
                 default_rx_backend = strdup("RX_CDC_DMA_RX_1");
                 my_data->is_multiple_sample_rate_combo_supported = false;
             } else if (!strncmp(snd_card_name, "bengal-scuba", strlen("bengal-scuba"))) {
+#ifdef MORA_I2S
+                my_data->current_backend_cfg[DEFAULT_CODEC_BACKEND].bitwidth_mixer_ctl =
+                        strdup("PRIM_MI2S_RX Format");
+                my_data->current_backend_cfg[DEFAULT_CODEC_BACKEND].samplerate_mixer_ctl =
+                        strdup("PRIM_MI2S_RX SampleRate");
+                default_rx_backend = strdup("PRIM_MI2S_RX");
+#else
                 my_data->current_backend_cfg[DEFAULT_CODEC_BACKEND].bitwidth_mixer_ctl =
                         strdup("SEC_MI2S_RX Format");
                 my_data->current_backend_cfg[DEFAULT_CODEC_BACKEND].samplerate_mixer_ctl =
                         strdup("SEC_MI2S_RX SampleRate");
                 default_rx_backend = strdup("SEC_MI2S_RX");
+#endif
                 my_data->is_multiple_sample_rate_combo_supported = false;
             }
         } else if (!strncmp(snd_card_name, "sdm660", strlen("sdm660")) ||
