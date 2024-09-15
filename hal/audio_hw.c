@@ -3786,6 +3786,7 @@ int start_output_stream(struct stream_out *out)
             ALOGE("%s: pcm_prepare returned %d", __func__, ret);
             pcm_close(out->pcm);
             out->pcm = NULL;
+            goto error_open;
         }
 
         ret = pcm_mmap_commit(out->pcm, 0, MMAP_PERIOD_SIZE);
