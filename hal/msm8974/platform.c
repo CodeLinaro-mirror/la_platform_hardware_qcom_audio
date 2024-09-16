@@ -727,6 +727,7 @@ static const char * const device_table[SND_DEVICE_MAX] = {
     [SND_DEVICE_OUT_HAPTICS] = "haptics",
     [SND_DEVICE_OUT_ICC] = "bus-speaker",
     [SND_DEVICE_OUT_SYNTH_SPKR] = "bus-speaker",
+    [SND_DEVICE_OUT_MORA] = "mora",
 
     /* Capture sound devices */
     [SND_DEVICE_IN_HANDSET_MIC] = "handset-mic",
@@ -1059,6 +1060,7 @@ static int acdb_device_table[SND_DEVICE_MAX] = {
     [SND_DEVICE_OUT_HAPTICS] = 200,
     [SND_DEVICE_OUT_ICC] = 16,
     [SND_DEVICE_OUT_SYNTH_SPKR] = 134,
+    [SND_DEVICE_OUT_MORA] = 201,
     [SND_DEVICE_IN_HANDSET_MIC] = 4,
     [SND_DEVICE_IN_HANDSET_MIC_SB] = 163,
     [SND_DEVICE_IN_HANDSET_MIC_NN] = 183,
@@ -1322,6 +1324,7 @@ static struct name_to_index snd_device_name_index[SND_DEVICE_MAX] = {
     {TO_NAME_INDEX(SND_DEVICE_OUT_BUS_RSE)},
     {TO_NAME_INDEX(SND_DEVICE_OUT_CALL_PROXY)},
     {TO_NAME_INDEX(SND_DEVICE_OUT_HAPTICS)},
+    {TO_NAME_INDEX(SND_DEVICE_OUT_MORA)},
     {TO_NAME_INDEX(SND_DEVICE_IN_HANDSET_MIC)},
     {TO_NAME_INDEX(SND_DEVICE_IN_HANDSET_MIC_SB)},
     {TO_NAME_INDEX(SND_DEVICE_IN_HANDSET_MIC_NN)},
@@ -2577,6 +2580,7 @@ static void set_platform_defaults(struct platform_data * my_data)
     backend_tag_table[SND_DEVICE_IN_VOICE_SPEAKER_MIC_HFP_MMSECNS] = strdup("bt-sco-mmsecns");
     backend_tag_table[SND_DEVICE_OUT_CALL_PROXY] = strdup("call-proxy");
     backend_tag_table[SND_DEVICE_OUT_HAPTICS] = strdup("haptics");
+    backend_tag_table[SND_DEVICE_OUT_MORA] = strdup("mora");
     backend_tag_table[SND_DEVICE_IN_CALL_PROXY] = strdup("call-proxy-in");
     backend_tag_table[SND_DEVICE_IN_SPEAKER_MIC2] = strdup("speaker-mic2");
     backend_tag_table[SND_DEVICE_IN_SPEAKER_MIC3] = strdup("speaker-mic3");
@@ -2685,6 +2689,7 @@ static void set_platform_defaults(struct platform_data * my_data)
     hw_interface_table[SND_DEVICE_OUT_BUS_RSE] = strdup("QUIN_TDM_RX_0");
     hw_interface_table[SND_DEVICE_OUT_CALL_PROXY] = strdup("CALL_PROXY_RX");
     hw_interface_table[SND_DEVICE_OUT_HAPTICS] = strdup("RX_CDC_DMA_RX_6");
+    hw_interface_table[SND_DEVICE_OUT_MORA] = strdup("SEC_MI2S_RX");
     hw_interface_table[SND_DEVICE_IN_HANDSET_MIC] = strdup("SLIMBUS_0_TX");
     hw_interface_table[SND_DEVICE_IN_HANDSET_MIC_SB] = strdup("SLIMBUS_0_TX");
     hw_interface_table[SND_DEVICE_IN_HANDSET_MIC_NN] = strdup("SLIMBUS_0_TX");
@@ -5706,6 +5711,8 @@ int platform_get_backend_index(snd_device_t snd_device)
                         port = USB_AUDIO_RX_BACKEND;
                 else if (strcmp(backend_tag_table[snd_device], "call-proxy") == 0)
                         port = CALL_PROXY_RX_BACKEND;
+                else if (strcmp(backend_tag_table[snd_device], "mora") == 0)
+                        port = SEC_MI2S_RX_BACKEND;
         }
     } else if (snd_device >= SND_DEVICE_IN_BEGIN && snd_device < SND_DEVICE_IN_END) {
         port = DEFAULT_CODEC_TX_BACKEND;
@@ -6764,6 +6771,39 @@ int platform_get_ext_disp_type_v2(void *platform, int controller, int stream)
     return disp_type;
 }
 
+#ifdef MORA_I2S
+static snd_device_t map_usecase_to_output_snd_device(struct audio_device *adev, audio_usecase_t uc) {
+
+    audio_mode_t mode = adev->mode;
+    switch (uc) {
+        case USECASE_AUDIO_PLAYBACK_LOW_LATENCY:
+             if (mode == AUDIO_MODE_RINGTONE) {
+                 ALOGD("%s ring mode, select default device", __func__);
+                 return SND_DEVICE_NONE;
+             }
+
+        case USECASE_AUDIO_PLAYBACK_DEEP_BUFFER:
+        case USECASE_AUDIO_PLAYBACK_MULTI_CH:
+        case USECASE_AUDIO_PLAYBACK_OFFLOAD:
+        case USECASE_AUDIO_PLAYBACK_OFFLOAD2:
+        case USECASE_AUDIO_PLAYBACK_OFFLOAD3:
+        case USECASE_AUDIO_PLAYBACK_OFFLOAD4:
+        case USECASE_AUDIO_PLAYBACK_OFFLOAD5:
+        case USECASE_AUDIO_PLAYBACK_OFFLOAD6:
+        case USECASE_AUDIO_PLAYBACK_OFFLOAD7:
+        case USECASE_AUDIO_PLAYBACK_OFFLOAD8:
+        case USECASE_AUDIO_PLAYBACK_OFFLOAD9:
+        case USECASE_AUDIO_PLAYBACK_ULL:
+        case USECASE_AUDIO_PLAYBACK_MMAP:
+            ALOGD("%s select MORA device for usecase(%s)", __func__, use_case_table[uc]);
+            return SND_DEVICE_OUT_MORA;
+    }
+
+    ALOGD("%s select default device for usecase(%s)", __func__, use_case_table[uc]);
+    return SND_DEVICE_NONE;
+}
+#endif
+
 snd_device_t platform_get_output_snd_device(void *platform, struct stream_out *out,
                                             usecase_type_t uc_type)
 {
@@ -6784,6 +6824,16 @@ snd_device_t platform_get_output_snd_device(void *platform, struct stream_out *o
 
     list_init(&devices);
     assign_devices(&devices, &out->device_list);
+
+#ifdef MORA_I2S
+    if (uc_type == PCM_PLAYBACK && is_usb_out_device_type(&devices)) {
+        snd_device = map_usecase_to_output_snd_device(adev, out->usecase);
+        if (snd_device != SND_DEVICE_NONE) {
+            ALOGD("%s return mora device", __func__);
+            return snd_device;
+        }
+    }
+#endif
 
     ALOGV("%s: enter: output devices(%#x)", __func__, get_device_types(&devices));
     if (list_empty(&devices) ||
