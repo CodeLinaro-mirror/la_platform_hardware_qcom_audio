@@ -217,6 +217,7 @@ static unsigned int configured_low_latency_capture_period_size =
 #define MMAP_PERIOD_COUNT_MIN 32
 #define MMAP_PERIOD_COUNT_MAX 512
 #define MMAP_PERIOD_COUNT_DEFAULT (MMAP_PERIOD_COUNT_MAX)
+#define MMAP_MIN_BUFFER_SIZE 2048
 
 /* This constant enables extended precision handling.
  * TODO The flag is off until more testing is done.
@@ -9467,15 +9468,9 @@ static int adev_open_input_stream(struct audio_hw_device *dev,
         }
     }
 
-    /* Additional sample rates added below must also be present
+    /* All sample rates must be support which is added
        in audio_policy_configuration.xml for mmap_no_irq_in */
-    bool valid_mmap_record_rate = (config->sample_rate == 8000 ||
-                                config->sample_rate == 16000 ||
-                                config->sample_rate == 24000 ||
-                                config->sample_rate == 32000 ||
-                                config->sample_rate == 48000);
-    if (valid_mmap_record_rate &&
-        ((in->flags & AUDIO_INPUT_FLAG_MMAP_NOIRQ) != 0)) {
+    if ((in->flags & AUDIO_INPUT_FLAG_MMAP_NOIRQ) != 0) {
         in->realtime = 0;
         in->usecase = USECASE_AUDIO_RECORD_MMAP;
         in->config = pcm_config_mmap_capture;
@@ -13219,7 +13214,7 @@ int platform_configure_mmap_playback(void *handle, int32_t* fd, int64_t* burstSi
     struct audio_mmap_buffer_info info;
     usecase_info_t *uc_info_new = (usecase_info_t *)(handle);
     struct stream_out* out = uc_info_new->stream.out;
-    int _ret = out->stream.create_mmap_buffer(out,1,&info);
+    int _ret = out->stream.create_mmap_buffer(out, MMAP_MIN_BUFFER_SIZE, &info);
     *flags = info.flags;
     *bufferSizeFrames = info.buffer_size_frames;
     *fd = info.shared_memory_fd;
