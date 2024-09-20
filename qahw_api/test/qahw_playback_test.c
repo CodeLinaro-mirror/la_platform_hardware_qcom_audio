@@ -350,7 +350,7 @@ void read_kvpair(char *kvpair, char* kvpair_values, int filetype)
 {
     char *kvpair_type = NULL;
     char *token = NULL;
-    char *saveptr = NULL
+    char *saveptr = NULL;
     int value = 0;
     int len = 0;
     int size = 0;
