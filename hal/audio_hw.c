@@ -3,7 +3,6 @@
  * Not a Contribution.
  *
  * Copyright (C) 2013 The Android Open Source Project
- *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -33,6 +32,10 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
+ * Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
+ * Copyright (c) 2024 Qualcomm Innovation Center, Inc. All rights reserved.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 #define LOG_TAG "audio_hw_primary"
@@ -1579,6 +1582,8 @@ int disable_audio_route(struct audio_device *adev,
     }
     audio_extn_sound_trigger_update_stream_status(usecase, ST_EVENT_STREAM_FREE);
     audio_extn_listen_update_stream_status(usecase, LISTEN_EVENT_STREAM_FREE);
+
+    audio_extn_utils_deallocate_cal(adev, usecase);
 
     if (usecase->type == PCM_CAPTURE) {
         in = usecase->stream.in;
@@ -11342,7 +11347,6 @@ static int adev_open(const hw_module_t *module, const char *name,
     audio_extn_qdsp_init(adev->platform);
 
     adev->multi_offload_enable = property_get_bool("vendor.audio.offload.multiple.enabled", false);
-    pthread_mutex_unlock(&adev_init_lock);
 
     if (adev->adm_init)
         adev->adm_data = adev->adm_init();
@@ -11367,6 +11371,7 @@ static int adev_open(const hw_module_t *module, const char *name,
     audio_extn_sound_trigger_update_battery_status(adev->is_charging);
     audio_extn_audiozoom_init();
     pthread_mutex_unlock(&adev->lock);
+    pthread_mutex_unlock(&adev_init_lock);
     /* Allocate memory for Device config params */
     adev->device_cfg_params = (struct audio_device_config_param*)
                                   calloc(platform_get_max_codec_backend(),
