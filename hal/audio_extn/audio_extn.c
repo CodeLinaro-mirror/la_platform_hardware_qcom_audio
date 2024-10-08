@@ -6609,6 +6609,7 @@ static void* power_policy_thread_func(void* arg __unused) {
     power_policy_init_config_t init_config;
     init_config.fp_in_set_power_policy = in_set_power_policy;
     init_config.fp_out_set_power_policy = out_set_power_policy;
+    init_config.fp_snd_card_status = snd_card_status;
     launch_power_policy(init_config);
 
 exit:
