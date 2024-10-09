@@ -12986,6 +12986,15 @@ int platform_get_active_microphones(void *platform, unsigned int channels,
                                     audio_usecase_t uc_id,
                                     struct audio_microphone_characteristic_t *mic_array,
                                     size_t *mic_count) {
+
+    return platform_get_active_microphones_v2(platform, channels, uc_id, mic_array,
+                                                    mic_count, CAR_AUDIO_STREAM_INVALID);
+}
+
+int platform_get_active_microphones_v2(void *platform, unsigned int channels,
+                                    audio_usecase_t uc_id,
+                                    struct audio_microphone_characteristic_t *mic_array,
+                                    size_t *mic_count, int car_audio_stream) {
     struct platform_data *my_data = (struct platform_data *)platform;
     struct audio_usecase *usecase = get_usecase_from_list(my_data->adev, uc_id);
     if (mic_count == NULL || mic_array == NULL || usecase == NULL) {
@@ -12994,10 +13003,18 @@ int platform_get_active_microphones(void *platform, unsigned int channels,
     size_t max_mic_count = my_data->declared_mic_count;
     size_t actual_mic_count = 0;
     struct listnode devices;
+    snd_device_t active_input_snd_device = SND_DEVICE_NONE;
     list_init(&devices);
 
-    snd_device_t active_input_snd_device =
+    if ((car_audio_stream == CAR_AUDIO_STREAM_IN_PRIMARY) ||
+        (car_audio_stream == CAR_AUDIO_STREAM_IN_FRONT_PASSENGER) ||
+        (car_audio_stream == CAR_AUDIO_STREAM_IN_REAR_SEAT)) {
+        active_input_snd_device = audio_extn_auto_hal_get_snd_device_for_car_audio_stream(car_audio_stream);
+    }
+    else {
+        active_input_snd_device =
             platform_get_input_snd_device(platform, usecase->stream.in, &devices, USECASE_TYPE_MAX);
+    }
     if (active_input_snd_device == SND_DEVICE_NONE) {
         ALOGI("%s: No active microphones found", __func__);
         goto end;
