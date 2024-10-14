@@ -209,6 +209,7 @@ LOCAL_C_INCLUDES := \
     system/media/audio_utils/include \
     $(call include-path-for, audio-route) \
     $(call include-path-for, audio-effects) \
+    $(TARGET_OUT_HEADERS)/mm-audio/surround_sound_3mic/ \
     $(TARGET_OUT_HEADERS)/common/inc/
 
 ifeq ($(TARGET_BOARD_AUTO),true)
@@ -903,6 +904,7 @@ LOCAL_SANITIZE := integer_overflow
 endif
 include $(BUILD_SHARED_LIBRARY)
 
+ifneq ($(TARGET_BOARD_AUTO),true)
 #-------------------------------------------
 #            Build BATTERY_LISTENER
 #-------------------------------------------
@@ -973,6 +975,7 @@ ifneq ($(filter kona lahaina holi,$(TARGET_BOARD_PLATFORM)),)
 LOCAL_SANITIZE := integer_overflow
 endif
 include $(BUILD_SHARED_LIBRARY)
+endif
 
 #-------------------------------------------
 #            Build HWDEP_CAL
