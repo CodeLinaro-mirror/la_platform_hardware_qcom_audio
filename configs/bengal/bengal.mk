@@ -233,6 +233,9 @@ ifeq ($(strip $(TARGET_PRODUCT))$(strip $(AUDIO_FEATURE_ENABLED_MORA_I2S)),benga
 PRODUCT_COPY_FILES += \
     vendor/qcom/opensource/audio-hal/primary-hal/configs/bengal/mixer_paths_scubaidp-v2.xml:$(TARGET_COPY_OUT_VENDOR)/etc/mixer_paths_scubaidp.xml \
     vendor/qcom/opensource/audio-hal/primary-hal/configs/bengal/audio_platform_info_scubaidp-v2.xml:$(TARGET_COPY_OUT_VENDOR)/etc/audio_platform_info_scubaidp.xml
+
+PRODUCT_PROPERTY_OVERRIDES += \
+    vendor.audio.enabled.mora.i2s=true
 else
 PRODUCT_COPY_FILES += \
     vendor/qcom/opensource/audio-hal/primary-hal/configs/bengal/mixer_paths_scubaidp.xml:$(TARGET_COPY_OUT_VENDOR)/etc/mixer_paths_scubaidp.xml \
