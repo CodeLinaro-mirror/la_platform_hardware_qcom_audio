@@ -123,7 +123,7 @@ endif
 ifneq ($(ENABLE_HYP),true)
 AUDIO_FEATURE_ENABLED_AUTO_AUDIOD := true
 
-ifneq ( ,$(filter msmnile_au gen4_au msmnile_au_km4 msmnile_au_ar msmnile_tb, $(TARGET_BOARD_PLATFORM)$(TARGET_BOARD_SUFFIX)$(TARGET_BOARD_DERIVATIVE_SUFFIX)))
+ifneq ( ,$(filter msmnile_au msmnile_au_s_u gen4_au msmnile_au_km4 msmnile_au_ar msmnile_tb, $(TARGET_BOARD_PLATFORM)$(TARGET_BOARD_SUFFIX)$(TARGET_BOARD_DERIVATIVE_SUFFIX)))
 AUDIO_FEATURE_ENABLED_DAEMON_SUPPORT := true
 else
 AUDIO_FEATURE_ENABLED_DAEMON_SUPPORT := false
@@ -158,7 +158,7 @@ DEVICE_PACKAGE_OVERLAYS += vendor/qcom/opensource/audio-hal/primary-hal/configs/
 endif
 
 ifneq ( ,$(filter T Tiramisu 13 U UpsideDownCake 14 V VanillaIceCream 15, $(PLATFORM_VERSION)))
-ifneq ( ,$(filter msmnile_au  gen4_au msmnile_au_km4 msmnile_tb msmnile_au_ar, $(TARGET_BOARD_PLATFORM)$(TARGET_BOARD_SUFFIX))$(TARGET_BOARD_DERIVATIVE_SUFFIX))
+ifneq ( ,$(filter msmnile_au  msmnile_au_s_u gen4_au msmnile_au_km4 msmnile_tb msmnile_au_ar, $(TARGET_BOARD_PLATFORM)$(TARGET_BOARD_SUFFIX))$(TARGET_BOARD_DERIVATIVE_SUFFIX))
 AUDIO_FEATURE_MMAP_AAUDIO = true
 endif
 endif
@@ -227,7 +227,7 @@ PRODUCT_COPY_FILES += \
     $(TOPDIR)vendor/qcom/opensource/audio-hal/primary-hal/configs/common_au/car_audio_configuration.xml:$(TARGET_COPY_OUT_VENDOR)/etc/car_audio_configuration.xml
 
 
-ifneq ( ,$(filter msmnile_gvmq msmnile_au msmnile_au_km4 msmnile_tb, $(TARGET_BOARD_PLATFORM)$(TARGET_BOARD_SUFFIX)$(TARGET_BOARD_DERIVATIVE_SUFFIX)))
+ifneq ( ,$(filter msmnile_gvmq msmnile_au msmnile_au_s_u msmnile_au_km4 msmnile_tb, $(TARGET_BOARD_PLATFORM)$(TARGET_BOARD_SUFFIX)$(TARGET_BOARD_DERIVATIVE_SUFFIX)))
 PRODUCT_COPY_FILES += \
     vendor/qcom/opensource/audio-hal/primary-hal/configs/msmnile_au/modules.audio.ar.blocklist:$(TARGET_COPY_OUT_VENDOR_DLKM)/lib/modules/modules.audio.ar.blocklist \
     vendor/qcom/opensource/audio-hal/primary-hal/configs/msmnile_au/modules.audio.legacy.blocklist:$(TARGET_COPY_OUT_VENDOR_DLKM)/lib/modules/modules.audio.legacy.blocklist
