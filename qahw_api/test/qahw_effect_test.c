@@ -25,6 +25,12 @@
 * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
 * OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
 * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+*
+* Changes from Qualcomm Innovation Center are provided under the following
+* license:
+*
+* Copyright (c) 2024 Qualcomm Innovation Center, Inc. All rights reserved.
+* SPDX-License-Identifier: BSD-3-Clause-Clear
 */
 
 /* effect test to be applied on HAL layer */
@@ -493,6 +499,7 @@ void *command_thread_func(void* data) {
     uint32_t      preset;
     int           level;
     uint16_t      band_idx;
+    char *prompt_name = NULL;
     qahw_effect_param_t *param = (qahw_effect_param_t *)buf32;
     qahw_effect_param_t *param_2 = (qahw_effect_param_t *)buf32_2;
 
@@ -526,7 +533,11 @@ void *command_thread_func(void* data) {
         case TTY_VT_SET_STRENGTH:
         case TTY_ASPHERE_SET_STRENGTH:
             {
-                fprintf(stdout, "%s", get_prompt_from_name(fx_ctxt->who_am_i, cmd_str));
+                prompt_name = get_prompt_from_name(fx_ctxt->who_am_i, cmd_str);
+                if (prompt_name) {
+                    fprintf(stdout, "%s", prompt_name);
+                    prompt_name = NULL;
+                }
                 if (fgets(cmd_str, sizeof(cmd_str), stdin) == NULL) {
                     fprintf(stderr, "unrecognized strength number!\n");
                     break;
@@ -551,7 +562,11 @@ void *command_thread_func(void* data) {
             }
         case TTY_EQ_SET_PRESET:
             {
-                fprintf(stdout, "%s", get_prompt_from_name(fx_ctxt->who_am_i, cmd_str));
+                prompt_name = get_prompt_from_name(fx_ctxt->who_am_i, cmd_str);
+                if (prompt_name) {
+                    fprintf(stdout, "%s", prompt_name);
+                    prompt_name = NULL;
+                }
                 if (fgets(cmd_str, sizeof(cmd_str), stdin) == NULL) {
                     fprintf(stderr, "unrecognized preset!\n");
                     break;
@@ -574,6 +589,11 @@ void *command_thread_func(void* data) {
             }
         case TTY_EQ_SET_CUSTOM:
             {
+                prompt_name = get_prompt_from_name(fx_ctxt->who_am_i, cmd_str);
+                if (prompt_name) {
+                    fprintf(stdout, "%s", prompt_name);
+                    prompt_name = NULL;
+                }
                 fprintf(stdout, "%s", get_prompt_from_name(fx_ctxt->who_am_i, cmd_str));
                 for (band_idx = 0; band_idx < NUM_EQ_BANDS; ++band_idx) {
                     fprintf(stdout, "input level for band (%d - %dHz) (range from -15 to +15):\n",
@@ -603,7 +623,11 @@ void *command_thread_func(void* data) {
             break;
         case TTY_RB_SET_PRESET:
             {
-                fprintf(stdout, "%s", get_prompt_from_name(fx_ctxt->who_am_i, cmd_str));
+                prompt_name = get_prompt_from_name(fx_ctxt->who_am_i, cmd_str);
+                if (prompt_name) {
+                    fprintf(stdout, "%s", prompt_name);
+                    prompt_name = NULL;
+                }
                 if (fgets(cmd_str, sizeof(cmd_str), stdin) == NULL) {
                     fprintf(stderr, "unrecognized preset!\n");
                     break;
