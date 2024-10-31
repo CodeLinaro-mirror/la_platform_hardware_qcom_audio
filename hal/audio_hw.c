@@ -13319,8 +13319,9 @@ int32_t platform_in_get_latency(int32_t flags, audio_format_t format, uint32_t c
                     audio_channel_count_from_in_mask(ch_mask), is_low_latency);
             /* prevent division-by-zero */
             if (frame_size == 0) {
-                ALOGE("%s: Error frame_size==0", __func__);
-                return 0;
+                ALOGE("%s: Error frame_size==0"
+                    "fallback to default capture latency", __func__);
+                return AUDIO_CAPTURE_PERIOD_DURATION_MSEC;
             }
             config.period_size = buffer_size / frame_size;
     }
@@ -13328,5 +13329,5 @@ int32_t platform_in_get_latency(int32_t flags, audio_format_t format, uint32_t c
         config = pcm_config_mmap_capture;
 
     return config.rate ? platform_latency +
-        ((config.period_size*1000)/config.rate) : 0;
+        ((config.period_size*1000)/config.rate) : AUDIO_CAPTURE_PERIOD_DURATION_MSEC;
 }
