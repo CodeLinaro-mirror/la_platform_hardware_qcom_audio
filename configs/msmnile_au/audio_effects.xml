@@ -48,6 +48,7 @@
         <library name="audio_avc" path="libqtiautobundle.so"/>
         <library name="audio_sumx" path="libqtiautobundle.so"/>
         <library name="audio_synth" path="libqtiautobundle.so"/>
+        <library name="audio_equalizer" path="libqtiautobundle.so"/>
     </libraries>
     <effects>
         <effectProxy name="bassboost" library="proxy" uuid="14804144-a5ee-4d24-aa88-0002a5d5c51b">
@@ -103,6 +104,7 @@
         <effect name="audio_avc" library="audio_avc" uuid="2130c69e-6a3a-4e35-9890-71687f0b78bf"/>
         <effect name="audio_sumx" library="audio_sumx" uuid="32e9fe7f-de63-4d1b-a5d2-281e8492f3ce"/>
         <effect name="audio_synth" library="audio_synth" uuid="a124b54f-4026-4ed2-9316-4ba2d5effdb8"/>
+        <effect name="audio_equalizer" library="audio_equalizer" uuid="28bb9b5e-c8df-11eb-b8bc-0242ac130003"/>
     </effects>
     <postprocess>
         <stream type="music">
