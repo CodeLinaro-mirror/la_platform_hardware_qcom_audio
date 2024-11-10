@@ -144,6 +144,7 @@ MM_AUDIO += Handset_cal.acdb
 MM_AUDIO += Hdmi_cal.acdb
 MM_AUDIO += Headset_cal.acdb
 MM_AUDIO += Speaker_cal.acdb
+MM_AUDIO += workspaceFile.qwsp
 
 MM_AUDIO += libaudiohalplugin
 ifeq ($(call is-board-platform-in-list,gen4),true)
