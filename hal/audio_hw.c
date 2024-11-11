@@ -35,7 +35,7 @@
  * limitations under the License.
  *
  * Changes from Qualcomm Innovation Center are provided under the following license:
- * Copyright (c) 2023-2024 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2023-2025 Qualcomm Innovation Center, Inc. All rights reserved.
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  *
  */
@@ -429,6 +429,7 @@ const char * const use_case_table[AUDIO_USECASE_MAX] = {
     [USECASE_AUDIO_PLAYBACK_MMAP] = "mmap-playback",
     [USECASE_AUDIO_PLAYBACK_HIFI] = "hifi-playback",
     [USECASE_AUDIO_PLAYBACK_TTS] = "audio-tts-playback",
+    [USECASE_AUDIO_PLAYBACK_NAVIGATION] = "navigation-playback",
 
     [USECASE_AUDIO_RECORD] = "audio-record",
     [USECASE_AUDIO_RECORD2] = "audio-record2",
@@ -620,6 +621,7 @@ static pthread_mutex_t adev_init_lock = PTHREAD_MUTEX_INITIALIZER;
 static unsigned int audio_device_ref_count;
 //cache last MBDRC cal step level
 static int last_known_cal_step = -1 ;
+static bool open_navigation_playback = false;
 
 static int out_set_compr_volume(struct audio_stream_out *stream, float left, float right);
 static int out_set_mmap_volume(struct audio_stream_out *stream, float left, float right);
@@ -4508,7 +4510,7 @@ int start_output_stream(struct stream_out *out)
         if (out->usecase == USECASE_AUDIO_PLAYBACK_VOIP)
             out_set_voip_volume(&out->stream, out->volume_l, out->volume_r);
         else if ((out->usecase == USECASE_AUDIO_PLAYBACK_LOW_LATENCY || out->usecase == USECASE_AUDIO_PLAYBACK_DEEP_BUFFER ||
-                  out->usecase == USECASE_AUDIO_PLAYBACK_ULL) && (out->apply_volume)) {
+                  out->usecase == USECASE_AUDIO_PLAYBACK_ULL || out->usecase == USECASE_AUDIO_PLAYBACK_NAVIGATION) && (out->apply_volume)) {
                  out_set_pcm_volume(&out->stream, out->volume_l, out->volume_r);
                  out->apply_volume = false;
         } else if (audio_extn_auto_hal_is_bus_device_usecase(out->usecase)) {
@@ -5889,7 +5891,8 @@ static uint32_t out_get_latency(const struct audio_stream_out *stream)
         latency = (out->config.period_count * out->config.period_size * 1000) /
                    (out->config.rate);
         if (out->usecase == USECASE_AUDIO_PLAYBACK_DEEP_BUFFER ||
-            out->usecase == USECASE_AUDIO_PLAYBACK_LOW_LATENCY)
+            out->usecase == USECASE_AUDIO_PLAYBACK_LOW_LATENCY ||
+            out->usecase == USECASE_AUDIO_PLAYBACK_NAVIGATION)
             latency += platform_render_latency(out)/1000;
     }
 
@@ -6171,7 +6174,8 @@ static int out_set_volume(struct audio_stream_out *stream, float left,
         return ret;
     } else if (out->usecase == USECASE_AUDIO_PLAYBACK_LOW_LATENCY ||
                out->usecase == USECASE_AUDIO_PLAYBACK_DEEP_BUFFER ||
-               out->usecase == USECASE_AUDIO_PLAYBACK_ULL) {
+               out->usecase == USECASE_AUDIO_PLAYBACK_ULL ||
+               out->usecase == USECASE_AUDIO_PLAYBACK_NAVIGATION) {
         pthread_mutex_lock(&out->latch_lock);
         /* Volume control for pcm playback */
         if (!out->standby && !out->a2dp_muted)
@@ -8953,6 +8957,11 @@ int adev_open_output_stream(struct audio_hw_device *dev,
                 ret = -EINVAL;
                 goto error_open;
             }
+        } else if (audio_is_linear_pcm(out->format) &&
+            out->flags == AUDIO_OUTPUT_FLAG_NONE && open_navigation_playback == true) {
+            out->usecase = USECASE_AUDIO_PLAYBACK_NAVIGATION;
+            out->config = pcm_config_deep_buffer;
+            open_navigation_playback = false;
         } else if (flags & AUDIO_OUTPUT_FLAG_TTS) {
             out->usecase = USECASE_AUDIO_PLAYBACK_TTS;
             out->config = pcm_config_deep_buffer;
@@ -9611,6 +9620,13 @@ static int adev_set_parameters(struct audio_hw_device *dev, const char *kvpairs)
                     in->source == AUDIO_SOURCE_CAMCORDER && !in->standby) {
                 select_devices(adev, in->usecase);
             }
+        }
+    }
+
+    ret = str_parms_get_str(parms, "open_navigation_playback", value, sizeof(value));
+    if (ret >= 0) {
+        if (!strncmp(value, "true", 4)) {
+            open_navigation_playback = true;
         }
     }
 
