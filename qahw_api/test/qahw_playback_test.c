@@ -19,7 +19,7 @@
 /*
  * Changes from Qualcomm Innovation Center are provided under the following license:
  *
- * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2022,2024 Qualcomm Innovation Center, Inc. All rights reserved.
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
@@ -350,6 +350,7 @@ void read_kvpair(char *kvpair, char* kvpair_values, int filetype)
 {
     char *kvpair_type = NULL;
     char *token = NULL;
+    char *saveptr = NULL;
     int value = 0;
     int len = 0;
     int size = 0;
@@ -378,7 +379,7 @@ void read_kvpair(char *kvpair, char* kvpair_values, int filetype)
     }
 
     if (kvpair_type) {
-        token = strtok(kvpair_values, ",");
+        token = strtok_r(kvpair_values, ",", &saveptr);
         while (token) {
             len = strcspn(kvpair_type, "=");
             size = len + strlen(token) + 2;
@@ -387,7 +388,7 @@ void read_kvpair(char *kvpair, char* kvpair_values, int filetype)
                 snprintf(kvpair, size, kvpair_type, value);
             kvpair += size - 1;
             kvpair_type += len + 3;
-            token = strtok(NULL, ",");
+            token = strtok_r(NULL, ",", &saveptr);
         }
     }
 }
