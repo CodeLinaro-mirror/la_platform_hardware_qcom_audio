@@ -1571,10 +1571,12 @@ static struct name_to_index usecase_name_index[AUDIO_USECASE_MAX] = {
     {TO_NAME_INDEX(USECASE_AUDIO_PLAYBACK_FRONT_PASSENGER)},
     {TO_NAME_INDEX(USECASE_AUDIO_PLAYBACK_REAR_SEAT)},
     {TO_NAME_INDEX(USECASE_AUDIO_RECORD_VOIP_LOW_LATENCY)},
+    {TO_NAME_INDEX(USECASE_ICC_CALL)},
     {TO_NAME_INDEX(USECASE_AUDIO_RECORD_BUS)},
     {TO_NAME_INDEX(USECASE_AUDIO_RECORD_BUS_FRONT_PASSENGER)},
     {TO_NAME_INDEX(USECASE_AUDIO_RECORD_BUS_REAR_SEAT)},
     {TO_NAME_INDEX(USECASE_AUDIO_PLAYBACK_SYNTHESIZER)},
+    {TO_NAME_INDEX(USECASE_AUDIO_RECORD_ECHO_REF_EXT)},
 };
 
 static const struct name_to_index usecase_type_index[USECASE_TYPE_MAX] = {
@@ -13039,7 +13041,7 @@ int platform_get_controller_stream_from_params(struct str_parms *parms,
                                                int *controller, int *stream) {
     str_parms_get_int(parms, "controller", controller);
     str_parms_get_int(parms, "stream", stream);
-    if (*controller < 0 || *controller > MAX_CONTROLLERS ||
+    if (*controller < 0 || *controller >= MAX_CONTROLLERS ||
             *stream < 0 || *stream >= MAX_STREAMS_PER_CONTROLLER) {
         *controller = 0;
         *stream = 0;
