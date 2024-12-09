@@ -2603,9 +2603,11 @@ struct audio_usecase *get_usecase_from_list(const struct audio_device *adev,
     struct listnode *node;
 
     list_for_each(node, &adev->usecase_list) {
-        usecase = node_to_item(node, struct audio_usecase, list);
-        if (usecase->id == uc_id)
-            return usecase;
+        if (node != NULL) {
+            usecase = node_to_item(node, struct audio_usecase, list);
+            if (usecase && (usecase->id == uc_id))
+                return usecase;
+        }
     }
     return NULL;
 }
@@ -8175,9 +8177,9 @@ static int in_get_active_microphones(const struct audio_stream_in *stream,
 
     lock_input_stream(in);
     pthread_mutex_lock(&adev->lock);
-    int ret = platform_get_active_microphones(adev->platform,
+    int ret = platform_get_active_microphones_v2(adev->platform,
                                               audio_channel_count_from_in_mask(in->channel_mask),
-                                              in->usecase, mic_array, mic_count);
+                                              in->usecase, mic_array, mic_count, in->car_audio_stream);
     pthread_mutex_unlock(&adev->lock);
     pthread_mutex_unlock(&in->lock);
 
@@ -9255,6 +9257,11 @@ void in_set_power_policy(uint8_t enable)
 
     ALOGD("%s: Enter, state %d", __func__, enable);
 
+    if (!adev) {
+        ALOGE("%s: audio device wasn't initialized. exit", __func__);
+        return;
+    }
+
     pthread_mutex_lock(&adev->lock);
     adev->in_power_policy = enable ? POWER_POLICY_STATUS_ONLINE : POWER_POLICY_STATUS_OFFLINE;
     pthread_mutex_unlock(&adev->lock);
@@ -9279,6 +9286,11 @@ void out_set_power_policy(uint8_t enable)
     struct listnode *node;
 
     ALOGD("%s: Enter, state %d", __func__, enable);
+
+    if (!adev) {
+        ALOGE("%s: audio device wasn't initialized. exit", __func__);
+        return;
+    }
 
     pthread_mutex_lock(&adev->lock);
     adev->out_power_policy = enable ? POWER_POLICY_STATUS_ONLINE : POWER_POLICY_STATUS_OFFLINE;
@@ -9550,6 +9562,13 @@ static int adev_set_parameters(struct audio_hw_device *dev, const char *kvpairs)
                 }
                 pthread_mutex_unlock(&usecase->stream.out->latch_lock);
             }
+        }
+    }
+    else
+    {
+        if (AUDIO_HW_A2DP_OFFLOAD_IS_NOT_SUPPORTED == status)
+        {
+            status = 0;
         }
     }
 
