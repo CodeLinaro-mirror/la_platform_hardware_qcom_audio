@@ -6611,7 +6611,7 @@ int platform_split_snd_device(void *platform,
  */
 int platform_get_display_port_ctl_index(int controller, int stream) {
 
-    if (controller < 0 || controller > MAX_CONTROLLERS ||
+    if (controller < 0 || controller >= MAX_CONTROLLERS ||
             stream < 0 || stream >= MAX_STREAMS_PER_CONTROLLER) {
         ALOGE("%s: Invalid controller/stream - %d/%d",
               __func__, controller, stream);
