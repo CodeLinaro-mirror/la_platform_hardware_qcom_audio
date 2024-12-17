@@ -25,6 +25,10 @@
  * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
  * OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
  * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ *
+ * Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
+ * Copyright (c) 2024 Qualcomm Innovation Center, Inc. All rights reserved.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 #define LOG_TAG "platform_info"
@@ -338,11 +342,18 @@ static void process_pcm_id(const XML_Char **attr)
         goto done;
     }
 
-    int id = atoi((char *)attr[5]);
+    int pcm_id = atoi((char *)attr[5]);
 
-    if (platform_set_usecase_pcm_id(index, type, id) < 0) {
-        ALOGE("%s: usecase %s type %d id %d was not set!",
-              __func__, attr[1], type, id);
+    if (strcmp(attr[6], "fe") != 0) {
+        ALOGE("%s: fe id not mentioned", __func__);
+        goto done;
+    }
+
+    int fe_id = atoi((char *)attr[7]);
+
+    if (platform_set_usecase_pcm_id(index, type, pcm_id, fe_id) < 0) {
+        ALOGE("%s: usecase %s type %d pcm_id %d fe_id %d was not set!",
+              __func__, attr[1], type, pcm_id, fe_id);
         goto done;
     }
 
