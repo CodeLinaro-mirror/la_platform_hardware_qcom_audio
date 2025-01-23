@@ -516,6 +516,10 @@
         <ctl name="PRI_MI2S_RX Audio Mixer MultiMedia1" value="1" />
     </path>
 
+    <path name="deep-buffer-playback mora">
+        <ctl name="SEC_MI2S_RX Audio Mixer MultiMedia1" value="1" />
+    </path>
+
     <path name="deep-buffer-playback handset">
         <ctl name="PRI_MI2S_RX Audio Mixer MultiMedia1" value="1" />
     </path>
@@ -627,6 +631,10 @@
 
     <path name="low-latency-playback">
         <ctl name="PRI_MI2S_RX Audio Mixer MultiMedia5" value="1" />
+    </path>
+
+    <path name="low-latency-playback mora">
+        <ctl name="SEC_MI2S_RX Audio Mixer MultiMedia5" value="1" />
     </path>
 
     <path name="low-latency-playback handset">
@@ -744,6 +752,10 @@
 
     <path name="audio-ull-playback">
         <ctl name="PRI_MI2S_RX Audio Mixer MultiMedia5" value="1" />
+    </path>
+
+    <path name="audio-ull-playback mora">
+        <ctl name="SEC_MI2S_RX Audio Mixer MultiMedia5" value="1" />
     </path>
 
     <path name="audio-ull-playback handset">
@@ -877,6 +889,10 @@
         <ctl name="PRI_MI2S_RX Audio Mixer MultiMedia4" value="1" />
     </path>
 
+    <path name="compress-offload-playback mora">
+        <ctl name="SEC_MI2S_RX Audio Mixer MultiMedia4" value="1" />
+    </path>
+
     <path name="compress-offload-playback handset">
         <ctl name="RX_CDC_DMA_RX_0 Audio Mixer MultiMedia4" value="1" />
     </path>
@@ -1002,6 +1018,10 @@
         <ctl name="PRI_MI2S_RX Audio Mixer MultiMedia7" value="1" />
     </path>
 
+    <path name="compress-offload-playback2 mora">
+        <ctl name="SEC_MI2S_RX Audio Mixer MultiMedia7" value="1" />
+    </path>
+
     <path name="compress-offload-playback2 handset">
         <ctl name="RX_CDC_DMA_RX_0 Audio Mixer MultiMedia7" value="1" />
     </path>
@@ -1114,6 +1134,10 @@
 
     <path name="compress-offload-playback3">
         <ctl name="PRI_MI2S_RX Audio Mixer MultiMedia5" value="1" />
+    </path>
+
+    <path name="compress-offload-playback3 mora">
+        <ctl name="SEC_MI2S_RX Audio Mixer MultiMedia5" value="1" />
     </path>
 
     <path name="compress-offload-playback3 handset">
@@ -1229,6 +1253,10 @@
         <ctl name="PRI_MI2S_RX Audio Mixer MultiMedia5" value="1" />
     </path>
 
+    <path name="compress-offload-playback4 mora">
+        <ctl name="SEC_MI2S_RX Audio Mixer MultiMedia5" value="1" />
+    </path>
+
     <path name="compress-offload-playback4 handset">
         <ctl name="RX_CDC_DMA_RX_0 Audio Mixer MultiMedia11" value="1" />
     </path>
@@ -1340,6 +1368,10 @@
 
     <path name="compress-offload-playback5">
         <ctl name="PRI_MI2S_RX Audio Mixer MultiMedia5" value="1" />
+    </path>
+
+    <path name="compress-offload-playback5 mora">
+        <ctl name="SEC_MI2S_RX Audio Mixer MultiMedia5" value="1" />
     </path>
 
     <path name="compress-offload-playback5 handset">
@@ -1455,6 +1487,10 @@
         <ctl name="PRI_MI2S_RX Audio Mixer MultiMedia5" value="1" />
     </path>
 
+    <path name="compress-offload-playback6 mora">
+        <ctl name="SEC_MI2S_RX Audio Mixer MultiMedia5" value="1" />
+    </path>
+
     <path name="compress-offload-playback6 handset">
         <ctl name="RX_CDC_DMA_RX_0 Audio Mixer MultiMedia13" value="1" />
     </path>
@@ -1566,6 +1602,10 @@
 
     <path name="compress-offload-playback7">
         <ctl name="PRI_MI2S_RX Audio Mixer MultiMedia5" value="1" />
+    </path>
+
+    <path name="compress-offload-playback7 mora">
+        <ctl name="SEC_MI2S_RX Audio Mixer MultiMedia5" value="1" />
     </path>
 
     <path name="compress-offload-playback7 handset">
@@ -1681,6 +1721,10 @@
         <ctl name="PRI_MI2S_RX Audio Mixer MultiMedia5" value="1" />
     </path>
 
+    <path name="compress-offload-playback8 mora">
+        <ctl name="SEC_MI2S_RX Audio Mixer MultiMedia5" value="1" />
+    </path>
+
     <path name="compress-offload-playback8 handset">
         <ctl name="RX_CDC_DMA_RX_0 Audio Mixer MultiMedia15" value="1" />
     </path>
@@ -1792,6 +1836,10 @@
 
     <path name="compress-offload-playback9">
         <ctl name="PRI_MI2S_RX Audio Mixer MultiMedia5" value="1" />
+    </path>
+
+    <path name="compress-offload-playback9 mora">
+        <ctl name="SEC_MI2S_RX Audio Mixer MultiMedia5" value="1" />
     </path>
 
     <path name="compress-offload-playback9 handset">
@@ -2585,6 +2633,9 @@
         <ctl name="Ext Spk Switch" value="On"/>
     </path>
 
+    <path name="mora">
+    </path>
+
     <path name="voice-speaker-hfp">
         <path name="speaker" />
     </path>
@@ -3345,6 +3396,10 @@
 
     <path name="mmap-playback">
         <ctl name="PRI_MI2S_RX Audio Mixer MultiMedia16" value="1" />
+    </path>
+
+    <path name="mmap-playback mora">
+        <ctl name="SEC_MI2S_RX Audio Mixer MultiMedia16" value="1" />
     </path>
 
    <path name="mmap-playback handset">

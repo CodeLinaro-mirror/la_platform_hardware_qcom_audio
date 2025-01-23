@@ -17,7 +17,7 @@
  * limitations under the License.
  *
  * Changes from Qualcomm Innovation Center are provided under the following license:
- * Copyright (c) 2023-2024 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2023-2025 Qualcomm Innovation Center, Inc. All rights reserved.
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
@@ -214,6 +214,7 @@ enum {
     SND_DEVICE_OUT_HAPTICS,
     SND_DEVICE_OUT_ICC,
     SND_DEVICE_OUT_SYNTH_SPKR,
+    SND_DEVICE_OUT_MORA,
     SND_DEVICE_OUT_END,
 
     /*
