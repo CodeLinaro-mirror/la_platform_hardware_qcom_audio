@@ -431,6 +431,10 @@ static int pcm_device_table[AUDIO_USECASE_MAX][4] = {
                                             DEEP_BUFFER_PCM_DEVICE,
                                             MSM_FRONTEND_DAI_MULTIMEDIA1,
                                             MSM_FRONTEND_DAI_MULTIMEDIA1},
+    [USECASE_AUDIO_PLAYBACK_NAVIGATION] =  {NAVIGATION_PCM_DEVICE,
+                                            NAVIGATION_PCM_DEVICE,
+                                            MSM_FRONTEND_DAI_MULTIMEDIA9,
+                                            MSM_FRONTEND_DAI_MULTIMEDIA9},
     [USECASE_AUDIO_PLAYBACK_WITH_HAPTICS] = {AUDIO_HAPTICS_PCM_DEVICE,
                                              AUDIO_HAPTICS_PCM_DEVICE, -1, -1},
     [USECASE_AUDIO_PLAYBACK_HAPTICS] = {HAPTICS_PCM_DEVICE,
@@ -1501,6 +1505,7 @@ static char * hw_interface_table[SND_DEVICE_MAX] = {0};
 
 static struct name_to_index usecase_name_index[AUDIO_USECASE_MAX] = {
     {TO_NAME_INDEX(USECASE_AUDIO_PLAYBACK_DEEP_BUFFER)},
+    {TO_NAME_INDEX(USECASE_AUDIO_PLAYBACK_NAVIGATION)},
     {TO_NAME_INDEX(USECASE_AUDIO_PLAYBACK_WITH_HAPTICS)},
     {TO_NAME_INDEX(USECASE_AUDIO_PLAYBACK_HAPTICS)},
     {TO_NAME_INDEX(USECASE_AUDIO_PLAYBACK_LOW_LATENCY)},
@@ -9517,6 +9522,7 @@ int64_t platform_render_latency(struct stream_out *out)
         return delay;
     switch (out->usecase) {
         case USECASE_AUDIO_PLAYBACK_DEEP_BUFFER:
+        case USECASE_AUDIO_PLAYBACK_NAVIGATION:
         case USECASE_AUDIO_PLAYBACK_MEDIA:
         case USECASE_AUDIO_PLAYBACK_NAV_GUIDANCE:
         case USECASE_AUDIO_PLAYBACK_REAR_SEAT:
@@ -9615,6 +9621,7 @@ bool platform_sound_trigger_usecase_needs_event(audio_usecase_t uc_id)
     switch(uc_id){
     /* concurrent playback usecases needs event */
     case USECASE_AUDIO_PLAYBACK_DEEP_BUFFER:
+    case USECASE_AUDIO_PLAYBACK_NAVIGATION:
     case USECASE_AUDIO_PLAYBACK_MULTI_CH:
     case USECASE_AUDIO_PLAYBACK_OFFLOAD:
     case USECASE_AUDIO_PLAYBACK_OFFLOAD2:

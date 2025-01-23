@@ -629,6 +629,14 @@
         <path name="deep-buffer-playback" />
     </path>
 
+    <path name="navigation-playback">
+        <ctl name="PRI_MI2S_RX Audio Mixer MultiMedia9" value="1" />
+    </path>
+
+    <path name="navigation-playback usb-headset">
+        <ctl name="USB_AUDIO_RX Audio Mixer MultiMedia9" value="1" />
+    </path>
+
     <path name="low-latency-playback">
         <ctl name="PRI_MI2S_RX Audio Mixer MultiMedia5" value="1" />
     </path>
