@@ -17,7 +17,7 @@
      limitations under the License.
 
      Changes from Qualcomm Innovation Center are provided under the following license:
-     Copyright (c) 2023 Qualcomm Innovation Center, Inc. All rights reserved.
+     Copyright (c) 2023, 2025 Qualcomm Innovation Center, Inc. All rights reserved.
      SPDX-License-Identifier: BSD-3-Clause-Clear
 -->
 
@@ -333,6 +333,9 @@
                     <profile name="" format="AUDIO_FORMAT_PCM_8_24_BIT"
                              samplingRates="8000 11025 12000 16000 22050 24000 32000 44100 48000"
                              channelMasks="AUDIO_CHANNEL_IN_MONO AUDIO_CHANNEL_IN_STEREO AUDIO_CHANNEL_IN_FRONT_BACK AUDIO_CHANNEL_INDEX_MASK_3"/>
+                    <profile name="" format="AUDIO_FORMAT_PCM_16_BIT"
+                             samplingRates="8000 11025 12000 16000 22050 24000 32000 44100 48000"
+                             channelMasks="AUDIO_CHANNEL_IN_MONO AUDIO_CHANNEL_IN_STEREO AUDIO_CHANNEL_IN_FRONT_BACK"/>
                 </mixPort>
                 <mixPort name="voice_rx" role="sink">
                     <profile name="" format="AUDIO_FORMAT_PCM_16_BIT"
