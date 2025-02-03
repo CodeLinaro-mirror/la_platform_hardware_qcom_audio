@@ -743,7 +743,7 @@ enum {
 #define HFP_SEC_ASM_RX_TX -1
 #else
 #define HFP_SCO_RX 23
-#define HFP_ASM_RX_TX 24
+#define HFP_ASM_RX_TX 33
 #define HFP_SEC_SCO_RX -1
 #define HFP_SEC_ASM_RX_TX -1
 #endif

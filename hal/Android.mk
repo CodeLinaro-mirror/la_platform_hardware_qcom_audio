@@ -113,6 +113,7 @@ ifneq ($(filter bengal,$(TARGET_BOARD_PLATFORM)),)
 ifeq ($(TARGET_PRODUCT),bengal_2w_v2)
 ifeq ($(strip $(AUDIO_FEATURE_ENABLED_MORA_I2S)), true)
   LOCAL_CFLAGS += -DMORA_I2S
+  LOCAL_CFLAGS += -DENABLE_HFP_CALIBRATION
 endif
 endif
 endif
