@@ -16,8 +16,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * Changes from Qualcomm Innovation Center are provided under the following license:
- * Copyright (c) 2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ * ​​​​​Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
+ * Copyright (c) 2023-2025 Qualcomm Innovation Center, Inc. All rights reserved.
  * SPDX-License-Identifier: BSD-3-Clause-Clear
 */
 
@@ -52,6 +52,7 @@ enum {
 struct mixer;
 /* Audio calibration related functions */
 typedef void (*acdb_deallocate_t)(void);
+typedef void (*acdb_deallocate_cal_t)(int, int);
 typedef int  (*acdb_init_t)();
 typedef int  (*acdb_init_v2_t)(const char *, char *, int);
 typedef int  (*acdb_init_v3_t)(const char *, char *, struct listnode *);
