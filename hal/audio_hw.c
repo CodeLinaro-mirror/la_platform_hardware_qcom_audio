@@ -9688,6 +9688,21 @@ static char* adev_get_parameters(const struct audio_hw_device *dev,
         }
     }
 
+    ret = str_parms_get_str(query,
+        AUDIO_PARAMETER_IS_DUAL_BT_I2S_ENABLED,
+        value, sizeof(value));
+    if (ret >= 0) {
+        if (property_get_bool("vendor.audio.enabled.mora.i2s", false)) {
+            str_parms_add_str(reply, AUDIO_PARAMETER_IS_DUAL_BT_I2S_ENABLED,
+                 "true");
+            goto exit;
+        } else {
+            str_parms_add_str(reply, AUDIO_PARAMETER_IS_DUAL_BT_I2S_ENABLED,
+                "false");
+            goto exit;
+        }
+    }
+
     pthread_mutex_lock(&adev->lock);
     audio_extn_get_parameters(adev, query, reply);
     voice_get_parameters(adev, query, reply);
