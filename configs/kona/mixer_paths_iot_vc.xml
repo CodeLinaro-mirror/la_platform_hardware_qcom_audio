@@ -363,6 +363,7 @@
     <ctl name="TX DEC7 MUX" value="MSM_DMIC" />
     <ctl name="TX DMIC MUX7" value="ZERO" />
     <ctl name="TX SMIC MUX7" value="ZERO" />
+    <ctl name="TX3 MODE" value="ADC_INVALID" />
 
     <!-- VA controls -->
     <ctl name="VA_CDC_DMA_TX_0 Channels" value="One" />
@@ -401,6 +402,12 @@
     <ctl name="ADC1 Volume" value="12" />
     <ctl name="ADC2 Volume" value="12" />
     <ctl name="ADC3 Volume" value="12" />
+
+    <ctl name="ADC3_MIXER Switch" value="0" />
+    <ctl name="ADC3 MUX" value="INP4" />
+    <ctl name="ADC3 ChMap" value="ZERO" />
+
+    <ctl name="AMIC6_MIXER Switch" value="0" />
 
     <!-- Compander controls -->
     <ctl name="WSA_COMP1 Switch" value="0" />
@@ -2755,6 +2762,18 @@
         <ctl name="TX_AIF1_CAP Mixer DEC2" value="1" />
         <ctl name="ADC2_MIXER Switch" value="1" />
         <ctl name="ADC2 MUX" value="INP3" />
+    </path>
+
+    <path name="amic6">
+        <ctl name="TX DEC0 MUX" value="SWR_MIC" />
+        <ctl name="TX SMIC MUX0" value="ADC2" />
+        <ctl name="TX_AIF1_CAP Mixer DEC0" value="1" />
+        <ctl name="TX3 MODE" value="ADC_NORMAL" />
+        <ctl name="ADC3 Volume" value="20" />
+        <ctl name="ADC3_MIXER Switch" value="1" />
+        <ctl name="ADC3 MUX" value="INP6" />
+        <ctl name="AMIC6_MIXER Switch" value="1" />
+        <ctl name="ADC3 ChMap" value="ADC3" />
     </path>
 
     <path name="dmic1">
