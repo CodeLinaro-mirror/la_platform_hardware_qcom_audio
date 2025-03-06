@@ -3349,7 +3349,7 @@ int a2dp_set_parameters(struct str_parms *parms, bool *reconfig)
 
     if (a2dp.is_a2dp_offload_supported == false) {
         ALOGV("no supported encoders identified,ignoring a2dp setparam");
-        status = -EINVAL;
+        status = AUDIO_HW_A2DP_OFFLOAD_IS_NOT_SUPPORTED;
         goto param_handled;
     }
 
