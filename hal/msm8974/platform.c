@@ -3383,6 +3383,7 @@ void *platform_init(struct audio_device *adev)
     int cfg_value = -1;
     bool dual_mic_config = false;
     struct snd_card_split *snd_split_handle = NULL;
+    char soc_model[PROPERTY_VALUE_MAX];
 
     list_init(&operator_info_list);
     list_init(&app_type_entry_list);
@@ -3745,16 +3746,22 @@ void *platform_init(struct audio_device *adev)
                 memset(mixer_xml_file, 0, sizeof(mixer_xml_file));
                 snprintf(mixer_xml_file, sizeof(mixer_xml_file), "%s_%s.xml",
                              MIXER_XML_BASE_STRING, snd_split_handle->variant);
-
                 if (!audio_extn_utils_resolve_config_file(mixer_xml_file)) {
-                    memset(mixer_xml_file, 0, sizeof(mixer_xml_file));
-                    snprintf(mixer_xml_file, sizeof(mixer_xml_file), "%s_%s.xml",
-                                 MIXER_XML_BASE_STRING, snd_split_handle->snd_card);
-
+                    property_get("ro.vendor.qti.soc_model", soc_model, "");
+                    if (!strncmp(soc_model, "SA6155P", sizeof("SA6155P"))) {
+                        memset(mixer_xml_file, 0, sizeof(mixer_xml_file));
+                        snprintf(mixer_xml_file, sizeof(mixer_xml_file), "%s_%s_%s.xml",
+                        MIXER_XML_BASE_STRING, soc_model, snd_split_handle->snd_card);
+                    }
                     if (!audio_extn_utils_resolve_config_file(mixer_xml_file)) {
                         memset(mixer_xml_file, 0, sizeof(mixer_xml_file));
-                        strlcpy(mixer_xml_file, MIXER_XML_DEFAULT_PATH, MIXER_PATH_MAX_LENGTH);
-                        audio_extn_utils_resolve_config_file(mixer_xml_file);
+                        snprintf(mixer_xml_file, sizeof(mixer_xml_file), "%s_%s.xml",
+                                     MIXER_XML_BASE_STRING, snd_split_handle->snd_card);
+                        if (!audio_extn_utils_resolve_config_file(mixer_xml_file)) {
+                            memset(mixer_xml_file, 0, sizeof(mixer_xml_file));
+                            strlcpy(mixer_xml_file, MIXER_XML_DEFAULT_PATH, MIXER_PATH_MAX_LENGTH);
+                            audio_extn_utils_resolve_config_file(mixer_xml_file);
+                        }
                     }
                 }
             }
