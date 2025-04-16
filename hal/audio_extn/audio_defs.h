@@ -25,6 +25,11 @@
  * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
  * OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
  * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ *
+ * Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
+ * Copyright (c) 2025 Qualcomm Innovation Center, Inc. All rights reserved.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
+ *
  */
 
 #ifndef AUDIO_DEFS_H
@@ -107,6 +112,9 @@
 #define AUDIO_PARAMETER_STREAM_PROFILE "audio_stream_profile"
 
 #define AUDIO_PARAMETER_KEY_VR_AUDIO_MODE "vr_audio_mode_on"
+
+/*Query if Dual BT over I2S is enabled*/
+#define AUDIO_PARAMETER_IS_DUAL_BT_I2S_ENABLED "is_dual_bt_i2s_enabled"
 
 /* audio input flags for compress and timestamp mode.
  * check other input flags defined in audio.h for conflicts
