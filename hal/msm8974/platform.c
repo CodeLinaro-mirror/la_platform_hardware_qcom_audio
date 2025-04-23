@@ -5955,7 +5955,8 @@ int platform_send_audio_calibration_hfp(void *platform, snd_device_t snd_device)
 
     if ((my_data->acdb_send_audio_cal_v3) &&
         ((snd_device == SND_DEVICE_IN_VOICE_SPEAKER_MIC_HFP) ||
-        (snd_device == SND_DEVICE_IN_VOICE_SPEAKER_DMIC))) {
+        (snd_device == SND_DEVICE_IN_VOICE_SPEAKER_DMIC) ||
+        (snd_device == SND_DEVICE_IN_VOICE_SPEAKER_MIC_NN))) {
         /* TX path calibration */
         my_data->acdb_send_audio_cal_v3(acdb_dev_id, ACDB_DEV_TYPE_IN,
                                 DEFAULT_APP_TYPE_TX_PATH, sample_rate, 0);
@@ -7729,7 +7730,9 @@ snd_device_t platform_get_input_snd_device(void *platform,
                     platform_set_echo_reference(adev, true, out_devices);
             } else {
                 if (adev->enable_hfp) {
-                    snd_device = SND_DEVICE_IN_VOICE_SPEAKER_MIC_HFP;
+                    snd_device = (my_data->fluence_nn_enabled ?
+                                    SND_DEVICE_IN_VOICE_SPEAKER_MIC_NN
+                                    : SND_DEVICE_IN_VOICE_SPEAKER_MIC_HFP);
                     platform_set_echo_reference(adev, true, out_devices);
                 } else {
                     snd_device = my_data->fluence_sb_enabled ?
