@@ -360,6 +360,7 @@ struct platform_data {
     int hw_dep_fd;
     char cvd_version[MAX_CVD_VERSION_STRING_SIZE];
     char snd_card_name[MAX_SND_CARD_STRING_SIZE];
+    int max_vol_index;
     int source_mic_type;
     int max_mic_count;
     bool is_dsd_supported;
@@ -4146,6 +4147,48 @@ int platform_set_voice_volume(void *platform, int volume, uint32_t vsid)
     }
     return ret;
 }
+
+int platform_get_voice_volume(void *platform, int *volume, uint32_t vsid)
+{
+    struct platform_data *my_data = (struct platform_data *)platform;
+    struct audio_device *adev = my_data->adev;
+    struct mixer_ctl *ctl;
+    int count;
+    const char *mixer_ctl_name = NULL;
+    int ret = 0;
+    long set_values[ ] = {0, 0};
+
+    switch (vsid) {
+        case VOICEMMODE1_VSID:
+            mixer_ctl_name = "Voicemmode1 Rx Gain";
+            break;
+        case VOICEMMODE2_VSID:
+            mixer_ctl_name = "Voicemmode2 Rx Gain";
+            break;
+        default:
+            ALOGE("%s: Could not get mixer cmd", __func__);
+            return -EINVAL;
+    }
+
+    ctl = mixer_get_ctl_by_name(adev->mixer, mixer_ctl_name);
+    if (!ctl) {
+        ALOGE("%s: Could not get ctl for mixer cmd - %s",
+              __func__, mixer_ctl_name);
+        return -EINVAL;
+    }
+
+    mixer_ctl_update(ctl);
+    count = mixer_ctl_get_num_values(ctl);
+    if (count > ARRAY_SIZE(set_values))
+        count = ARRAY_SIZE(set_values);
+
+    ret = mixer_ctl_get_array(ctl, set_values, count);
+    *volume = (int)index_to_percent(set_values[0], MIN_VOL_INDEX,
+                                    my_data->max_vol_index);
+
+    return ret;
+}
+
 
 int platform_set_mic_mute(void *platform, bool state, uint32_t vsid)
 {
