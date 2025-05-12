@@ -6829,6 +6829,10 @@ int adev_open_output_stream(struct audio_hw_device *dev,
     *stream_out = NULL;
 
     out = (struct stream_out *)calloc(1, sizeof(struct stream_out));
+    if(devices & AUDIO_DEVICE_BIT_IN) {
+      ALOGW("%s: IN devices are not valid for output stream : devices(%#x)",__func__,devices);
+      return -EINVAL;
+    }
 
     ALOGD("%s: enter: format(%#x) sample_rate(%d) channel_mask(%#x) devices(%#x) flags(%#x)\
         stream_handle(%p) address(%s)", __func__, config->format, config->sample_rate, config->channel_mask,
