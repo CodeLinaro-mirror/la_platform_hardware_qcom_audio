@@ -165,9 +165,9 @@ struct pcm_config pcm_config_cirrus_tx = {
 static struct cirrus_playback_session handle;
 
 #ifdef CIRRUS_FACTORY_CALIBRATION
-static void *audio_extn_cirrus_calibration_thread();
+static void *audio_extn_cirrus_calibration_thread(void * arg);
 #else
-static void *audio_extn_cirrus_config_thread();
+static void *audio_extn_cirrus_config_thread(void * arg);
 #endif
 
 #ifdef ENABLE_CIRRUS_DETECTION
@@ -201,11 +201,11 @@ void spkr_prot_init(void *adev, spkr_prot_init_config_t spkr_prot_init_config_va
 #ifdef CIRRUS_FACTORY_CALIBRATION
     (void)pthread_create(&handle.calibration_thread,
                 (const pthread_attr_t *) NULL,
-                audio_extn_cirrus_calibration_thread, &handle);
+                (void*(*)(void*)) audio_extn_cirrus_calibration_thread, &handle);
 #else
     (void)pthread_create(&handle.calibration_thread,
                 (const pthread_attr_t *) NULL,
-                audio_extn_cirrus_config_thread, &handle);
+                (void*(*)(void*)) audio_extn_cirrus_config_thread, &handle);
 #endif
 }
 
@@ -476,7 +476,7 @@ exit:
     return ret;
 }
 
-static void *audio_extn_cirrus_calibration_thread() {
+static void *audio_extn_cirrus_calibration_thread(void * arg) {
     struct audio_device *adev = handle.adev_handle;
     struct audio_usecase *uc_info_rx = NULL;
     int ret = 0;
@@ -565,7 +565,7 @@ exit:
     if (handle.state == PLAYBACK)
         (void)pthread_create(&handle.failure_detect_thread,
                     (const pthread_attr_t *) NULL,
-                    audio_extn_cirrus_failure_detect_thread,
+                    (void*(*)(void*)) audio_extn_cirrus_failure_detect_thread,
                     &handle);
 #endif
 
@@ -885,7 +885,7 @@ int spkr_prot_start_processing(snd_device_t snd_device) {
     if (handle.state == IDLE)
         (void)pthread_create(&handle.failure_detect_thread,
                     (const pthread_attr_t *) NULL,
-                    audio_extn_cirrus_failure_detect_thread,
+                    (void*(*)(void*)) audio_extn_cirrus_failure_detect_thread,
                     &handle);
 #endif
 
