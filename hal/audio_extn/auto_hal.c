@@ -866,7 +866,7 @@ static void auto_hal_set_mute_duck_state(struct audio_device *adev,
                                               list);
             out = out_ctxt->output;
             car_audio_stream = auto_hal_get_car_audio_stream_from_address(ptr);
-            if (car_audio_stream == out->car_audio_stream) {
+            if (out && (car_audio_stream == out->car_audio_stream)) {
                 switch(duck_mute_state) {
                     case AUDIO_DEVICE_DUCKED:
                         ALOGD("%s: Ducking BUS device %s", __func__, ptr);
