@@ -86,6 +86,10 @@ if (test x$TARGET_SUPPORT = xsdxpoorwills); then
          AC_SUBST([TARGET_PLATFORM], ["msm8974"])
          TARGET_CFLAGS="-DPLATFORM_SDX24"
 fi
+if (test x$TARGET_SUPPORT = xmdm9650); then
+         AC_SUBST([TARGET_PLATFORM], ["msm8916"])
+         TARGET_CFLAGS="-DPLATFORM_MDM9650"
+fi
 if (test x$TARGET_SUPPORT = x8x96autogvmquintcu); then
          AC_SUBST([TARGET_PLATFORM], ["msm8974"])
          TARGET_CFLAGS="-DPLATFORM_MSM8996"
