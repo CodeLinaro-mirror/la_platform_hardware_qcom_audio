@@ -272,6 +272,14 @@ patch_handle_type_t get_loopback_patch_type(loopback_patch_t*  loopback_patch)
         }
     }
     if (is_source_supported && is_sink_supported) {
+        audio_devices_t source = loopback_patch->loopback_source.ext.devices.type;
+        audio_devices_t sink = loopback_patch->loopback_sink.ext.devices.type;
+        ALOGI("%s: source_device_type: %d (0x%x), sink_device_type: %d (0x%x)",
+              __func__,source,source,sink,sink);
+        if(source == sink) {
+            ALOGI("Source and sink devices are the same: %d (0x%x)",__func__,source,source);
+            return PATCH_HANDLE_INVALID;
+        }
         return AUDIO_PATCH_MIC_IN_SPKR_OUT;
     }
     ALOGE("%s, Unsupported source or sink port config", __func__);
