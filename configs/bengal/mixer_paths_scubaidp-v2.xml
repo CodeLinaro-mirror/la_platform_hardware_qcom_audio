@@ -2046,6 +2046,14 @@
       <path name="audio-record-compress2" />
     </path>
 
+    <path name="audio-record-compress2 camcorder-mic">
+      <path name="audio-record-compress2" />
+    </path>
+
+    <path name="audio-record camcorder-mic">
+      <path name="audio-record" />
+    </path>
+
     <path name="low-latency-record">
       <ctl name="MultiMedia8 Mixer TX_CDC_DMA_TX_3" value="1" />
     </path>
