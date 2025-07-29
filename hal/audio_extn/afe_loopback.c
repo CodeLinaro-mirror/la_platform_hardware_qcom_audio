@@ -154,20 +154,22 @@ int init_patch_database(patch_db_t* patch_db)
 
 bool is_supported_source_device(audio_devices_t source_device_mask)
 {
-    if((source_device_mask & AUDIO_DEVICE_IN_BUILTIN_MIC) ||
-       (source_device_mask & AUDIO_DEVICE_IN_BACK_MIC) ||
-       (source_device_mask & AUDIO_DEVICE_IN_WIRED_HEADSET)) {
-           ALOGD("%s, source_device_mask (%08x)", __func__, source_device_mask);
-	            return true;
+    if((source_device_mask == AUDIO_DEVICE_IN_BUILTIN_MIC) ||
+       (source_device_mask == AUDIO_DEVICE_IN_BACK_MIC) ||
+       (source_device_mask == AUDIO_DEVICE_IN_WIRED_HEADSET)) {
+	   ALOGD("%s, source_device_mask (%08x)", __func__, source_device_mask);
+	   return true;
     }
     return false;
 }
 
 bool is_supported_sink_device(audio_devices_t sink_device_mask)
 {
-    if((sink_device_mask & AUDIO_DEVICE_OUT_SPEAKER) ||
-       (sink_device_mask & AUDIO_DEVICE_OUT_WIRED_HEADSET) ||
-       (sink_device_mask & AUDIO_DEVICE_OUT_EARPIECE)) {
+
+    if((sink_device_mask == AUDIO_DEVICE_OUT_SPEAKER) ||
+       (sink_device_mask == AUDIO_DEVICE_OUT_WIRED_HEADSET) ||
+       (sink_device_mask == AUDIO_DEVICE_OUT_EARPIECE)) {
+	   ALOGD("%s, sink_device_mask (%08x)", __func__, sink_device_mask);
            return true;
        }
     return false;
