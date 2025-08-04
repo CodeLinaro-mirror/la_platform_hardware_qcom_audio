@@ -229,7 +229,8 @@ PRODUCT_COPY_FILES += \
     frameworks/native/data/etc/android.hardware.audio.pro.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/android.hardware.audio.pro.xml \
     frameworks/native/data/etc/android.hardware.audio.low_latency.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/android.hardware.audio.low_latency.xml
 
-ifeq ($(strip $(TARGET_PRODUCT))$(strip $(AUDIO_FEATURE_ENABLED_MORA_I2S)),bengal_2w_v2true)
+
+ifeq ($(filter $(TARGET_PRODUCT), bengal_2w_v2 bengal_auto), $(TARGET_PRODUCT))
 PRODUCT_COPY_FILES += \
     vendor/qcom/opensource/audio-hal/primary-hal/configs/bengal/mixer_paths_scubaidp-v2.xml:$(TARGET_COPY_OUT_VENDOR)/etc/mixer_paths_scubaidp.xml \
     vendor/qcom/opensource/audio-hal/primary-hal/configs/bengal/audio_platform_info_scubaidp-v2.xml:$(TARGET_COPY_OUT_VENDOR)/etc/audio_platform_info_scubaidp.xml
