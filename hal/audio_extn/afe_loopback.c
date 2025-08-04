@@ -272,8 +272,8 @@ patch_handle_type_t get_loopback_patch_type(loopback_patch_t*  loopback_patch)
         }
     }
     if (is_source_supported && is_sink_supported) {
-        audio_devices_t source = loopback_patch->loopback_source.ext.devices.type;
-        audio_devices_t sink = loopback_patch->loopback_sink.ext.devices.type;
+        audio_devices_t source = loopback_patch->loopback_source.ext.device.type;
+        audio_devices_t sink = loopback_patch->loopback_sink.ext.device.type;
         ALOGI("%s: source_device_type: %d (0x%x), sink_device_type: %d (0x%x)",
               __func__,source,source,sink,sink);
         if(source == sink) {
