@@ -25,8 +25,7 @@
 * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
 * OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
 * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-*
-* Changes from Qualcomm Innovation Center are provided under the following license:
+* Changes from Qualcomm Technologies, Inc. are provided under the following license:
 * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
 * SPDX-License-Identifier: BSD-3-Clause-Clear
 */
@@ -2193,6 +2192,7 @@ int qahw_stream_open(qahw_module_handle_t *hw_module,
         if ((!rc) && ((attr.type == QAHW_VOICE_CALL)||(attr.type == QAHW_ECALL))) {
             stream->cb = cb;
             stream->cookie = cookie;
+            qahw_out_set_volume(stream->out_stream, vols[0].vol, vols[1].vol);
         }
 
         if ((attr.type != QAHW_VOICE_CALL) && (attr.type != QAHW_ECALL)) {
