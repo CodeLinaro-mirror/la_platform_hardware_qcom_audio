@@ -1080,6 +1080,11 @@ exit:
             pthread_mutex_unlock(&handle.mutex_spkr_prot);
         }
     }
+    else {
+            pthread_mutex_unlock(&handle.spkr_calib_cancelack_mutex);
+            pthread_mutex_unlock(&handle.mutex_spkr_prot);
+    }
+
     if (acquire_device)
         pthread_mutex_lock(&adev->lock);
     return status.status;
