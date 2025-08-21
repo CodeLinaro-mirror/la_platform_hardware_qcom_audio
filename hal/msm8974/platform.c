@@ -16,8 +16,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * Changes from Qualcomm Innovation Center are provided under the following license:
- * Copyright (c) 2023-2024 Qualcomm Innovation Center, Inc. All rights reserved.
+ * ​​​​​Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
+ * Copyright (c) 2023-2025 Qualcomm Innovation Center, Inc. All rights reserved.
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
@@ -360,6 +360,7 @@ struct platform_data {
     acdb_init_v3_t             acdb_init_v3;
     acdb_init_v4_t             acdb_init_v4;
     acdb_deallocate_t          acdb_deallocate;
+    acdb_deallocate_cal_t      acdb_deallocate_cal;
     acdb_send_audio_cal_t      acdb_send_audio_cal;
     acdb_send_audio_cal_v3_t   acdb_send_audio_cal_v3;
     acdb_send_audio_cal_v4_t   acdb_send_audio_cal_v4;
@@ -3382,6 +3383,7 @@ void *platform_init(struct audio_device *adev)
     int cfg_value = -1;
     bool dual_mic_config = false;
     struct snd_card_split *snd_split_handle = NULL;
+    char soc_model[PROPERTY_VALUE_MAX];
 
     list_init(&operator_info_list);
     list_init(&app_type_entry_list);
@@ -3744,16 +3746,22 @@ void *platform_init(struct audio_device *adev)
                 memset(mixer_xml_file, 0, sizeof(mixer_xml_file));
                 snprintf(mixer_xml_file, sizeof(mixer_xml_file), "%s_%s.xml",
                              MIXER_XML_BASE_STRING, snd_split_handle->variant);
-
                 if (!audio_extn_utils_resolve_config_file(mixer_xml_file)) {
-                    memset(mixer_xml_file, 0, sizeof(mixer_xml_file));
-                    snprintf(mixer_xml_file, sizeof(mixer_xml_file), "%s_%s.xml",
-                                 MIXER_XML_BASE_STRING, snd_split_handle->snd_card);
-
+                    property_get("ro.vendor.qti.soc_model", soc_model, "");
+                    if (!strncmp(soc_model, "SA6155P", sizeof("SA6155P"))) {
+                        memset(mixer_xml_file, 0, sizeof(mixer_xml_file));
+                        snprintf(mixer_xml_file, sizeof(mixer_xml_file), "%s_%s_%s.xml",
+                        MIXER_XML_BASE_STRING, soc_model, snd_split_handle->snd_card);
+                    }
                     if (!audio_extn_utils_resolve_config_file(mixer_xml_file)) {
                         memset(mixer_xml_file, 0, sizeof(mixer_xml_file));
-                        strlcpy(mixer_xml_file, MIXER_XML_DEFAULT_PATH, MIXER_PATH_MAX_LENGTH);
-                        audio_extn_utils_resolve_config_file(mixer_xml_file);
+                        snprintf(mixer_xml_file, sizeof(mixer_xml_file), "%s_%s.xml",
+                                     MIXER_XML_BASE_STRING, snd_split_handle->snd_card);
+                        if (!audio_extn_utils_resolve_config_file(mixer_xml_file)) {
+                            memset(mixer_xml_file, 0, sizeof(mixer_xml_file));
+                            strlcpy(mixer_xml_file, MIXER_XML_DEFAULT_PATH, MIXER_PATH_MAX_LENGTH);
+                            audio_extn_utils_resolve_config_file(mixer_xml_file);
+                        }
                     }
                 }
             }
@@ -3808,6 +3816,12 @@ void *platform_init(struct audio_device *adev)
                                                     "acdb_loader_deallocate_ACDB");
         if (!my_data->acdb_deallocate)
             ALOGE("%s: Could not find the symbol acdb_loader_deallocate_ACDB from %s",
+                  __func__, LIB_ACDB_LOADER);
+
+       my_data->acdb_deallocate_cal = (acdb_deallocate_cal_t)dlsym(my_data->acdb_handle,
+                                                    "acdb_loader_deallocate_cal");
+        if (!my_data->acdb_deallocate_cal)
+            ALOGE("%s: Could not find the symbol acdb_loader_deallocate_cal from %s",
                   __func__, LIB_ACDB_LOADER);
 
         my_data->acdb_send_audio_cal = (acdb_send_audio_cal_t)dlsym(my_data->acdb_handle,
@@ -5933,6 +5947,89 @@ int platform_send_audio_calibration_hfp(void *platform, snd_device_t snd_device)
     } else if (my_data->acdb_send_audio_cal) {
         my_data->acdb_send_audio_cal(acdb_dev_id, acdb_dev_type, app_type,
                                      sample_rate);
+    }
+
+    return 0;
+}
+
+int platform_deallocate_cal(void *platform, struct audio_usecase *usecase)
+{
+    struct platform_data *my_data = (struct platform_data *)platform;
+    int i, acdb_dev_type, path, fe_id = -1, num_devices = 1;
+    int snd_device = SND_DEVICE_OUT_SPEAKER;
+    int new_snd_device[SND_DEVICE_OUT_END] = {0};
+    bool is_incall_rec_usecase = false;
+    snd_device_t incall_rec_device;
+    bool is_bus_dev_usecase = false;
+
+    if (voice_is_in_call_or_call_screen(my_data->adev))
+        is_incall_rec_usecase = voice_is_in_call_rec_stream(usecase->stream.in);
+
+    if (compare_device_type(&usecase->device_list, AUDIO_DEVICE_OUT_BUS))
+        is_bus_dev_usecase = true;
+
+    if (usecase->type == PCM_PLAYBACK)
+        snd_device = usecase->out_snd_device;
+    else if ((usecase->type == PCM_CAPTURE) && is_incall_rec_usecase)
+        snd_device = voice_get_incall_rec_snd_device(usecase->in_snd_device);
+    else if ((usecase->type == PCM_HFP_CALL) || (usecase->type == PCM_CAPTURE)||
+            (usecase->type == ICC_CALL))
+        snd_device = usecase->in_snd_device;
+    else if (usecase->type == TRANSCODE_LOOPBACK_RX)
+        snd_device = usecase->out_snd_device;
+
+
+    if (!is_incall_rec_usecase) {
+        if (platform_split_snd_device(my_data, snd_device,
+                                      &num_devices, new_snd_device) < 0) {
+            new_snd_device[0] = snd_device;
+        }
+    } else {
+        incall_rec_device = voice_get_incall_rec_backend_device(usecase->stream.in);
+        if (platform_split_snd_device(my_data, incall_rec_device,
+                                      &num_devices, new_snd_device) < 0) {
+            new_snd_device[0] = snd_device;
+        }
+    }
+    if ((usecase->type == PCM_HFP_CALL) || (usecase->type == ICC_CALL) ||
+          is_bus_dev_usecase) {
+        num_devices = 2;
+        new_snd_device[0] = usecase->in_snd_device;
+        new_snd_device[1] = usecase->out_snd_device;
+    }
+
+    for (i = 0; i < num_devices; i++) {
+        if (new_snd_device[i] >= SND_DEVICE_OUT_BEGIN &&
+                new_snd_device[i] < SND_DEVICE_OUT_END)
+            acdb_dev_type = ACDB_DEV_TYPE_OUT;
+        else
+            acdb_dev_type = ACDB_DEV_TYPE_IN;
+
+        path = acdb_dev_type-1;
+
+        fe_id = platform_get_fe_id(usecase->id, path);
+
+        if (my_data->acdb_send_audio_cal_v6 && (fe_id != -1) ) {
+            if (my_data->acdb_deallocate_cal) {
+                ALOGD("acdb_loader_deallocate_cal \n");
+                my_data->acdb_deallocate_cal(acdb_dev_type, fe_id);
+            }
+        } else if (my_data->acdb_send_audio_cal_v4) {
+            if (my_data->acdb_deallocate_cal) {
+                ALOGD("acdb_loader_deallocate_cal \n");
+                my_data->acdb_deallocate_cal(acdb_dev_type, path);
+            }
+        } else if (my_data->acdb_send_audio_cal_v3) {
+            if (my_data->acdb_deallocate_cal) {
+                ALOGD("acdb_loader_deallocate_cal \n");
+                my_data->acdb_deallocate_cal(acdb_dev_type, i);
+            }
+        } else if (my_data->acdb_send_audio_cal) {
+            if (my_data->acdb_deallocate_cal) {
+                ALOGD("acdb_loader_deallocate_cal \n");
+                my_data->acdb_deallocate_cal(acdb_dev_type, 0);
+            }
+        }
     }
 
     return 0;

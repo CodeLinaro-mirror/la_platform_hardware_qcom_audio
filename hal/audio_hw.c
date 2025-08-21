@@ -34,10 +34,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * Changes from Qualcomm Innovation Center are provided under the following license:
- * Copyright (c) 2023-2024 Qualcomm Innovation Center, Inc. All rights reserved.
+ * ​​​​​Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
+ * Copyright (c) 2023-2025 Qualcomm Innovation Center, Inc. All rights reserved.
  * SPDX-License-Identifier: BSD-3-Clause-Clear
- *
  */
 
 #define LOG_TAG "audio_hw_primary"
@@ -1625,6 +1624,8 @@ int disable_audio_route(struct audio_device *adev,
     audio_extn_sound_trigger_update_stream_status(usecase, ST_EVENT_STREAM_FREE);
     audio_extn_listen_update_stream_status(usecase, LISTEN_EVENT_STREAM_FREE);
 
+    audio_extn_utils_deallocate_cal(adev, usecase);
+
     if (usecase->type == PCM_CAPTURE) {
         in = usecase->stream.in;
         if ((in && is_loopback_input_device(get_device_types(&in->device_list))) ||
@@ -2603,11 +2604,13 @@ struct audio_usecase *get_usecase_from_list(const struct audio_device *adev,
     struct listnode *node;
 
     list_for_each(node, &adev->usecase_list) {
-        if (node != NULL) {
-            usecase = node_to_item(node, struct audio_usecase, list);
-            if (usecase && (usecase->id == uc_id))
-                return usecase;
+        if (node == NULL) {
+            ALOGE("%s: node is NULL", __func__);
+            return NULL;
         }
+        usecase = node_to_item(node, struct audio_usecase, list);
+        if (usecase && (usecase->id == uc_id))
+            return usecase;
     }
     return NULL;
 }
@@ -5922,7 +5925,7 @@ static int out_set_soft_volume_params(struct audio_stream_out *stream)
     struct soft_step_volume_params *volume_params = NULL;
 
     int pcm_device_id = platform_get_pcm_device_id(out->usecase, PCM_PLAYBACK);
-    snprintf(mixer_ctl_name, sizeof(mixer_ctl_name), "Playback  %d Soft Vol Params", pcm_device_id);
+    snprintf(mixer_ctl_name, sizeof(mixer_ctl_name), "Playback %d Soft Vol Params", pcm_device_id);
     ctl = mixer_get_ctl_by_name(adev->mixer, mixer_ctl_name);
     if (!ctl) {
         ALOGE("%s : Could not get ctl for mixer cmd - %s", __func__, mixer_ctl_name);
