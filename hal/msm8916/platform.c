@@ -17,7 +17,7 @@
  * limitations under the License.
  *
  * Changes from Qualcomm Innovation Center are provided under the following license:
- * Copyright (c) 2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted (subject to the limitations in the
@@ -4112,40 +4112,7 @@ void platform_set_speaker_gain_in_combo(struct audio_device *adev,
 
 int platform_set_voice_volume(void *platform, int volume, uint32_t vsid)
 {
-    struct platform_data *my_data = (struct platform_data *)platform;
-    struct audio_device *adev = my_data->adev;
-    struct mixer_ctl *ctl;
-    const char *mixer_ctl_name = "Voice Rx Gain";
-    int vol_index = 0, ret = 0;
-    long set_values[ ] = {0,
-                          ALL_SESSION_VSID,
-                          DEFAULT_VOLUME_RAMP_DURATION_MS};
-    if (vsid)
-        set_values[1] = (long) vsid;
-    // Voice volume levels are mapped to adsp volume levels as follows.
-    // 100 -> 5, 80 -> 4, 60 -> 3, 40 -> 2, 20 -> 1  0 -> 0
-    // But this values don't changed in kernel. So, below change is need.
-    vol_index = (int)percent_to_index(volume, MIN_VOL_INDEX, MAX_VOL_INDEX);
-    set_values[0] = vol_index;
-
-    ctl = mixer_get_ctl_by_name(adev->mixer, mixer_ctl_name);
-    if (!ctl) {
-        ALOGE("%s: Could not get ctl for mixer cmd - %s",
-              __func__, mixer_ctl_name);
-        ret = -EINVAL;
-    } else {
-        ALOGV("%s Setting voice volume index: %ld",__func__, set_values[0]);
-        mixer_ctl_set_array(ctl, set_values, ARRAY_SIZE(set_values));
-    }
-
-    if (my_data->csd != NULL) {
-        ret = my_data->csd->volume(ALL_SESSION_VSID, volume,
-                                   DEFAULT_VOLUME_RAMP_DURATION_MS);
-        if (ret < 0) {
-            ALOGE("%s: csd_volume error %d", __func__, ret);
-        }
-    }
-    return ret;
+    return -ENOSYS;
 }
 
 int platform_get_voice_volume(void *platform, int *volume, uint32_t vsid)
