@@ -510,7 +510,7 @@
     </path>
 
     <path name="deep-buffer-playback handset">
-        <ctl name="RX_CDC_DMA_RX_0 Audio Mixer MultiMedia1" value="1" />
+        <ctl name="PRI_MI2S_RX Audio Mixer MultiMedia1" value="1" />
     </path>
 
     <path name="deep-buffer-playback speaker-protected">
@@ -571,7 +571,7 @@
     </path>
 
     <path name="deep-buffer-playback headphones">
-        <ctl name="RX_CDC_DMA_RX_0 Audio Mixer MultiMedia1" value="1" />
+        <ctl name="PRI_MI2S_RX Audio Mixer MultiMedia1" value="1" />
     </path>
 
     <path name="deep-buffer-playback headset">
@@ -618,11 +618,19 @@
         <path name="deep-buffer-playback" />
     </path>
 
+    <path name="navigation-playback">
+        <ctl name="PRI_MI2S_RX Audio Mixer MultiMedia9" value="1" />
+    </path>
+
+    <path name="navigation-playback usb-headset">
+        <ctl name="USB_AUDIO_RX Audio Mixer MultiMedia9" value="1" />
+    </path>
+
     <path name="low-latency-playback">
         <ctl name="PRI_MI2S_RX Audio Mixer MultiMedia5" value="1" />
     </path>
-	
-	<path name="low-latency-playback mora">
+
+    <path name="low-latency-playback mora">
         <ctl name="SEC_MI2S_RX Audio Mixer MultiMedia5" value="1" />
     </path>
 
@@ -740,7 +748,11 @@
     </path>
 
     <path name="audio-ull-playback">
-        <ctl name="RX_CDC_DMA_RX_1 Audio Mixer MultiMedia8" value="1" />
+        <ctl name="PRI_MI2S_RX Audio Mixer MultiMedia8" value="1" />
+    </path>
+
+    <path name="audio-ull-playback mora">
+        <ctl name="SEC_MI2S_RX Audio Mixer MultiMedia8" value="1" />
     </path>
 
     <path name="audio-ull-playback handset">
@@ -873,7 +885,7 @@
     <path name="compress-offload-playback">
         <ctl name="PRI_MI2S_RX Audio Mixer MultiMedia4" value="1" />
     </path>
-	
+
     <path name="compress-offload-playback mora">
         <ctl name="SEC_MI2S_RX Audio Mixer MultiMedia4" value="1" />
     </path>
@@ -1002,7 +1014,7 @@
     <path name="compress-offload-playback2">
         <ctl name="PRI_MI2S_RX Audio Mixer MultiMedia7" value="1" />
     </path>
-	
+
     <path name="compress-offload-playback2 mora">
         <ctl name="SEC_MI2S_RX Audio Mixer MultiMedia7" value="1" />
     </path>
@@ -1118,7 +1130,7 @@
     </path>
 
     <path name="compress-offload-playback3">
-        <ctl name="RX_CDC_DMA_RX_1 Audio Mixer MultiMedia10" value="1" />
+        <ctl name="PRI_MI2S_RX Audio Mixer MultiMedia10" value="1" />
     </path>
 
     <path name="compress-offload-playback3 handset">
@@ -1912,6 +1924,10 @@
         <ctl name="MultiMedia1 Mixer TX_CDC_DMA_TX_3" value="1" />
     </path>
 
+    <path name="audio-record handset-mic">
+        <path name="audio-record" />
+    </path>
+
     <path name="audio-record usb-headset-mic">
         <ctl name="MultiMedia1 Mixer USB_AUDIO_TX" value="1" />
     </path>
@@ -1926,7 +1942,7 @@
     </path>
 
     <path name="audio-record headset-mic">
-        <ctl name="MultiMedia1 Mixer TX_CDC_DMA_TX_4" value="1" />
+        <ctl name="MultiMedia1 Mixer TX_CDC_DMA_TX_3" value="1" />
     </path>
 
     <path name="audio-record bt-sco-swb">
@@ -1942,7 +1958,7 @@
     </path>
 
     <path name="audio-record-compress headset-mic">
-        <ctl name="MultiMedia8 Mixer TX_CDC_DMA_TX_4" value="1" />
+        <ctl name="MultiMedia8 Mixer TX_CDC_DMA_TX_3" value="1" />
     </path>
 
     <path name="audio-record-compress bt-sco">
@@ -1984,7 +2000,19 @@
     </path>
 
     <path name="audio-record-compress2 headset-mic">
-        <ctl name="MultiMedia17 Mixer TX_CDC_DMA_TX_4" value="1" />
+        <ctl name="MultiMedia17 Mixer TX_CDC_DMA_TX_3" value="1" />
+    </path>
+
+    <path name="audio-record-compress2 handset-mic">
+      <path name="audio-record-compress2" />
+    </path>
+
+    <path name="audio-record-compress2 camcorder-mic">
+      <path name="audio-record-compress2" />
+    </path>
+
+    <path name="audio-record camcorder-mic">
+      <path name="audio-record" />
     </path>
 
     <path name="low-latency-record">
@@ -1992,7 +2020,7 @@
     </path>
 
     <path name="low-latency-record headset-mic">
-      <ctl name="MultiMedia8 Mixer TX_CDC_DMA_TX_4" value="1" />
+      <ctl name="MultiMedia8 Mixer TX_CDC_DMA_TX_3" value="1" />
     </path>
 
     <path name="low-latency-record bt-sco">
@@ -2382,7 +2410,7 @@
     </path>
 
     <path name="voicemmode2-call handset">
-        <ctl name="RX_CDC_DMA_RX_0_Voice Mixer VoiceMMode2" value="1" />
+        <ctl name="PRI_MI2S_RX_Voice Mixer VoiceMMode2" value="1" />
         <ctl name="VoiceMMode2_Tx Mixer TX_CDC_DMA_TX_3_MMode2" value="1" />
     </path>
 
@@ -2506,8 +2534,12 @@
         <ctl name="TX_DEC2 Volume" value="84" />
     </path>
 
+    <path name="audio-record-voip speaker-mic">
+        <ctl name="MultiMedia10 Mixer TX_CDC_DMA_TX_3" value="1" />
+    </path>
+
     <path name="audio-record-voip headset-mic">
-        <ctl name="MultiMedia10 Mixer TX_CDC_DMA_TX_4" value="1" />
+        <ctl name="MultiMedia10 Mixer TX_CDC_DMA_TX_3" value="1" />
     </path>
 
     <path name="audio-record-voip usb-headset-mic">
@@ -2528,7 +2560,7 @@
     </path>
 
     <path name="audio-record-voip headset-mic">
-        <ctl name="MultiMedia10 Mixer TX_CDC_DMA_TX_4" value="1" />
+        <ctl name="MultiMedia10 Mixer TX_CDC_DMA_TX_3" value="1" />
     </path>
 
     <path name="spkr-rx-calib">
@@ -2592,6 +2624,9 @@
 
     <path name="speaker">
         <ctl name="Ext Spk Switch" value="On"/>
+    </path>
+
+    <path name="mora">
     </path>
 
     <path name="voice-speaker-hfp">
@@ -3347,9 +3382,14 @@
         <ctl name="PRI_MI2S_RX Audio Mixer MultiMedia16" value="1" />
     </path>
 
+    <path name="mmap-playback mora">
+        <ctl name="SEC_MI2S_RX Audio Mixer MultiMedia16" value="1" />
+    </path>
+
    <path name="mmap-playback handset">
         <ctl name="PRI_MI2S_RX Audio Mixer MultiMedia16" value="1" />
     </path>
+
     <path name="mmap-playback headphones">
         <ctl name="RX_CDC_DMA_RX_0 Audio Mixer MultiMedia16" value="1" />
     </path>
