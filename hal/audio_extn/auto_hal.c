@@ -27,7 +27,7 @@
  * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  * Changes from Qualcomm Innovation Center are provided under the following license:
- * Copyright (c) 2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2023-2025 Qualcomm Innovation Center, Inc. All rights reserved.
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 #define LOG_TAG "auto_hal_extn"
@@ -54,6 +54,7 @@
 #define MAX_VOLUME 1.995262
 #define DSP_MAX_VOLUME 0x2000
 #define DUCKED_VOLUME 0.0035
+#define MUTE_VOLUME 0.0000
 
 enum {
     AUDIO_DEVICE_DUCKED = 0,
@@ -866,7 +867,7 @@ static void auto_hal_set_mute_duck_state(struct audio_device *adev,
                                               list);
             out = out_ctxt->output;
             car_audio_stream = auto_hal_get_car_audio_stream_from_address(ptr);
-            if (car_audio_stream == out->car_audio_stream) {
+            if (out && (car_audio_stream == out->car_audio_stream)) {
                 switch(duck_mute_state) {
                     case AUDIO_DEVICE_DUCKED:
                         ALOGD("%s: Ducking BUS device %s", __func__, ptr);
@@ -892,7 +893,7 @@ static void auto_hal_set_mute_duck_state(struct audio_device *adev,
                         ALOGD("%s: Muting BUS device %s", __func__, ptr);
                         out->muted = true;
                         if (out && out->compr)
-                              auto_hal_out_set_compr_volume(out, DUCKED_VOLUME, DUCKED_VOLUME);
+                              auto_hal_out_set_compr_volume(out, MUTE_VOLUME, MUTE_VOLUME);
                         break;
 
                     case AUDIO_DEVICE_UNMUTED:
