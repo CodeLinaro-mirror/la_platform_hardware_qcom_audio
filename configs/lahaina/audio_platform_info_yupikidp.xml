@@ -26,7 +26,7 @@
 <!-- IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.                          -->
 <!--                                                                        -->
 <!-- Changes from Qualcomm Innovation Center are provided under the following license:-->
-<!-- Copyright (c) 2023 Qualcomm Innovation Center, Inc. All rights reserved.-->
+<!-- Copyright (c) 2023, 2025 Qualcomm Innovation Center, Inc. All rights reserved.-->
 <!-- SPDX-License-Identifier: BSD-3-Clause-Clear                            -->
 <audio_platform_info>
     <bit_width_configs>
@@ -151,7 +151,6 @@
         <device name="SND_DEVICE_IN_UNPROCESSED_HEADSET_MIC" acdb_id="147"/>
         <device name="SND_DEVICE_IN_HANDSET_GENERIC_QMIC" acdb_id="191"/>
         <device name="SND_DEVICE_IN_VOICE_HEARING_AID" acdb_id="11"/>
-        <device name="SND_DEVICE_IN_VOICE_REC_MIC" acdb_id="200"/>
         <device name="SND_DEVICE_IN_VOICE_REC_DMIC_STEREO" acdb_id="202"/>
         <device name="SND_DEVICE_OUT_VOICE_HANDSET_TMUS" acdb_id="7"/>
         <device name="SND_DEVICE_IN_BT_A2DP" acdb_id="201"/>
