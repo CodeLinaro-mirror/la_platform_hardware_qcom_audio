@@ -265,16 +265,6 @@ persist.vendor.audio.fluence.tmic.enabled=false
 #
 #snapdragon value add features
 #
-PRODUCT_PROPERTY_OVERRIDES += \
-ro.qc.sdk.audio.ssr=false
-
-##fluencetype can be "fluence" or "fluencepro" or "none"
-PRODUCT_PROPERTY_OVERRIDES += \
-ro.qc.sdk.audio.fluencetype=none\
-persist.audio.fluence.voicecall=true\
-persist.audio.fluence.voicerec=false\
-persist.audio.fluence.speaker=true
-
 #disable tunnel encoding
 PRODUCT_PROPERTY_OVERRIDES += \
 vendor.audio.tunnel.encode=false
@@ -336,21 +326,9 @@ vendor.audio.safx.pbe.enabled=false
 PRODUCT_PROPERTY_OVERRIDES += \
 vendor.audio.parser.ip.buffer.size=262144
 
-#Enable 16 bit PCM offload by default
-PRODUCT_PROPERTY_OVERRIDES += \
-audio.offload.pcm.16bit.enable=true
-
-#Enable 24 bit PCM offload by default
-PRODUCT_PROPERTY_OVERRIDES += \
-audio.offload.pcm.24bit.enable=true
-
 #flac sw decoder 24 bit decode capability
 PRODUCT_PROPERTY_OVERRIDES += \
 vendor.audio.flac.sw.decoder.24bit=true
-
-#split a2dp DSP supported encoder list
-PRODUCT_PROPERTY_OVERRIDES += \
-persist.vendor.bt.a2dp_offload_cap=sbc-aptx-aptxtws-aptxhd-aac-ldac
 
 # A2DP offload support
 PRODUCT_PROPERTY_OVERRIDES += \
@@ -391,14 +369,6 @@ PRODUCT_PROPERTY_OVERRIDES += \
 vendor.audio.use.hw.wma.decoder=true
 PRODUCT_PROPERTY_OVERRIDES += \
 vendor.audio.use.hw.ape.decoder=true
-
-#audio becoming noisy intent broadcast delay
-PRODUCT_PROPERTY_OVERRIDES += \
-audio.sys.noisy.broadcast.delay=600
-
-#offload pausetime out duration to 3 secs to inline with other outputs
-PRODUCT_PROPERTY_OVERRIDES += \
-audio.sys.offload.pstimeout.secs=3
 
 #Set AudioFlinger client heap size
 PRODUCT_PROPERTY_OVERRIDES += \
