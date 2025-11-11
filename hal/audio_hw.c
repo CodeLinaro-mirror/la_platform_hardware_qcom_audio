@@ -11405,6 +11405,8 @@ static int adev_open(const hw_module_t *module, const char *name,
     adev->a2dp_started = false;
     adev->ha_proxy_enable = false;
 
+    adev->ec_ref_path_ref_cnt = 0;
+
     audio_extn_perf_lock_init();
 
     /* Loads platform specific libraries dynamically */
