@@ -284,6 +284,7 @@ static void init_stream(void) {
     stream_params.dtmf_detect_enable = 0;
     stream_params.file_type = FILE_WAV;
     stream_params.stream_type = 1;
+    stream_params.omit_call = false;
     pthread_mutex_init(&stream_params.write_lock, (const pthread_mutexattr_t *)NULL);
     pthread_cond_init(&stream_params.write_cond, (const pthread_condattr_t *) NULL);
     pthread_mutex_init(&stream_params.drain_lock, (const pthread_mutexattr_t *)NULL);
@@ -957,6 +958,7 @@ void usage() {
     printf(" -e  --in_dl_call_playback <filename to play from> play downlink audio to voice call\n");
     printf(" -n  --stream type             - <1 = QAHW_VOICECALL, 2 = QAHW_ECALL \n");
     printf(" -w  --dtmf_detect                                   .\n");
+    printf(" -x  --omit_call                                     .\n");
 }
 
 void stop_signal_handler(int signal __unused) {
@@ -1681,6 +1683,7 @@ int main(int argc, char *argv[]) {
     qahw_stream_direction dir;
     int call_count = 0;
     bool isVoiceOverUsb = false;
+    bool omit_hpcm_call = false;
     int period_size = 0;
     int period_count = 0;
     int call_lenght = 0;
@@ -1715,12 +1718,13 @@ int main(int argc, char *argv[]) {
         { "voice_over_usb", no_argument,  0, 'g' },
         { "usb_period_size", required_argument,  0, 'j' },
         { "usb_period_count", no_argument,  0, 'k' },
+        { "omit_call", no_argument,  0, 'x' },
         { 0, 0, 0, 0 }
     };
 
     while ((opt = getopt_long(argc,
                               argv,
-                                "-v:d:l:m:p:r:t:f:a:b:h:i:u:y:c:w:o:e:n:s:g:j:k:",
+                                "-v:d:l:m:p:r:t:f:a:b:h:i:u:y:c:w:o:e:n:s:g:j:k:x:",
                               long_options,
                               &option_index)) != -1) {
 
@@ -1804,12 +1808,18 @@ int main(int argc, char *argv[]) {
             stream_params.dtmf = true;
             stream_params.dtmf_detect_enable = true;
             break;
+        case 'x':
+            fprintf(stderr, "omit_call  during HPCM use case\n");
+            stream_params.omit_call = true;
+            break;
         case 'h':
         default:
             usage();
             return 0;
         }
     }
+
+    omit_hpcm_call = (stream_params.hpcm && stream_params.omit_call);
     /*making dummy voice Over USB run, */
     /*to be cleaned */
     if (isVoiceOverUsb) {
@@ -1878,47 +1888,52 @@ int main(int argc, char *argv[]) {
     stream_params.out_voice_handle = NULL;
 
     fprintf(stderr, "vsid is %s device is %d \n", attr.attr.voice.vsid, stream_params.output_device[0]);
-    rc = qahw_stream_open(stream_params.qahw_mod_handle,
-                          attr,
-                          1,
-                          stream_params.output_device,
-                          0,
-                          NULL,
-                          NULL,
-                          NULL,
-                          &(stream_params.out_voice_handle));
-    if (rc) {
-        fprintf(stderr, "Could not open output stream.\n");
-        goto unload;
-    }
-    /*set tty mode if needed*/
-    if(stream_params.tty_mode) {
-        qahw_param_payload tty;
-        tty.tty_mode_params.mode = stream_params.tty_mode;
-        rc = qahw_stream_set_parameters(stream_params.out_voice_handle,
-                                        QAHW_PARAM_TTY_MODE, &tty);
+    if (!omit_hpcm_call) {
+        rc = qahw_stream_open(stream_params.qahw_mod_handle,
+                              attr,
+                              1,
+                              stream_params.output_device,
+                              0,
+                              NULL,
+                              NULL,
+                              NULL,
+                              &(stream_params.out_voice_handle));
+        if (rc) {
+            fprintf(stderr, "Could not open output stream.\n");
+            goto unload;
+        }
+        /*set tty mode if needed*/
+        if(stream_params.tty_mode) {
+            qahw_param_payload tty;
+            tty.tty_mode_params.mode = stream_params.tty_mode;
+            rc = qahw_stream_set_parameters(stream_params.out_voice_handle,
+                                            QAHW_PARAM_TTY_MODE, &tty);
+        }
     }
     while (stream_params.multi_call) {
         call_count++;
-        rc = qahw_stream_start(stream_params.out_voice_handle);
+        if (!omit_hpcm_call){
+            rc = qahw_stream_start(stream_params.out_voice_handle);
 
-        if (rc) {
-            fprintf(stderr, "Could not start voice stream.\n");
-            goto close_stream;
-        }
-        fprintf(stderr, "started voice call %d\n", call_count);
-        /*set volume */
-        struct qahw_volume_data vol;
-        struct qahw_channel_vol vol_pair;
+            if (rc) {
+                fprintf(stderr, "Could not start voice stream.\n");
+                goto close_stream;
+            }
+            fprintf(stderr, "started voice call %d\n", call_count);
 
-        vol_pair.channel = QAHW_CHANNEL_L;
-        vol_pair.vol = stream_params.vol;
-        vol.num_of_channels = 1;
-        vol.vol_pair = &vol_pair;
+            /*set volume */
+            struct qahw_volume_data vol;
+            struct qahw_channel_vol vol_pair;
 
-        rc = qahw_stream_set_volume(stream_params.out_voice_handle, vol);
-        if(rc){
-            fprintf(stderr, "set vol failed rc %d!\n", rc);
+            vol_pair.channel = QAHW_CHANNEL_L;
+            vol_pair.vol = stream_params.vol;
+            vol.num_of_channels = 1;
+            vol.vol_pair = &vol_pair;
+
+            rc = qahw_stream_set_volume(stream_params.out_voice_handle, vol);
+            if(rc){
+                fprintf(stderr, "set vol failed rc %d!\n", rc);
+            }
         }
         call_lenght = stream_params.call_length;
         if (stream_params.in_call_rec) {
@@ -1966,13 +1981,13 @@ int main(int argc, char *argv[]) {
                 fprintf(stderr, "in call playback thread creation failed %d\n");
             }
         }
-        if(stream_params.mute) {
+        if(stream_params.mute && !omit_hpcm_call) {
            struct qahw_mute_data mute;
            mute.enable = true;
            mute.direction = stream_params.mute_dir;
            rc = qahw_stream_set_mute(stream_params.out_voice_handle, mute);
         }
-        if(stream_params.dtmf_gen_enable) {
+        if(stream_params.dtmf_gen_enable && !omit_hpcm_call) {
             qahw_param_payload dtmf;
             char *s = strtok_r(freq_values, ",", &freq);
             char *s1 = strtok_r(NULL, ",", &freq);
@@ -1993,7 +2008,7 @@ int main(int argc, char *argv[]) {
                                             QAHW_PARAM_DTMF_GEN, &dtmf);
         }
 skip_dtmf_gen:
-        if(stream_params.dtmf_detect_enable) {
+        if(stream_params.dtmf_detect_enable && !omit_hpcm_call) {
             qahw_param_payload dtmf_det;
             dtmf_det.dtmf_detect_params.enable = 1;
             dtmf_det.dtmf_detect_params.dir = stream_params.tp_dir;
@@ -2043,16 +2058,18 @@ skip_dtmf_gen:
         stop = true;
         stop_dl = true;
         fprintf(stderr, "stoping call %d\n", call_count);
-        rc = qahw_stream_stop(stream_params.out_voice_handle);
+        if (!omit_hpcm_call)
+            rc = qahw_stream_stop(stream_params.out_voice_handle);
         stream_params.multi_call--;
         /*let session stop*/
         usleep(100000);
     }
 
  close_stream:
-    fprintf(stderr, "closing voice stream\n");
-    rc = qahw_stream_close(stream_params.out_voice_handle);
-
+    if (!omit_hpcm_call) {
+        fprintf(stderr, "closing voice stream\n");
+        rc = qahw_stream_close(stream_params.out_voice_handle);
+    }
  unload:
     fprintf(stderr, "unloading hal\n");
     if (qahw_unload_module(stream_params.qahw_mod_handle) < 0) {
