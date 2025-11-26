@@ -25,8 +25,8 @@
 <!-- OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN -->
 <!-- IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.                          -->
 <!--                                                                        -->
-<!-- Changes from Qualcomm Innovation Center are provided under the following license: -->
-<!-- Copyright (c) 2023-2024 Qualcomm Innovation Center, Inc. All rights reserved. -->
+<!-- Changes from Qualcomm Technologies, Inc. are provided under the following license: -->
+<!-- Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.         -->
 <!-- SPDX-License-Identifier: BSD-3-Clause-Clear                            -->
 <mixer>
     <!-- These are the initial mixer settings -->
@@ -418,8 +418,9 @@
     </path>
 
     <path name="low-latency-record">
-        <ctl name="TERT_TDM_TX_0 Channels" value="One" />
+        <ctl name="TERT_TDM_TX_0 Channels" value="Four" />
         <ctl name="MultiMedia32 Mixer TERT_TDM_TX_0" value="1" />
+        <ctl name="TERT_TDM_TX_0 ADM Channels" value="Four" />
     </path>
 
     <path name="low-latency-record2">

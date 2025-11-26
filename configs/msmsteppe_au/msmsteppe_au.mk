@@ -105,7 +105,7 @@ PRODUCT_PACKAGES += $(AUDIO_HAL_TEST_APPS)
 AUDIO_FEATURE_ENABLED_AUTO_HAL := true
 AUDIO_FEATURE_ENABLED_EXT_HW_PLUGIN := true
 AUDIO_FEATURE_ENABLED_AUDIO_CONTROL_HAL := true
-ifneq ( ,$(filter T Tiramisu 13 U UpsideDownCake 14 W Baklava 16, $(PLATFORM_VERSION)))
+ifneq ( ,$(filter T Tiramisu 13 U UpsideDownCake 14 W Baklava 16 CinnamonBun 17, $(PLATFORM_VERSION)))
 AUDIO_FEATURE_ENABLED_AUDIO_CONTROL_HAL_AIDL := true
 endif
 ifneq ($(ENABLE_HYP),true)
@@ -115,7 +115,7 @@ AUDIO_FEATURE_ENABLED_SILENT_BOOT := true
 endif
 AUDIO_FEATURE_ENABLED_FM_TUNER_EXT := true
 AUDIO_FEATURE_ENABLED_ICC := true
-ifneq ( ,$(filter S 12 U UpsideDownCake 14 W Baklava 16, $(PLATFORM_VERSION)))
+ifneq ( ,$(filter S 12 U UpsideDownCake 14 W Baklava 16 CinnamonBun 17, $(PLATFORM_VERSION)))
 AUDIO_FEATURE_ENABLED_POWER_POLICY := true
 endif
 ifeq ($(TARGET_BOARD_PLATFORM)$(TARGET_BOARD_SUFFIX), sm6150_au)
@@ -123,7 +123,7 @@ AUDIO_FEATURE_ENABLED_AUDIO_PARSERS := true
 endif
 ##AUTOMOTIVE_AUDIO_FEATURE_FLAGS
 
-ifneq ( ,$(filter U UpsideDownCake 14 W Baklava 16, $(PLATFORM_VERSION)))
+ifneq ( ,$(filter U UpsideDownCake 14 W Baklava 16 CinnamonBun 17, $(PLATFORM_VERSION)))
 AUDIO_FEATURE_ENABLED_HAL_V7 := true
 endif
 
@@ -135,7 +135,7 @@ endif
 #Automotive audio specific device overlays
 DEVICE_PACKAGE_OVERLAYS += vendor/qcom/opensource/audio-hal/primary-hal/configs/common_au/overlay
 
-ifneq ( ,$(filter U UpsideDownCake 14 W Baklava 16, $(PLATFORM_VERSION)))
+ifneq ( ,$(filter U UpsideDownCake 14 W Baklava 16 CinnamonBun 17, $(PLATFORM_VERSION)))
 PRODUCT_COPY_FILES += \
     $(TOPDIR)vendor/qcom/opensource/audio-hal/primary-hal/configs/msmsteppe_au/audio_effects_64.conf:$(TARGET_COPY_OUT_VENDOR)/etc/audio_effects.conf
 else
@@ -158,7 +158,7 @@ PRODUCT_COPY_FILES += \
 
 #XML Audio configuration files
 ifneq ($(TARGET_USES_AOSP_FOR_AUDIO), true)
-ifneq ( ,$(filter U UpsideDownCake 14 W Baklava 16, $(PLATFORM_VERSION)))
+ifneq ( ,$(filter U UpsideDownCake 14 W Baklava 16 CinnamonBun 17, $(PLATFORM_VERSION)))
 PRODUCT_COPY_FILES += \
     $(TOPDIR)vendor/qcom/opensource/audio-hal/primary-hal/configs/msmsteppe_au/audio_policy_configuration_7_0.xml:$(TARGET_COPY_OUT_VENDOR)/etc/audio/audio_policy_configuration.xml
 else
@@ -167,7 +167,7 @@ PRODUCT_COPY_FILES += \
 endif
 endif
 
-ifneq ( ,$(filter U UpsideDownCake 14 W Baklava 16, $(PLATFORM_VERSION)))
+ifneq ( ,$(filter U UpsideDownCake 14 W Baklava 16 CinnamonBun 17, $(PLATFORM_VERSION)))
 PRODUCT_COPY_FILES += \
     $(TOPDIR)vendor/qcom/opensource/audio-hal/primary-hal/configs/common_au/audio_policy_configuration_7_0.xml:$(TARGET_COPY_OUT_VENDOR)/etc/audio_policy_configuration.xml \
     $(TOPDIR)frameworks/av/services/audiopolicy/config/a2dp_audio_policy_configuration_7_0.xml:$(TARGET_COPY_OUT_VENDOR)/etc/a2dp_audio_policy_configuration.xml
@@ -364,7 +364,7 @@ vendor.audio.hal.output.suspend.supported=false
 #Enable AAudio MMAP/NOIRQ data path
 #1 is AAUDIO_POLICY_NEVER so it will not try MMAP
 #2 is AAUDIO_POLICY_AUTO so it will try MMAP then fallback to Legacy path
-ifneq ( ,$(filter U UpsideDownCake 14 W Baklava 16, $(PLATFORM_VERSION)))
+ifneq ( ,$(filter U UpsideDownCake 14 W Baklava 16 CinnamonBun 17, $(PLATFORM_VERSION)))
 PRODUCT_PROPERTY_OVERRIDES += aaudio.mmap_policy=2
 #Allow EXCLUSIVE then fall back to SHARED.
 PRODUCT_PROPERTY_OVERRIDES += aaudio.mmap_exclusive_policy=2
@@ -549,7 +549,7 @@ PRODUCT_PACKAGES_DEBUG += \
     AudioSettings
 
 # for HIDL related audiocontrol packages
-ifeq ( ,$(filter 12 13 U UpsideDownCake 14 W Baklava 16, $(PLATFORM_VERSION)))
+ifeq ( ,$(filter 12 13 U UpsideDownCake 14 W Baklava 16 CinnamonBun 17, $(PLATFORM_VERSION)))
 PRODUCT_PACKAGES += \
     android.hardware.automotive.audiocontrol@2.0-service \
     android.hardware.automotive.audiocontrol@2.0
