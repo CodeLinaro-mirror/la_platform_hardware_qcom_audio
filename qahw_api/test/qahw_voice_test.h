@@ -97,6 +97,7 @@ typedef struct {
     bool in_call_playback;
     bool in_dl_call_playback;
     bool hpcm;
+    bool omit_call;
     int hpcm_tp;
     int hpcm_sr;
     int tp_dir;
