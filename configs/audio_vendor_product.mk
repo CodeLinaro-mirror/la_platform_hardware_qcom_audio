@@ -1,14 +1,7 @@
-AUDIO_USE_STUB_HAL := false
-ifeq ($(TARGET_USES_QMAA),true)
-ifeq ($(TARGET_USES_QMAA_OVERRIDE_AUDIO), false)
-AUDIO_USE_STUB_HAL := true
-endif # TARGET_USES_QMAA_OVERRIDE_AUDIO
-endif # TARGET_USES_QMAA
+#Audio product definitions 
+PRODUCT_PACKAGES += $(AUDIO_GENERIC_MODULES)
 
-ifeq ($(TARGET_USES_AUDIOLITE),true)
-AUDIO_USE_STUB_HAL := true
-MM_AUDIO += audiolite
-endif #ends TARGET_USES_AUDIOLITE
+PRODUCT_PACKAGES_DEBUG += $(MM_AUDIO_DBG)
 
 #MM_AUDIO product packages
 MM_AUDIO += audiod
@@ -45,25 +38,13 @@ MM_AUDIO += libqcvirt
 MM_AUDIO += libqcreverb
 MM_AUDIO += libasphere
 MM_AUDIO += audio_effects.conf
-MM_AUDIO += ftm_test_config
+#MM_AUDIO += ftm_test_config //TODO
 MM_AUDIO += libFlacSwDec
 MM_AUDIO += libAlacSwDec
 MM_AUDIO += libApeSwDec
 MM_AUDIO += libMpeghSwEnc
 MM_AUDIO += libdsd2pcm
 MM_AUDIO += audioflacapp
-ifeq ($(TARGET_BOARD_PLATFORM),sdm845)
-MM_AUDIO += libOmxQcelp13Dec
-MM_AUDIO += libOmxEvrcDec
-MM_AUDIO += libOmxWmaDec
-MM_AUDIO += libOmxAlacDec
-MM_AUDIO += libOmxApeDec
-MM_AUDIO += libOmxDsdDec
-MM_AUDIO += libOmxAmrwbplusDec
-MM_AUDIO += libOmxAmrDec
-MM_AUDIO += libOmxAlacDecSw
-MM_AUDIO += libOmxApeDecSw
-endif
 MM_AUDIO += libqct_resampler
 MM_AUDIO += libaudiodevarb
 MM_AUDIO += audiod
@@ -131,70 +112,18 @@ MM_AUDIO += QRD_Hdmi_cal.acdb
 MM_AUDIO += QRD_Headset_cal.acdb
 MM_AUDIO += QRD_Speaker_cal.acdb
 MM_AUDIO += QRD_workspaceFile.qwsp
-ifeq ($(TARGET_BOARD_PLATFORM),lahaina)
+
+MM_AUDIO += IDP_Yupik_Bluetooth_cal.acdb
+MM_AUDIO += IDP_Yupik_Codec_cal.acdb
+MM_AUDIO += IDP_Yupik_General_cal.acdb
+MM_AUDIO += IDP_Yupik_Global_cal.acdb
+MM_AUDIO += IDP_Yupik_Handset_cal.acdb
+MM_AUDIO += IDP_Yupik_Hdmi_cal.acdb
+MM_AUDIO += IDP_Yupik_Headset_cal.acdb
+MM_AUDIO += IDP_Yupik_Speaker_cal.acdb
+MM_AUDIO += IDP_Yupik_workspaceFile.qwsp
+ifneq (,$(call is-board-platform-in-list2,lahaina))
 MM_AUDIO += fai__4.8.8_0.0__3.0.0_0.0__3.1.2_0.0__3.2.0_0.1__eai_1.10.pmd
-endif
-ifeq ($(TARGET_BOARD_AUTO),true)
-MM_AUDIO += adsp_avs_config.acdb
-MM_AUDIO += Bluetooth_cal.acdb
-MM_AUDIO += Codec_cal.acdb
-MM_AUDIO += General_cal.acdb
-MM_AUDIO += Global_cal.acdb
-MM_AUDIO += Handset_cal.acdb
-MM_AUDIO += Hdmi_cal.acdb
-MM_AUDIO += Headset_cal.acdb
-MM_AUDIO += Speaker_cal.acdb
-
-MM_AUDIO += libaudiohalplugin
-ifeq ($(call is-board-platform-in-list,gen4),true)
-MM_AUDIO += libaudio_dac
-MM_AUDIO += libaudio_expander
-MM_AUDIO += exp_dac_test
-endif #gen4
-MM_AUDIO += libcdcdriver
-MM_AUDIO += libvad
-MM_AUDIO += capi_v2_bmt
-MM_AUDIO += capi_v2_fnb
-MM_AUDIO += capi_v2_loud
-MM_AUDIO += capi_v2_peq
-MM_AUDIO += capi_v2_sumx
-MM_AUDIO += capi_v2_synth
-MM_AUDIO += capi_v2_avc
-MM_AUDIO += capi_v2_asrc
-MM_AUDIO += capi_v2_ecmx
-MM_AUDIO += capi_v2_vote
-MM_AUDIO += icc_module.so.1
-MM_AUDIO += sec_module.so.1
-MM_AUDIO += audio-nxp-auto
-MM_AUDIO += libaudio-nxp-auto
-MM_AUDIO += mercuryflasher
-MM_AUDIO += liba2bplugin-master
-MM_AUDIO += liba2bplugin-slave
-MM_AUDIO += liba2bstack
-MM_AUDIO += liba2bstack-pal
-MM_AUDIO += liba2bstack-protobuf
-MM_AUDIO += a2b-app
-MM_AUDIO += liba2bdriver
-MM_AUDIO += libacdbloaderclient
-MM_AUDIO += libacdbloadersocketclient
-MM_AUDIO += acdb_loader_service
-MM_AUDIO += libaudiohalpluginclient
-MM_AUDIO += audio_hal_plugin_service
-MM_AUDIO += audio_chime
-MM_AUDIO += libqtiautobundle
-MM_AUDIO += autoeffects
-MM_AUDIO += autoeffects.xml
-MM_AUDIO += audcalparam_commands.cfg
-MM_AUDIO += audcalparam_commands_elite.cfg
-MM_AUDIO += libsynth
-MM_AUDIO += libicc
-
-ifneq ( ,$(filter T Tiramisu 13 U UpsideDownCake 14 V VanillaIceCream 15, $(PLATFORM_VERSION)))
-MM_AUDIO += vendor.qti.hardware.automotive.audiocontrol-service
-else
-MM_AUDIO += android.hardware.automotive.audiocontrol-service.example
-endif
-MM_AUDIO += libaudiopowerpolicy
 endif
 
 ifeq ($(ENABLE_HYP), true)
@@ -213,7 +142,7 @@ MM_AUDIO_DBG += filter3i.pcm
 MM_AUDIO_DBG += filter3r.pcm
 MM_AUDIO_DBG += filter4i.pcm
 MM_AUDIO_DBG += filter4r.pcm
-MM_AUDIO_DBG += mm-audio-ftm
+#MM_AUDIO_DBG += mm-audio-ftm
 MM_AUDIO_DBG += mm-audio-alsa-test
 MM_AUDIO_DBG += avs_test_ker.ko
 MM_AUDIO_DBG += libsrsprocessing_libs
@@ -225,38 +154,66 @@ PRODUCT_PACKAGES += $(MM_AUDIO)
 
 PRODUCT_PACKAGES_DEBUG += $(MM_AUDIO_DBG)
 
-#-------
-# audio specific
-# ------
-TARGET_USES_AOSP := true
-TARGET_USES_AOSP_FOR_AUDIO := false
 
-# sdm845 specific rules
-ifeq ($(TARGET_BOARD_PLATFORM),sdm845)
+#----------------------------------------------------------------------
+# audio specific
+#----------------------------------------------------------------------
 TARGET_USES_AOSP := false
 TARGET_USES_AOSP_FOR_AUDIO := false
-endif
 
-# Audio configuration file
-ifeq ($(AUDIO_USE_STUB_HAL),true)
+ifeq ($(TARGET_USES_QMAA_OVERRIDE_AUDIO), false)
+ifeq ($(TARGET_USES_QMAA),true)
+AUDIO_USE_STUB_HAL := true
 TARGET_USES_AOSP_FOR_AUDIO := true
+endif
+endif
+ifeq ($(AUDIO_USE_STUB_HAL), true)
 -include $(TOPDIR)vendor/qcom/opensource/audio-hal/primary-hal/configs/common/default.mk
 else
-ifeq ($(TARGET_GVMGH_SPECIFIC), false)
--include $(TOPDIR)vendor/qcom/opensource/audio-hal/primary-hal/configs/msmnile_au/msmnile_au.mk
-else ifeq ($(TARGET_BOARD_PLATFORM)$(TARGET_BOARD_SUFFIX)$(TARGET_BOARD_DERIVATIVE_SUFFIX),msmnile_au_km4)
--include $(TOPDIR)vendor/qcom/opensource/audio-hal/primary-hal/configs/msmnile_au/msmnile_au.mk
-else ifeq ($(TARGET_BOARD_PLATFORM)$(TARGET_BOARD_SUFFIX)$(TARGET_BOARD_DERIVATIVE_SUFFIX),msmnile_tb)
--include $(TOPDIR)vendor/qcom/opensource/audio-hal/primary-hal/configs/msmnile_au/msmnile_au.mk
-else ifeq ($(TARGET_BOARD_PLATFORM)$(TARGET_BOARD_SUFFIX)$(TARGET_BOARD_DERIVATIVE_SUFFIX),msmnile_au_ar)
--include $(TOPDIR)vendor/qcom/opensource/audio-hal/primary-hal/configs/msmnile_au/msmnile_au.mk
-else ifeq ($(TARGET_BOARD_PLATFORM)$(TARGET_BOARD_SUFFIX),sm6150_au)
--include $(TOPDIR)vendor/qcom/opensource/audio-hal/primary-hal/configs/msmsteppe_au/msmsteppe_au.mk
+# Audio hal configuration file
+-include $(TOPDIR)vendor/qcom/opensource/audio-hal/primary-hal/configs/$(TARGET_BOARD_PLATFORM)/$(TARGET_BOARD_PLATFORM).mk
 endif
-endif # AUDIO_USE_STUB_HAL
 
-ifeq ($(TARGET_BOARD_AUTO),true)
-ifeq ($(TARGET_USES_RRO),true)
-PRODUCT_PACKAGES += CarServiceResAutoTarget_Vendor
+$(warning audio check QC_HWASAN: $(QC_HWASAN) sanitize_target $(SANITIZE_TARGET))
+$(call add_soong_config_namespace,vendor_audio_hwasan_config)
+ifneq ($(filter audio, $(QC_HWASAN)),)
+$(warning audio hwasan enabled at module level)
+AUDIO_FEATURE_USE_HWASAN_ARTIFACTS := true
+PRODUCT_HWASAN_INCLUDE_PATHS += \
+    vendor/qcom/opensource/audio-hal
 endif
+
+# Pro Audio feature
+PRODUCT_COPY_FILES += \
+    frameworks/native/data/etc/android.hardware.audio.pro.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/android.hardware.audio.pro.xml
+
+SOONG_CONFIG_qtiaudio_var00 := false
+SOONG_CONFIG_qtiaudio_var11 := false
+SOONG_CONFIG_qtiaudio_var22 := false
+SOONG_CONFIG_qtiaudio_hwasan := false
+
+ifneq ($(BUILD_AUDIO_TECHPACK_SOURCE), true)
+    SOONG_CONFIG_qtiaudio_var00 := true
+    SOONG_CONFIG_qtiaudio_var11 := true
+    SOONG_CONFIG_qtiaudio_var22 := true
+endif
+ifeq (,$(wildcard $(QCPATH)/mm-audio-noship))
+    SOONG_CONFIG_qtiaudio_var11 := true
+endif
+ifeq (,$(wildcard $(QCPATH)/mm-audio))
+    SOONG_CONFIG_qtiaudio_var22 := true
+endif
+
+ifneq ($(filter hwaddress,$(SANITIZE_TARGET)),)
+$(warning audio hwasan enabled at target level)
+AUDIO_FEATURE_USE_HWASAN_ARTIFACTS := true
+SOONG_CONFIG_qtiaudio_hwasan := true
+endif
+
+# this feature flag is only set when hwasan is enabled (local or global)
+ifeq ($(AUDIO_FEATURE_USE_HWASAN_ARTIFACTS), true)
+$(warning audio use hwasan artifacts)
+$(call add_soong_config_var_value,vendor_audio_hwasan_config,use_hwasan,true)
+else
+$(call add_soong_config_var_value,vendor_audio_hwasan_config,use_hwasan,false)
 endif

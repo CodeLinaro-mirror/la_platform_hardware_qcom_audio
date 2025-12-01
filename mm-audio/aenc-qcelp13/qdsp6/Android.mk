@@ -58,6 +58,12 @@ ifeq ($(strip $(AUDIO_FEATURE_ENABLED_DLKM)),true)
   endif # BOARD_OPENSOURCE_DIR
 endif
 
+LOCAL_HEADER_LIBRARIES += audio_kernel_headers
+
+ifeq ($(ENABLE_AUDIO_LEGACY_TECHPACK),true)
+LOCAL_HEADER_LIBRARIES += qti_legacy_audio_kernel_uapi
+endif
+
 
 ifneq ($(filter kona lahaina holi,$(TARGET_BOARD_PLATFORM)),)
 LOCAL_SANITIZE := integer_overflow

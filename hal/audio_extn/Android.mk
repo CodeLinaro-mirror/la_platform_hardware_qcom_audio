@@ -78,6 +78,7 @@ LOCAL_ADDITIONAL_DEPENDENCIES += $(TARGET_OUT_INTERMEDIATES)/KERNEL_OBJ/usr
 
 ifeq ($(strip $(AUDIO_FEATURE_ENABLED_DLKM)),true)
   LOCAL_HEADER_LIBRARIES += audio_kernel_headers
+  LOCAL_HEADER_LIBRARIES += legacy_audio_kernel_headers
   LOCAL_C_INCLUDES += $(AUDIO_KERNEL_INC)
 endif
 
@@ -85,6 +86,7 @@ ifeq ($(strip $(AUDIO_FEATURE_ENABLED_DYNAMIC_LOG)), true)
     LOCAL_CFLAGS += -DDYNAMIC_LOG_ENABLED
     LOCAL_C_INCLUDES += $(TARGET_OUT_HEADERS)/mm-audio/audio-log-utils
     LOCAL_SHARED_LIBRARIES += libaudio_log_utils
+    LOCAL_HEADER_LIBRARIES += libaudiologutils_headers
 endif
 
 LOCAL_HEADER_LIBRARIES += libhardware_headers
@@ -147,6 +149,7 @@ LOCAL_ADDITIONAL_DEPENDENCIES += $(TARGET_OUT_INTERMEDIATES)/KERNEL_OBJ/usr
 
 ifeq ($(strip $(AUDIO_FEATURE_ENABLED_DLKM)),true)
   LOCAL_HEADER_LIBRARIES += audio_kernel_headers
+  LOCAL_HEADER_LIBRARIES += legacy_audio_kernel_headers
   LOCAL_C_INCLUDES += $(AUDIO_KERNEL_INC)
 endif
 
@@ -154,6 +157,7 @@ ifeq ($(strip $(AUDIO_FEATURE_ENABLED_DYNAMIC_LOG)), true)
     LOCAL_CFLAGS += -DDYNAMIC_LOG_ENABLED
     LOCAL_C_INCLUDES += $(TARGET_OUT_HEADERS)/mm-audio/audio-log-utils
     LOCAL_SHARED_LIBRARIES += libaudio_log_utils
+    LOCAL_HEADER_LIBRARIES += libaudiologutils_headers
 endif
 
 LOCAL_HEADER_LIBRARIES += libhardware_headers
@@ -212,9 +216,9 @@ LOCAL_C_INCLUDES := \
     $(TARGET_OUT_HEADERS)/mm-audio/surround_sound_3mic/ \
     $(TARGET_OUT_HEADERS)/common/inc/
 
-ifeq ($(TARGET_BOARD_AUTO),true)
+#ifeq ($(TARGET_BOARD_AUTO),true)
 LOCAL_HEADER_LIBRARIES += libsurround_3mic_proc_headers
-endif
+#endif
 
 ifeq ($(ENABLE_AUDIO_LEGACY_TECHPACK),true)
 LOCAL_HEADER_LIBRARIES += qti_legacy_audio_kernel_uapi
@@ -227,6 +231,7 @@ LOCAL_ADDITIONAL_DEPENDENCIES += $(TARGET_OUT_INTERMEDIATES)/KERNEL_OBJ/usr
 
 ifeq ($(strip $(AUDIO_FEATURE_ENABLED_DLKM)),true)
   LOCAL_HEADER_LIBRARIES += audio_kernel_headers
+  LOCAL_HEADER_LIBRARIES += legacy_audio_kernel_headers
   LOCAL_C_INCLUDES += $(PRIMARY_HAL_PATH)
 endif
 
@@ -234,6 +239,7 @@ ifeq ($(strip $(AUDIO_FEATURE_ENABLED_DYNAMIC_LOG)), true)
     LOCAL_CFLAGS += -DDYNAMIC_LOG_ENABLED
     LOCAL_C_INCLUDES += $(TARGET_OUT_HEADERS)/mm-audio/audio-log-utils
     LOCAL_SHARED_LIBRARIES += libaudio_log_utils
+    LOCAL_HEADER_LIBRARIES += libaudiologutils_headers
 endif
 
 LOCAL_HEADER_LIBRARIES += libhardware_headers
@@ -300,6 +306,7 @@ LOCAL_ADDITIONAL_DEPENDENCIES += $(TARGET_OUT_INTERMEDIATES)/KERNEL_OBJ/usr
 
 ifeq ($(strip $(AUDIO_FEATURE_ENABLED_DLKM)),true)
   LOCAL_HEADER_LIBRARIES += audio_kernel_headers
+  LOCAL_HEADER_LIBRARIES += legacy_audio_kernel_headers
   LOCAL_C_INCLUDES += $(AUDIO_KERNEL_INC)
 endif
 
@@ -307,6 +314,7 @@ ifeq ($(strip $(AUDIO_FEATURE_ENABLED_DYNAMIC_LOG)), true)
     LOCAL_CFLAGS += -DDYNAMIC_LOG_ENABLED
     LOCAL_C_INCLUDES += $(TARGET_OUT_HEADERS)/mm-audio/audio-log-utils
     LOCAL_SHARED_LIBRARIES += libaudio_log_utils
+    LOCAL_HEADER_LIBRARIES += libaudiologutils_headers
 endif
 
 LOCAL_HEADER_LIBRARIES += libhardware_headers
@@ -381,6 +389,7 @@ ifeq ($(strip $(AUDIO_FEATURE_ENABLED_DYNAMIC_LOG)), true)
     LOCAL_CFLAGS += -DDYNAMIC_LOG_ENABLED
     LOCAL_C_INCLUDES += $(TARGET_OUT_HEADERS)/mm-audio/audio-log-utils
     LOCAL_SHARED_LIBRARIES += libaudio_log_utils
+    LOCAL_HEADER_LIBRARIES += libaudiologutils_headers
 endif
 
 LOCAL_HEADER_LIBRARIES += libhardware_headers
@@ -517,12 +526,14 @@ LOCAL_ADDITIONAL_DEPENDENCIES += $(TARGET_OUT_INTERMEDIATES)/KERNEL_OBJ/usr
 ifeq ($(strip $(AUDIO_FEATURE_ENABLED_DLKM)),true)
   LOCAL_HEADER_LIBRARIES += audio_kernel_headers
   LOCAL_C_INCLUDES += $(AUDIO_KERNEL_INC)
+  LOCAL_HEADER_LIBRARIES += legacy_audio_kernel_headers
 endif
 
 ifeq ($(strip $(AUDIO_FEATURE_ENABLED_DYNAMIC_LOG)), true)
     LOCAL_CFLAGS += -DDYNAMIC_LOG_ENABLED
     LOCAL_C_INCLUDES += $(TARGET_OUT_HEADERS)/mm-audio/audio-log-utils
     LOCAL_SHARED_LIBRARIES += libaudio_log_utils
+    LOCAL_HEADER_LIBRARIES += libaudiologutils_headers
 endif
 
 LOCAL_HEADER_LIBRARIES += libhardware_headers
@@ -594,6 +605,7 @@ LOCAL_ADDITIONAL_DEPENDENCIES += $(TARGET_OUT_INTERMEDIATES)/KERNEL_OBJ/usr
 
 ifeq ($(strip $(AUDIO_FEATURE_ENABLED_DLKM)),true)
   LOCAL_HEADER_LIBRARIES += audio_kernel_headers
+  LOCAL_HEADER_LIBRARIES += legacy_audio_kernel_headers
   LOCAL_C_INCLUDES += $(AUDIO_KERNEL_INC)
 endif
 
@@ -665,6 +677,7 @@ LOCAL_ADDITIONAL_DEPENDENCIES += $(TARGET_OUT_INTERMEDIATES)/KERNEL_OBJ/usr
 
 ifeq ($(strip $(AUDIO_FEATURE_ENABLED_DLKM)),true)
   LOCAL_HEADER_LIBRARIES += audio_kernel_headers
+  LOCAL_HEADER_LIBRARIES += legacy_audio_kernel_headers
   LOCAL_C_INCLUDES += $(AUDIO_KERNEL_INC)
 endif
 
@@ -672,6 +685,7 @@ ifeq ($(strip $(AUDIO_FEATURE_ENABLED_DYNAMIC_LOG)), true)
     LOCAL_CFLAGS += -DDYNAMIC_LOG_ENABLED
     LOCAL_C_INCLUDES += $(TARGET_OUT_HEADERS)/mm-audio/audio-log-utils
     LOCAL_SHARED_LIBRARIES += libaudio_log_utils
+    LOCAL_HEADER_LIBRARIES += libaudiologutils_headers
 endif
 
 LOCAL_HEADER_LIBRARIES += libhardware_headers
@@ -742,6 +756,7 @@ LOCAL_ADDITIONAL_DEPENDENCIES += $(TARGET_OUT_INTERMEDIATES)/KERNEL_OBJ/usr
 
 ifeq ($(strip $(AUDIO_FEATURE_ENABLED_DLKM)),true)
   LOCAL_HEADER_LIBRARIES += audio_kernel_headers
+  LOCAL_HEADER_LIBRARIES += legacy_audio_kernel_headers
   LOCAL_C_INCLUDES += $(AUDIO_KERNEL_INC)
 endif
 
@@ -813,6 +828,7 @@ LOCAL_ADDITIONAL_DEPENDENCIES += $(TARGET_OUT_INTERMEDIATES)/KERNEL_OBJ/usr
 
 ifeq ($(strip $(AUDIO_FEATURE_ENABLED_DLKM)),true)
   LOCAL_HEADER_LIBRARIES += audio_kernel_headers
+  LOCAL_HEADER_LIBRARIES += legacy_audio_kernel_headers
   LOCAL_C_INCLUDES += $(AUDIO_KERNEL_INC)
 endif
 
@@ -879,10 +895,13 @@ ifeq ($(ENABLE_AUDIO_LEGACY_TECHPACK),true)
 LOCAL_HEADER_LIBRARIES += qti_legacy_audio_kernel_uapi
 endif
 
+LOCAL_HEADER_LIBRARIES += libaudioparser_headers
+
 LOCAL_ADDITIONAL_DEPENDENCIES += $(TARGET_OUT_INTERMEDIATES)/KERNEL_OBJ/usr
 
 ifeq ($(strip $(AUDIO_FEATURE_ENABLED_DLKM)),true)
   LOCAL_HEADER_LIBRARIES += audio_kernel_headers
+  LOCAL_HEADER_LIBRARIES += legacy_audio_kernel_headers
   LOCAL_C_INCLUDES += $(AUDIO_KERNEL_INC)
 endif
 
@@ -890,6 +909,7 @@ ifeq ($(strip $(AUDIO_FEATURE_ENABLED_DYNAMIC_LOG)), true)
     LOCAL_CFLAGS += -DDYNAMIC_LOG_ENABLED
     LOCAL_C_INCLUDES += $(TARGET_OUT_HEADERS)/mm-audio/audio-log-utils
     LOCAL_SHARED_LIBRARIES += libaudio_log_utils
+    LOCAL_HEADER_LIBRARIES += libaudiologutils_headers
 endif
 
 # Kernel specific feature
@@ -966,6 +986,7 @@ LOCAL_ADDITIONAL_DEPENDENCIES += $(TARGET_OUT_INTERMEDIATES)/KERNEL_OBJ/usr
 
 ifeq ($(strip $(AUDIO_FEATURE_ENABLED_DLKM)),true)
   LOCAL_HEADER_LIBRARIES += audio_kernel_headers
+  LOCAL_HEADER_LIBRARIES += legacy_audio_kernel_headers
   LOCAL_C_INCLUDES += $(AUDIO_KERNEL_INC)
 endif
 
@@ -1028,6 +1049,7 @@ LOCAL_ADDITIONAL_DEPENDENCIES += $(TARGET_OUT_INTERMEDIATES)/KERNEL_OBJ/usr
 
 ifeq ($(strip $(AUDIO_FEATURE_ENABLED_DLKM)),true)
   LOCAL_HEADER_LIBRARIES += audio_kernel_headers
+  LOCAL_HEADER_LIBRARIES += legacy_audio_kernel_headers
   LOCAL_C_INCLUDES += $(AUDIO_KERNEL_INC)
 endif
 
@@ -1095,6 +1117,7 @@ LOCAL_ADDITIONAL_DEPENDENCIES += $(TARGET_OUT_INTERMEDIATES)/KERNEL_OBJ/usr
 
 ifeq ($(strip $(AUDIO_FEATURE_ENABLED_DLKM)),true)
   LOCAL_HEADER_LIBRARIES += audio_kernel_headers
+  LOCAL_HEADER_LIBRARIES += legacy_audio_kernel_headers
   LOCAL_C_INCLUDES += $(AUDIO_KERNEL_INC)
 endif
 
@@ -1161,6 +1184,7 @@ LOCAL_ADDITIONAL_DEPENDENCIES += $(TARGET_OUT_INTERMEDIATES)/KERNEL_OBJ/usr
 
 ifeq ($(strip $(AUDIO_FEATURE_ENABLED_DLKM)),true)
   LOCAL_HEADER_LIBRARIES += audio_kernel_headers
+  LOCAL_HEADER_LIBRARIES += legacy_audio_kernel_headers
   LOCAL_C_INCLUDES += $(AUDIO_KERNEL_INC)
 endif
 
@@ -1229,6 +1253,7 @@ LOCAL_ADDITIONAL_DEPENDENCIES += $(TARGET_OUT_INTERMEDIATES)/KERNEL_OBJ/usr
 
 ifeq ($(strip $(AUDIO_FEATURE_ENABLED_DLKM)),true)
   LOCAL_HEADER_LIBRARIES += audio_kernel_headers
+  LOCAL_HEADER_LIBRARIES += legacy_audio_kernel_headers
   LOCAL_C_INCLUDES += $(AUDIO_KERNEL_INC)
 endif
 

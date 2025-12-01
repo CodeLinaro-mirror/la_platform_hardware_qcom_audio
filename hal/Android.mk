@@ -159,6 +159,7 @@ LOCAL_HEADER_LIBRARIES := libhardware_headers
 
 ifeq ($(ENABLE_AUDIO_LEGACY_TECHPACK),true)
   LOCAL_HEADER_LIBRARIES += qti_legacy_audio_kernel_uapi
+  LOCAL_HEADER_LIBRARIES += qti_legacy_audio_header_uapi
 endif
 
 ifeq ($(AUDIO_FEATURE_ENABLED_HAL_V7), true)
@@ -223,6 +224,9 @@ LOCAL_ADDITIONAL_DEPENDENCIES += $(TARGET_OUT_INTERMEDIATES)/KERNEL_OBJ/usr
 # Hardware specific feature
 ifeq ($(strip $(AUDIO_FEATURE_ENABLED_DLKM)),true)
   LOCAL_HEADER_LIBRARIES += audio_kernel_headers
+
+LOCAL_HEADER_LIBRARIES += legacy_audio_kernel_headers
+
 ifneq ($(BOARD_OPENSOURCE_DIR), )
     LOCAL_C_INCLUDES += $(TARGET_OUT_INTERMEDIATES)/$(BOARD_OPENSOURCE_DIR)/audio-kernel/include
   else
@@ -387,6 +391,7 @@ ifeq ($(strip $(AUDIO_FEATURE_ENABLED_DYNAMIC_LOG)), true)
     LOCAL_CFLAGS += -DDYNAMIC_LOG_ENABLED
     LOCAL_C_INCLUDES += $(TARGET_OUT_HEADERS)/mm-audio/audio-log-utils
     LOCAL_SHARED_LIBRARIES += libaudio_log_utils
+    LOCAL_HEADER_LIBRARIES += libaudiologutils_headers
 endif
 
 # Hardware specific feature

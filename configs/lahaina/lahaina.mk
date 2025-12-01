@@ -13,15 +13,15 @@ OVERLAY_PATH := vendor/qcom/opensource/audio-hal/primary-hal/configs/lahaina/shi
 TARGET_PATH := vendor/qcom/opensource/audio-hal/primary-hal/configs/lahaina
 SCRIPT := vendor/qcom/opensource/audio-hal/primary-hal/configs/common/mixer_xml_utils.py
 
-$(shell python $(SCRIPT) --generate combine --base $(BASE_PATH)/mixer_paths_base.xml --overlay $(OVERLAY_PATH)/mixer_paths_shimaidp_overlay.xml $(OVERLAY_PATH)/mixer_paths_shimaidps_overlay.xml $(OVERLAY_PATH)/mixer_paths_shimaqrd_overlay.xml --out_dir $(TARGET_PATH) --out mixer_paths_shimaidp.xml mixer_paths_shimaidps.xml mixer_paths_shimaqrd.xml )
+#$(shell python $(SCRIPT) --generate combine --base $(BASE_PATH)/mixer_paths_base.xml --overlay $(OVERLAY_PATH)/mixer_paths_shimaidp_overlay.xml $(OVERLAY_PATH)/mixer_paths_shimaidps_overlay.xml $(OVERLAY_PATH)/mixer_paths_shimaqrd_overlay.xml --out_dir $(TARGET_PATH) --out mixer_paths_shimaidp.xml mixer_paths_shimaidps.xml mixer_paths_shimaqrd.xml )
 
-$(shell python $(SCRIPT) --generate combine --base $(BASE_PATH)/sound_trigger_mixer_paths_base.xml --overlay $(OVERLAY_PATH)/sound_trigger_mixer_paths_shimaidp_overlay.xml $(OVERLAY_PATH)/sound_trigger_mixer_paths_shimaidps_overlay.xml $(OVERLAY_PATH)/sound_trigger_mixer_paths_shimaqrd_overlay.xml --out_dir $(TARGET_PATH) --out sound_trigger_mixer_paths_shimaidp.xml sound_trigger_mixer_paths_shimaidps.xml sound_trigger_mixer_paths_shimaqrd.xml )
+#$(shell python $(SCRIPT) --generate combine --base $(BASE_PATH)/sound_trigger_mixer_paths_base.xml --overlay $(OVERLAY_PATH)/sound_trigger_mixer_paths_shimaidp_overlay.xml $(OVERLAY_PATH)/sound_trigger_mixer_paths_shimaidps_overlay.xml $(OVERLAY_PATH)/sound_trigger_mixer_paths_shimaqrd_overlay.xml --out_dir $(TARGET_PATH) --out sound_trigger_mixer_paths_shimaidp.xml sound_trigger_mixer_paths_shimaidps.xml sound_trigger_mixer_paths_shimaqrd.xml )
 
 OVERLAY_PATH := vendor/qcom/opensource/audio-hal/primary-hal/configs/lahaina/yupik_overlay
 
-$(shell python $(SCRIPT) --generate combine --base $(BASE_PATH)/mixer_paths_base.xml --overlay $(OVERLAY_PATH)/mixer_paths_yupikidp_overlay.xml $(OVERLAY_PATH)/mixer_paths_yupikqrd_overlay.xml $(OVERLAY_PATH)/mixer_paths_yupikidprb3_overlay.xml --out_dir $(TARGET_PATH) --out mixer_paths_yupikidp.xml mixer_paths_yupikqrd.xml mixer_paths_yupikidprb3.xml)
+#$(shell python $(SCRIPT) --generate combine --base $(BASE_PATH)/mixer_paths_base.xml --overlay $(OVERLAY_PATH)/mixer_paths_yupikidp_overlay.xml $(OVERLAY_PATH)/mixer_paths_yupikqrd_overlay.xml $(OVERLAY_PATH)/mixer_paths_yupikidprb3_overlay.xml --out_dir $(TARGET_PATH) --out mixer_paths_yupikidp.xml mixer_paths_yupikqrd.xml mixer_paths_yupikidprb3.xml)
 
-$(shell python $(SCRIPT) --generate combine --base $(BASE_PATH)/sound_trigger_mixer_paths_base.xml --overlay $(OVERLAY_PATH)/sound_trigger_mixer_paths_yupikidp_overlay.xml $(OVERLAY_PATH)/sound_trigger_mixer_paths_yupikqrd_overlay.xml $(OVERLAY_PATH)/sound_trigger_mixer_paths_yupikidprb3_overlay.xml --out_dir $(TARGET_PATH) --out sound_trigger_mixer_paths_yupikidp.xml sound_trigger_mixer_paths_yupikqrd.xml sound_trigger_mixer_paths_yupikidprb3.xml)
+#$(shell python $(SCRIPT) --generate combine --base $(BASE_PATH)/sound_trigger_mixer_paths_base.xml --overlay $(OVERLAY_PATH)/sound_trigger_mixer_paths_yupikidp_overlay.xml $(OVERLAY_PATH)/sound_trigger_mixer_paths_yupikqrd_overlay.xml $(OVERLAY_PATH)/sound_trigger_mixer_paths_yupikidprb3_overlay.xml --out_dir $(TARGET_PATH) --out sound_trigger_mixer_paths_yupikidp.xml sound_trigger_mixer_paths_yupikqrd.xml sound_trigger_mixer_paths_yupikidprb3.xml)
 #
 ifneq ($(AUDIO_USE_STUB_HAL), true)
 BOARD_USES_ALSA_AUDIO := true
@@ -88,7 +88,7 @@ AUDIO_FEATURE_ENABLED_SPKR_PROTECTION := true
 AUDIO_FEATURE_ENABLED_ACDB_LICENSE := false
 AUDIO_FEATURE_ENABLED_DEV_ARBI := false
 AUDIO_FEATURE_ENABLED_DYNAMIC_LOG := true
-MM_AUDIO_ENABLED_FTM := true
+#MM_AUDIO_ENABLED_FTM := true //TODO
 TARGET_USES_QCOM_MM_AUDIO := true
 AUDIO_FEATURE_ENABLED_SOURCE_TRACKING := true
 AUDIO_FEATURE_ENABLED_GEF_SUPPORT := true
@@ -98,6 +98,7 @@ AUDIO_FEATURE_ENABLED_SND_MONITOR := true
 AUDIO_FEATURE_ENABLED_USB_BURST_MODE := true
 AUDIO_FEATURE_ENABLED_SVA_MULTI_STAGE := true
 AUDIO_FEATURE_ENABLED_BATTERY_LISTENER := true
+AUDIO_FEATURE_ENABLED_AUDIO_PARSERS := true
 ##AUDIO_FEATURE_FLAGS
 
 BOARD_SUPPORTS_OPENSOURCE_STHAL := true
@@ -162,19 +163,14 @@ PRODUCT_COPY_FILES += \
     frameworks/native/data/etc/android.hardware.audio.pro.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/android.hardware.audio.pro.xml \
     frameworks/native/data/etc/android.hardware.audio.low_latency.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/android.hardware.audio.low_latency.xml
 
-#XML Audio configuration files
-ifneq ($(TARGET_USES_AOSP_FOR_AUDIO), true)
 PRODUCT_COPY_FILES += \
-    $(TOPDIR)vendor/qcom/opensource/audio-hal/primary-hal/configs/lahaina/audio_policy_configuration.xml:$(TARGET_COPY_OUT_VENDOR)/etc/audio/audio_policy_configuration.xml
-endif
-PRODUCT_COPY_FILES += \
-    $(TOPDIR)vendor/qcom/opensource/audio-hal/primary-hal/configs/common/audio_policy_configuration.xml:$(TARGET_COPY_OUT_VENDOR)/etc/audio_policy_configuration.xml \
-    $(TOPDIR)frameworks/av/services/audiopolicy/config/a2dp_audio_policy_configuration.xml:$(TARGET_COPY_OUT_VENDOR)/etc/a2dp_audio_policy_configuration.xml \
+    $(TOPDIR)frameworks/av/services/audiopolicy/config/a2dp_audio_policy_configuration_7_0.xml:$(TARGET_COPY_OUT_VENDOR)/etc/a2dp_audio_policy_configuration.xml \
     $(TOPDIR)frameworks/av/services/audiopolicy/config/audio_policy_volumes.xml:$(TARGET_COPY_OUT_VENDOR)/etc/audio_policy_volumes.xml \
     $(TOPDIR)frameworks/av/services/audiopolicy/config/default_volume_tables.xml:$(TARGET_COPY_OUT_VENDOR)/etc/default_volume_tables.xml \
     $(TOPDIR)frameworks/av/services/audiopolicy/config/r_submix_audio_policy_configuration.xml:$(TARGET_COPY_OUT_VENDOR)/etc/r_submix_audio_policy_configuration.xml \
     $(TOPDIR)frameworks/av/services/audiopolicy/config/usb_audio_policy_configuration.xml:$(TARGET_COPY_OUT_VENDOR)/etc/usb_audio_policy_configuration.xml \
     $(TOPDIR)vendor/qcom/opensource/audio-hal/primary-hal/configs/common/bluetooth_qti_audio_policy_configuration.xml:$(TARGET_COPY_OUT_VENDOR)/etc/bluetooth_qti_audio_policy_configuration.xml \
+   $(TOPDIR)frameworks/av/services/audiopolicy/config/bluetooth_with_le_audio_policy_configuration_7_0.xml:$(TARGET_COPY_OUT_VENDOR)/etc/bluetooth_audio_policy_configuration.xml \
     $(TOPDIR)vendor/qcom/opensource/audio-hal/primary-hal/configs/common/bluetooth_qti_hearing_aid_audio_policy_configuration.xml:$(TARGET_COPY_OUT_VENDOR)/etc/bluetooth_qti_hearing_aid_audio_policy_configuration.xml
 
 #TODO: Delete xml's from obsolete paths
@@ -206,14 +202,16 @@ PRODUCT_COPY_FILES += \
     frameworks/av/services/audiopolicy/config/r_submix_audio_policy_configuration.xml:$(TARGET_COPY_OUT_VENDOR)/etc/audio/sku_$(DEVICE_SKU)/r_submix_audio_policy_configuration.xml \
     frameworks/av/services/audiopolicy/config/audio_policy_volumes.xml:$(TARGET_COPY_OUT_VENDOR)/etc/audio/sku_$(DEVICE_SKU)/audio_policy_volumes.xml
 
-#Copy generic APM XML file to common folder for runtime copy
+#XML Audio configuration files
+ifneq ($(TARGET_USES_AOSP_FOR_AUDIO), true)
 PRODUCT_COPY_FILES += \
-    vendor/qcom/opensource/audio-hal/primary-hal/configs/common/audio_policy_configuration.xml:$(TARGET_COPY_OUT_VENDOR)/etc/audio/sku_$(DEVICE_SKU)/audio_policy_configuration.xml
+    vendor/qcom/opensource/audio-hal/primary-hal/configs/lahaina/audio_policy_configuration.xml:$(TARGET_COPY_OUT_VENDOR)/etc/audio/sku_$(DEVICE_SKU)/audio_policy_configuration.xml
 
 # Audio configuration xml's common to Lahaina family
 PRODUCT_COPY_FILES += \
 $(foreach DEVICE_SKU, $(QCV_FAMILY_SKUS), \
     vendor/qcom/opensource/audio-hal/primary-hal/configs/lahaina/audio_policy_configuration.xml:$(TARGET_COPY_OUT_VENDOR)/etc/audio/sku_$(DEVICE_SKU)_qssi/audio_policy_configuration.xml)
+endif
 
 QCV_FAMILY_SKUS := shima
 DEVICE_SKU := shima
@@ -237,15 +235,16 @@ PRODUCT_COPY_FILES += \
     frameworks/av/services/audiopolicy/config/r_submix_audio_policy_configuration.xml:$(TARGET_COPY_OUT_VENDOR)/etc/audio/sku_$(DEVICE_SKU)/r_submix_audio_policy_configuration.xml \
     frameworks/av/services/audiopolicy/config/audio_policy_volumes.xml:$(TARGET_COPY_OUT_VENDOR)/etc/audio/sku_$(DEVICE_SKU)/audio_policy_volumes.xml
 
-
-#Copy generic APM XML file to common folder for runtime copy
+#XML Audio configuration files
+ifneq ($(TARGET_USES_AOSP_FOR_AUDIO), true)
 PRODUCT_COPY_FILES += \
-    vendor/qcom/opensource/audio-hal/primary-hal/configs/common/audio_policy_configuration.xml:$(TARGET_COPY_OUT_VENDOR)/etc/audio/sku_$(DEVICE_SKU)/audio_policy_configuration.xml
+    vendor/qcom/opensource/audio-hal/primary-hal/configs/lahaina/audio_policy_configuration.xml:$(TARGET_COPY_OUT_VENDOR)/etc/audio/sku_$(DEVICE_SKU)/audio_policy_configuration.xml
 
 # Audio configuration xml's common to cedros family
 PRODUCT_COPY_FILES += \
 $(foreach DEVICE_SKU, $(QCV_FAMILY_SKUS), \
     vendor/qcom/opensource/audio-hal/primary-hal/configs/lahaina/audio_policy_configuration.xml:$(TARGET_COPY_OUT_VENDOR)/etc/audio/sku_$(DEVICE_SKU)_qssi/audio_policy_configuration.xml)
+endif
 
 QCV_FAMILY_SKUS := yupik
 DEVICE_SKU := yupik
@@ -258,30 +257,25 @@ PRODUCT_COPY_FILES += \
     vendor/qcom/opensource/audio-hal/primary-hal/configs/lahaina/audio_platform_info_intcodec.xml:$(TARGET_COPY_OUT_VENDOR)/etc/audio/sku_$(DEVICE_SKU)/audio_platform_info_intcodec.xml \
     vendor/qcom/opensource/audio-hal/primary-hal/configs/lahaina/audio_platform_info_yupikqrd.xml:$(TARGET_COPY_OUT_VENDOR)/etc/audio/sku_$(DEVICE_SKU)/audio_platform_info_yupikqrd.xml \
     vendor/qcom/opensource/audio-hal/primary-hal/configs/lahaina/audio_platform_info_yupikidp.xml:$(TARGET_COPY_OUT_VENDOR)/etc/audio/sku_$(DEVICE_SKU)/audio_platform_info_yupikidp.xml \
-    vendor/qcom/opensource/audio-hal/primary-hal/configs/lahaina/audio_platform_info_yupikidprb3.xml:$(TARGET_COPY_OUT_VENDOR)/etc/audio/sku_$(DEVICE_SKU)/audio_platform_info_yupikidprb3.xml \
-    vendor/qcom/opensource/audio-hal/primary-hal/configs/lahaina/audio_platform_info_yupikdashcam.xml:$(TARGET_COPY_OUT_VENDOR)/etc/audio/sku_$(DEVICE_SKU)/audio_platform_info_yupikdashcam.xml \
     vendor/qcom/opensource/audio-hal/primary-hal/configs/lahaina/sound_trigger_mixer_paths_yupikidp.xml:$(TARGET_COPY_OUT_VENDOR)/etc/audio/sku_$(DEVICE_SKU)/sound_trigger_mixer_paths_yupikidp.xml \
-    vendor/qcom/opensource/audio-hal/primary-hal/configs/lahaina/sound_trigger_mixer_paths_yupikidprb3.xml:$(TARGET_COPY_OUT_VENDOR)/etc/audio/sku_$(DEVICE_SKU)/sound_trigger_mixer_paths_yupikidprb3.xml \
     vendor/qcom/opensource/audio-hal/primary-hal/configs/lahaina/sound_trigger_mixer_paths_yupikqrd.xml:$(TARGET_COPY_OUT_VENDOR)/etc/audio/sku_$(DEVICE_SKU)/sound_trigger_mixer_paths_yupikqrd.xml \
-    vendor/qcom/opensource/audio-hal/primary-hal/configs/lahaina/sound_trigger_mixer_paths_yupikdashcam.xml:$(TARGET_COPY_OUT_VENDOR)/etc/audio/sku_$(DEVICE_SKU)/sound_trigger_mixer_paths_yupikdashcam.xml \
     vendor/qcom/opensource/audio-hal/primary-hal/configs/lahaina/mixer_paths_yupikidp.xml:$(TARGET_COPY_OUT_VENDOR)/etc/audio/sku_$(DEVICE_SKU)/mixer_paths_yupikidp.xml \
-    vendor/qcom/opensource/audio-hal/primary-hal/configs/lahaina/mixer_paths_yupikidprb3.xml:$(TARGET_COPY_OUT_VENDOR)/etc/audio/sku_$(DEVICE_SKU)/mixer_paths_yupikidprb3.xml \
     vendor/qcom/opensource/audio-hal/primary-hal/configs/lahaina/mixer_paths_yupikqrd.xml:$(TARGET_COPY_OUT_VENDOR)/etc/audio/sku_$(DEVICE_SKU)/mixer_paths_yupikqrd.xml \
-    vendor/qcom/opensource/audio-hal/primary-hal/configs/lahaina/mixer_paths_yupikdashcam.xml:$(TARGET_COPY_OUT_VENDOR)/etc/audio/sku_$(DEVICE_SKU)/mixer_paths_yupikdashcam.xml \
     vendor/qcom/opensource/audio-hal/primary-hal/configs/lahaina/audio_tuning_mixer.txt:$(TARGET_COPY_OUT_VENDOR)/etc/audio/sku_$(DEVICE_SKU)/audio_tuning_mixer.txt \
     frameworks/av/services/audiopolicy/config/default_volume_tables.xml:$(TARGET_COPY_OUT_VENDOR)/etc/audio/sku_$(DEVICE_SKU)/default_volume_tables.xml \
     frameworks/av/services/audiopolicy/config/r_submix_audio_policy_configuration.xml:$(TARGET_COPY_OUT_VENDOR)/etc/audio/sku_$(DEVICE_SKU)/r_submix_audio_policy_configuration.xml \
     frameworks/av/services/audiopolicy/config/audio_policy_volumes.xml:$(TARGET_COPY_OUT_VENDOR)/etc/audio/sku_$(DEVICE_SKU)/audio_policy_volumes.xml
 
-
-#Copy generic APM XML file to common folder for runtime copy
+#XML Audio configuration files
+ifneq ($(TARGET_USES_AOSP_FOR_AUDIO), true)
 PRODUCT_COPY_FILES += \
-    vendor/qcom/opensource/audio-hal/primary-hal/configs/common/audio_policy_configuration.xml:$(TARGET_COPY_OUT_VENDOR)/etc/audio/sku_$(DEVICE_SKU)/audio_policy_configuration.xml
+    vendor/qcom/opensource/audio-hal/primary-hal/configs/lahaina/audio_policy_configuration.xml:$(TARGET_COPY_OUT_VENDOR)/etc/audio/sku_$(DEVICE_SKU)/audio_policy_configuration.xml
 
 # Audio configuration xml's common to yupik family
 PRODUCT_COPY_FILES += \
 $(foreach DEVICE_SKU, $(QCV_FAMILY_SKUS), \
     vendor/qcom/opensource/audio-hal/primary-hal/configs/lahaina/audio_policy_configuration.xml:$(TARGET_COPY_OUT_VENDOR)/etc/audio/sku_$(DEVICE_SKU)_qssi/audio_policy_configuration.xml)
+endif
 
 # Low latency audio buffer size in frames
 PRODUCT_PROPERTY_OVERRIDES += \
@@ -305,13 +299,13 @@ persist.vendor.audio.fluence.tmic.enabled=false
 
 ##speaker protection v4 switch and ADSP AFE API version
 PRODUCT_PROPERTY_OVERRIDES += \
-persist.vendor.audio.speaker.prot.enable=true\
-persist.vendor.audio.spv4.enable=true\
+persist.vendor.audio.speaker.prot.enable=false\
+persist.vendor.audio.spv4.enable=false\
 persist.vendor.audio.avs.afe_api_version=9
 
 ##bcl aka vbat monitor feature enable by default
 PRODUCT_PROPERTY_OVERRIDES += \
-persist.vendor.audio.vbat.enabled=true\
+persist.vendor.audio.vbat.enabled=false\
 persist.vendor.audio.bcl.enabled=true\
 
 #disable tunnel encoding
@@ -511,7 +505,7 @@ vendor.audio.feature.usb_offload.enable=true \
 vendor.audio.feature.usb_offload_burst_mode.enable=true \
 vendor.audio.feature.usb_offload_sidetone_volume.enable=false \
 vendor.audio.feature.deepbuffer_as_primary.enable=false \
-vendor.audio.feature.vbat.enable=true \
+vendor.audio.feature.vbat.enable=false \
 vendor.audio.feature.wsa.enable=false \
 vendor.audio.feature.audiozoom.enable=false \
 vendor.audio.feature.snd_mon.enable=true \
@@ -547,6 +541,15 @@ PRODUCT_PACKAGES += \
     android.hardware.audio@6.0-impl \
     android.hardware.audio.effect@6.0 \
     android.hardware.audio.effect@6.0-impl
+
+# enable audio hidl hal 7.0
+PRODUCT_PACKAGES += \
+    android.hardware.audio@7.0 \
+    android.hardware.audio.common@7.0 \
+    android.hardware.audio.common@7.0-util \
+    android.hardware.audio@7.0-impl \
+    android.hardware.audio.effect@7.0 \
+    android.hardware.audio.effect@7.0-impl
 
 # enable sound trigger hidl hal 2.2
 PRODUCT_PACKAGES += \
@@ -592,3 +595,6 @@ AUDIO_FEATURE_ENABLED_GKI := true
 
 #enable STT support
 AUDIO_FEATURE_ENABLED_STT_SUPPORT := true
+
+# Enable audio legacy kernel tp build
+ENABLE_AUDIO_LEGACY_TECHPACK := true

@@ -10,7 +10,7 @@ LOCAL_CFLAGS += -Wno-tautological-compare
 LOCAL_CFLAGS += -Wno-unused-function
 LOCAL_CFLAGS += -Wno-unused-local-typedef
 
-ifeq ($(strip $(TARGET_USES_QCOM_MM_AUDIO)),true)
-include $(call all-subdir-makefiles)
-endif
+#ifeq ($(strip $(TARGET_USES_QCOM_MM_AUDIO)),true)
+#include $(call all-subdir-makefiles)
+#endif
 endif

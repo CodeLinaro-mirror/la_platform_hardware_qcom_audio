@@ -25,6 +25,12 @@
 <!--- WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE      -->
 <!--- OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN    -->
 <!--- IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.                             -->
+
+<!-- Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ SPDX-License-Identifier: BSD-3-Clause-Clear
+* -->
+
 <sound_trigger_platform_info>
     <param version="0x0106" /> <!-- this must be the first param -->
 <!--- Version History:                                                          -->
@@ -93,7 +99,7 @@
             <!-- Options are "KEYWORD_DETECTION", "USER_VERIFICATION", "CUSTOM_DETECTION"  -->
             <param sm_detection_type= "KEYWORD_DETECTION" />
             <param sm_id="0x2" />
-            <param module_lib="libcapiv2svacnn.so"/>
+            <param module_lib="libcapiv2svacnnvendor.so"/>
             <param sample_rate="16000"/>
             <param bit_wdith="16"/>
             <param channel_count="1"/>
@@ -101,7 +107,7 @@
         <arm_ss_usecase>
             <param sm_detection_type= "USER_VERIFICATION" />
             <param sm_id="0x4" />
-            <param module_lib="libcapiv2vop.so"/>
+            <param module_lib="libcapiv2uvvendor.so"/>
             <param sample_rate="16000"/>
             <param bit_wdith="16"/>
             <param channel_count="1"/>
@@ -109,7 +115,7 @@
         <arm_ss_usecase>
             <param sm_detection_type= "KEYWORD_DETECTION" />
             <param sm_id="0x8" />
-            <param module_lib="libcapiv2svarnn.so"/>
+            <param module_lib="libcapiv2svarnnvendor.so"/>
             <param sample_rate="16000"/>
             <param bit_wdith="16"/>
             <param channel_count="1"/>

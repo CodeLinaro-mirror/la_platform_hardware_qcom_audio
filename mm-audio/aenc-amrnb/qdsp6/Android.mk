@@ -43,6 +43,11 @@ LOCAL_CFLAGS += --coverage -fprofile-arcs -ftest-coverage
 LOCAL_CPPFLAGS += --coverage -fprofile-arcs -ftest-coverage
 LOCAL_STATIC_LIBRARIES += libprofile_rt
 endif
+LOCAL_HEADER_LIBRARIES += audio_kernel_headers
+
+ifeq ($(ENABLE_AUDIO_LEGACY_TECHPACK),true)
+LOCAL_HEADER_LIBRARIES += qti_legacy_audio_kernel_uapi
+endif
 
 LOCAL_C_INCLUDES += $(TARGET_OUT_INTERMEDIATES)/KERNEL_OBJ/usr/include
 LOCAL_C_INCLUDES += $(TARGET_OUT_INTERMEDIATES)/KERNEL_OBJ/usr/include/audio
