@@ -2223,6 +2223,14 @@ int qahw_stream_open(qahw_module_handle_t *hw_module,
         if ((!rc) && ((attr.type == QAHW_VOICE_CALL)||(attr.type == QAHW_ECALL))) {
             stream->cb = cb;
             stream->cookie = cookie;
+
+            if (stream->out_stream) {
+                rc = qahw_out_set_callback(stream->out_stream, stream->cb, stream->cookie);
+                if (rc) {
+                    ALOGV("%s: setting callback failed %d \n", __func__, rc);
+                    rc = 0;
+                }
+            }
         }
 
         if ((attr.type != QAHW_VOICE_CALL) && (attr.type != QAHW_ECALL)) {
@@ -2445,7 +2453,7 @@ int qahw_stream_start(qahw_stream_handle_t *stream_handle) {
         memset(&devices[0], 0, sizeof(devices));
         memcpy(&devices[0], &stream->devices[0],
                (stream->num_of_devices*sizeof(audio_devices_t)));
-        qahw_stream_set_device(stream, stream->num_of_devices, &devices[0]);
+        rc = qahw_stream_set_device(stream, stream->num_of_devices, &devices[0]);
     } else if (stream->type == QAHW_AUDIO_AFE_LOOPBACK) {
         rc = qahw_create_audio_patch(stream->hw_module,
                         1,

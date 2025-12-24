@@ -1036,3 +1036,48 @@ bool voice_extn_compress_voip_is_started(struct audio_device *adev)
     return ret;
 }
 
+
+int voice_extn_register_voice_ready_event(struct stream_out *out, bool enable)
+{
+    struct audio_device *adev = out->dev;
+    struct audio_usecase *usecase = NULL;
+    struct listnode *node = NULL;
+    struct audio_adsp_event adsp_event_params = {
+        ADSP_STREAM_READY_EVENT,  // your READY event ID
+        0,
+        NULL
+    };
+    struct adsp_hdlr_stream_cfg config = {0, 0, PCM_PLAYBACK};
+    int ret = 0;
+
+    if (out->adsp_hdlr_stream_handle == NULL) {
+        list_for_each(node, &adev->usecase_list) {
+            usecase = node_to_item(node, struct audio_usecase, list);
+            if (usecase->type == VOICE_CALL)
+                config.pcm_device_id = platform_get_pcm_device_id(usecase->id,
+                                                                 PCM_PLAYBACK);
+        }
+    }
+
+    if (enable) {
+        ret = audio_extn_adsp_hdlr_stream_set_param(
+                    out->adsp_hdlr_stream_handle,
+                    ADSP_HDLR_STREAM_CMD_REGISTER_EVENT,
+                    (void *)&adsp_event_params);
+        if (ret) {
+            ALOGE("%s: Failed to register READY event", __func__);
+            return ret;
+        }
+    } else {
+        ret = audio_extn_adsp_hdlr_stream_set_param(
+                out->adsp_hdlr_stream_handle,
+                ADSP_HDLR_STREAM_CMD_DEREGISTER_EVENT,
+                (void *)&adsp_event_params);
+        if (ret) {
+            ALOGE("%s: Failed to deregister READY event", __func__);
+            return ret;
+        }
+    }
+
+    return ret;
+}

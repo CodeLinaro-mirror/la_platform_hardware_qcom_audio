@@ -167,6 +167,12 @@ int voice_stop_usecase(struct audio_device *adev, audio_usecase_t usecase_id)
         return -EINVAL;
     }
 
+    /*  Unregister READY event before tearing down route/devices */
+    if (uc_info->stream.out) {
+        ALOGD("%s: Unregistering voice READY event", __func__);
+        voice_extn_register_voice_ready_event(uc_info->stream.out, false);
+    }
+
     session->state.current = CALL_INACTIVE;
 
     /* Disable sidetone only when no calls are active */
@@ -181,11 +187,21 @@ int voice_stop_usecase(struct audio_device *adev, audio_usecase_t usecase_id)
 
     /* 1. Close the PCM devices */
     if (session->pcm_rx) {
-        pcm_close(session->pcm_rx);
+        ret = pcm_close(session->pcm_rx);
+        if (ret) {
+           ALOGE("%s: pcm_close RX failed, rc = %d, errno = %d (%s)", __func__,
+                  ret, errno, strerror(errno));
+           ret = -errno;
+        }
         session->pcm_rx = NULL;
     }
     if (session->pcm_tx) {
-        pcm_close(session->pcm_tx);
+        ret = pcm_close(session->pcm_tx);
+        if (ret) {
+           ALOGE("%s: pcm_close TX failed, rc = %d, errno = %d (%s)", __func__,
+                 ret, errno, strerror(errno));
+           ret = -errno;
+        }
         session->pcm_tx = NULL;
     }
 
@@ -347,11 +363,31 @@ int voice_start_usecase(struct audio_device *adev, audio_usecase_t usecase_id)
     }
 #endif
 
+    if (uc_info->stream.out) {
+        ret = voice_extn_register_voice_ready_event(uc_info->stream.out, true);
+        if (ret) {
+            ALOGE("%s: Failed to register voice READY event, ret=%d", __func__, ret);
+            goto error_start_voice;
+        }
+    }
+
     if(adev->mic_break_enabled)
         platform_set_mic_break_det(adev->platform, true);
 
-    pcm_start(session->pcm_tx);
-    pcm_start(session->pcm_rx);
+    ret = pcm_start(session->pcm_tx);
+    if (ret) {
+        ALOGE("%s: pcm_start TX failed rc = %d, errno = %d (%s)", __func__,
+              ret, errno, strerror(errno));
+        ret = -errno;
+        goto error_start_voice;
+    }
+    ret = pcm_start(session->pcm_rx);
+    if (ret) {
+        ALOGE("%s: pcm_start RX failed rc = %d, errno = %d (%s)", __func__,
+              ret, errno, strerror(errno));
+        ret = -errno;
+        goto error_start_voice;
+    }
 #ifdef PLATFORM_AUTO
     pcm_start(voice_loopback_tx);
     pcm_start(voice_loopback_rx);
