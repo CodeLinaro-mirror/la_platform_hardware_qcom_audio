@@ -274,6 +274,30 @@ typedef int qahw_stream_callback_t(qahw_stream_callback_event_t event,
                                    void *param,
                                    void *cookie);
 
+/* ADSP-specific stream event types carried inside QAHW_STREAM_CBK_EVENT_ADSP.
+ *
+ * For QAHW_STREAM_CBK_EVENT_ADSP with QAHW_STREAM_VOICE_READY_EVENT:
+ * event_info points to a uint32_t array laid out as:
+ *   evtInfo[0] : qahw_stream_event_t
+ *   evtInfo[1] : payload size in bytes
+ *   evtInfo[2] : qahw_voice_stream_state_t (QAHW_VOICE_STREAM_STATE_READY or
+ *               QAHW_VOICE_STREAM_STATE_NOT_READY)
+ *
+ * Note: The above layout of event_info[] is defined only for the
+ * QAHW_STREAM_VOICE_READY_EVENT case. Other ADSP events (e.g. QAHW_STREAM_DTMF_DETECTION_EVENT)
+ * may use event_info with a different structure.
+ */
+typedef enum {
+    QAHW_STREAM_DTMF_DETECTION_EVENT  = 0,
+    QAHW_STREAM_VOICE_READY_EVENT = 3,
+} qahw_stream_event_t;
+/* Values 1 and 2 are matched to ENCDEC and IEC definitions */
+
+typedef enum {
+    QAHW_VOICE_STREAM_STATE_NOT_READY = 0,
+    QAHW_VOICE_STREAM_STATE_READY     = 1,
+} qahw_voice_stream_state_t;
+
 struct qahw_stream_callback_param {
     qahw_stream_callback_t *cb;    /* callback function */
     void *cookie;                  /* callback context */

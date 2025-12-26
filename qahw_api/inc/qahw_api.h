@@ -527,6 +527,37 @@ int qahw_stream_open(qahw_module_handle_t *hw_module,
 
 int qahw_stream_close(qahw_stream_handle_t *stream_handle);
 
+/*
+ * qahw_stream_start: Starts the given audio stream, performing any required
+ *                    routing and mode/call-state setup for that use case.
+ *
+ * qahw_stream_stop:  Stops the given audio stream, undoing any routing and
+ *                    mode/call-state configuration done at start so subsequent
+ *                    sessions use the correct devices.
+ *
+ * qahw_stream_start/qahw_stream_stop can return the errno values below when
+ * there are voice device/stream creation or configuration failures.
+ *
+ *   -ECONNREFUSED : Audio dynamic service failed while configuring or
+ *                   creating the voice-call device.
+ *   -ECONNABORTED : Audio dynamic service failed while configuring or
+ *                   creating the voice-call stream.
+ *
+ *   -EEXIST       : Voice device already exists; no new creation required.
+ *   -EISCONN      : Voice stream already exists; no new creation required.
+ *
+ *   -ENOSPC       : Voice device operation failed due to memory allocation
+ *                   error or insufficient resources.
+ *   -ENOSR        : Voice stream operation failed due to memory allocation
+ *                   error or insufficient resources.
+ *
+ *   -EBADRQC      : Invalid parameters provided for voice device operation.
+ *   -EBADR        : Invalid parameters provided for voice stream operation.
+ *
+ * We can rely on these errno values and descriptions to interpret
+ * voice-related failures returned by the audio HAL APIs.
+ */
+
 int qahw_stream_start(qahw_stream_handle_t *stream_handle);
 
 int qahw_stream_stop(qahw_stream_handle_t *stream_handle);
