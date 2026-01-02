@@ -2204,12 +2204,6 @@ void platform_set_echo_reference(struct audio_device *adev, bool enable,
 
     audio_extn_sound_trigger_update_ec_ref_status(enable);
 
-    if (strcmp(my_data->ec_ref_mixer_path, "")) {
-        ALOGV("%s: disabling %s", __func__, my_data->ec_ref_mixer_path);
-        audio_route_reset_and_update_path(adev->audio_route,
-                                          my_data->ec_ref_mixer_path);
-    }
-
     if (enable) {
         if (!voice_extn_is_compress_voip_supported()) {
             if (adev->mode == AUDIO_MODE_IN_COMMUNICATION) {
@@ -2259,14 +2253,28 @@ void platform_set_echo_reference(struct audio_device *adev, bool enable,
             strlcat(ec_ref_mixer_path, " bt-sco",
                     MIXER_PATH_MAX_LENGTH);
 
-        if (audio_route_apply_and_update_path(adev->audio_route,
-                                              ec_ref_mixer_path) == 0)
-            strlcpy(my_data->ec_ref_mixer_path, ec_ref_mixer_path,
-                    MIXER_PATH_MAX_LENGTH);
-        else
-            audio_route_apply_and_update_path(adev->audio_route, my_data->ec_ref_mixer_path);
+        // enable EC path only for the first use case
+        if (++adev->ec_ref_path_ref_cnt == 1) {
+            ALOGV("%s: enabling %s", __func__, my_data->ec_ref_mixer_path);
+            if (audio_route_apply_and_update_path(adev->audio_route,
+                                                  ec_ref_mixer_path) == 0)
+                strlcpy(my_data->ec_ref_mixer_path, ec_ref_mixer_path,
+                        MIXER_PATH_MAX_LENGTH);
+            else
+                audio_route_apply_and_update_path(adev->audio_route, my_data->ec_ref_mixer_path);
+        }
+        ALOGD("%s: active echo reference streams: %d", __func__, adev->ec_ref_path_ref_cnt);
+    } else if (adev->ec_ref_path_ref_cnt > 0) {
+        adev->ec_ref_path_ref_cnt--;
 
-        ALOGD("%s: enabling %s", __func__, my_data->ec_ref_mixer_path);
+        // disable EC path only if no usecases are active
+        if (adev->ec_ref_path_ref_cnt == 0) {
+            if (strcmp(my_data->ec_ref_mixer_path, "")) {
+                ALOGV("%s: disabling %s", __func__, my_data->ec_ref_mixer_path);
+                audio_route_reset_and_update_path(adev->audio_route,
+                                                  my_data->ec_ref_mixer_path);
+            }
+        }
     }
 }
 
