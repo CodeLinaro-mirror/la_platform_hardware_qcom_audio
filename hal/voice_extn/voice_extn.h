@@ -115,6 +115,7 @@ bool voice_extn_is_compress_voip_supported();
 void dynamic_ecns_feature_init(bool is_feature_enabled);
 bool voice_extn_is_dynamic_ecns_enabled();
 
+int voice_extn_register_voice_ready_event(struct stream_out *out, bool enable);
 
 #ifdef DTMF_ENABLED
 int voice_extn_dtmf_generate_rx_tone(struct stream_out *out,

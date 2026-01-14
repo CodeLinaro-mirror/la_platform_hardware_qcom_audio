@@ -43,6 +43,15 @@ struct adsp_hdlr_stream_cfg {
 
 #ifdef AUDIO_EXTN_ADSP_HDLR_ENABLED
 
+#define ADSP_STREAM_PP_EVENT                            0
+#define ADSP_STREAM_ENCDEC_EVENT                        1
+#define ADSP_STREAM_IEC_61937_FMT_UPDATE_EVENT          2
+#define ADSP_STREAM_READY_EVENT                         3
+#define ADSP_STREAM_EVENT_MAX                           4
+
+#define ADSP_STREAM_STATE_NOT_READY                     0
+#define ADSP_STREAM_STATE_READY                         1
+
 typedef int (*adsp_event_callback_t)(void *handle, void *payload, void *cookie);
 
 int audio_extn_adsp_hdlr_init(struct mixer *mixer);

@@ -7452,7 +7452,19 @@ int adev_open_output_stream(struct audio_hw_device *dev,
         } else if (out->flags & AUDIO_OUTPUT_FLAG_VOICE_CALL) {
             /* Voice call should not use primary path */
             out->usecase = USECASE_VOICEMMODE1_CALL;
+            out->stream.set_callback = out_set_callback;
             out->config = GET_PCM_CONFIG_AUDIO_PLAYBACK_PRIMARY(use_db_as_primary);
+            hdlr_stream_cfg.pcm_device_id = platform_get_pcm_device_id(
+                   out->usecase, PCM_PLAYBACK);
+            hdlr_stream_cfg.flags = out->flags;
+            hdlr_stream_cfg.type = PCM_PLAYBACK;
+            ret = audio_extn_adsp_hdlr_stream_open(&out->adsp_hdlr_stream_handle,
+                     &hdlr_stream_cfg);
+            if (ret) {
+                 ALOGE("%s: adsp_hdlr_stream_open failed %d",__func__, ret);
+                 out->adsp_hdlr_stream_handle = NULL;
+            }
+
             if(adev->voice_tx_output == NULL) {
                 adev->voice_tx_output = out;
             } else {
@@ -7463,7 +7475,18 @@ int adev_open_output_stream(struct audio_hw_device *dev,
         } else if (out->flags & AUDIO_OUTPUT_FLAG_VOICE2_CALL) {
             /* Voice call should not use primary path */
             out->usecase = USECASE_VOICEMMODE2_CALL;
+            out->stream.set_callback = out_set_callback;
             out->config = GET_PCM_CONFIG_AUDIO_PLAYBACK_PRIMARY(use_db_as_primary);
+            hdlr_stream_cfg.pcm_device_id = platform_get_pcm_device_id(
+                   out->usecase, PCM_PLAYBACK);
+            hdlr_stream_cfg.flags = out->flags;
+            hdlr_stream_cfg.type = PCM_PLAYBACK;
+            ret = audio_extn_adsp_hdlr_stream_open(&out->adsp_hdlr_stream_handle,
+                     &hdlr_stream_cfg);
+            if (ret) {
+                 ALOGE("%s: adsp_hdlr_stream_open failed %d",__func__, ret);
+                 out->adsp_hdlr_stream_handle = NULL;
+            }
             if(adev->voice2_tx_output == NULL) {
 			   adev->voice2_tx_output = out;
             } else {

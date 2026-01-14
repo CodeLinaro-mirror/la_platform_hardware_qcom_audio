@@ -388,7 +388,10 @@ static void *event_callback_thread_loop(void *context)
                                     __func__, ptr[0]);
                                 ptr[0] = AUDIO_FORMAT_INVALID;
                             }
+                        } else if (received_evt->event_type == ADSP_STREAM_READY_EVENT) {
+                            ALOGD("%s: ADSP_STREAM_READY_EVENT: state=%u", __func__, ptr[0]);
                         }
+
                         if (event_info->cb != NULL) {
                             ALOGVV("%s: calling event callback function", __func__);
                             event_info->cb(event_info->stream_handle,
