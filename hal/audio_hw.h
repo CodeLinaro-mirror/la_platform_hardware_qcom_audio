@@ -836,6 +836,8 @@ struct audio_device {
     Hashmap *io_streams_map;
     bool a2dp_started;
     bool ha_proxy_enable;
+    pthread_mutex_t active_inputs_list_lock;
+    pthread_mutex_t active_outputs_list_lock;
 };
 
 struct audio_patch_record {
