@@ -16,7 +16,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
+ * ​​​​​Changes from Qualcomm Technologies, Inc. are provided under the following license:
  * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
 */
 
 #ifndef ACDB_H
