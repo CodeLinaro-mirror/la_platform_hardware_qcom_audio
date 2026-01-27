@@ -209,7 +209,7 @@ PRODUCT_COPY_FILES += \
 
 #Copy generic APM XML file to common folder for runtime copy
 PRODUCT_COPY_FILES += \
-    vendor/qcom/opensource/audio-hal/primary-hal/configs/common/audio_policy_configuration.xml:$(TARGET_COPY_OUT_VENDOR)/etc/audio/sku_$(DEVICE_SKU)/audio_policy_configuration.xml
+    vendor/qcom/opensource/audio-hal/primary-hal/configs/lahaina/audio_policy_configuration.xml:$(TARGET_COPY_OUT_VENDOR)/etc/audio/sku_$(DEVICE_SKU)/audio_policy_configuration.xml
 
 # Audio configuration xml's common to Lahaina family
 PRODUCT_COPY_FILES += \
@@ -286,7 +286,7 @@ PRODUCT_COPY_FILES += \
 
 #Copy generic APM XML file to common folder for runtime copy
 PRODUCT_COPY_FILES += \
-    vendor/qcom/opensource/audio-hal/primary-hal/configs/common/audio_policy_configuration.xml:$(TARGET_COPY_OUT_VENDOR)/etc/audio/sku_$(DEVICE_SKU)/audio_policy_configuration.xml
+    vendor/qcom/opensource/audio-hal/primary-hal/configs/lahaina/audio_policy_configuration.xml:$(TARGET_COPY_OUT_VENDOR)/etc/audio/sku_$(DEVICE_SKU)/audio_policy_configuration.xml
 
 # Audio configuration xml's common to yupik family
 PRODUCT_COPY_FILES += \
@@ -435,6 +435,10 @@ vendor.audio.volume.headset.gain.depcal=true
 #enable dualmic fluence for voice communication
 PRODUCT_PROPERTY_OVERRIDES += \
 persist.vendor.audio.fluence.voicecomm=true
+
+#enable c2 based encoders/decoders as default NT decoders/encoders
+PRODUCT_PROPERTY_OVERRIDES += \
+vendor.audio.c2.preferred=true
 
 ifneq ($(GENERIC_ODM_IMAGE),true)
 $(warning "Enabling codec2.0 SW only for non-generic odm build variant")
