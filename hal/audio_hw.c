@@ -42,6 +42,7 @@
 #define LOG_TAG "audio_hw_primary"
 #define ATRACE_TAG (ATRACE_TAG_AUDIO|ATRACE_TAG_HAL)
 /*#define LOG_NDEBUG 0*/
+
 /*#define VERY_VERY_VERBOSE_LOGGING*/
 #ifdef VERY_VERY_VERBOSE_LOGGING
 #define ALOGVV ALOGV
@@ -771,6 +772,11 @@ static void register_out_stream(struct stream_out *out)
         !adev->adm_register_output_stream)
         return;
 
+    if (!(out->flags & AUDIO_OUTPUT_FLAG_RAW)) {
+        ALOGV("Ignore adm register_out_stream for flags: 0x%x\n", out->flags);
+        return;
+    }
+
     // register stream first for backward compatibility
     adev->adm_register_output_stream(adev->adm_data,
                                      out->handle,
@@ -796,6 +802,11 @@ static void register_in_stream(struct stream_in *in)
     struct audio_device *adev = in->dev;
     if (!adev->adm_register_input_stream)
         return;
+
+    if (!(in->flags & AUDIO_INPUT_FLAG_RAW)) {
+        ALOGV("Ignore adm register_in_stream for flags: 0x%x\n", in->flags);
+        return;
+    }
 
     adev->adm_register_input_stream(adev->adm_data,
                                     in->capture_handle,
@@ -5010,8 +5021,12 @@ static int out_standby(struct audio_stream *stream)
 
     lock_output_stream(out);
     if (!out->standby) {
-        if (adev->adm_deregister_stream)
-            adev->adm_deregister_stream(adev->adm_data, out->handle);
+        if (!(out->flags & AUDIO_OUTPUT_FLAG_RAW)) {
+            ALOGV("Ignore adm_deregister_stream for out flags: 0x%x\n", out->flags);
+        } else {
+             if (adev->adm_deregister_stream)
+                adev->adm_deregister_stream(adev->adm_data, out->handle);
+        }
 
         if (is_offload_usecase(out->usecase)) {
             stop_compressed_output_l(out);
@@ -5124,8 +5139,13 @@ int out_standby_l(struct audio_stream *stream)
 
     if (!out->standby) {
         ATRACE_BEGIN("out_standby_l");
-        if (adev->adm_deregister_stream)
-            adev->adm_deregister_stream(adev->adm_data, out->handle);
+
+        if (!(out->flags & AUDIO_OUTPUT_FLAG_RAW)) {
+                 ALOGV("Ignore adm_deregister_stream for out flags: 0x%x\n", out->flags);
+        } else {
+                 if (adev->adm_deregister_stream)
+                     adev->adm_deregister_stream(adev->adm_data, out->handle);
+        }
 
         if (is_offload_usecase(out->usecase)) {
             stop_compressed_output_l(out);
@@ -5449,13 +5469,17 @@ int route_output_stream(struct stream_out *out,
 
         if (!out->standby) {
             if (!same_dev) {
-                ALOGV("update routing change");
+                ALOGD("update routing change");
                 audio_extn_perf_lock_acquire(&adev->perf_lock_handle, 0,
                                              adev->perf_lock_opts,
                                              adev->perf_lock_opts_size);
-                if (adev->adm_on_routing_change)
-                    adev->adm_on_routing_change(adev->adm_data,
+                if (!(out->flags & AUDIO_OUTPUT_FLAG_RAW)) {
+                    ALOGV("Ignore adev->adm_on_routing_change for flags: 0x%x\n", out->flags);
+                } else {
+                    if (adev->adm_on_routing_change)
+                        adev->adm_on_routing_change(adev->adm_data,
                                                 out->handle);
+                }
             }
             if (!bypass_a2dp) {
                 select_devices(adev, out->usecase);
@@ -6327,6 +6351,7 @@ static ssize_t out_write(struct audio_stream_out *stream, const void *buffer,
     ATRACE_BEGIN("out_write");
     lock_output_stream(out);
 
+    //ALOGE ("%s Entered \n", __func__);
     if (CARD_STATUS_OFFLINE == out->card_status ||
         POWER_POLICY_STATUS_OFFLINE == adev->out_power_policy) {
 
@@ -6618,6 +6643,7 @@ static ssize_t out_write(struct audio_stream_out *stream, const void *buffer,
                         *dst = (int16_t)(((int32_t)src[0] + (int32_t)src[1]) >> 1);
                     }
                     bytes_to_write /= 2;
+                    ALOGVV("%s channel_count = %d bytes_to_write = 0x%x = %d\n", __func__, channel_count, bytes_to_write );
                 }
             }
 
@@ -6656,7 +6682,12 @@ static ssize_t out_write(struct audio_stream_out *stream, const void *buffer,
                 ns = pcm_bytes_to_frames(out->pcm, bytes)*1000000000LL/
                                                      out->config.rate;
 
-            request_out_focus(out, ns);
+            if (!(out->flags & AUDIO_OUTPUT_FLAG_RAW)) {
+                  ALOGV("Ignore request_out_focus for flags: 0x%x\n", out->flags);
+            } else {
+                  request_out_focus(out, ns);
+            }
+
             bool use_mmap = is_mmap_usecase(out->usecase) || out->realtime;
 
             if (use_mmap)
@@ -6696,12 +6727,17 @@ static ssize_t out_write(struct audio_stream_out *stream, const void *buffer,
                 } else {
                     if (out->usecase == USECASE_AUDIO_PLAYBACK_WITH_HAPTICS)
                         ret = split_and_write_audio_haptic_data(out, buffer, bytes);
-                    else
+                    else {
                         ret = pcm_write(out->pcm, (void *)buffer, bytes_to_write);
+                    }
                 }
             }
 
-            release_out_focus(out);
+            if (!(out->flags & AUDIO_OUTPUT_FLAG_RAW)) {
+                 ALOGV("Ignore release_out_focus for flags: 0x%x\n", out->flags);
+            } else {
+                 release_out_focus(out);
+            }
 
             if (ret < 0)
                 ret = -errno;
@@ -6747,6 +6783,7 @@ exit:
         }
     }
     ATRACE_END();
+    ALOGVV("%s Wrote %d bytes  \n", __func__, bytes);
     return bytes;
 }
 
@@ -7347,8 +7384,12 @@ static int in_standby(struct audio_stream *stream)
     }
 
     if (!in->standby) {
-        if (adev->adm_deregister_stream)
-            adev->adm_deregister_stream(adev->adm_data, in->capture_handle);
+        if (!(in->flags & AUDIO_INPUT_FLAG_RAW)) {
+            ALOGV("Ignore adm_deregister_stream for flags: 0x%x\n", in->flags);
+        } else {
+            if (adev->adm_deregister_stream)
+                adev->adm_deregister_stream(adev->adm_data, in->capture_handle);
+        }
 
         pthread_mutex_lock(&adev->lock);
         in->standby = true;
@@ -7502,8 +7543,11 @@ int route_input_stream(struct stream_in *in,
             if (!in->standby && !in->is_st_session) {
                 ALOGV("update input routing change");
                 // inform adm before actual routing to prevent glitches.
-                if (adev->adm_on_routing_change) {
-                    adev->adm_on_routing_change(adev->adm_data,
+                if (!(in->flags & AUDIO_INPUT_FLAG_RAW)) {
+                    ALOGV("Ignore adm_deregister_stream for flags: 0x%x\n", in->flags);
+                } else {
+                    if (adev->adm_on_routing_change)
+                        adev->adm_on_routing_change(adev->adm_data,
                                                 in->capture_handle);
                     ret = select_devices(adev, in->usecase);
                     if (in->usecase == USECASE_AUDIO_RECORD_LOW_LATENCY)
@@ -7708,9 +7752,13 @@ static ssize_t in_read(struct audio_stream_in *stream, void *buffer,
         ns = pcm_bytes_to_frames(in->pcm, bytes)*1000000000LL/
                                              in->config.rate;
 
-    ret = request_in_focus(in, ns);
-    if (ret != 0)
-        goto exit;
+    if (!(in->flags & AUDIO_INPUT_FLAG_RAW)) {
+        ALOGV("Ignore request_in_focus for flags: 0x%x\n", in->flags);
+    } else {
+        ret = request_in_focus(in, ns);
+        if (ret != 0)
+            goto exit;
+    }
     bool use_mmap = is_mmap_usecase(in->usecase) || in->realtime;
 
     if (audio_extn_cin_attached_usecase(in)) {
@@ -7741,7 +7789,11 @@ static ssize_t in_read(struct audio_stream_in *stream, void *buffer,
         bytes_read = bytes;
     }
 
-    release_in_focus(in);
+    if (!(in->flags & AUDIO_INPUT_FLAG_RAW)) {
+        ALOGV("Ignore release_in_focus for flags: 0x%x\n", in->flags);
+    } else {
+        release_in_focus(in);
+    }
 
     /*
      * Instead of writing zeroes here, we could trust the hardware to always
@@ -10168,7 +10220,7 @@ static int adev_open_input_stream(struct audio_hw_device *dev,
 #endif
             in->af_period_multiplier = af_period_multiplier;
         }
- 
+
         /* assign concurrent capture usecase if record has to caried out from
          * actual hardware input source */
         if (audio_extn_is_concurrent_capture_enabled() &&
