@@ -3485,6 +3485,22 @@ void *platform_init(struct audio_device *adev)
         dual_mic_config = true;
     }
 
+    bool preferC2Codecs = property_get_bool("vendor.audio.c2.preferred", false);
+    if (preferC2Codecs &&
+        (property_get("ro.build.version.release", value, "") && (atoi(value) < 16))){
+        int ret = 0;
+        ret = property_set("vendor.audio.c2.preferred", false);
+        if (ret < 0) {
+            ALOGE("%s, Failed to Disable c2 codec for audio legacy architecture", __func__);
+        }
+        else {
+            ALOGI("%s, Disabled c2 codec for audio legacy architecture", __func__);
+        }
+    } else {
+        ALOGI("%s, Enabled c2 codec for audio legacy architecture", __func__);
+    }
+
+
     /* Check for Fluence Sub Band Enablement */
     if (property_get_bool("ro.vendor.audio.sdk.fluence.subband.enabled",false))
         my_data->fluence_sb_enabled = true;
