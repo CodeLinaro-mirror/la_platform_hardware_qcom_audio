@@ -3,10 +3,8 @@ LOCAL_PATH:= $(call my-dir)
 
 include $(CLEAR_VARS)
 
-ifneq ( ,$(filter U UpsideDownCake 14 V VanillaIceCream 15, $(PLATFORM_VERSION)))
 ifeq ($(TARGET_ARCH), arm64)
 LOCAL_CFLAGS := -DLIB64_AUDIO_HAL="/vendor/lib64/hw/audio.primary."$(TARGET_BOARD_PLATFORM)".so"
-endif
 endif
 
 LOCAL_CFLAGS := -DLIB_AUDIO_HAL="/vendor/lib/hw/audio.primary."$(TARGET_BOARD_PLATFORM)".so"
@@ -176,13 +174,18 @@ ifneq ($(filter msm8992 msm8994 msm8996 msm8998 sdm660 sdm845 apq8098_latv sdm71
 
 include $(CLEAR_VARS)
 
-ifneq ( ,$(filter U UpsideDownCake 14 V VanillaIceCream 15, $(PLATFORM_VERSION)))
 ifeq ($(TARGET_ARCH), arm64)
-LOCAL_CFLAGS := -DLIB64_AUDIO_HAL="/vendor/lib64/hw/audio.primary."$(TARGET_BOARD_PLATFORM)".so"
-endif
+ifeq ($(call is-board-platform-in-list,lahaina), true)
+LOCAL_CFLAGS := -DHAL_LIB64_LAHAINA
+else
+LOCAL_CFLAGS := -DLIB64_AUDIO_HAL=\"/vendor/lib64/hw/audio.primary.\"$(TARGET_BOARD_PLATFORM)\".so\"
 endif
 
+else
 LOCAL_CFLAGS := -DLIB_AUDIO_HAL="/vendor/lib/hw/audio.primary."$(TARGET_BOARD_PLATFORM)".so"
+endif
+
+
 LOCAL_CFLAGS += -Wno-unused-variable
 LOCAL_CFLAGS += -Wno-sign-compare
 LOCAL_CFLAGS += -Wno-unused-parameter

@@ -27,10 +27,14 @@
  * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
  * OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
  * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ *
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
 #define LOG_TAG "volume_listener"
-//#define LOG_NDEBUG 0
+#define LOG_NDEBUG 0
 #include <stdlib.h>
 #include <dlfcn.h>
 #include <math.h>
@@ -44,10 +48,15 @@
 #include <platform_api.h>
 
 #ifdef __LP64__
-#define PRIMARY_HAL_PATH XSTR(LIB64_AUDIO_HAL)
+#ifdef HAL_LIB64_LAHAINA
+#define PRIMARY_HAL_PATH "/vendor/lib64/hw/audio.primary.lahaina.so"
 #else
+#define PRIMARY_HAL_PATH XSTR(LIB64_AUDIO_HAL)
+#endif
+#else // 32-bit
 #define PRIMARY_HAL_PATH XSTR(LIB_AUDIO_HAL)
 #endif
+
 
 #define XSTR(x) STR(x)
 #define STR(x) #x
@@ -669,7 +678,7 @@ static void init_once()
         if (hal_lib_pointer == NULL) {
             ALOGE("%s: DLOPEN failed for %s", __func__, PRIMARY_HAL_PATH);
         } else {
-            ALOGV("%s: DLOPEN of %s Succes .. next get HAL entry function", __func__, PRIMARY_HAL_PATH);
+            ALOGD("%s: DLOPEN of %s Succes .. next get HAL entry function", __func__, PRIMARY_HAL_PATH);
             send_gain_dep_cal = (bool (*)(int))dlsym(hal_lib_pointer, AHAL_GAIN_DEPENDENT_INTERFACE_FUNCTION);
             if (send_gain_dep_cal == NULL) {
                 ALOGE("Couldnt able to get the function symbol");
