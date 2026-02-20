@@ -286,6 +286,11 @@ typedef int qahw_stream_callback_t(qahw_stream_callback_event_t event,
  * Note: The above layout of event_info[] is defined only for the
  * QAHW_STREAM_VOICE_READY_EVENT case. Other ADSP events (e.g. QAHW_STREAM_DTMF_DETECTION_EVENT)
  * may use event_info with a different structure.
+ *
+ * CLIENT EXPECTATIONS:
+ * This callback is synchronous. The client implementation:
+ * 1. Must not use any locks in its handler.
+ * 2. Must not call any QAHW APIs (like qahw_stream_close) inside the callback.
  */
 typedef enum {
     QAHW_STREAM_DTMF_DETECTION_EVENT  = 0,
