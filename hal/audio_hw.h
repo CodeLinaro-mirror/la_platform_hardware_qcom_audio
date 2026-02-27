@@ -870,9 +870,9 @@ struct audio_patch_record {
 #ifdef SOFT_VOLUME
 /* this struct is used for set/get values from AHAL*/
 struct soft_step_volume_params {
-    int period;
-    int step;
-    int curve;
+    long period;
+    long step;
+    long curve;
 };
 #endif
 void out_set_power_policy(uint8_t enable);

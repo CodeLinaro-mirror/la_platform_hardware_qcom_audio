@@ -5945,7 +5945,7 @@ static int out_set_soft_volume_params(struct audio_stream_out *stream)
         }
 
     }
-    ret = mixer_ctl_set_array(ctl, volume_params, sizeof(struct soft_step_volume_params)/sizeof(int));
+    ret = mixer_ctl_set_array(ctl, volume_params, sizeof(struct soft_step_volume_params)/sizeof(long));
     if (ret < 0) {
         ALOGE("%s: Could not set ctl, error:%d ", __func__, ret);
         ret = -EINVAL;
@@ -6091,7 +6091,7 @@ static int out_set_volume(struct audio_stream_out *stream, float left,
                           float right)
 {
     struct stream_out *out = (struct stream_out *)stream;
-    int volume[2];
+    long volume[2];
     int ret = 0;
 
     ALOGD("%s: called with left_vol=%f, right_vol=%f", __func__, left, right);

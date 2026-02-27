@@ -325,23 +325,23 @@ static void process_soft_volume_params(const XML_Char **attr)
         goto done;
     }
 
-    int period = atoi((char *)attr[3]);
+    long period = atol((char *)attr[3]);
 
     if (strcmp(attr[4], "step") != 0) {
         ALOGE("%s: ramp period not mentioned", __func__);
         goto done;
     }
-    int step = atoi((char *)attr[5]);
+    long step = atol((char *)attr[5]);
 
     if (strcmp(attr[6], "curve") != 0) {
         ALOGE("%s: usecase id not mentioned", __func__);
         goto done;
     }
 
-    int curve = atoi((char *)attr[7]);
+    long curve = atol((char *)attr[7]);
 
     if (platform_set_soft_step_volume_params(index, period, step, curve) < 0) {
-        ALOGE("%s: usecase %s period %d  step %d  curve %d ",
+        ALOGE("%s: usecase %s period %ld  step %ld  curve %ld ",
                             __func__, attr[1], period, step, curve);
     goto done;
     }
