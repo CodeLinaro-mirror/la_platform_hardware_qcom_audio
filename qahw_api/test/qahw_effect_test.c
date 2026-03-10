@@ -128,7 +128,7 @@ void stop_effect_command_thread_handler(int signal __unused)
 void *bassboost_thread_func(void* data) {
     thread_data_t            *thr_ctxt = (thread_data_t *)data;
     qahw_effect_lib_handle_t lib_handle = NULL;
-    qahw_effect_handle_t     effect_handle;
+    qahw_effect_handle_t     effect_handle = NULL;
     qahw_effect_descriptor_t effect_desc;
     int32_t                  rc;
     int                      reply_data;
@@ -217,7 +217,7 @@ void *bassboost_thread_func(void* data) {
 void *virtualizer_thread_func(void* data) {
     thread_data_t            *thr_ctxt = (thread_data_t *)data;
     qahw_effect_lib_handle_t lib_handle = NULL;
-    qahw_effect_handle_t     effect_handle;
+    qahw_effect_handle_t     effect_handle = NULL;
     qahw_effect_descriptor_t effect_desc;
     int32_t                  rc;
     int                      reply_data;
@@ -594,7 +594,6 @@ void *command_thread_func(void* data) {
                     fprintf(stdout, "%s", prompt_name);
                     prompt_name = NULL;
                 }
-                fprintf(stdout, "%s", get_prompt_from_name(fx_ctxt->who_am_i, cmd_str));
                 for (band_idx = 0; band_idx < NUM_EQ_BANDS; ++band_idx) {
                     fprintf(stdout, "input level for band (%d - %dHz) (range from -15 to +15):\n",
                             band_idx, qahw_equalizer_band_freqs[band_idx]);
