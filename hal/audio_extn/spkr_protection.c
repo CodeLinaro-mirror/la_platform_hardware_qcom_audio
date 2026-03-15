@@ -279,7 +279,7 @@ struct speaker_prot_session {
 };
 
 static struct pcm_config pcm_config_skr_prot = {
-    .channels = 4,
+    .channels = 2,
     .rate = 48000,
     .period_size = 256,
     .period_count = 4,
@@ -542,6 +542,7 @@ static int get_spkr_prot_cal(int cal_fd,
     status->r0[SP_V2_SPKR_1] = cal_data.cal_type.cal_info.r0[SP_V2_SPKR_1];
     status->r0[SP_V2_SPKR_2] = cal_data.cal_type.cal_info.r0[SP_V2_SPKR_2];
     status->status = cal_data.cal_type.cal_info.status;
+    ALOGD("%s status->status = %d \n", __func__, status->status);
 done:
     return ret;
 }
@@ -1203,6 +1204,7 @@ static void* spkr_calibration_thread()
     if (atoi(value) > 0)
         min_idle_time = atoi(value);
 
+    ALOGD("%s Entered:, min_idle_time =  %d (sec) \n",__func__, min_idle_time);
     handle.speaker_prot_threadid = pthread_self();
     spv3_enable = property_get_bool("persist.vendor.audio.spv3.enable", false);
     property_get("persist.vendor.audio.avs.afe_api_version", afe_version_value,
@@ -2520,7 +2522,7 @@ int spkr_prot_start_processing(snd_device_t snd_device)
                                  pcm_dev_tx_id,
                                  PCM_IN, &pcm_config_skr_prot);
         if (handle.pcm_tx && !pcm_is_ready(handle.pcm_tx)) {
-            ALOGE("%s: %s", __func__, pcm_get_error(handle.pcm_tx));
+            ALOGE("%s: pcm_open () failed %s", __func__, pcm_get_error(handle.pcm_tx));
             ret = -EIO;
             goto exit;
         }
