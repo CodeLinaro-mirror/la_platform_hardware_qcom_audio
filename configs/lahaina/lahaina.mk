@@ -299,13 +299,13 @@ persist.vendor.audio.fluence.tmic.enabled=false
 
 ##speaker protection v4 switch and ADSP AFE API version
 PRODUCT_PROPERTY_OVERRIDES += \
-persist.vendor.audio.speaker.prot.enable=false\
-persist.vendor.audio.spv4.enable=false\
+persist.vendor.audio.speaker.prot.enable=true\
+persist.vendor.audio.spv4.enable=true\
 persist.vendor.audio.avs.afe_api_version=9
 
 ##bcl aka vbat monitor feature enable by default
 PRODUCT_PROPERTY_OVERRIDES += \
-persist.vendor.audio.vbat.enabled=false\
+persist.vendor.audio.vbat.enabled=true\
 persist.vendor.audio.bcl.enabled=true\
 
 #disable tunnel encoding
@@ -509,7 +509,7 @@ vendor.audio.feature.usb_offload.enable=true \
 vendor.audio.feature.usb_offload_burst_mode.enable=true \
 vendor.audio.feature.usb_offload_sidetone_volume.enable=false \
 vendor.audio.feature.deepbuffer_as_primary.enable=false \
-vendor.audio.feature.vbat.enable=false \
+vendor.audio.feature.vbat.enable=true \
 vendor.audio.feature.wsa.enable=false \
 vendor.audio.feature.audiozoom.enable=false \
 vendor.audio.feature.snd_mon.enable=true \
