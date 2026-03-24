@@ -779,20 +779,19 @@ static void register_out_stream(struct stream_out *out)
 
     // register stream first for backward compatibility
     adev->adm_register_output_stream(adev->adm_data,
-                                     out->handle,
-                                     out->flags);
+                                     (void *)(uintptr_t)out->handle);
 
     if (!adev->adm_set_config)
         return;
 #ifdef PLATFORM_AUTO
     if (out->realtime || (out->flags & AUDIO_OUTPUT_FLAG_SYS_NOTIFICATION))
        adev->adm_set_config(adev->adm_data,
-                             out->handle,
+                             (void *)(uintptr_t)out->handle,
                              out->pcm, &out->config);
 #else
     if (out->realtime)
        adev->adm_set_config(adev->adm_data,
-                             out->handle,
+                             (void *)(uintptr_t)out->handle,
                              out->pcm, &out->config);
 #endif
 }
@@ -809,15 +808,14 @@ static void register_in_stream(struct stream_in *in)
     }
 
     adev->adm_register_input_stream(adev->adm_data,
-                                    in->capture_handle,
-                                    in->flags);
+                                    (void *)(uintptr_t)in->capture_handle);
 
     if (!adev->adm_set_config)
         return;
 
     if (in->realtime)
         adev->adm_set_config(adev->adm_data,
-                             in->capture_handle,
+                             (void *)(uintptr_t)in->capture_handle,
                              in->pcm,
                              &in->config);
 }
@@ -827,9 +825,9 @@ static void request_out_focus(struct stream_out *out, long ns)
     struct audio_device *adev = out->dev;
 
     if (adev->adm_request_focus_v2)
-        adev->adm_request_focus_v2(adev->adm_data, out->handle, ns);
+        adev->adm_request_focus_v2(adev->adm_data, (void *)(uintptr_t)out->handle, ns);
     else if (adev->adm_request_focus)
-        adev->adm_request_focus(adev->adm_data, out->handle);
+        adev->adm_request_focus(adev->adm_data, (void *)(uintptr_t)out->handle);
 }
 
 static int request_in_focus(struct stream_in *in, long ns)
@@ -838,11 +836,11 @@ static int request_in_focus(struct stream_in *in, long ns)
     int ret = 0;
 
     if (adev->adm_request_focus_v2_1)
-        ret = adev->adm_request_focus_v2_1(adev->adm_data, in->capture_handle, ns);
+        ret = adev->adm_request_focus_v2_1(adev->adm_data, (void *)(uintptr_t)in->capture_handle, ns);
     else if (adev->adm_request_focus_v2)
-        adev->adm_request_focus_v2(adev->adm_data, in->capture_handle, ns);
+        adev->adm_request_focus_v2(adev->adm_data, (void *)(uintptr_t)in->capture_handle, ns);
     else if (adev->adm_request_focus)
-        adev->adm_request_focus(adev->adm_data, in->capture_handle);
+        adev->adm_request_focus(adev->adm_data, (void *)(uintptr_t)in->capture_handle);
 
     return ret;
 }
@@ -852,14 +850,14 @@ static void release_out_focus(struct stream_out *out)
     struct audio_device *adev = out->dev;
 
     if (adev->adm_abandon_focus)
-        adev->adm_abandon_focus(adev->adm_data, out->handle);
+        adev->adm_abandon_focus(adev->adm_data, (void *)(uintptr_t)out->handle);
 }
 
 static void release_in_focus(struct stream_in *in)
 {
     struct audio_device *adev = in->dev;
     if (adev->adm_abandon_focus)
-        adev->adm_abandon_focus(adev->adm_data, in->capture_handle);
+        adev->adm_abandon_focus(adev->adm_data, (void *)(uintptr_t)in->capture_handle);
 }
 
 static int parse_snd_card_status(struct str_parms *parms, int *card,
@@ -4623,11 +4621,15 @@ int start_output_stream(struct stream_out *out)
                 ALOGE("%s: pcm stream not ready", __func__);
                 goto error_open;
             }
+            //This change avoids explicit pcm_start() for non-MMAP ULL streams
+            if(out->flags & AUDIO_OUTPUT_FLAG_MMAP_NOIRQ)
+            {
             ATRACE_BEGIN("pcm_start");
             ret = pcm_start(out->pcm);
             ATRACE_END();
             if (ret < 0)
                 goto error_open;
+            }
         }
     }
     audio_streaming_hint_end();
@@ -5025,7 +5027,7 @@ static int out_standby(struct audio_stream *stream)
             ALOGV("Ignore adm_deregister_stream for out flags: 0x%x\n", out->flags);
         } else {
              if (adev->adm_deregister_stream)
-                adev->adm_deregister_stream(adev->adm_data, out->handle);
+                adev->adm_deregister_stream(adev->adm_data, (void *)(uintptr_t)out->handle);
         }
 
         if (is_offload_usecase(out->usecase)) {
@@ -5144,7 +5146,7 @@ int out_standby_l(struct audio_stream *stream)
                  ALOGV("Ignore adm_deregister_stream for out flags: 0x%x\n", out->flags);
         } else {
                  if (adev->adm_deregister_stream)
-                     adev->adm_deregister_stream(adev->adm_data, out->handle);
+                     adev->adm_deregister_stream(adev->adm_data, (void *)(uintptr_t)out->handle);
         }
 
         if (is_offload_usecase(out->usecase)) {
@@ -5478,7 +5480,7 @@ int route_output_stream(struct stream_out *out,
                 } else {
                     if (adev->adm_on_routing_change)
                         adev->adm_on_routing_change(adev->adm_data,
-                                                out->handle);
+                                                (void *)(uintptr_t)out->handle);
                 }
             }
             if (!bypass_a2dp) {
@@ -7388,7 +7390,7 @@ static int in_standby(struct audio_stream *stream)
             ALOGV("Ignore adm_deregister_stream for flags: 0x%x\n", in->flags);
         } else {
             if (adev->adm_deregister_stream)
-                adev->adm_deregister_stream(adev->adm_data, in->capture_handle);
+                adev->adm_deregister_stream(adev->adm_data, (void *)(uintptr_t)in->capture_handle);
         }
 
         pthread_mutex_lock(&adev->lock);
@@ -7548,7 +7550,7 @@ int route_input_stream(struct stream_in *in,
                 } else {
                     if (adev->adm_on_routing_change)
                         adev->adm_on_routing_change(adev->adm_data,
-                                                in->capture_handle);
+                                                (void *)(uintptr_t)in->capture_handle);
                     ret = select_devices(adev, in->usecase);
                     if (in->usecase == USECASE_AUDIO_RECORD_LOW_LATENCY)
                         adev->adm_routing_changed = true;
