@@ -5210,6 +5210,30 @@ static int out_dump(const struct audio_stream *stream, int fd)
     return 0;
 }
 
+static void out_update_source_metadata(
+                                struct audio_stream_out *stream,
+                                const struct source_metadata_v7* source_metadata) {
+    if (stream == NULL || source_metadata == NULL) {
+        ALOGD("%s: invalid stream or source_metadata", __func__);
+        return;
+    }
+
+    if (source_metadata->track_count == 0) {
+        ALOGD("%s: zero tracks", __func__);
+        return;
+    }
+
+    for (size_t i = 0; i < source_metadata->track_count; i++) {
+        ALOGD("%s: track[%zu] usage: %s, content_type: %s, gain: %f, "
+                "channel_mask: 0x%08x, tags: '%s'", __func__, i,
+                audio_usage_to_string(source_metadata->tracks[i].base.usage),
+                audio_content_type_to_string(source_metadata->tracks[i].base.content_type),
+                source_metadata->tracks[i].base.gain,
+                source_metadata->tracks[i].channel_mask,
+                source_metadata->tracks[i].tags);
+    }
+}
+
 static int parse_compress_metadata(struct stream_out *out, struct str_parms *parms)
 {
     int ret = 0;
@@ -9067,6 +9091,8 @@ int adev_open_output_stream(struct audio_hw_device *dev,
     out->stream.get_render_position = out_get_render_position;
     out->stream.get_next_write_timestamp = out_get_next_write_timestamp;
     out->stream.get_presentation_position = out_get_presentation_position;
+
+    out->stream.update_source_metadata_v7 = out_update_source_metadata;
 
     if (out->realtime)
         out->af_period_multiplier = af_period_multiplier;
