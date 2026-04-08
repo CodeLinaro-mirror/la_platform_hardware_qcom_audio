@@ -16,8 +16,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * Changes from Qualcomm Innovation Center are provided under the following license:
- * Copyright (c) 2023-2024 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
@@ -83,6 +83,7 @@
 #endif
 
 #define APP_TYPE_VOIP_AUDIO 0x1113A
+#define DEFAULT_APP_TYPE_RX_PATH 0x11130
 
 #ifdef AUDIO_EXTERNAL_HDMI_ENABLED
 #define PROFESSIONAL        (1<<0)      /* 0 = consumer, 1 = professional */
@@ -827,6 +828,14 @@ void audio_extn_utils_update_stream_output_app_type_cfg(void *platform,
 
     ALOGV("%s: flags: %x, format: %x sample_rate %d, profile %s, app_type %d",
            __func__, flags, format, sample_rate, profile, app_type_cfg->app_type);
+
+    /* Check if compress offload app_type is incorrectly assigned system tones app_id */
+    if ((flags & (audio_output_flags_t)AUDIO_OUTPUT_FLAG_COMPRESS_OFFLOAD) &&
+        (app_type_cfg->app_type == 0x11131)) {
+        ALOGE("%s Detected incorrect app_type : 0x%x, set to default  69936 \n",__func__, app_type_cfg->app_type);
+        app_type_cfg->app_type = DEFAULT_APP_TYPE_RX_PATH;
+        ALOGD("%s app_type : 0x%x \n",__func__, app_type_cfg->app_type);
+    }
     list_for_each(node_i, streams_output_cfg_list) {
         s_info = node_to_item(node_i, struct streams_io_cfg, list);
         /* Along with flags do profile matching if set at either end.*/
@@ -1528,8 +1537,17 @@ static int send_app_type_cfg_for_device(struct audio_device *adev,
         }
         if (usecase->stream.out->flags == (audio_output_flags_t)AUDIO_OUTPUT_FLAG_INTERACTIVE)
             app_type = bd_app_type;
-        else
+        else {
+            /* Check if compress offload app_type is incorrectly assigned system tones app_id */
+            if ((usecase->stream.out->flags & (audio_output_flags_t)AUDIO_OUTPUT_FLAG_COMPRESS_OFFLOAD) &&
+                (usecase->stream.out->app_type_cfg.app_type == 0x11131)) {
+                ALOGE("%s Detected incorrect app_type : 0x%x, set to default \n",__func__,
+                                         usecase->stream.out->app_type_cfg.app_type);
+                usecase->stream.out->app_type_cfg.app_type = DEFAULT_APP_TYPE_RX_PATH;
+            }
             app_type = usecase->stream.out->app_type_cfg.app_type;
+            ALOGV("%s app_type from usecase->stream.out = %d \n",__func__, app_type);
+        }
         app_type_cfg[len++] = app_type;
         app_type_cfg[len++] = acdb_dev_id;
         app_type_cfg[len++] = sample_rate;
