@@ -690,13 +690,15 @@ static int voip_stop_call(struct audio_device *adev)
         list_for_each(node, &adev->usecase_list) {
             uc_info = node_to_item(node, struct audio_usecase, list);
             out = uc_info->stream.out;
+
             if (out && adev->adm_register_output_stream
                     && adev->adm_on_routing_change) {
-                adev->adm_register_output_stream(adev->adm_data,
-                                                 out->handle,
-                                                 out->flags);
-                adev->adm_on_routing_change(adev->adm_data,
-                                            out->handle);
+                if (out->flags & AUDIO_OUTPUT_FLAG_RAW){
+                    adev->adm_register_output_stream(adev->adm_data,
+                                                 (void *)(uintptr_t)out->handle);
+                    adev->adm_on_routing_change(adev->adm_data,
+                                            (void *)(uintptr_t)out->handle);
+                }
             }
             select_devices(adev, uc_info->id);
         }

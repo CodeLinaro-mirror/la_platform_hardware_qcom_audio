@@ -34,9 +34,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
 
- *  Changes from Qualcomm Innovation Center are provided under the following license:
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
 
- * Copyright (c) 2022-2024 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
 
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted (subject to the limitations in the
@@ -720,18 +720,18 @@ struct streams_io_cfg {
 
 typedef void* (*adm_init_t)();
 typedef void (*adm_deinit_t)(void *);
-typedef void (*adm_register_output_stream_t)(void *, audio_io_handle_t, audio_output_flags_t);
-typedef void (*adm_register_input_stream_t)(void *, audio_io_handle_t, audio_input_flags_t);
-typedef void (*adm_deregister_stream_t)(void *, audio_io_handle_t);
-typedef void (*adm_request_focus_t)(void *, audio_io_handle_t);
-typedef void (*adm_abandon_focus_t)(void *, audio_io_handle_t);
-typedef void (*adm_set_config_t)(void *, audio_io_handle_t,
+typedef void (*adm_register_output_stream_t)(void *, void *);
+typedef void (*adm_register_input_stream_t)(void *, void *);
+typedef void (*adm_deregister_stream_t)(void *, void *);
+typedef void (*adm_request_focus_t)(void *, void *);
+typedef void (*adm_abandon_focus_t)(void *, void *);
+typedef void (*adm_set_config_t)(void *, void *,
                                          struct pcm *,
                                          struct pcm_config *);
-typedef void (*adm_request_focus_v2_t)(void *, audio_io_handle_t, long);
+typedef void (*adm_request_focus_v2_t)(void *, void *, long);
 typedef bool (*adm_is_noirq_avail_t)(void *, int, int, int);
-typedef void (*adm_on_routing_change_t)(void *, audio_io_handle_t);
-typedef int (*adm_request_focus_v2_1_t)(void *, audio_io_handle_t, long);
+typedef void (*adm_on_routing_change_t)(void *, void *);
+typedef int (*adm_request_focus_v2_1_t)(void *, void *, long);
 
 struct audio_device {
     struct audio_hw_device device;
