@@ -417,7 +417,7 @@ struct  spkr_device_chmap {
 };
 
 #ifdef SOFT_VOLUME
-static int usecase_volume_params[AUDIO_USECASE_MAX][3] = {
+static long usecase_volume_params[AUDIO_USECASE_MAX][3] = {
     [USECASE_AUDIO_PLAYBACK_DEEP_BUFFER] = {-1,-1,-1},
     [USECASE_AUDIO_PLAYBACK_MEDIA] = {-1,-1,-1},
     [USECASE_AUDIO_PLAYBACK_SYS_NOTIFICATION] = {-1,-1,-1},
@@ -4969,7 +4969,7 @@ int send_qtime(void *platform, uint64_t qtime_value, int pcm_device_id)
     const char *mixer_ctl_name = "QTimer";
     const char *deviceNo = "NN";
     char *mixer_str = NULL;
-    uint32_t set_values[2];
+    long set_values[2];
 
     set_values[0] = (uint32_t)qtime_value;
     set_values[1] = (uint32_t)((qtime_value >> 16) >> 16);
@@ -10253,7 +10253,7 @@ static int platform_set_codec_backend_cfg(struct audio_device* adev,
         const char *ctl_name_prefix = "Display Port";
         const char *ctl_name_suffix = "RX DEVICE IDX";
         char mixer_ctl_name[MIXER_PATH_MAX_LENGTH] = {0};
-        int dev[] = {controller, stream};
+        long dev[] = {controller, stream};
 
         ctl_index = platform_get_display_port_ctl_index(controller, stream);
         if (-EINVAL == ctl_index) {
@@ -13054,18 +13054,18 @@ int platform_get_soft_step_volume_params(struct soft_step_volume_params *volume_
         ret = -EINVAL;
     } else {
         memcpy(volume_params,usecase_volume_params[uc_id],sizeof(struct soft_step_volume_params));
-        ALOGV("%s: usecase-id = %d, ramp period = %d, ramp step = %d, ramp curve = %d",
+        ALOGV("%s: usecase-id = %d, ramp period = %ld, ramp step = %ld, ramp curve = %ld",
            __func__, uc_id, volume_params->period, volume_params->step, volume_params->curve);
     }
 done:
     return ret;
 }
 
-int platform_set_soft_step_volume_params(int uc_id, int period, int step, int curve)
+int platform_set_soft_step_volume_params(int uc_id, long period, long step, long curve)
 {
     int ret = 0;
 
-    ALOGV("%s: usecase-id = %d, ramp period = %d, ramp step = %d, ramp curve = %d",
+    ALOGV("%s: usecase-id = %d, ramp period = %ld, ramp step = %ld, ramp curve = %ld",
            __func__, uc_id, period, step, curve);
     if ((uc_id < 0) || (uc_id >= AUDIO_USECASE_MAX)) {
         ALOGE("%s : invalid usecase id", __func__);
