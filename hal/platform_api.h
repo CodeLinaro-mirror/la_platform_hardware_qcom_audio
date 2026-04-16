@@ -453,7 +453,7 @@ void platform_reset_island_power_status(void *platform, snd_device_t snd_device)
 void platform_is_volume_boost_supported_device(void *platform, struct listnode *devices);
 const char *platform_get_mixer_FM_RX_control(struct audio_device *adev);
 #ifdef SOFT_VOLUME
-int platform_set_soft_step_volume_params(int uc_id, int period, int step, int curve);
+int platform_set_soft_step_volume_params(int uc_id, long period, long step, long curve);
 int platform_get_soft_step_volume_params(struct soft_step_volume_params *volume_params, int uc_id);
 #endif
 #endif // AUDIO_PLATFORM_API_H
