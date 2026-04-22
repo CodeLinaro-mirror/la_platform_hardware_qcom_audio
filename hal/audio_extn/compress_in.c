@@ -25,6 +25,10 @@
 * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
 * OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
 * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+*
+* Changes from Qualcomm Technologies, Inc. are provided under the following license:
+* Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+* SPDX-License-Identifier: BSD-3-Clause-Clear
 */
 
 #define LOG_TAG "audio_hw_cin"
@@ -275,7 +279,8 @@ int cin_read(struct stream_in *in, void *buffer,
                         size_t bytes, size_t *bytes_read)
 {
     int ret = -EINVAL;
-    size_t read_size = bytes;
+    size_t read_size = 0;
+    size_t size_read = 0;
     size_t mdata_size = (sizeof(struct snd_codec_metadata));
     cin_private_data_t *cin_data = (cin_private_data_t *) in->cin_extn;
 
@@ -287,8 +292,17 @@ int cin_read(struct stream_in *in, void *buffer,
         if (!(in->flags & (AUDIO_INPUT_FLAG_TIMESTAMP | AUDIO_INPUT_FLAG_PASSTHROUGH)))
             mdata_size = 0;
 
-        if (buffer && read_size) {
-            read_size = compress_read(cin_data->compr, buffer, read_size);
+        if (buffer && bytes) {
+           while (read_size < bytes) {
+                size_read = compress_read(cin_data->compr, buffer, bytes);
+
+                if (size_read < 0) {
+                    read_size = size_read;
+                    break;
+                }
+
+                read_size += size_read;
+            }
             if (read_size == bytes) {
                 /* set ret to 0 if compress_read succeeded*/
                 ret = 0;
