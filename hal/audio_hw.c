@@ -114,6 +114,12 @@
 #define RECORD_GAIN_MAX 1.0f
 #define RECORD_VOLUME_CTL_MAX 0x2000
 
+#define COMPRESS_CAPTURE_AAC_MAX_OUTPUT_BUFFER_SIZE 2048
+#define COMPRESS_CAPTURE_AAC_PCM_SAMPLES_IN_FRAME 1024
+
+#define COMPRESS_OFFLOAD_FRAGMENT_SIZE (32 * 1024)
+#define FLAC_COMPRESS_OFFLOAD_FRAGMENT_SIZE (256 * 1024)
+
 /* treat as unsigned Q1.13 */
 #define APP_TYPE_GAIN_DEFAULT         0x2000
 
@@ -9867,6 +9873,17 @@ static size_t adev_get_input_buffer_size(const struct audio_hw_device *dev __unu
     bool is_usb_hifi = IS_USB_HIFI;
     int channel_count = audio_channel_count_from_in_mask(config->channel_mask);
 
+    /* input for compress formats */
+    if (config && !audio_is_linear_pcm(config->format)) {
+        if (config->format == AUDIO_FORMAT_AAC_LC ||
+            config->format == AUDIO_FORMAT_AAC_ADTS_HE_V1 ||
+            config->format == AUDIO_FORMAT_AAC_ADTS_HE_V2) {
+            ALOGE("%s config->format is_AAC_LC/ADTS_HE_V1V2, return 2048 \n",__func__);
+            return COMPRESS_CAPTURE_AAC_MAX_OUTPUT_BUFFER_SIZE;
+        }
+        return 0;
+    }
+
     /* Don't know if USB HIFI in this context so use true to be conservative */
     if (check_input_parameters(config->sample_rate, config->format, channel_count,
                               is_usb_hifi) != 0)
@@ -9989,6 +10006,11 @@ static int adev_open_input_stream(struct audio_hw_device *dev,
 
     *stream_in = NULL;
 
+    bool is_direct_non_pcm = (flags & AUDIO_INPUT_FLAG_DIRECT) &&
+                         (config->format != AUDIO_FORMAT_DEFAULT) &&
+                         !audio_is_linear_pcm(config->format);
+    ALOGD("%s is_direct_non_pcm : %d \n,",__func__, is_direct_non_pcm);
+    
     if (!(is_usb_dev && may_use_hifi_record)) {
         if (config->sample_rate == 0)
             config->sample_rate = 48000;
@@ -9999,9 +10021,14 @@ static int adev_open_input_stream(struct audio_hw_device *dev,
 
         channel_count = audio_channel_count_from_in_mask(config->channel_mask);
 
-        if (check_input_parameters(config->sample_rate, config->format, channel_count,
-                                   false) != 0)
+        if (!is_direct_non_pcm && check_input_parameters(config->sample_rate, 
+                                   config->format, channel_count,
+                                   false) != 0) {
+            ALOGE("%s: check_input_parameters failed: rate=%u fmt=0x%x ch=0x%x",
+                       __func__, config->sample_rate,
+                       config->format, config->channel_mask);
             return -EINVAL;
+        }	
     }
 
     in = (struct stream_in *)calloc(1, sizeof(struct stream_in));
@@ -10258,9 +10285,13 @@ static int adev_open_input_stream(struct audio_hw_device *dev,
     /* Additional sample rates added below must also be present
        in audio_policy_configuration.xml for mmap_no_irq_in */
     bool valid_mmap_record_rate = (config->sample_rate == 8000 ||
+                                config->sample_rate == 11025 ||
+                                config->sample_rate == 12000 ||
                                 config->sample_rate == 16000 ||
+                                config->sample_rate == 22050 || 
                                 config->sample_rate == 24000 ||
                                 config->sample_rate == 32000 ||
+                                config->sample_rate == 44100 ||
                                 config->sample_rate == 48000);
     if (valid_mmap_record_rate &&
         ((in->flags & AUDIO_INPUT_FLAG_MMAP_NOIRQ) != 0)) {
