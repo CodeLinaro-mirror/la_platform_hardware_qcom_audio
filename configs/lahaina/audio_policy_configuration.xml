@@ -186,7 +186,7 @@
                              samplingRates="8000 11025 12000 16000 22050 24000 32000 44100 48000"
                              channelMasks="AUDIO_CHANNEL_IN_MONO AUDIO_CHANNEL_IN_STEREO AUDIO_CHANNEL_IN_FRONT_BACK"/>
                 </mixPort>
-                <mixPort name="compress-input" role="sink"
+                <!--mixPort name="compress-input" role="sink"
                          flags="AUDIO_INPUT_FLAG_DIRECT" >
                     <profile name="compress-capture-AAC-LC" format="AUDIO_FORMAT_AAC_LC"
                              samplingRates="8000 11025 12000 16000 22050 24000 32000 44100 48000"
@@ -197,7 +197,7 @@
                     <profile name="compress-capture-AAC-HE-V2" format="AUDIO_FORMAT_AAC_ADTS_HE_V2"
                              samplingRates="24000 32000 44100 48000"
                              channelMasks="AUDIO_CHANNEL_IN_STEREO"/>
-                </mixPort>
+                </mixPort-->
                 <mixPort name="fast input" role="sink"
                          flags="AUDIO_INPUT_FLAG_FAST">
                      <profile name="" format="AUDIO_FORMAT_PCM_16_BIT"
@@ -341,7 +341,7 @@
                              samplingRates="8000 11025 12000 16000 22050 24000 32000 44100 48000"
                              channelMasks="AUDIO_CHANNEL_IN_MONO AUDIO_CHANNEL_IN_STEREO AUDIO_CHANNEL_IN_FRONT_BACK"/>
                     <!-- To support compress offload capture such that client can query -->
-                    <profile name="compress-capture-AAC-LC" format="AUDIO_FORMAT_AAC_LC"
+                    <!--profile name="compress-capture-AAC-LC" format="AUDIO_FORMAT_AAC_LC"
                              samplingRates="8000 11025 12000 16000 22050 24000 32000 44100 48000"
                              channelMasks="AUDIO_CHANNEL_IN_MONO AUDIO_CHANNEL_IN_STEREO AUDIO_CHANNEL_IN_FRONT_BACK"/>
                     <profile name="compress-capture-AAC-HE-V1" format="AUDIO_FORMAT_AAC_ADTS_HE_V1"
@@ -349,7 +349,7 @@
                              channelMasks="AUDIO_CHANNEL_IN_MONO AUDIO_CHANNEL_IN_STEREO AUDIO_CHANNEL_IN_FRONT_BACK"/>
                     <profile name="compress-capture-AAC-HE-V2" format="AUDIO_FORMAT_AAC_ADTS_HE_V2"
                              samplingRates="24000 32000 44100 48000"
-                             channelMasks="AUDIO_CHANNEL_IN_STEREO"/>
+                             channelMasks="AUDIO_CHANNEL_IN_STEREO"/-->
                 </devicePort>
                 <devicePort tagName="Built-In Back Mic" type="AUDIO_DEVICE_IN_BACK_MIC" role="source">
                     <profile name="" format="AUDIO_FORMAT_PCM_16_BIT"
@@ -433,8 +433,8 @@
                        sources="Telephony Rx"/>
                 <route type="mix" sink="primary input"
                        sources="Built-In Mic,Built-In Back Mic,Wired Headset Mic,BT SCO Headset Mic,FM Tuner,Telephony Rx,A2DP In,Echo Reference,Proxy In"/>
-                <route type="mix" sink="compress-input"
-                       sources="Built-In Mic,Built-In Back Mic,BT SCO Headset Mic,Wired Headset Mic,USB Device In,USB Headset In,Proxy In"/>
+                <!--route type="mix" sink="compress-input"
+                       sources="Built-In Mic,Built-In Back Mic,BT SCO Headset Mic,Wired Headset Mic,USB Device In,USB Headset In,Proxy In"/-->
                 <route type="mix" sink="usb_surround_sound"
                        sources="USB Device In,USB Headset In"/>
                 <route type="mix" sink="fast input"
