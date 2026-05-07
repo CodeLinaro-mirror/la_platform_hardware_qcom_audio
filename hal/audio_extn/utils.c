@@ -3353,7 +3353,7 @@ int audio_extn_utils_send_app_type_gain(struct audio_device *adev,
                                         int app_type,
                                         int *gain)
 {
-    int gain_cfg[4];
+    long gain_cfg[4];
     const char *mixer_ctl_name = "App Type Gain";
     struct mixer_ctl *ctl;
     ctl = mixer_get_ctl_by_name(adev->mixer, mixer_ctl_name);

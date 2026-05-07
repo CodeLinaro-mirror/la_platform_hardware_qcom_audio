@@ -636,7 +636,7 @@ static int set_custom_mtmx_output_channel_map(struct audio_device *adev,
     struct mixer_ctl *ctl = NULL;
     char mixer_ctl_name[128] = {0};
     int ret = 0;
-    int channel_map[AUDIO_MAX_DSP_CHANNELS] = {0};
+    long channel_map[AUDIO_MAX_DSP_CHANNELS] = {0};
 
     ALOGV("%s channel_count %d", __func__, ch_count);
 
@@ -769,7 +769,7 @@ static int update_custom_mtmx_coefficients_v1(struct audio_device *adev,
     char mixer_name_prefix[100];
     int i = 0, err = 0, rule = 0;
     uint32_t mtrx_row_cnt = 0, mtrx_column_cnt = 0;
-    int reset_coeffs[AUDIO_MAX_DSP_CHANNELS] = {0};
+    long reset_coeffs[AUDIO_MAX_DSP_CHANNELS] = {0};
 
     ALOGI("%s: ip_channels %d, op_channels %d, pcm_device_id %d, usecase type %d, enable %d",
           __func__, pinfo->ip_channels, pinfo->op_channels, pcm_device_id,
@@ -4589,7 +4589,8 @@ void audio_extn_send_dual_mono_mixing_coefficients(struct stream_out *out)
     struct audio_device *adev = out->dev;
     struct mixer_ctl *ctl;
     char mixer_ctl_name[128];
-    int cust_ch_mixer_cfg[128], len = 0;
+    long cust_ch_mixer_cfg[128];
+    int len = 0;
     int ip_channel_cnt = audio_channel_count_from_out_mask(out->channel_mask);
     int pcm_device_id = platform_get_pcm_device_id(out->usecase, PCM_PLAYBACK);
     int op_channel_cnt= 2;
