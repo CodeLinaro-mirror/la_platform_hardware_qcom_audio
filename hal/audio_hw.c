@@ -5224,10 +5224,10 @@ static void out_update_source_metadata(
     }
 
     for (size_t i = 0; i < source_metadata->track_count; i++) {
-        ALOGD("%s: track[%zu] usage: %s, content_type: %s, gain: %f, "
+        ALOGD("%s: track[%zu] usage: %d, content_type: %d, gain: %f, "
                 "channel_mask: 0x%08x, tags: '%s'", __func__, i,
-                audio_usage_to_string(source_metadata->tracks[i].base.usage),
-                audio_content_type_to_string(source_metadata->tracks[i].base.content_type),
+                (int)source_metadata->tracks[i].base.usage,
+                (int)source_metadata->tracks[i].base.content_type,
                 source_metadata->tracks[i].base.gain,
                 source_metadata->tracks[i].channel_mask,
                 source_metadata->tracks[i].tags);
@@ -5969,7 +5969,7 @@ static int out_set_soft_volume_params(struct audio_stream_out *stream)
         }
 
     }
-    ret = mixer_ctl_set_array(ctl, volume_params, sizeof(struct soft_step_volume_params)/sizeof(int));
+    ret = mixer_ctl_set_array(ctl, volume_params, sizeof(struct soft_step_volume_params)/sizeof(long));
     if (ret < 0) {
         ALOGE("%s: Could not set ctl, error:%d ", __func__, ret);
         ret = -EINVAL;
@@ -6115,7 +6115,7 @@ static int out_set_volume(struct audio_stream_out *stream, float left,
                           float right)
 {
     struct stream_out *out = (struct stream_out *)stream;
-    int volume[2];
+    long volume[2];
     int ret = 0;
 
     ALOGD("%s: called with left_vol=%f, right_vol=%f", __func__, left, right);
@@ -10944,18 +10944,20 @@ int adev_create_audio_patch(struct audio_hw_device *dev,
 
 done:
     clear_devices(&devices);
-    audio_extn_hw_loopback_create_audio_patch(dev,
-                                        num_sources,
-                                        sources,
-                                        num_sinks,
-                                        sinks,
-                                        handle);
-    audio_extn_auto_hal_create_audio_patch(dev,
-                                        num_sources,
-                                        sources,
-                                        num_sinks,
-                                        sinks,
-                                        handle);
+    if (ret == 0) {
+        audio_extn_hw_loopback_create_audio_patch(dev,
+                                            num_sources,
+                                            sources,
+                                            num_sinks,
+                                            sinks,
+                                            handle);
+        audio_extn_auto_hal_create_audio_patch(dev,
+                                            num_sources,
+                                            sources,
+                                            num_sinks,
+                                            sinks,
+                                            handle);
+    }
     return ret;
 }
 
@@ -10966,6 +10968,7 @@ int adev_release_audio_patch(struct audio_hw_device *dev,
     int ret = 0;
     audio_source_t input_source = AUDIO_SOURCE_DEFAULT;
     struct audio_stream *stream = NULL;
+    bool released = false;
 
     if (handle == AUDIO_PATCH_HANDLE_NONE) {
         ALOGE("%s: Invalid patch handle %d", __func__, handle);
@@ -10977,16 +10980,20 @@ int adev_release_audio_patch(struct audio_hw_device *dev,
     pthread_mutex_lock(&adev->lock);
     struct audio_patch_info *p_info = fetch_patch_info_l(adev, handle);
     if (p_info == NULL) {
-        ALOGE("%s: Patch info not found with handle %d", __func__, handle);
+        /* Treat as already released (idempotent behavior) */
+        ALOGW("%s: Patch info not found with handle %d, treating as already released",
+              __func__, handle);
         pthread_mutex_unlock(&adev->lock);
-        ret = -EINVAL;
+        ret = 0;
         goto done;
     }
     struct audio_patch *patch = p_info->patch;
     if (patch == NULL) {
-        ALOGE("%s: Patch not found for handle %d", __func__, handle);
+        /* Treat as already released (idempotent behavior) */
+        ALOGW("%s: Patch not found with handle %d, treating as already released",
+              __func__, handle);
         pthread_mutex_unlock(&adev->lock);
-        ret = -EINVAL;
+        ret = 0;
         goto done;
     }
     audio_io_handle_t io_handle = AUDIO_IO_HANDLE_NONE;
@@ -11000,20 +11007,25 @@ int adev_release_audio_patch(struct audio_hw_device *dev,
             break;
         case AUDIO_PORT_TYPE_SESSION:
         case AUDIO_PORT_TYPE_NONE:
+            /* Unsupported/unexpected type, log warning but return success to not block cleanup */
+            ALOGW("%s: Unsupported patch source type %d for handle %d, treating as released",
+                  __func__, patch->sources[0].type, handle);
             pthread_mutex_unlock(&adev->lock);
-            ret = -EINVAL;
+            ret = 0;
             goto done;
     }
 
     // Remove patch and reset patch handle in stream info
     patch_type_t patch_type = p_info->patch_type;
     patch_map_remove_l(adev, handle);
+    released = true;
     if (patch_type == PATCH_PLAYBACK ||
         patch_type == PATCH_CAPTURE) {
         struct audio_stream_info *s_info =
             hashmapGet(adev->io_streams_map, (void *) (intptr_t) io_handle);
         if (s_info == NULL) {
-            ALOGE("%s: stream for io_handle %d is not available", __func__, io_handle);
+            ALOGW("%s: stream for io_handle %d is not available while releasing patch %d",
+                  __func__, io_handle, handle);
             pthread_mutex_unlock(&adev->lock);
             goto done;
         }
@@ -11036,10 +11048,16 @@ int adev_release_audio_patch(struct audio_hw_device *dev,
         ALOGW("%s: Stream routing failed for io_handle %d", __func__, io_handle);
 
 done:
-    audio_extn_hw_loopback_release_audio_patch(dev, handle);
-    audio_extn_auto_hal_release_audio_patch(dev, handle);
+    /* Only release extension patches if we actually released a core patch */
+    if (released) {
+        audio_extn_hw_loopback_release_audio_patch(dev, handle);
+        audio_extn_auto_hal_release_audio_patch(dev, handle);
+        ALOGV("%s: Successfully released patch %d", __func__, handle);
+    } else {
+        ALOGV("%s: No core patch to release for handle %d (ret=%d)",
+              __func__, handle, ret);
+    }
 
-    ALOGV("%s: Successfully released patch %d", __func__, handle);
     return ret;
 }
 
