@@ -969,16 +969,16 @@
         <path name="compress-offload-playback2"/>
     </path>
     <path name="compress-offload-playback3">
-        <ctl name="WSA_CDC_DMA_RX_0 Audio Mixer MultiMedia10" value="1"/>
+        <ctl name="WSA_CDC_DMA_RX_0 Audio Mixer MultiMedia20" value="1"/>
     </path>
     <path name="compress-offload-playback3 display-port">
-        <ctl name="DISPLAY_PORT Mixer MultiMedia10" value="1"/>
+        <ctl name="DISPLAY_PORT Mixer MultiMedia20" value="1"/>
     </path>
     <path name="compress-offload-playback3 display-port1">
-        <ctl name="DISPLAY_PORT1 Mixer MultiMedia10" value="1"/>
+        <ctl name="DISPLAY_PORT1 Mixer MultiMedia20" value="1"/>
     </path>
     <path name="compress-offload-playback3 bt-sco">
-        <ctl name="SLIMBUS_7_RX Audio Mixer MultiMedia10" value="1"/>
+        <ctl name="SLIMBUS_7_RX Audio Mixer MultiMedia20" value="1"/>
     </path>
     <path name="compress-offload-playback3 bt-sco-wb">
         <path name="compress-offload-playback3 bt-sco"/>
@@ -995,29 +995,29 @@
         <path name="compress-offload-playback3"/>
     </path>
     <path name="compress-offload-playback3 afe-proxy">
-        <ctl name="AFE_PCM_RX Audio Mixer MultiMedia10" value="1"/>
+        <ctl name="AFE_PCM_RX Audio Mixer MultiMedia20" value="1"/>
     </path>
     <path name="compress-offload-playback3 usb-headphones">
-        <ctl name="USB_AUDIO_RX Audio Mixer MultiMedia10" value="1"/>
+        <ctl name="USB_AUDIO_RX Audio Mixer MultiMedia20" value="1"/>
     </path>
     <path name="compress-offload-playback3 usb-headset">
-        <ctl name="USB_AUDIO_RX Audio Mixer MultiMedia10" value="1"/>
+        <ctl name="USB_AUDIO_RX Audio Mixer MultiMedia20" value="1"/>
     </path>
     <path name="compress-offload-playback3 speaker-and-usb-headphones">
         <path name="compress-offload-playback3 usb-headphones"/>
         <path name="compress-offload-playback3"/>
     </path>
     <path name="compress-offload-playback3 headphones">
-        <ctl name="RX_CDC_DMA_RX_0 Audio Mixer MultiMedia10" value="1"/>
+        <ctl name="RX_CDC_DMA_RX_0 Audio Mixer MultiMedia20" value="1"/>
     </path>
     <path name="compress-offload-playback3 headset">
         <path name="compress-offload-playback3 headphones"/>
     </path>
     <path name="compress-offload-playback3 headphones-44.1">
-        <ctl name="RX_CDC_DMA_RX_0 Audio Mixer MultiMedia10" value="1"/>
+        <ctl name="RX_CDC_DMA_RX_0 Audio Mixer MultiMedia20" value="1"/>
     </path>
     <path name="compress-offload-playback3 headphones-dsd">
-        <ctl name="RX_CDC_DMA_RX_0 Audio Mixer MultiMedia10" value="1"/>
+        <ctl name="RX_CDC_DMA_RX_0 Audio Mixer MultiMedia20" value="1"/>
     </path>
     <path name="compress-offload-playback3 speaker-and-headphones">
         <path name="compress-offload-playback3 headphones"/>
