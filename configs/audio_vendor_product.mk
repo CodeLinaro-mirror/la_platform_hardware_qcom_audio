@@ -122,6 +122,17 @@ MM_AUDIO += IDP_Yupik_Hdmi_cal.acdb
 MM_AUDIO += IDP_Yupik_Headset_cal.acdb
 MM_AUDIO += IDP_Yupik_Speaker_cal.acdb
 MM_AUDIO += IDP_Yupik_workspaceFile.qwsp
+
+MM_AUDIO += QRD_Yupik_Bluetooth_cal.acdb
+MM_AUDIO += QRD_Yupik_Codec_cal.acdb
+MM_AUDIO += QRD_Yupik_General_cal.acdb
+MM_AUDIO += QRD_Yupik_Global_cal.acdb
+MM_AUDIO += QRD_Yupik_Handset_cal.acdb
+MM_AUDIO += QRD_Yupik_Hdmi_cal.acdb
+MM_AUDIO += QRD_Yupik_Headset_cal.acdb
+MM_AUDIO += QRD_Yupik_Speaker_cal.acdb
+MM_AUDIO += QRD_Yupik_workspaceFile.qwsp
+
 ifneq (,$(call is-board-platform-in-list2,lahaina))
 MM_AUDIO += fai__4.8.8_0.0__3.0.0_0.0__3.1.2_0.0__3.2.0_0.1__eai_1.10.pmd
 endif
