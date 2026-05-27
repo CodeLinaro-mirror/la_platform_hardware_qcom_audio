@@ -166,6 +166,10 @@ ifeq ($(AUDIO_FEATURE_ENABLED_HAL_V7), true)
   LOCAL_CFLAGS += -DANDROID_U_HAL7
 endif
 
+ifeq ($(strip $(AUDIO_FEATURE_ENABLED_LSM_HIDL)),true)
+LOCAL_VINTF_FRAGMENTS += ../configs/common/manifest_non_qmaa_extn.xml
+endif
+
 LOCAL_SRC_FILES := \
     audio_hw.c \
     acdb.c \
