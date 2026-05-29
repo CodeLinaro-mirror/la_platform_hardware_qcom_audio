@@ -2998,6 +2998,7 @@
         <ctl name="RX_CDC_DMA_RX_0 Audio Mixer MultiMedia8" value="1"/>
     </path>
     <path name="compress-offload-playback handset">
+        <ctl name="RX_CDC_DMA_RX_0 Channels" value="Two"/>
         <ctl name="RX_CDC_DMA_RX_0 Audio Mixer MultiMedia4" value="1"/>
     </path>
     <path name="compress-offload-playback2 handset">

@@ -4772,6 +4772,18 @@ void platform_add_backend_name(char *mixer_path, snd_device_t snd_device,
         return;
     }
 
+    /*
+     * For compress offload usecases routed to handset, append "handset" to
+     * select compress-offload-playback handset mixer path. This path resets
+     * WSA_CDC_DMA_RX_0 Channels to Two so the AFE backend channel count
+     * matches the platform stereo config, preventing ADSP_EBADPARAM on
+     * AFE_PORT_CMD_DEVICE_START for the earpiece path.
+     */
+    if (snd_device == SND_DEVICE_OUT_HANDSET && is_offload_usecase(usecase->id)) {
+        strlcat(mixer_path, " handset", MIXER_PATH_MAX_LENGTH);
+        return;
+    }
+
     const char * suffix = backend_tag_table[snd_device];
 
     if (suffix != NULL) {
