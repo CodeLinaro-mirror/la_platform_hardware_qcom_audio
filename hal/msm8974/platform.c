@@ -7674,7 +7674,8 @@ snd_device_t platform_get_input_snd_device(void *platform,
                                  : (my_data->fluence_nn_enabled ?
                                         SND_DEVICE_IN_HANDSET_MIC_NN
                                         : SND_DEVICE_IN_HANDSET_MIC);
-                 if (audio_extn_hfp_is_active(adev))
+                 if (audio_extn_hfp_is_active(adev) &&
+                     !(in->enable_aec || in->enable_ec_port))
                      platform_set_echo_reference(adev, true, out_devices);
             } else {
                 if ((my_data->fluence_type & FLUENCE_TRI_MIC) &&
@@ -7694,7 +7695,8 @@ snd_device_t platform_get_input_snd_device(void *platform,
             }
         } else if (compare_device_type(out_devices, AUDIO_DEVICE_OUT_WIRED_HEADSET)) {
             snd_device = SND_DEVICE_IN_VOICE_HEADSET_MIC;
-            if (audio_extn_hfp_is_active(adev))
+            if (audio_extn_hfp_is_active(adev) &&
+                !(in->enable_aec || in->enable_ec_port))
                 platform_set_echo_reference(adev, true, out_devices);
         } else if (is_sco_out_device_type(out_devices)) {
             if (adev->swb_speech_mode != SPEECH_MODE_INVALID) {
@@ -7722,7 +7724,8 @@ snd_device_t platform_get_input_snd_device(void *platform,
                                 SND_DEVICE_IN_HANDSET_MIC_SB
                                  : SND_DEVICE_IN_HANDSET_MIC;
 
-            if (voice_is_in_call(adev))
+            if (voice_is_in_call(adev) &&
+                !(in->enable_aec || in->enable_ec_port))
                 platform_set_echo_reference(adev, true, out_devices);
         } else if (compare_device_type(out_devices, AUDIO_DEVICE_OUT_SPEAKER) ||
                    compare_device_type(out_devices, AUDIO_DEVICE_OUT_SPEAKER_SAFE) ||
@@ -7749,19 +7752,22 @@ snd_device_t platform_get_input_snd_device(void *platform,
                                         SND_DEVICE_IN_VOICE_SPEAKER_DMIC_SB
                                         : SND_DEVICE_IN_VOICE_SPEAKER_DMIC;
                 }
-                if (audio_extn_hfp_is_active(adev))
+                if (audio_extn_hfp_is_active(adev) &&
+                    !(in->enable_aec || in->enable_ec_port))
                     platform_set_echo_reference(adev, true, out_devices);
             } else {
                 if (adev->enable_hfp) {
                     snd_device = SND_DEVICE_IN_VOICE_SPEAKER_MIC_HFP;
-                    platform_set_echo_reference(adev, true, out_devices);
+                    if (!(in->enable_aec || in->enable_ec_port))
+                        platform_set_echo_reference(adev, true, out_devices);
                 } else {
                     snd_device = my_data->fluence_sb_enabled ?
                                      SND_DEVICE_IN_VOICE_SPEAKER_MIC_SB
                                      : (my_data->fluence_nn_enabled ?
                                          SND_DEVICE_IN_VOICE_SPEAKER_MIC_NN
                                          : SND_DEVICE_IN_VOICE_SPEAKER_MIC);
-                    if (audio_extn_hfp_is_active(adev))
+                    if (audio_extn_hfp_is_active(adev) &&
+                        !(in->enable_aec || in->enable_ec_port))
                         platform_set_echo_reference(adev, true, out_devices);
                 }
             }
