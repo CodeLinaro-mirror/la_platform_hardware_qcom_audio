@@ -113,6 +113,16 @@ MM_AUDIO += QRD_Headset_cal.acdb
 MM_AUDIO += QRD_Speaker_cal.acdb
 MM_AUDIO += QRD_workspaceFile.qwsp
 
+MM_AUDIO += CDP_Bluetooth_cal.acdb
+MM_AUDIO += CDP_Codec_cal.acdb
+MM_AUDIO += CDP_General_cal.acdb
+MM_AUDIO += CDP_Global_cal.acdb
+MM_AUDIO += CDP_Handset_cal.acdb
+MM_AUDIO += CDP_Hdmi_cal.acdb
+MM_AUDIO += CDP_Headset_cal.acdb
+MM_AUDIO += CDP_Speaker_cal.acdb
+MM_AUDIO += CDP_workspaceFile.qwsp
+
 MM_AUDIO += IDP_Yupik_Bluetooth_cal.acdb
 MM_AUDIO += IDP_Yupik_Codec_cal.acdb
 MM_AUDIO += IDP_Yupik_General_cal.acdb
