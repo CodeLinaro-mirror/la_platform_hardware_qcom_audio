@@ -119,6 +119,8 @@
 
 #define COMPRESS_OFFLOAD_FRAGMENT_SIZE (32 * 1024)
 #define FLAC_COMPRESS_OFFLOAD_FRAGMENT_SIZE (256 * 1024)
+/* Max seconds to wait for PARTIAL_DRAIN_READY from DSP before forcing drain-ready */
+#define PARTIAL_DRAIN_TIMEOUT_SEC 30
 
 /* treat as unsigned Q1.13 */
 #define APP_TYPE_GAIN_DEFAULT         0x2000
@@ -3956,6 +3958,25 @@ static void free_offload_usecase(struct audio_device *adev,
     ALOGV("%s: free offload usecase %d", __func__, uc_id);
 }
 
+struct partial_drain_data {
+    struct compress  *compr;
+    int               ret;
+    pthread_mutex_t   mutex;
+    pthread_cond_t    cond;
+    bool              done;
+};
+
+static void *partial_drain_fn(void *arg)
+{
+    struct partial_drain_data *d = (struct partial_drain_data *)arg;
+    d->ret = compress_partial_drain(d->compr);
+    pthread_mutex_lock(&d->mutex);
+    d->done = true;
+    pthread_cond_signal(&d->cond);
+    pthread_mutex_unlock(&d->mutex);
+    return NULL;
+}
+
 static void *offload_thread_loop(void *context)
 {
     struct stream_out *out = (struct stream_out *) context;
@@ -4023,11 +4044,49 @@ static void *offload_thread_loop(void *context)
         case OFFLOAD_CMD_PARTIAL_DRAIN:
             ret = compress_next_track(out->compr);
             if(ret == 0) {
+                struct partial_drain_data pd;
+                pthread_t pd_thread;
+                struct timespec abstime;
+                int timed_out;
+
+                pd.compr = out->compr;
+                pd.ret   = 0;
+                pd.done  = false;
+                pthread_mutex_init(&pd.mutex, NULL);
+                pthread_cond_init(&pd.cond, NULL);
+
                 ALOGD("copl(%p):calling compress_partial_drain", out);
-                ret = compress_partial_drain(out->compr);
+                pthread_create(&pd_thread, NULL, partial_drain_fn, &pd);
+                clock_gettime(CLOCK_REALTIME, &abstime);
+                abstime.tv_sec += PARTIAL_DRAIN_TIMEOUT_SEC;
+
+                pthread_mutex_lock(&pd.mutex);
+                timed_out = 0;
+                while (!pd.done) {
+                    if (pthread_cond_timedwait(&pd.cond, &pd.mutex,
+                                               &abstime) == ETIMEDOUT) {
+                        timed_out = !pd.done;
+                        break;
+                    }
+                }
+                pthread_mutex_unlock(&pd.mutex);
+
+                if (timed_out) {
+                    ALOGW("%s: copl(%p) partial_drain timed out after %ds,"
+                          " forcing drain-ready", __func__, out,
+                          PARTIAL_DRAIN_TIMEOUT_SEC);
+                    compress_stop(out->compr);
+                    pthread_join(pd_thread, NULL);
+                    ret = 0;
+                } else {
+                    pthread_join(pd_thread, NULL);
+                    ret = pd.ret;
+                    if (ret < 0)
+                        ret = -errno;
+                }
+                pthread_cond_destroy(&pd.cond);
+                pthread_mutex_destroy(&pd.mutex);
                 ALOGD("copl(%p):out of compress_partial_drain", out);
-                if (ret < 0)
-                    ret = -errno;
             }
             else if (ret == -ETIMEDOUT)
                 ret = compress_drain(out->compr);
