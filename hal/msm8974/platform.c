@@ -417,7 +417,7 @@ struct  spkr_device_chmap {
 };
 
 #ifdef SOFT_VOLUME
-static int usecase_volume_params[AUDIO_USECASE_MAX][3] = {
+static long usecase_volume_params[AUDIO_USECASE_MAX][3] = {
     [USECASE_AUDIO_PLAYBACK_DEEP_BUFFER] = {-1,-1,-1},
     [USECASE_AUDIO_PLAYBACK_MEDIA] = {-1,-1,-1},
     [USECASE_AUDIO_PLAYBACK_SYS_NOTIFICATION] = {-1,-1,-1},
@@ -4976,11 +4976,11 @@ int send_qtime(void *platform, uint64_t qtime_value, int pcm_device_id)
     const char *mixer_ctl_name = "QTimer";
     const char *deviceNo = "NN";
     char *mixer_str = NULL;
-    uint32_t set_values[2];
+    long set_values[2];
 
     set_values[0] = (uint32_t)qtime_value;
     set_values[1] = (uint32_t)((qtime_value >> 16) >> 16);
-    ALOGD("%s: Send qtime msw: %u, lsw: %u", __func__, set_values[1],
+    ALOGD("%s: Send qtime msw: %ld, lsw: %ld", __func__, set_values[1],
           set_values[0]);
 
     // Mixer control format: "Qtimer NN"
@@ -7674,7 +7674,8 @@ snd_device_t platform_get_input_snd_device(void *platform,
                                  : (my_data->fluence_nn_enabled ?
                                         SND_DEVICE_IN_HANDSET_MIC_NN
                                         : SND_DEVICE_IN_HANDSET_MIC);
-                 if (audio_extn_hfp_is_active(adev))
+                 if (audio_extn_hfp_is_active(adev) &&
+                     !(in->enable_aec || in->enable_ec_port))
                      platform_set_echo_reference(adev, true, out_devices);
             } else {
                 if ((my_data->fluence_type & FLUENCE_TRI_MIC) &&
@@ -7694,7 +7695,8 @@ snd_device_t platform_get_input_snd_device(void *platform,
             }
         } else if (compare_device_type(out_devices, AUDIO_DEVICE_OUT_WIRED_HEADSET)) {
             snd_device = SND_DEVICE_IN_VOICE_HEADSET_MIC;
-            if (audio_extn_hfp_is_active(adev))
+            if (audio_extn_hfp_is_active(adev) &&
+                !(in->enable_aec || in->enable_ec_port))
                 platform_set_echo_reference(adev, true, out_devices);
         } else if (is_sco_out_device_type(out_devices)) {
             if (adev->swb_speech_mode != SPEECH_MODE_INVALID) {
@@ -7722,7 +7724,8 @@ snd_device_t platform_get_input_snd_device(void *platform,
                                 SND_DEVICE_IN_HANDSET_MIC_SB
                                  : SND_DEVICE_IN_HANDSET_MIC;
 
-            if (voice_is_in_call(adev))
+            if (voice_is_in_call(adev) &&
+                !(in->enable_aec || in->enable_ec_port))
                 platform_set_echo_reference(adev, true, out_devices);
         } else if (compare_device_type(out_devices, AUDIO_DEVICE_OUT_SPEAKER) ||
                    compare_device_type(out_devices, AUDIO_DEVICE_OUT_SPEAKER_SAFE) ||
@@ -7749,19 +7752,22 @@ snd_device_t platform_get_input_snd_device(void *platform,
                                         SND_DEVICE_IN_VOICE_SPEAKER_DMIC_SB
                                         : SND_DEVICE_IN_VOICE_SPEAKER_DMIC;
                 }
-                if (audio_extn_hfp_is_active(adev))
+                if (audio_extn_hfp_is_active(adev) &&
+                    !(in->enable_aec || in->enable_ec_port))
                     platform_set_echo_reference(adev, true, out_devices);
             } else {
                 if (adev->enable_hfp) {
                     snd_device = SND_DEVICE_IN_VOICE_SPEAKER_MIC_HFP;
-                    platform_set_echo_reference(adev, true, out_devices);
+                    if (!(in->enable_aec || in->enable_ec_port))
+                        platform_set_echo_reference(adev, true, out_devices);
                 } else {
                     snd_device = my_data->fluence_sb_enabled ?
                                      SND_DEVICE_IN_VOICE_SPEAKER_MIC_SB
                                      : (my_data->fluence_nn_enabled ?
                                          SND_DEVICE_IN_VOICE_SPEAKER_MIC_NN
                                          : SND_DEVICE_IN_VOICE_SPEAKER_MIC);
-                    if (audio_extn_hfp_is_active(adev))
+                    if (audio_extn_hfp_is_active(adev) &&
+                        !(in->enable_aec || in->enable_ec_port))
                         platform_set_echo_reference(adev, true, out_devices);
                 }
             }
@@ -10260,7 +10266,7 @@ static int platform_set_codec_backend_cfg(struct audio_device* adev,
         const char *ctl_name_prefix = "Display Port";
         const char *ctl_name_suffix = "RX DEVICE IDX";
         char mixer_ctl_name[MIXER_PATH_MAX_LENGTH] = {0};
-        int dev[] = {controller, stream};
+        long dev[] = {controller, stream};
 
         ctl_index = platform_get_display_port_ctl_index(controller, stream);
         if (-EINVAL == ctl_index) {
@@ -13061,18 +13067,18 @@ int platform_get_soft_step_volume_params(struct soft_step_volume_params *volume_
         ret = -EINVAL;
     } else {
         memcpy(volume_params,usecase_volume_params[uc_id],sizeof(struct soft_step_volume_params));
-        ALOGV("%s: usecase-id = %d, ramp period = %d, ramp step = %d, ramp curve = %d",
+        ALOGV("%s: usecase-id = %d, ramp period = %ld, ramp step = %ld, ramp curve = %ld",
            __func__, uc_id, volume_params->period, volume_params->step, volume_params->curve);
     }
 done:
     return ret;
 }
 
-int platform_set_soft_step_volume_params(int uc_id, int period, int step, int curve)
+int platform_set_soft_step_volume_params(int uc_id, long period, long step, long curve)
 {
     int ret = 0;
 
-    ALOGV("%s: usecase-id = %d, ramp period = %d, ramp step = %d, ramp curve = %d",
+    ALOGV("%s: usecase-id = %d, ramp period = %ld, ramp step = %ld, ramp curve = %ld",
            __func__, uc_id, period, step, curve);
     if ((uc_id < 0) || (uc_id >= AUDIO_USECASE_MAX)) {
         ALOGE("%s : invalid usecase id", __func__);
