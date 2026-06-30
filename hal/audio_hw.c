@@ -10295,6 +10295,23 @@ static int adev_open_input_stream(struct audio_hw_device *dev,
                                 config->sample_rate == 48000);
     if (valid_mmap_record_rate &&
         ((in->flags & AUDIO_INPUT_FLAG_MMAP_NOIRQ) != 0)) {
+        /* If the low-latency path already claimed pcm_low_latency_record_uc_state
+         * (because AUDIO_INPUT_FLAG_FAST was also set), release it now — the
+         * usecase is being overridden to USECASE_AUDIO_RECORD_MMAP and the
+         * close path checks in->usecase to decide which state to clear. Without
+         * this release, any subsequent SHARED MMAP open will find the state
+         * non-zero and be rerouted to USECASE_AUDIO_RECORD_COMPRESS2, causing
+         * create_mmap_buffer() to return -ENOSYS and the CTS callback test to fail.
+         */
+        if (is_low_latency) {
+            pthread_mutex_lock(&adev->lock);
+            if (audio_extn_is_concurrent_low_latency_pcm_record_enabled()) {
+                free_low_latency_record_usecase(adev, USECASE_AUDIO_RECORD_LOW_LATENCY);
+            } else {
+                adev->pcm_low_latency_record_uc_state = 0;
+            }
+            pthread_mutex_unlock(&adev->lock);
+        }
         in->realtime = 0;
         in->usecase = USECASE_AUDIO_RECORD_MMAP;
         in->config = pcm_config_mmap_capture;
