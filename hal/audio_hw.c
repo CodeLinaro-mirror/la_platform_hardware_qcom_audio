@@ -1471,7 +1471,9 @@ int enable_audio_route(struct audio_device *adev,
         snd_device = usecase->in_snd_device;
 
         if (in) {
-            if (in->enable_aec || in->enable_ec_port) {
+            ALOGV ("%s in->source = 0x%x  \n",__func__, in->source);
+            if (in->enable_aec || in->enable_ec_port ||
+                    in->source == AUDIO_SOURCE_ECHO_REFERENCE) {
                 list_init(&out_devices);
                 update_device_list(&out_devices, AUDIO_DEVICE_OUT_SPEAKER, "", true);
                 struct listnode *node;
@@ -1497,6 +1499,16 @@ int enable_audio_route(struct audio_device *adev,
 
                 platform_set_echo_reference(adev, true, &out_devices);
                 in->ec_opened = true;
+                /*
+                 * Debug: log which echo reference mixer path was applied
+                 * and what snd_device / acdb_id the capture stream is using.
+                 * Tag: echo_ref â€” use logcat -s echo_ref to filter.
+                 */
+                ALOGD("echo_ref: enable_audio_route: platform_set_echo_reference done."
+                      " usecase->in_snd_device=%d(%s) acdb_id=%d",
+                      snd_device,
+                      platform_get_snd_device_name(snd_device),
+                      platform_get_snd_device_acdb_id(snd_device));
                 clear_devices(&out_devices);
             }
         }
@@ -3209,6 +3221,26 @@ int select_devices(struct audio_device *adev, audio_usecase_t uc_id)
                     if (!priority_in ||
                             audio_extn_auto_hal_overwrite_priority_for_auto(usecase->stream.in))
                         priority_in = usecase->stream.in;
+                }
+                if (list_empty(&out_devices) && priority_in &&
+                        priority_in->source == AUDIO_SOURCE_ECHO_REFERENCE) {
+                    struct audio_usecase *uinfo;
+                    struct listnode *node;
+
+                    if (adev->primary_output && !adev->primary_output->standby) {
+                        assign_devices(&out_devices, &adev->primary_output->device_list);
+                    } else {
+                        list_for_each(node, &adev->usecase_list) {
+                            uinfo = node_to_item(node, struct audio_usecase, list);
+                            if (uinfo->type != PCM_CAPTURE) {
+                                assign_devices(&out_devices,
+                                               &uinfo->stream.out->device_list);
+                                break;
+                            }
+                        }
+                    }
+                    if (list_empty(&out_devices))
+                        reassign_device_list(&out_devices, AUDIO_DEVICE_OUT_SPEAKER, "");
                 }
                 if (compare_device_type(&usecase->device_list, AUDIO_DEVICE_IN_BUS)){
                     in_snd_device = audio_extn_auto_hal_get_snd_device_for_car_audio_stream(priority_in->car_audio_stream);
@@ -10177,6 +10209,9 @@ static int adev_open_input_stream(struct audio_hw_device *dev,
     /* reassign use case for echo reference stream on automotive platforms */
     if (in->source == AUDIO_SOURCE_ECHO_REFERENCE) {
         ret = audio_extn_auto_hal_open_echo_reference_stream(in);
+        ALOGD("echo_ref: adev_open_input_stream: ECHO_REFERENCE source,"
+              " usecase=%d(%s) devices=0x%x",
+              in->usecase, use_case_table[in->usecase], devices);
     }
 
     if ((in->source == AUDIO_SOURCE_FM_TUNER) || (devices == AUDIO_DEVICE_IN_FM_TUNER)) {

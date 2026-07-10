@@ -7953,9 +7953,23 @@ snd_device_t platform_get_input_snd_device(void *platform,
         }
     } else if (source == AUDIO_SOURCE_FM_TUNER) {
         snd_device = SND_DEVICE_IN_CAPTURE_FM;
-    } else if ((source == AUDIO_SOURCE_ECHO_REFERENCE) &&
-        (uc_id == USECASE_AUDIO_RECORD_ECHO_REF_EXT)) {
-        snd_device = SND_DEVICE_IN_ECHO_REFERENCE;
+    } else if (source == AUDIO_SOURCE_ECHO_REFERENCE) {
+        ALOGD("echo_ref: platform_get_input_snd_device: source=ECHO_REF"
+              " out_device=0x%x -> snd_device=%d(%s) acdb_id=%d",
+              compare_device_type(out_devices, AUDIO_DEVICE_OUT_WIRED_HEADSET) ? AUDIO_DEVICE_OUT_WIRED_HEADSET :
+              compare_device_type(out_devices, AUDIO_DEVICE_OUT_WIRED_HEADPHONE) ? AUDIO_DEVICE_OUT_WIRED_HEADPHONE :
+              compare_device_type(out_devices, AUDIO_DEVICE_OUT_SPEAKER) ? AUDIO_DEVICE_OUT_SPEAKER : 0,
+              snd_device, platform_get_snd_device_name(snd_device),
+              platform_get_snd_device_acdb_id(snd_device));
+        if (compare_device_type(out_devices, AUDIO_DEVICE_OUT_WIRED_HEADSET) ||
+                compare_device_type(out_devices, AUDIO_DEVICE_OUT_WIRED_HEADPHONE)) {
+            snd_device = SND_DEVICE_IN_HEADSET_MIC;
+        }
+        else {
+            snd_device = my_data->fluence_sb_enabled ? SND_DEVICE_IN_HANDSET_MIC_SB
+                             : (my_data->fluence_nn_enabled ? SND_DEVICE_IN_HANDSET_MIC_NN
+                               : SND_DEVICE_IN_HANDSET_MIC);
+        }
     } else if (source == AUDIO_SOURCE_DEFAULT) {
         goto exit;
     }
@@ -8029,9 +8043,14 @@ snd_device_t platform_get_input_snd_device(void *platform,
             snd_device = SND_DEVICE_IN_USB_HEADSET_MIC;
         } else if (compare_device_type(&in_devices, AUDIO_DEVICE_IN_FM_TUNER)) {
             snd_device = SND_DEVICE_IN_CAPTURE_FM;
-        } else if (compare_device_type(&in_devices, AUDIO_DEVICE_IN_ECHO_REFERENCE) &&
-            (uc_id == USECASE_AUDIO_RECORD_ECHO_REF_EXT)) {
-            snd_device = SND_DEVICE_IN_ECHO_REFERENCE;
+        } else if (compare_device_type(&in_devices, AUDIO_DEVICE_IN_ECHO_REFERENCE)) {
+            if (compare_device_type(out_devices, AUDIO_DEVICE_OUT_WIRED_HEADSET) ||
+                    compare_device_type(out_devices, AUDIO_DEVICE_OUT_WIRED_HEADPHONE))
+                snd_device = SND_DEVICE_IN_HEADSET_MIC;
+            else
+                snd_device = my_data->fluence_sb_enabled ? SND_DEVICE_IN_HANDSET_MIC_SB
+                                 : (my_data->fluence_nn_enabled ? SND_DEVICE_IN_HANDSET_MIC_NN
+                                   : SND_DEVICE_IN_HANDSET_MIC);
         } else if (audio_extn_usb_connected(NULL) &&
                    is_usb_in_device_type(&in_devices)) {
             snd_device = fixup_usb_headset_mic_snd_device(platform,
