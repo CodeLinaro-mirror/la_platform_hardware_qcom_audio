@@ -1,4 +1,4 @@
-#Audio product definitions 
+#Audio product definitions
 PRODUCT_PACKAGES += $(AUDIO_GENERIC_MODULES)
 
 PRODUCT_PACKAGES_DEBUG += $(MM_AUDIO_DBG)
@@ -134,7 +134,11 @@ MM_AUDIO += QRD_Yupik_Speaker_cal.acdb
 MM_AUDIO += QRD_Yupik_workspaceFile.qwsp
 
 ifneq (,$(call is-board-platform-in-list2,lahaina))
-MM_AUDIO += fai__4.8.8_0.0__3.0.0_0.0__3.1.2_0.0__3.2.0_0.1__eai_1.10.pmd
+MM_AUDIO += fai__2.0.0_0.1__3.0.0_0.0__eai_1.00.pmd
+MM_AUDIO += fai__2.0.0_0.1__3.0.0_0.0__eai_1.10.pmd
+MM_AUDIO += fai__2.3.0_0.1__3.0.0_0.0__eai_1.00.pmd
+MM_AUDIO += fai__2.3.0_0.1__3.0.0_0.0__eai_1.10.pmd
+MM_AUDIO += fai__2.6.3_0.0__3.0.0_0.0__eai_1.10_enpu1.pmd
 endif
 
 ifeq ($(ENABLE_HYP), true)
