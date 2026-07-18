@@ -320,6 +320,8 @@ int audio_extn_usb_get_service_interval(bool playback,
                                         unsigned long *service_interval);
 int audio_extn_usb_check_and_set_svc_int(struct audio_usecase *uc_info,
                                          bool starting_output_stream);
+int audio_extn_usb_check_and_set_capture_svc_int(struct audio_usecase *uc_info,
+                                         bool starting_input_stream);
 bool audio_extn_usb_is_reconfig_req();
 void audio_extn_usb_set_reconfig(bool is_required);
 bool audio_extn_usb_is_sidetone_volume_enabled();
