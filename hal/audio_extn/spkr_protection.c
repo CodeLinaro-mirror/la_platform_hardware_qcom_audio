@@ -276,6 +276,9 @@ struct speaker_prot_session {
     int v_vali_vali_time;
     bool cal_thrd_created;
     bool v_vali_thrd_created;
+    pthread_t vi_feedback_thread;
+    bool vi_feedback_thread_valid;
+    int vi_feedback_thread_ret;
 };
 
 static struct pcm_config pcm_config_skr_prot = {
@@ -2459,11 +2462,106 @@ int select_spkr_prot_cal_data(snd_device_t snd_device)
     return ret;
 }
 
+/*
+ * Runs on handle.vi_feedback_thread. Performs the TX/vi-feedback ACDB cal
+ * load (fp_enable_snd_device/fp_enable_audio_route) and starts vi-feedback
+ * PCM capture, off the caller's thread so it can overlap with the RX
+ * speaker-vbat cal load that the caller (enable_snd_device()'s caller in
+ * audio_hw.c, still holding adev->lock) performs immediately after
+ * spkr_prot_start_processing() returns. enable_snd_device()/
+ * enable_audio_route() do not themselves take adev->lock, so running them
+ * here does not deadlock against the lock the calling thread already holds;
+ * it does mean this thread and the caller can both be touching
+ * adev->audio_route/adev->usecase_list at once, which is new for this file
+ * (see join_vi_feedback_thread_locked()) - callers must join before relying
+ * on handle.pcm_tx or before removing uc_info_tx from adev->usecase_list.
+ */
+static void *vi_feedback_thread_func(void *context)
+{
+    struct audio_usecase *uc_info_tx = (struct audio_usecase *)context;
+    struct audio_device *adev = handle.adev_handle;
+    int32_t pcm_dev_tx_id = -1, ret = 0;
+
+    fp_enable_snd_device(adev, uc_info_tx->in_snd_device);
+    fp_enable_audio_route(adev, uc_info_tx);
+
+    pcm_dev_tx_id = fp_platform_get_pcm_device_id(uc_info_tx->id, PCM_CAPTURE);
+    if (pcm_dev_tx_id < 0) {
+        ALOGE("%s: Invalid pcm device for usecase (%d)",
+              __func__, uc_info_tx->id);
+        ret = -ENODEV;
+        goto exit;
+    }
+    handle.pcm_tx = pcm_open(adev->snd_card,
+                             pcm_dev_tx_id,
+                             PCM_IN, &pcm_config_skr_prot);
+    if (handle.pcm_tx && !pcm_is_ready(handle.pcm_tx)) {
+        ALOGE("%s: pcm_open () failed %s", __func__, pcm_get_error(handle.pcm_tx));
+        ret = -EIO;
+        goto exit;
+    }
+    if (pcm_start(handle.pcm_tx) < 0) {
+        ALOGE("%s: pcm start for TX failed", __func__);
+        ret = -EINVAL;
+    }
+
+exit:
+    handle.vi_feedback_thread_ret = ret;
+    return NULL;
+}
+
+/*
+ * Applies the same error-recovery (or success bookkeeping) that
+ * spkr_prot_start_processing() used to run inline, given a vi-feedback
+ * result. Must be called with handle.mutex_spkr_prot held.
+ */
+static int finish_vi_feedback_locked(struct audio_usecase *uc_info_tx,
+                                      snd_device_t in_snd_device,
+                                      char *device_name, int ret)
+{
+    struct audio_device *adev = handle.adev_handle;
+
+    if (ret) {
+        if (handle.pcm_tx)
+            pcm_close(handle.pcm_tx);
+        handle.pcm_tx = NULL;
+        list_remove(&uc_info_tx->list);
+        uc_info_tx->in_snd_device = in_snd_device;
+        uc_info_tx->out_snd_device = SND_DEVICE_NONE;
+        audio_route_reset_and_update_path(adev->audio_route,
+           device_name);
+        fp_disable_snd_device(adev, in_snd_device);
+        fp_disable_audio_route(adev, uc_info_tx);
+        free(uc_info_tx);
+    } else {
+        handle.spkr_processing_state = SPKR_PROCESSING_IN_PROGRESS;
+    }
+    return ret;
+}
+
+/*
+ * Joins any in-flight vi-feedback worker thread and folds its result via
+ * finish_vi_feedback_locked(). Must be called with handle.mutex_spkr_prot
+ * held.
+ */
+static int join_vi_feedback_thread_locked(struct audio_usecase *uc_info_tx,
+                                           snd_device_t in_snd_device,
+                                           char *device_name)
+{
+    if (!handle.vi_feedback_thread_valid)
+        return 0;
+
+    pthread_join(handle.vi_feedback_thread, (void **) NULL);
+    handle.vi_feedback_thread_valid = false;
+    return finish_vi_feedback_locked(uc_info_tx, in_snd_device, device_name,
+                                      handle.vi_feedback_thread_ret);
+}
+
 int spkr_prot_start_processing(snd_device_t snd_device)
 {
     struct audio_usecase *uc_info_tx;
     struct audio_device *adev = handle.adev_handle;
-    int32_t pcm_dev_tx_id = -1, ret = 0;
+    int32_t ret = 0;
     snd_device_t in_snd_device;
     char device_name[DEVICE_NAME_MAX_SIZE] = {0};
     int app_type = 0;
@@ -2495,6 +2593,7 @@ int spkr_prot_start_processing(snd_device_t snd_device)
 
     if (fp_platform_get_snd_device_name_extn(adev->platform, snd_device, device_name) < 0) {
         ALOGE("%s: Invalid sound device returned", __func__);
+        free(uc_info_tx);
         return -EINVAL;
     }
     ALOGD("%s: spkr snd_device(%d: %s)", __func__, snd_device,
@@ -2503,50 +2602,31 @@ int spkr_prot_start_processing(snd_device_t snd_device)
            device_name);
 
     pthread_mutex_lock(&handle.mutex_spkr_prot);
+    /* Reap any worker thread left over from a prior start (should already
+     * be joined via spkr_prot_stop_processing(), this is a safety net). */
+    if (handle.vi_feedback_thread_valid)
+        pthread_join(handle.vi_feedback_thread, (void **) NULL);
+    handle.vi_feedback_thread_valid = false;
+
     if (handle.spkr_processing_state == SPKR_PROCESSING_IN_IDLE) {
         uc_info_tx->in_snd_device = in_snd_device;
         uc_info_tx->out_snd_device = SND_DEVICE_NONE;
         handle.pcm_tx = NULL;
         list_add_tail(&adev->usecase_list, &uc_info_tx->list);
-        fp_enable_snd_device(adev, in_snd_device);
-        fp_enable_audio_route(adev, uc_info_tx);
 
-        pcm_dev_tx_id = fp_platform_get_pcm_device_id(uc_info_tx->id, PCM_CAPTURE);
-        if (pcm_dev_tx_id < 0) {
-            ALOGE("%s: Invalid pcm device for usecase (%d)",
-                  __func__, uc_info_tx->id);
-            ret = -ENODEV;
-            goto exit;
+        if (pthread_create(&handle.vi_feedback_thread, (const pthread_attr_t *) NULL,
+                            vi_feedback_thread_func, uc_info_tx) == 0) {
+            handle.vi_feedback_thread_valid = true;
+        } else {
+            ALOGE("%s: pthread_create failed for vi-feedback thread, falling back to inline",
+                  __func__);
+            vi_feedback_thread_func(uc_info_tx);
+            ret = finish_vi_feedback_locked(uc_info_tx, in_snd_device, device_name,
+                                             handle.vi_feedback_thread_ret);
         }
-        handle.pcm_tx = pcm_open(adev->snd_card,
-                                 pcm_dev_tx_id,
-                                 PCM_IN, &pcm_config_skr_prot);
-        if (handle.pcm_tx && !pcm_is_ready(handle.pcm_tx)) {
-            ALOGE("%s: pcm_open () failed %s", __func__, pcm_get_error(handle.pcm_tx));
-            ret = -EIO;
-            goto exit;
-        }
-        if (pcm_start(handle.pcm_tx) < 0) {
-            ALOGE("%s: pcm start for TX failed", __func__);
-            ret = -EINVAL;
-        }
-    }
-
-exit:
-    if (ret) {
-        if (handle.pcm_tx)
-            pcm_close(handle.pcm_tx);
-        handle.pcm_tx = NULL;
-        list_remove(&uc_info_tx->list);
-        uc_info_tx->in_snd_device = in_snd_device;
-        uc_info_tx->out_snd_device = SND_DEVICE_NONE;
-        audio_route_reset_and_update_path(adev->audio_route,
-           device_name);
-        fp_disable_snd_device(adev, in_snd_device);
-        fp_disable_audio_route(adev, uc_info_tx);
+    } else {
         free(uc_info_tx);
-    } else
-        handle.spkr_processing_state = SPKR_PROCESSING_IN_PROGRESS;
+    }
     pthread_mutex_unlock(&handle.mutex_spkr_prot);
     ALOGV("%s: Exit", __func__);
     return ret;
@@ -2557,6 +2637,7 @@ void spkr_prot_stop_processing(snd_device_t snd_device)
     struct audio_usecase *uc_info_tx;
     struct audio_device *adev = handle.adev_handle;
     snd_device_t in_snd_device;
+    char device_name[DEVICE_NAME_MAX_SIZE] = {0};
 
     ALOGV("%s: Entry", __func__);
     snd_device = fp_platform_get_spkr_prot_snd_device(snd_device);
@@ -2564,6 +2645,14 @@ void spkr_prot_stop_processing(snd_device_t snd_device)
     in_snd_device = fp_platform_get_vi_feedback_snd_device(snd_device);
 
     pthread_mutex_lock(&handle.mutex_spkr_prot);
+    /* Make sure the TX enable/cal-load worker has finished (and folded its
+     * result via join_vi_feedback_thread_locked()) before we tear the
+     * usecase/pcm down - otherwise the worker thread could still be inside
+     * fp_enable_audio_route()/pcm_start() while this disables the device. */
+    if (adev && handle.vi_feedback_thread_valid) {
+        uc_info_tx = fp_get_usecase_from_list(adev, USECASE_AUDIO_SPKR_CALIB_TX);
+        join_vi_feedback_thread_locked(uc_info_tx, in_snd_device, device_name);
+    }
     if (adev && handle.spkr_processing_state == SPKR_PROCESSING_IN_PROGRESS) {
         uc_info_tx = fp_get_usecase_from_list(adev, USECASE_AUDIO_SPKR_CALIB_TX);
         if (handle.pcm_tx)
