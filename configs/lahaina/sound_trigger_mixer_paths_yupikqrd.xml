@@ -298,6 +298,8 @@
         <ctl name="ADC2 MUX" value="INP3"/>
         <ctl name="HDR12 MUX" value="NO_HDR12"/>
         <ctl name="ADC2_MIXER Switch" value="1"/>
+        <ctl name="AMIC3_MIXER Switch" value="1"/>
+        <ctl name="VA_AMIC3_MIXER Switch" value="1"/>
     </path>
     <path name="listen-ape-handset-mic-preproc">
         <path name="listen-ape-handset-mic"/>
@@ -312,6 +314,7 @@
         <ctl name="ADC2 MUX" value="INP3"/>
         <ctl name="HDR12 MUX" value="NO_HDR12"/>
         <ctl name="ADC2_MIXER Switch" value="1"/>
+        <ctl name="AMIC3_MIXER Switch" value="1"/>
         <ctl name="VA_AIF1_CAP Mixer DEC1" value="1"/>
         <ctl name="VA DEC1 MUX" value="SWR_MIC"/>
         <ctl name="VA_DEC1 MODE" value="ADC_LOW_PWR"/>
@@ -320,6 +323,9 @@
         <ctl name="ADC3 MUX" value="INP4"/>
         <ctl name="HDR34 MUX" value="NO_HDR34"/>
         <ctl name="ADC3_MIXER Switch" value="1"/>
+        <ctl name="AMIC4_MIXER Switch" value="1"/>
+        <ctl name="VA_AMIC3_MIXER Switch" value="1"/>
+        <ctl name="VA_AMIC4_MIXER Switch" value="1"/>
     </path>
     <path name="listen-ape-handset-tmic">
         <ctl name="VA_CDC_DMA_TX_0 Channels" value="Three"/>
