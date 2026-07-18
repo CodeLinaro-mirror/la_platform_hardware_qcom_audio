@@ -5015,6 +5015,35 @@ static uint64_t get_actual_pcm_frames_rendered(struct stream_out *out, struct ti
     } else if (timestamp != NULL) {
         clock_gettime(CLOCK_MONOTONIC, timestamp);
     }
+
+    /* Interpolate position using elapsed time since last write. When compress_write
+     * blocks (kernel buffer full), out->written stops advancing but hardware continues
+     * draining at sample_rate. Model this by reducing estimated kernel occupancy over
+     * time, advancing the reported position even without new writes completing.
+     * Covers both: position frozen above threshold (e.g. 8kHz) and position stuck
+     * at zero because written_frames never exceeded kernel+dsp threshold (12kHz+).
+     */
+    if (out->writeAt.tv_sec != 0 && written_frames > 0) {
+        struct timespec now_ts;
+        clock_gettime(CLOCK_MONOTONIC, &now_ts);
+        int64_t elapsed_ns = ((int64_t)now_ts.tv_sec - (int64_t)out->writeAt.tv_sec)
+                             * 1000000000LL
+                             + ((int64_t)now_ts.tv_nsec - (int64_t)out->writeAt.tv_nsec);
+        if (elapsed_ns > 0) {
+            uint64_t elapsed_frames = (uint64_t)elapsed_ns * out->sample_rate / 1000000000LL;
+            uint64_t adjusted_kernel = (kernel_frames > elapsed_frames)
+                                       ? (kernel_frames - elapsed_frames) : 0;
+            if (written_frames >= (adjusted_kernel + dsp_frames)) {
+                uint64_t interp_frames = written_frames - adjusted_kernel - dsp_frames;
+                if (interp_frames > actual_frames_rendered) {
+                    actual_frames_rendered = interp_frames;
+                    if (timestamp != NULL)
+                        *timestamp = now_ts;
+                }
+            }
+        }
+    }
+
     pthread_mutex_unlock(&out->position_query_lock);
 
     ALOGVV("%s signed frames %lld written frames %lld kernel frames %lld dsp frames %lld",
@@ -6948,6 +6977,14 @@ static int out_get_presentation_position(const struct audio_stream_out *stream,
     if (is_offload_usecase(out->usecase) && !out->non_blocking &&
         !(out->flags & AUDIO_OUTPUT_FLAG_COMPRESS_OFFLOAD)) {
         *frames = get_actual_pcm_frames_rendered(out, timestamp);
+        if (*frames == 0 && out->compr == NULL) {
+            pthread_mutex_lock(&out->position_query_lock);
+            uint32_t bpf = audio_bytes_per_sample(out->hal_ip_format) *
+                           popcount(out->channel_mask);
+            *frames = (bpf != 0) ? (out->written / bpf) : 0;
+            pthread_mutex_unlock(&out->position_query_lock);
+            clock_gettime(CLOCK_MONOTONIC, timestamp);
+        }
         ALOGVV("frames %lld playedat %lld",(long long int)*frames,
              timestamp->tv_sec * 1000000LL + timestamp->tv_nsec / 1000);
         return 0;
