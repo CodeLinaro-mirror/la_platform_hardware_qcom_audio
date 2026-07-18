@@ -1567,6 +1567,14 @@ static int send_app_type_cfg_for_device(struct audio_device *adev,
             app_type_cfg[len++] = snd_device_be_idx;
         ALOGI("%s CAPTURE app_type %d, acdb_dev_id %d, sample_rate %d, snd_device_be_idx %d",
            __func__, app_type, acdb_dev_id, sample_rate, snd_device_be_idx);
+
+       if (usecase->stream.in->source == AUDIO_SOURCE_ECHO_REFERENCE)
+            ALOGD("echo_ref: send_app_type_cfg CAPTURE"
+                  " app_type=%d acdb_dev_id=%d snd_device_be_idx=%d snd_device=%d(%s)"
+                  " -- acdb_dev_id MUST be 100 for echo-ref output topology;"
+                  " if 4 or 8, ADSP uses AEC topology -> silence",
+                  app_type, acdb_dev_id, snd_device_be_idx, snd_device,
+                  platform_get_snd_device_name(snd_device));
     } else {
         app_type = platform_get_default_app_type_v2(adev->platform, usecase->type);
         if(usecase->type == TRANSCODE_LOOPBACK_RX) {
