@@ -28,6 +28,7 @@ MM_AUDIO += libsvarnncnnvendor
 MM_AUDIO += libcapiv2svacnnvendor
 MM_AUDIO += libcapiv2vopvendor
 MM_AUDIO += libcapiv2svarnnvendor
+MM_AUDIO += libcapiv2uvvendor
 MM_AUDIO += libpdksvavendor
 MM_AUDIO += liblisten
 MM_AUDIO += liblistenhardware
