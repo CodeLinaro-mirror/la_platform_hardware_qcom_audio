@@ -32,6 +32,7 @@
 #include <android/hardware/health/2.0/IHealth.h>
 #include <healthhalutils/HealthHalUtils.h>
 #include <hidl/HidlTransportSupport.h>
+#include <atomic>
 #include <thread>
 #include "battery_listener.h"
 
@@ -50,7 +51,7 @@ using namespace std::literals::chrono_literals;
 namespace android {
 
 #define GET_HEALTH_SVC_RETRY_CNT 5
-#define GET_HEALTH_SVC_WAIT_TIME_MS 500
+#define GET_HEALTH_SVC_WAIT_TIME_MS 100
 
 struct BatteryListenerImpl : public hardware::health::V2_0::IHealthInfoCallback,
                              public hardware::hidl_death_recipient {
@@ -62,6 +63,7 @@ struct BatteryListenerImpl : public hardware::health::V2_0::IHealthInfoCallback,
     virtual void serviceDied(uint64_t cookie,
                              const wp<hidl::base::V1_0::IBase>& who);
     bool isCharging() {
+        if (!mInitDone) return false;
         std::lock_guard<std::mutex> _l(mLock);
         return statusToBool(mStatus);
     }
@@ -74,6 +76,8 @@ struct BatteryListenerImpl : public hardware::health::V2_0::IHealthInfoCallback,
     std::mutex mLock;
     std::condition_variable mCond;
     std::unique_ptr<std::thread> mThread;
+    std::unique_ptr<std::thread> mInitThread;
+    std::atomic<bool> mInitDone;
     bool mDone;
     bool statusToBool(const BatteryStatus &s) const {
         return (s == BatteryStatus::CHARGING) ||
@@ -158,18 +162,36 @@ status_t BatteryListenerImpl::init()
 }
 
 BatteryListenerImpl::BatteryListenerImpl(cb_fn_t cb) :
-        mCb(cb)
+        mCb(cb), mInitDone(false)
 {
-    init();
+    //init();
+    mInitThread = std::make_unique<std::thread>([this]() {
+        status_t res = init();
+        mInitDone = true;
+        // Fire the initial charge state so callers that read is_charging=false
+        // before init completed get corrected via the registered callback.
+        if (res == NO_ERROR) {
+            bool charging;
+            {
+                std::lock_guard<std::mutex> _l(mLock);
+                charging = statusToBool(mStatus);
+            }
+            mCb(charging);
+        }
+    });
 }
 
 BatteryListenerImpl::~BatteryListenerImpl()
 {
+    if (mInitThread != nullptr && mInitThread->joinable())
+        mInitThread->join();
     if (mThread != nullptr)
         mThread->join();
 }
 
 void BatteryListenerImpl::reset(){
+    if (mInitThread != nullptr && mInitThread->joinable())
+        mInitThread->join();
     std::lock_guard<std::mutex> _l(mLock);
     if (mHealth != nullptr) {
         mHealth->unregisterCallback(this);
