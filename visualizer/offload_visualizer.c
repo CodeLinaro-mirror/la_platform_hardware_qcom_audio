@@ -1223,7 +1223,10 @@ int effect_command(effect_handle_t self, uint32_t cmdCode, uint32_t cmdSize,
         if (pCmdData == NULL ||
             cmdSize != (int)(sizeof(effect_param_t) + sizeof(uint32_t)) ||
             pReplyData == NULL ||
-            *replySize < (int)(sizeof(effect_param_t) + sizeof(uint32_t) + sizeof(uint32_t))) {
+            *replySize < (int)(sizeof(effect_param_t) + sizeof(uint32_t) + sizeof(uint32_t)) ||
+            // constrain memcpy below
+            ((effect_param_t *)pCmdData)->psize > *replySize - sizeof(effect_param_t) ||
+            ((effect_param_t *)pCmdData)->psize > cmdSize - sizeof(effect_param_t)) {
             status = -EINVAL;
             goto exit;
         }
