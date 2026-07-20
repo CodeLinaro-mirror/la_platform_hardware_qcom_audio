@@ -44,11 +44,6 @@ using vendor::qti::hardware::audiohalext::V1_0::IAudioHalExt;
 using namespace android::hardware;
 using android::OK;
 
-/* Forward declaration for IModule/bluetooth registration.
- * Defined in android.hardware.bluetooth.audio_sw library.
- */
-extern "C" int32_t registerIModuleBluetoothSWQti();
-
 extern "C" {
 int audio_extn_hidl_init() {
 
@@ -61,11 +56,6 @@ int audio_extn_hidl_init() {
 #endif
 
     /* to register other hidls */
-    /* Register android.hardware.audio.core.IModule/bluetooth.
-     * VINTF declares this interface but it is never registered otherwise.
-     */
-    int32_t ret = registerIModuleBluetoothSWQti();
-    ALOGW_IF(ret != 0, "Could not register IModule/bluetooth, ret=%d", ret);
 
     return 0;
 }
