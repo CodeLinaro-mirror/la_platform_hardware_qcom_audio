@@ -559,7 +559,7 @@ static int vol_effect_command(effect_handle_t self,
             bool recompute_gain_dep_cal_Level = false;
             ALOGV("cmd called EFFECT_CMD_SET_DEVICE ");
 
-            if (p_cmd_data == NULL) {
+            if (p_cmd_data == NULL || cmd_size < sizeof(uint32_t)) {
                 ALOGE("%s: EFFECT_CMD_SET_DEVICE: cmd data NULL", __func__);
                 status = -EINVAL;
                 goto exit;

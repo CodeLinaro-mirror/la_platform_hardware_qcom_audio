@@ -582,7 +582,8 @@ static int fx_command(effect_handle_t  self,
                     pReplyData == NULL ||
                     *replySize < (int)sizeof(effect_param_t) ||
                     // constrain memcpy below
-                    ((effect_param_t *)pCmdData)->psize > *replySize - sizeof(effect_param_t)) {
+                    ((effect_param_t *)pCmdData)->psize > *replySize - sizeof(effect_param_t) ||
+                    ((effect_param_t *)pCmdData)->psize > cmdSize - sizeof(effect_param_t)) {
                 ALOGV("fx_command() EFFECT_CMD_GET_PARAM invalid args");
                 return -EINVAL;
             }
