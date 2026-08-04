@@ -75,7 +75,6 @@
 #endif /* COMPRESSED_TIMESTAMP_FLAG */
 
 #define COMPRESS_RECORD_NUM_FRAGMENTS 8
-#define COMPRESS_CAPTURE_AAC_MAX_OUTPUT_BUFFER_SIZE 2048
 
 struct cin_private_data {
     struct compr_config compr_config;
@@ -358,15 +357,8 @@ int cin_configure_input_stream(struct stream_in *in, struct audio_config *in_con
     config.channel_mask = in->channel_mask;
     config.format = in->format;
     in->config.channels = audio_channel_count_from_in_mask(in->channel_mask);
-
-    if (!audio_is_linear_pcm(in->format)) {
-        /* For compressed formats like AAC, use fixed output buffer size */
-        buffer_size = COMPRESS_CAPTURE_AAC_MAX_OUTPUT_BUFFER_SIZE;
-        ALOGE("%s AAC compress format, buffer_size set to %d\n",__func__, COMPRESS_CAPTURE_AAC_MAX_OUTPUT_BUFFER_SIZE);
-    } else {
-        buffer_size = audio_extn_utils_get_input_buffer_size(config.sample_rate, config.format,
+    buffer_size = audio_extn_utils_get_input_buffer_size(config.sample_rate, config.format,
                     in->config.channels, in_config->offload_info.duration_us / 1000, false);
-    }
 
     cin_data->compr_config.fragment_size = buffer_size;
     cin_data->compr_config.codec->id = get_snd_codec_id(in->format);
