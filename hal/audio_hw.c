@@ -3701,6 +3701,13 @@ int start_input_stream(struct stream_in *in)
     uc_info->in_snd_device = SND_DEVICE_NONE;
     uc_info->out_snd_device = SND_DEVICE_NONE;
 
+    /* This must be called before adding this usecase to the list */
+    if (is_usb_in_device_type(&in->device_list)) {
+       audio_extn_usb_check_and_set_capture_svc_int(uc_info, true);
+       /* USB backend is not reopened immediately.
+       This is eventually done as part of select_devices */
+    }
+
     list_add_tail(&adev->usecase_list, &uc_info->list);
     audio_streaming_hint_start();
     audio_extn_perf_lock_acquire(&adev->perf_lock_handle, 0,

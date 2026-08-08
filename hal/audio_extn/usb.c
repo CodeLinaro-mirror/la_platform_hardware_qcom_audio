@@ -1395,14 +1395,10 @@ int usb_altset_for_service_interval(bool playback,
 int usb_get_service_interval(bool playback,
                                         unsigned long *service_interval)
 {
-    const char *ctl_name = "USB_AUDIO_RX service_interval";
+    const char *ctl_name = playback ? "USB_AUDIO_RX service_interval" :
+                                       "USB_AUDIO_TX service_interval";
     struct mixer_ctl *ctl = mixer_get_ctl_by_name(usbmod->adev->mixer,
                                                   ctl_name);
-
-    if (!playback) {
-        ALOGE("%s not valid for capture", __func__);
-        return -1;
-    }
 
     if (!ctl) {
         ALOGV("%s: could not get mixer %s", __func__, ctl_name);
@@ -1419,14 +1415,10 @@ int usb_set_service_interval(bool playback,
 {
     *reconfig = false;
     unsigned long current_service_interval = 0;
-    const char *ctl_name = "USB_AUDIO_RX service_interval";
+    const char *ctl_name = playback ? "USB_AUDIO_RX service_interval" :
+                                       "USB_AUDIO_TX service_interval";
     struct mixer_ctl *ctl = mixer_get_ctl_by_name(usbmod->adev->mixer,
                                                   ctl_name);
-
-    if (!playback) {
-        ALOGE("%s not valid for capture", __func__);
-        return -1;
-    }
 
     if (!ctl) {
         ALOGV("%s: could not get mixer %s", __func__, ctl_name);
@@ -1499,6 +1491,35 @@ int usb_check_and_set_svc_int(struct audio_usecase *uc_info,
             usb_find_service_interval(!burst_mode, true /*playback*/);
 
     usb_set_service_interval(true /*playback*/,
+                                        service_interval,
+                                        &reconfig);
+
+    /* no change or not supported or no active usecases */
+    if (reconfig)
+        return -1;
+    return 0;
+}
+
+int usb_check_and_set_capture_svc_int(struct audio_usecase *uc_info,
+                                         bool starting_input_stream __unused)
+{
+    bool reconfig = false;
+    unsigned long service_interval = 0;
+
+    ALOGV("%s: enter:", __func__);
+
+    /*
+     * Unlike playback, capture has no ULL-vs-non-ULL contention to
+     * arbitrate: always request the fastest (min) interval the
+     * connected device advertises for capture.
+     */
+    service_interval = usb_find_service_interval(true /*min*/, false /*playback*/);
+    if (service_interval == ULONG_MAX) {
+        ALOGV("%s: no valid capture service interval found", __func__);
+        return -1;
+    }
+
+    usb_set_service_interval(false /*playback*/,
                                         service_interval,
                                         &reconfig);
 

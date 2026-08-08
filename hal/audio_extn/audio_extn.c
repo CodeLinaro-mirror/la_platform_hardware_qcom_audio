@@ -1600,6 +1600,8 @@ int usb_get_service_interval(bool playback,
                                         unsigned long *service_interval);
 int usb_check_and_set_svc_int(struct audio_usecase *uc_info,
                                          bool starting_output_stream);
+int usb_check_and_set_capture_svc_int(struct audio_usecase *uc_info,
+                                         bool starting_input_stream);
 bool usb_is_reconfig_req();
 void usb_set_reconfig(bool is_required);
 
@@ -1806,6 +1808,16 @@ int audio_extn_usb_check_and_set_svc_int(struct audio_usecase *uc_info,
     int ret_val = 0;
     if (is_usb_offload_enabled && is_usb_burst_mode_enabled)
         ret_val = usb_check_and_set_svc_int(uc_info, starting_output_stream);
+
+    return ret_val;
+}
+
+int audio_extn_usb_check_and_set_capture_svc_int(struct audio_usecase *uc_info,
+                                         bool starting_input_stream)
+{
+    int ret_val = 0;
+    if (is_usb_offload_enabled && is_usb_burst_mode_enabled)
+        ret_val = usb_check_and_set_capture_svc_int(uc_info, starting_input_stream);
 
     return ret_val;
 }
