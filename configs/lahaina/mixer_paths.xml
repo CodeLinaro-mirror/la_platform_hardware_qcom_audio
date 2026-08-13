@@ -1107,8 +1107,8 @@
     </path>
 
     <path name="compress-offload-playback handset">
-        <ctl name="RX_CDC_DMA_RX_0 Channels" value="Two"/>
-        <ctl name="RX_CDC_DMA_RX_0 Audio Mixer MultiMedia4" value="1"/>
+        <ctl name="WSA_CDC_DMA_RX_0 Channels" value="Two"/>
+        <path name="compress-offload-playback"/>
     </path>
 
     <path name="compress-offload-playback headphones">
@@ -1169,6 +1169,10 @@
 
     <path name="compress-offload-playback2">
         <ctl name="WSA_CDC_DMA_RX_0 Audio Mixer MultiMedia7" value="1" />
+    </path>
+    <path name="compress-offload-playback2 handset">
+        <ctl name="WSA_CDC_DMA_RX_0 Channels" value="Two"/>
+        <path name="compress-offload-playback2"/>
     </path>
 
     <path name="compress-offload-playback2 display-port">

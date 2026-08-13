@@ -6731,6 +6731,18 @@ static ssize_t out_write(struct audio_stream_out *stream, const void *buffer,
         /* Call compr start only when non-zero bytes of data is there to be rendered */
         if (!out->playback_started && ret > 0) {
             int status = compress_start(out->compr);
+            if (status < 0 && errno == EPERM) {
+                /* The DSP driver keeps the ALSA compress stream in
+                 * RUNNING state (not SETUP/PREPARED) across a gapless
+                 * next-track transition, since SNDRV_COMPRESS_NEXT_TRACK
+                 * requires RUNNING state to succeed. So compress_start()
+                 * on the continuation track always sees a stream that's
+                 * already running and returns EPERM - that's expected,
+                 * not an error, so treat it as success. */
+                ALOGD("%s: compr start got EPERM, stream already running from"
+                      " gapless next-track transition", __func__);
+                status = 0;
+            }
             if (status < 0) {
                 ret = status;
                 ALOGE("%s: compr start failed with err %d", __func__, errno);
