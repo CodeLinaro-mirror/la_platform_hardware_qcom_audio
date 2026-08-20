@@ -2282,19 +2282,17 @@ static void check_usecases_capture_codec_backend(struct audio_device *adev,
          * TODO: Enhance below condition to handle BT sco/USB multi recording
          */
 
+        bool disable_active_usecase = platform_check_all_backends_match(snd_device, usecase->in_snd_device);
         bool capture_uc_needs_routing = usecase->type != PCM_PLAYBACK && (usecase != uc_info &&
                                        (usecase->in_snd_device != snd_device || force_routing));
         bool call_proxy_snd_device = platform_is_call_proxy_snd_device(snd_device) ||
                                 platform_is_call_proxy_snd_device(usecase->in_snd_device);
         if (capture_uc_needs_routing && !call_proxy_snd_device &&
-                ((backend_check_cond &&
-                 (is_codec_backend_in_device_type(&usecase->device_list) ||
-                  (usecase->type == VOIP_CALL))) ||
-                ((uc_info->type == VOICE_CALL &&
+                (disable_active_usecase ||
+                (usecase->type == VOIP_CALL) ||
+                (uc_info->type == VOICE_CALL &&
                  is_single_device_type_equal(&usecase->device_list,
-                                            AUDIO_DEVICE_IN_VOICE_CALL)) ||
-                 platform_check_all_backends_match(snd_device,\
-                                              usecase->in_snd_device))) &&
+                                            AUDIO_DEVICE_IN_VOICE_CALL))) &&
                 (usecase->id != USECASE_AUDIO_SPKR_CALIB_TX)) {
             ALOGD("%s: Usecase (%s) is active on (%s) - disabling ..",
                   __func__, use_case_table[usecase->id],
