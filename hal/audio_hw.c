@@ -10511,6 +10511,9 @@ static void adev_close_input_stream(struct audio_hw_device *dev,
         !audio_extn_hfp_is_active(adev) &&
         !audio_extn_sound_trigger_check_ec_ref_enable()) {
         struct listnode out_devices;
+        if (in->ec_opened) {
+            in->ec_opened = false;
+        }
         list_init(&out_devices);
         platform_set_echo_reference(adev, false, &out_devices);
         clear_devices(&out_devices);
