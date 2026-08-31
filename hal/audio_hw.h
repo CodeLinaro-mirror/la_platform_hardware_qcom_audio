@@ -858,6 +858,7 @@ struct audio_device {
     pthread_mutex_t active_outputs_list_lock;
 
     int ec_ref_path_ref_cnt;
+    bool ec_ref_reconfig_in_progress;
 };
 
 struct audio_patch_record {

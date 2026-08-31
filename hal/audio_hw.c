@@ -2282,19 +2282,17 @@ static void check_usecases_capture_codec_backend(struct audio_device *adev,
          * TODO: Enhance below condition to handle BT sco/USB multi recording
          */
 
+        bool disable_active_usecase = platform_check_all_backends_match(snd_device, usecase->in_snd_device);
         bool capture_uc_needs_routing = usecase->type != PCM_PLAYBACK && (usecase != uc_info &&
                                        (usecase->in_snd_device != snd_device || force_routing));
         bool call_proxy_snd_device = platform_is_call_proxy_snd_device(snd_device) ||
                                 platform_is_call_proxy_snd_device(usecase->in_snd_device);
         if (capture_uc_needs_routing && !call_proxy_snd_device &&
-                ((backend_check_cond &&
-                 (is_codec_backend_in_device_type(&usecase->device_list) ||
-                  (usecase->type == VOIP_CALL))) ||
-                ((uc_info->type == VOICE_CALL &&
+                (disable_active_usecase ||
+                (usecase->type == VOIP_CALL) ||
+                (uc_info->type == VOICE_CALL &&
                  is_single_device_type_equal(&usecase->device_list,
-                                            AUDIO_DEVICE_IN_VOICE_CALL)) ||
-                 platform_check_all_backends_match(snd_device,\
-                                              usecase->in_snd_device))) &&
+                                            AUDIO_DEVICE_IN_VOICE_CALL))) &&
                 (usecase->id != USECASE_AUDIO_SPKR_CALIB_TX)) {
             ALOGD("%s: Usecase (%s) is active on (%s) - disabling ..",
                   __func__, use_case_table[usecase->id],
@@ -3328,7 +3326,9 @@ int select_devices(struct audio_device *adev, audio_usecase_t uc_id)
     }
 
     if (in_snd_device != SND_DEVICE_NONE) {
+        adev->ec_ref_reconfig_in_progress = true;
         check_usecases_capture_codec_backend(adev, usecase, in_snd_device);
+        adev->ec_ref_reconfig_in_progress = false;
         enable_snd_device(adev, in_snd_device);
     }
 
@@ -3423,7 +3423,9 @@ int select_devices(struct audio_device *adev, audio_usecase_t uc_id)
                 voip_usecase->in_snd_device = in_snd_device;
                 voip_usecase->out_snd_device = usecase->out_snd_device;
                 /* Route all TX  usecase to Compress voip BE */
+                adev->ec_ref_reconfig_in_progress = true;
                 check_usecases_capture_codec_backend(adev, voip_usecase, in_snd_device);
+                adev->ec_ref_reconfig_in_progress = false;
                 enable_snd_device(adev, in_snd_device);
                 /* Send Voice related calibration for RX /TX  pair */
                 status = platform_switch_voice_call_device_post(adev->platform,
@@ -7811,7 +7813,13 @@ exit:
             bytes_read = bytes;
             memset(buffer, 0, bytes);
         }
-        in_standby(&in->stream.common);
+        if (!adev->ec_ref_reconfig_in_progress) {
+            in_standby(&in->stream.common);
+        } else {
+            ALOGW("%s: PCM read error on %s, deferring standby during reconfig",
+                __func__, use_case_table[in->usecase]);
+        }
+
         if (in->usecase == USECASE_AUDIO_RECORD_LOW_LATENCY)
             adev->adm_routing_changed = false;
         ALOGV("%s: read failed status %d- sleeping for buffer duration", __func__, ret);
@@ -10537,6 +10545,9 @@ static void adev_close_input_stream(struct audio_hw_device *dev,
         !audio_extn_hfp_is_active(adev) &&
         !audio_extn_sound_trigger_check_ec_ref_enable()) {
         struct listnode out_devices;
+        if (in->ec_opened) {
+            in->ec_opened = false;
+        }
         list_init(&out_devices);
         platform_set_echo_reference(adev, false, &out_devices);
         clear_devices(&out_devices);
