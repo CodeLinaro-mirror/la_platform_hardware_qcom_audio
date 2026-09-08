@@ -81,7 +81,9 @@
 #define PLATFORM_INFO_XML_PATH_YUPIK_QRD "audio_platform_info_yupikqrd.xml"
 #define PLATFORM_INFO_XML_PATH_YUPIK_IDP "audio_platform_info_yupikidp.xml"
 #define PLATFORM_INFO_XML_PATH_YUPIK_IDPIOT "audio_platform_info_yupikidpiot.xml"
+#define PLATFORM_INFO_XML_PATH_YUPIK_IDPCONTROLLER "audio_platform_info_yupikidpcontroller.xml"
 #define PLATFORM_INFO_XML_PATH_YUPIK_IDPRB3 "audio_platform_info_yupikidprb3.xml"
+#define PLATFORM_INFO_XML_PATH_YUPIK_IDPRB3_VK "audio_platform_info_yupikidprb3_vk.xml"
 #define PLATFORM_INFO_XML_PATH_YUPIK_IDPAIO "audio_platform_info_yupikidpaio.xml"
 #define PLATFORM_INFO_XML_PATH_SCUBA_IDP "audio_platform_info_scubaidp.xml"
 #define PLATFORM_INFO_XML_PATH_SCUBA_QRD "audio_platform_info_scubaqrd.xml"
@@ -1971,10 +1973,14 @@ static void update_codec_type_and_interface(struct platform_data * my_data,
                    sizeof("lahaina-yupikidp-snd-card")) ||
          !strncmp(snd_card_name, "lahaina-yupikidprb3-snd-card",
                    sizeof("lahaina-yupikidprb3-snd-card")) ||
+         !strncmp(snd_card_name, "lahaina-yupikidprb3-vk-snd-card",
+                   sizeof("lahaina-yupikidprb3-vk-snd-card")) ||
          !strncmp(snd_card_name, "lahaina-yupikidpaio-snd-card",
                    sizeof("lahaina-yupikidpaio-snd-card")) ||
          !strncmp(snd_card_name, "lahaina-yupikidpiot-snd-card",
                    sizeof("lahaina-yupikidpiot-snd-card")) ||
+         !strncmp(snd_card_name, "lahaina-yupikidpcontroller-snd-card",
+                   sizeof("lahaina-yupikidpcontroller-snd-card")) ||
          !strncmp(snd_card_name, "lahaina-yupikqrd-snd-card",
                    sizeof("lahaina-yupikqrd-snd-card")) ||
          !strncmp(snd_card_name, "kona-qrd-snd-card",
@@ -3485,6 +3491,22 @@ void *platform_init(struct audio_device *adev)
         dual_mic_config = true;
     }
 
+    bool preferC2Codecs = property_get_bool("vendor.audio.c2.preferred", false);
+    if (preferC2Codecs &&
+        (property_get("ro.build.version.release", value, "") && (atoi(value) < 16))){
+        int ret = 0;
+        ret = property_set("vendor.audio.c2.preferred", false);
+        if (ret < 0) {
+            ALOGE("%s, Failed to Disable c2 codec for audio legacy architecture", __func__);
+        }
+        else {
+            ALOGI("%s, Disabled c2 codec for audio legacy architecture", __func__);
+        }
+    } else {
+        ALOGI("%s, Enabled c2 codec for audio legacy architecture", __func__);
+    }
+
+
     /* Check for Fluence Sub Band Enablement */
     if (property_get_bool("ro.vendor.audio.sdk.fluence.subband.enabled",false))
         my_data->fluence_sb_enabled = true;
@@ -3693,6 +3715,10 @@ void *platform_init(struct audio_device *adev)
                sizeof("lahaina-yupikidprb3-snd-card"))) {
         platform_info_init(get_xml_file_path(PLATFORM_INFO_XML_PATH_YUPIK_IDPRB3),
             my_data, PLATFORM);
+    } else if (!strncmp(snd_card_name, "lahaina-yupikidprb3-vk-snd-card",
+               sizeof("lahaina-yupikidprb3-vk-snd-card"))) {
+        platform_info_init(get_xml_file_path(PLATFORM_INFO_XML_PATH_YUPIK_IDPRB3_VK),
+            my_data, PLATFORM);
     } else if (!strncmp(snd_card_name, "lahaina-yupikidpaio-snd-card",
                sizeof("lahaina-yupikidpaio-snd-card"))) {
         platform_info_init(get_xml_file_path(PLATFORM_INFO_XML_PATH_YUPIK_IDPAIO),
@@ -3700,6 +3726,10 @@ void *platform_init(struct audio_device *adev)
     } else if (!strncmp(snd_card_name, "lahaina-yupikidpiot-snd-card",
                sizeof("lahaina-yupikidpiot-snd-card"))) {
         platform_info_init(get_xml_file_path(PLATFORM_INFO_XML_PATH_YUPIK_IDPIOT),
+            my_data, PLATFORM);
+    } else if (!strncmp(snd_card_name, "lahaina-yupikidpcontroller-snd-card",
+               sizeof("lahaina-yupikidpcontroller-snd-card"))) {
+        platform_info_init(get_xml_file_path(PLATFORM_INFO_XML_PATH_YUPIK_IDPCONTROLLER),
             my_data, PLATFORM);
     } else if (!strncmp(snd_card_name, "lahaina-yupikqrd-snd-card",
                sizeof("lahaina-yupikqrd-snd-card"))) {
@@ -6643,6 +6673,7 @@ int platform_set_ext_display_device_v2(void *platform, int controller, int strea
     struct platform_data *my_data = (struct platform_data *)platform;
     struct audio_device *adev = my_data->adev;
     struct mixer_ctl *ctl = NULL;
+    struct ext_disp_state *disp = NULL;
     int ctl_index = 0;
     const char *ctl_name_prefix = "External Display";
     const char *ctl_name_prefix2 = "External HDMI";
@@ -6653,6 +6684,15 @@ int platform_set_ext_display_device_v2(void *platform, int controller, int strea
     if (!audio_extn_is_display_port_enabled()) {
         ALOGE("%s: display port is not supported", __func__);
         return -EINVAL;
+    }
+
+    disp = &my_data->ext_disp[controller][stream];
+    if (controller == 1) {
+        disp->type = EXT_DISPLAY_TYPE_HDMI;
+    } else if (controller == 0) {
+        disp->type = EXT_DISPLAY_TYPE_DP;
+    } else {
+        disp->type = EXT_DISPLAY_TYPE_NONE;
     }
 
     ctl_index = platform_get_display_port_ctl_index(controller, stream);
@@ -6684,8 +6724,8 @@ int platform_set_ext_display_device_v2(void *platform, int controller, int strea
         return -EINVAL;
     }
 
-    ALOGV("%s: controller/stream: %ld/%ld", __func__, device_values[0],
-          device_values[1]);
+    ALOGV("%s: controller/stream: %ld/%ld, disp type: %d", __func__, device_values[0],
+          device_values[1], disp->type);
 
     return mixer_ctl_set_array(ctl, device_values, ARRAY_SIZE(device_values));
 }

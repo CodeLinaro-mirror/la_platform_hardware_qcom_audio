@@ -1,9 +1,6 @@
 /*
  * Copyright (c) 2013-2021, The Linux Foundation. All rights reserved.
  *
- * Changes from Qualcomm Innovation Center are provided under the following license:
- * Copyright (c) 2022-2023 Qualcomm Innovation Center, Inc. All rights reserved.
- * SPDX-License-Identifier: BSD-3-Clause-Clear
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -640,11 +637,17 @@ static void update_hardware_info_lahaina(
     } else if (!strncmp(snd_card_name, "lahaina-yupikidprb3-snd-card",
                  sizeof("lahaina-yupikidprb3-snd-card"))) {
         strlcpy(hw_info->name, "yupik", sizeof(hw_info->name));
+    } else if (!strncmp(snd_card_name, "lahaina-yupikidprb3-vk-snd-card",
+                 sizeof("lahaina-yupikidprb3-vk-snd-card"))) {
+        strlcpy(hw_info->name, "yupik", sizeof(hw_info->name));
     } else if (!strncmp(snd_card_name, "lahaina-yupikidpaio-snd-card",
                  sizeof("lahaina-yupikidpaio-snd-card"))) {
 	strlcpy(hw_info->name, "yupik", sizeof(hw_info->name));
     } else if (!strncmp(snd_card_name, "lahaina-yupikidpiot-snd-card",
                  sizeof("lahaina-yupikidpiot-snd-card"))) {
+        strlcpy(hw_info->name, "yupik", sizeof(hw_info->name));
+    } else if (!strncmp(snd_card_name, "lahaina-yupikidpcontroller-snd-card",
+                 sizeof("lahaina-yupikidpcontroller-snd-card"))) {
         strlcpy(hw_info->name, "yupik", sizeof(hw_info->name));
     } else if (!strncmp(snd_card_name, "lahaina-yupikqrd-snd-card",
                  sizeof("lahaina-yupikqrd-snd-card"))) {
