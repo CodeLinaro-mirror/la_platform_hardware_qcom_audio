@@ -1903,6 +1903,9 @@ audio_format_t StreamOutPrimary::AlsatoHalFormat(uint32_t pcm_format) {
     case PCM_FORMAT_S16_LE:
         format = AUDIO_FORMAT_PCM_16_BIT;
         break;
+    case PCM_FORMAT_S8:
+        format = AUDIO_FORMAT_PCM_8_BIT;
+        break;
     case PCM_FORMAT_S24_3LE:
         format = AUDIO_FORMAT_PCM_24_BIT_PACKED;
         break;
@@ -1997,7 +2000,7 @@ int StreamOutPrimary::Open() {
         pcmFormat = HaltoAlsaFormat(halInputFormat);
         halOutputFormat = AlsatoHalFormat(pcmFormat);
         ALOGD("halInputFormat %d halOutputFormat %d", halInputFormat, halOutputFormat);
-        streamAttributes_.out_media_config.bit_width = format_to_bitwidth_table[halOutputFormat];
+        streamAttributes_.out_media_config.bit_width = GetBitWidthForFormat(halOutputFormat);
         if (streamAttributes_.out_media_config.bit_width == 0)
             streamAttributes_.out_media_config.bit_width = 16;
     } else if ((streamAttributes_.type == PAL_STREAM_ULTRA_LOW_LATENCY) &&
@@ -2205,14 +2208,14 @@ ssize_t StreamOutPrimary::Write(const void *buffer, size_t bytes) {
     }
 
     if (halInputFormat != halOutputFormat && convertBuffer != NULL) {
-        frames = bytes / (format_to_bitwidth_table[halInputFormat]/8);
+        frames = bytes / (GetBitWidthForFormat(halInputFormat)/8);
 
 #ifndef LINUX_ENABLED
         memcpy_by_audio_format(convertBuffer, halOutputFormat, buffer, halInputFormat,
                                frames);
 #endif
         palBuffer.buffer = convertBuffer;
-        palBuffer.size = frames * (format_to_bitwidth_table[halOutputFormat]/8);
+        palBuffer.size = frames * (GetBitWidthForFormat(halOutputFormat)/8);
     }
     local_bytes_written = pal_stream_write(pal_stream_handle_, &palBuffer);
     total_bytes_written_ += local_bytes_written;
