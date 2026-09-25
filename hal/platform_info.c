@@ -26,9 +26,9 @@
  * OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
  * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
- * Changes from Qualcomm Innovation Center are provided under the following license:
-
- * Copyright (c) 2022, 2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
 
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted (subject to the limitations in the
@@ -1732,7 +1732,7 @@ done:
 
 void platform_info_deinit()
 {
-    if (my_data.kvpairs) {
+    if (my_data.kvpairs != NULL) {
         str_parms_destroy(my_data.kvpairs);
         my_data.kvpairs = NULL;
     }

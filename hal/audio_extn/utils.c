@@ -548,6 +548,15 @@ void audio_get_vendor_config_path (char* config_file_path, int path_size)
         /* Audio configs are stored in /vendor/etc/audio/sku_${vendor_sku} */
         snprintf(config_file_path, path_size,
             "%s%s", "/vendor/etc/audio/sku_", vendor_sku);
+
+        /* validate the resolved SKU path exists; fall back gracefully */
+        if (access(config_file_path, F_OK) != 0) {
+            int saved_errno = errno;
+            ALOGW("%s: SKU config dir '%s' not found (errno=%d), "
+                  "falling back to /vendor/etc",
+                  __func__, config_file_path, saved_errno);
+            snprintf(config_file_path, path_size, "%s", "/vendor/etc");
+        }
     }
 }
 

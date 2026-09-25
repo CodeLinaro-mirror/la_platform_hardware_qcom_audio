@@ -2269,7 +2269,9 @@ void platform_set_echo_reference(struct audio_device *adev, bool enable,
 
         // disable EC path only if no usecases are active
         if (adev->ec_ref_path_ref_cnt == 0) {
-            if (strcmp(my_data->ec_ref_mixer_path, "")) {
+            if (adev->ec_ref_reconfig_in_progress) {
+                ALOGD("%s: skipping echo-ref disable, reconfig in progress", __func__);
+            } else if (strcmp(my_data->ec_ref_mixer_path, "")) {
                 ALOGV("%s: disabling %s", __func__, my_data->ec_ref_mixer_path);
                 audio_route_reset_and_update_path(adev->audio_route,
                                                   my_data->ec_ref_mixer_path);
