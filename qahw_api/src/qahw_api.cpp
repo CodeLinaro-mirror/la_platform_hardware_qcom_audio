@@ -2175,11 +2175,11 @@ int qahw_stream_open(qahw_module_handle_t *hw_module,
     if ((attr.type == QAHW_VOICE_CALL)||(attr.type == QAHW_ECALL)) {
         if (strncmp("11C05000",attr.attr.voice.vsid,sizeof("11C05000")) == 0) {
             flags = AUDIO_OUTPUT_FLAG_PRIMARY | QAHW_AUDIO_OUTPUT_FLAG_VOICE_CALL;
-            ALOGE("VSID1");
+            ALOGE("%s: VSID1 override: 0x%x", __func__, flags);
         }
         if (strncmp("11DC5000",attr.attr.voice.vsid,sizeof("11DC5000")) == 0) {
-            flags = QAHW_AUDIO_OUTPUT_FLAG_VOICE2_CALL;
-            ALOGE("VSID2");
+            flags = AUDIO_OUTPUT_FLAG_PRIMARY | QAHW_AUDIO_OUTPUT_FLAG_VOICE2_CALL;
+            ALOGE("%s: VSID2 override: 0x%x", __func__, flags);
         }
     }
 
