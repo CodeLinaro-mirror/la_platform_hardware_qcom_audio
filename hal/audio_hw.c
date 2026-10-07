@@ -34,8 +34,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * ​​​​​Changes from Qualcomm Innovation Center, Inc. are provided under the following license:
- * Copyright (c) 2023-2025 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
  * SPDX-License-Identifier: BSD-3-Clause-Clear
  */
 
@@ -11599,7 +11599,6 @@ static int adev_open(const hw_module_t *module, const char *name,
     audio_extn_qdsp_init(adev->platform);
 
     adev->multi_offload_enable = property_get_bool("vendor.audio.offload.multiple.enabled", false);
-    pthread_mutex_unlock(&adev_init_lock);
 
     if (adev->adm_init)
         adev->adm_data = adev->adm_init();
@@ -11624,6 +11623,7 @@ static int adev_open(const hw_module_t *module, const char *name,
     audio_extn_sound_trigger_update_battery_status(adev->is_charging);
     audio_extn_audiozoom_init();
     pthread_mutex_unlock(&adev->lock);
+    pthread_mutex_unlock(&adev_init_lock);
     /* Allocate memory for Device config params */
     adev->device_cfg_params = (struct audio_device_config_param*)
                                   calloc(platform_get_max_codec_backend(),
