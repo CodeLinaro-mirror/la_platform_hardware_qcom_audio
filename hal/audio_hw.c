@@ -771,6 +771,12 @@ static void register_out_stream(struct stream_out *out)
         !adev->adm_register_output_stream)
         return;
 
+    if (!(out->flags & AUDIO_OUTPUT_FLAG_RAW))
+    {
+        ALOGD("Ignore adm register_out_stream for flags: 0x%x\n", out->flags);
+        return;
+    }
+
     // register stream first for backward compatibility
     adev->adm_register_output_stream(adev->adm_data,
                                      out->handle,
@@ -796,6 +802,12 @@ static void register_in_stream(struct stream_in *in)
     struct audio_device *adev = in->dev;
     if (!adev->adm_register_input_stream)
         return;
+
+    if (!(in->flags & AUDIO_INPUT_FLAG_RAW))
+    {
+        ALOGD("Ignore adm register_in_stream for flags: 0x%x\n", in->flags);
+        return;
+    }
 
     adev->adm_register_input_stream(adev->adm_data,
                                     in->capture_handle,
@@ -873,13 +885,19 @@ static int parse_snd_card_status(struct str_parms *parms, int *card,
 
 bool is_combo_audio_input_device(struct listnode *devices){
 
-    if ((devices == NULL) || (!list_empty(devices)))
+    if ((devices == NULL) || (list_empty(devices)))
+    {
         return false;
+    }
 
     if(compare_device_type(devices, AUDIO_DEVICE_IN_BUILTIN_MIC|AUDIO_DEVICE_IN_SPEAKER_MIC2))
+    {
         return true;
+    }
     else
+    {
         return false;
+    }
 }
 
 static inline void adjust_frames_for_device_delay(struct stream_out *out,
@@ -1536,6 +1554,7 @@ int enable_audio_route(struct audio_device *adev,
             audio_extn_set_custom_mtmx_params_v1(adev, usecase, true);
         }
     } else {
+        ALOGD("%s: set custom mtmx params v2", __func__);
         audio_extn_set_custom_mtmx_params_v2(adev, usecase, true);
     }
 
@@ -1637,6 +1656,7 @@ int disable_audio_route(struct audio_device *adev,
             audio_extn_set_custom_mtmx_params_v1(adev, usecase, false);
         }
     } else {
+        ALOGD("%s: reset custom mtmx params v2", __func__);
         audio_extn_set_custom_mtmx_params_v2(adev, usecase, false);
     }
 
@@ -3745,8 +3765,8 @@ int start_input_stream(struct stream_in *in)
             in->pcm = NULL;
             goto error_open;
         }
-        if (in->flags  & (AUDIO_INPUT_FLAG_FAST | AUDIO_INPUT_FLAG_RAW))
-            register_in_stream(in);
+
+        register_in_stream(in);
         if (in->realtime) {
             ATRACE_BEGIN("pcm_in_start");
             ret = pcm_start(in->pcm);
@@ -4609,8 +4629,7 @@ int start_output_stream(struct stream_out *out)
     }
 
     if (ret == 0) {
-        if (out->flags & (AUDIO_OUTPUT_FLAG_FAST | AUDIO_OUTPUT_FLAG_RAW))
-            register_out_stream(out);
+        register_out_stream(out);
         if (out->realtime) {
             if (out->pcm == NULL || !pcm_is_ready(out->pcm)) {
                 ALOGE("%s: pcm stream not ready", __func__);
@@ -9993,9 +10012,9 @@ static int adev_open_input_stream(struct audio_hw_device *dev,
         return -ENOMEM;
     }
 
-    ALOGD("%s: enter: sample_rate(%d) channel_mask(%#x) devices(%#x)\
+    ALOGD("%s: enter: sample_rate(%d) channel_mask(%#x) devices(%#x) flags(%#x)\
         stream_handle(%p) io_handle(%d) source(%d) format %x",__func__, config->sample_rate,
-        config->channel_mask, devices, &in->stream, handle, source, config->format);
+        config->channel_mask, devices, flags, &in->stream, handle, source, config->format);
     pthread_mutex_init(&in->lock, (const pthread_mutexattr_t *) NULL);
     pthread_mutex_init(&in->pre_lock, (const pthread_mutexattr_t *) NULL);
 
