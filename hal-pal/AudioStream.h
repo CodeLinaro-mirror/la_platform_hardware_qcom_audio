@@ -296,6 +296,14 @@ const uint32_t format_to_bitwidth_table[] = {
     [AUDIO_FORMAT_PCM_24_BIT_PACKED] = 24,
 };
 
+/* Bounds-checked lookup: audio_format_t (e.g. AUDIO_FORMAT_INVALID == UINT_MAX)
+ * can fall outside format_to_bitwidth_table, so never index it directly. */
+static inline uint32_t GetBitWidthForFormat(uint32_t format) {
+    if (format >= (sizeof(format_to_bitwidth_table) / sizeof(format_to_bitwidth_table[0])))
+        return 16;
+    return format_to_bitwidth_table[format];
+}
+
 const char * const use_case_table[AUDIO_USECASE_MAX] = {
     [USECASE_AUDIO_PLAYBACK_DEEP_BUFFER] = "deep-buffer-playback",
     [USECASE_AUDIO_PLAYBACK_LOW_LATENCY] = "low-latency-playback",
