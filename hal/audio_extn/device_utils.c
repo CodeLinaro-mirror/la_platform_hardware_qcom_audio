@@ -372,7 +372,9 @@ bool compare_device_type(struct listnode *devices, audio_devices_t device_type)
 
     list_for_each_safe (node, temp, devices) {
         item = node_to_item(node, struct audio_device_info, list);
-        if (item != NULL && (item->type == device_type)) {
+        if (item == NULL)
+            return false;
+        if (item->type == device_type) {
             ALOGV("%s: device types %d match", __func__, device_type);
             return true;
         }
